@@ -1,0 +1,100 @@
+{
+  "name": "moose",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "description": "A quiet workspace for your coding agents",
+  "author": "Moose",
+  "license": "UNLICENSED",
+  "main": "dist-electron/main/main.js",
+  "packageManager": "pnpm@12.4.1",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "pnpm build && playwright test",
+    "test:providers": "tsx scripts/probe-providers.ts",
+    "db:generate": "drizzle-kit generate",
+    "native:rebuild": "electron-builder install-app-deps",
+    "package": "pnpm build && electron-builder --mac dir --arm64",
+    "dist": "pnpm build && electron-builder --mac dmg --arm64",
+    "protocol:generate": "codex app-server generate-ts --out electron/providers/generated/codex",
+    "postinstall": "install-electron && electron-builder install-app-deps",
+    "test:live": "tsx scripts/live-providers.ts",
+    "icon:build": "swift scripts/icon.swift && iconutil -c icns build/icon.iconset -o build/icon.icns"
+  },
+  "dependencies": {
+    "better-sqlite3": "13.0.3"
+  },
+  "devDependencies": {
+    "@agentclientprotocol/sdk": "1.4.0",
+    "@base-ui/react": "1.8.0",
+    "@playwright/test": "1.63.0",
+    "@shadcn/react": "0.3.1",
+    "@tailwindcss/vite": "4.3.3",
+    "@types/better-sqlite3": "9.6.0",
+    "@types/node": "22.20.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.1",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "cn": "0.2.6",
+    "drizzle-kit": "0.31.10",
+    "drizzle-orm": "0.45.2",
+    "electron": "44.3.0",
+    "electron-builder": "26.15.3",
+    "highlight.js": "11.12.0",
+    "lucide-react": "1.45.0",
+    "motion": "13.2.0",
+    "node-gyp": "13.0.2",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-markdown": "10.1.0",
+    "rehype-highlight": "7.0.2",
+    "remark-gfm": "4.0.1",
+    "shadcn": "4.21.0",
+    "tailwind-merge": "3.7.0",
+    "tailwindcss": "4.3.3",
+    "tsx": "4.23.13",
+    "tw-animate-css": "1.4.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.0",
+    "vite-plugin-electron": "1.1.2",
+    "vitest": "5.0.0",
+    "zod": "4.6.4"
+  },
+  "build": {
+    "appId": "dev.moose.desktop",
+    "productName": "Moose",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**",
+      "dist-electron/**",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "**/*.node"
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ],
+      "identity": null,
+      "icon": "build/icon.icns"
+    },
+    "dmg": {
+      "title": "Moose",
+      "artifactName": "Moose-${version}-${arch}.${ext}"
+    }
+  }
+}
