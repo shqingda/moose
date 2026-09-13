@@ -1,7 +1,8 @@
 import type { Choice, Message, ProviderInfo, Question, Session } from '../../shared/types';
 export type AgentEvent = { key: string; kind: Message['kind']; text?: string; delta?: string; title?: string; state?: Message['state']; choices?: Choice[]; questions?: Question[] };
-export interface RunContext { promptContext?: import('../../shared/types').PromptContext; selection?: { references: import('../../shared/types').ContextEntry[]; skills: import('../../shared/types').ContextEntry[] }; session: Session; cwd: string; text: string; attachments?: import('../attachments').AgentAttachment[]; turnId?(id: string): void; emit(event: AgentEvent): void; nativeId(id: string): void }
+export interface RunContext { usage?(usage: import('../../shared/types').ContextUsage): void; promptContext?: import('../../shared/types').PromptContext; selection?: { references: import('../../shared/types').ContextEntry[]; skills: import('../../shared/types').ContextEntry[] }; session: Session; cwd: string; text: string; attachments?: import('../attachments').AgentAttachment[]; turnId?(id: string): void; emit(event: AgentEvent): void; nativeId(id: string): void }
 export interface AgentAdapter {
+  usage?(): Promise<import('../../shared/types').UsageInfo>;
   probe(): Promise<Pick<ProviderInfo, 'models' | 'modes' | 'images'>>;
   fork?(session: Session, cwd: string, lastTurnId: string): Promise<string>;
   run(context: RunContext): Promise<void>;

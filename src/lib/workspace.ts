@@ -32,19 +32,21 @@ export function useTranscript(sessionId: string | undefined, report: (error: str
   const [loading, setLoading] = useState(false);
   const generation = useRef(0);
   useEffect(() => {
-    const current = ++generation.current;
+    let current = ++generation.current;
     setPage({ messages: [], hasMore: false });
     if (!sessionId) return;
     setLoading(true);
     let refreshTimer: ReturnType<typeof setTimeout> | undefined;
     const fetch = async (initial = false) => {
+      const requestGeneration = current;
       try {
         const data = await window.moose.request('messages', { sessionId });
-        if (current === generation.current) setPage(old => ({ messages: mergeMessages(old.messages, data.messages), hasMore: initial ? data.hasMore : old.hasMore }));
+        if (requestGeneration === generation.current) setPage(old => ({ messages: mergeMessages(old.messages, data.messages), hasMore: initial ? data.hasMore : old.hasMore }));
       } catch (error) { if (current === generation.current) report(String(error)); }
       finally { if (current === generation.current) setLoading(false); }
     };
     const unsubscribe = window.moose.subscribe(event => {
+      if (event.type === 'transcript-reset' && event.sessionId === sessionId) { current = ++generation.current; setPage({ messages: [], hasMore: false }); void fetch(true); }
       if (event.type === 'message' && event.message.sessionId === sessionId) setPage(old => ({ ...old, messages: mergeMessages(old.messages, [event.message]) }));
       if (event.type === 'changed') { clearTimeout(refreshTimer); refreshTimer = setTimeout(() => { void fetch(); }, 100); }
     });

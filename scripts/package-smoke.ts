@@ -9,6 +9,6 @@ try {
  const page = await app.firstWindow(); await page.waitForSelector('.app-shell');
  const details = await app.evaluate(({ app, BrowserWindow }) => ({ version: app.getVersion(), sandbox: (BrowserWindow.getAllWindows()[0].webContents as unknown as { getLastWebPreferences(): { sandbox: boolean } }).getLastWebPreferences().sandbox }));
  const snapshot = await page.evaluate(() => window.moose.request('snapshot', {}));
- if (details.version !== '0.3.0' || !details.sandbox || !Array.isArray(snapshot.projects)) throw new Error('Packaged smoke failed');
- await page.screenshot({ path: 'test-results/package-0.3.0.png' }); console.log(JSON.stringify({ ...details, sqlite: 'ready' }));
+ if (details.version !== '0.5.4' || !details.sandbox || !Array.isArray(snapshot.projects)) throw new Error('Packaged smoke failed');
+ await page.screenshot({ path: 'test-results/package-0.5.4.png' }); console.log(JSON.stringify({ ...details, sqlite: 'ready' }));
 } finally { await app.close(); await rm(dir, { recursive: true, force: true }); }

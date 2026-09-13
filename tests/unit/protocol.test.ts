@@ -24,3 +24,9 @@ it('rejects privileged or malformed renderer requests', () => {
   expect(() => validate('__proto__' as 'snapshot', {})).toThrow();
   expect(validate('openExternal', { url: 'https://example.com' })).toEqual({ url: 'https://example.com' });
 });
+
+it('preserves streamed reasoning when the completed item has an empty summary', () => {
+ expect(normalizeCodex('item/reasoning/textDelta', { itemId: 'r', delta: 'Visible reasoning' })).toMatchObject({ kind: 'reasoning', delta: 'Visible reasoning' });
+ expect(normalizeCodex('item/completed', { item: { type: 'reasoning', id: 'r', summary: [], content: [] } })).not.toHaveProperty('text');
+ expect(normalizeCodex('item/completed', { item: { type: 'reasoning', id: 'r', summary: [], content: ['Visible content'] } })).toMatchObject({ text: 'Visible content' });
+});

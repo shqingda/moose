@@ -11,21 +11,18 @@ import { diffLines } from '../../src/lib/diff';
 const cleanup: (() => Promise<void> | void)[] = [];
 afterEach(async () => { for (const run of cleanup.splice(0)) await run(); });
 function fixture() { const dir = mkdtempSync(join(tmpdir(), 'moose-history-')); const store = new Store(join(dir, 'db')); const service = new MooseService(store, () => {}); cleanup.push(async () => { await service.close(); rmSync(dir, { recursive: true, force: true }); }); return { dir, store, service }; }
-it('preserves original history and produces an editable branch without reverting code', async () => {
-  const { dir, store, service } = fixture(), session = store.createSession(store.addProject(dir).id, 'grok');
-  writeFileSync(join(dir, 'keep.txt'), 'existing edits');
-  const first = store.begin(store.enqueue(session.id, 'first'), randomUUID());
-  store.saveMessage({ id: randomUUID(), sessionId: session.id, runId: first.runId, seq: 2, kind: 'assistant', text: 'first result', title: '', state: 'done', createdAt: Date.now() });
-  const second = store.begin(store.enqueue(session.id, 'second'), randomUUID());
-  const branch = await service.handle('rewind', { sessionId: session.id, messageId: second.id, edit: true }) as typeof session;
-  expect(branch.draft).toBe('second'); expect(branch.nativeId).toBeNull(); expect(branch.historySeed).toContain('first result'); expect(branch.historySeed).not.toContain('user: second');
-  expect(store.allMessages(branch.id)).toHaveLength(2); expect(store.allMessages(session.id)).toHaveLength(3);
-  expect(readFileSync(join(dir, 'keep.txt'), 'utf8')).toBe('existing edits');
+it('rejects the removed rewind operation', async () => {
+ const { service } = fixture();
+ await expect(service.handle('rewind', {})).rejects.toThrow('Unknown operation');
 });
-it('archives all project sessions and deletes only Moose rows', async () => {
+it('allows deletion only after session archive and keeps code when removing a project', async () => {
   const { dir, store, service } = fixture(), p = store.addProject(dir), a = store.createSession(p.id, 'codex'), b = store.createSession(p.id, 'grok');
   store.enqueue(a.id, 'queued'); store.enqueue(b.id, 'queued'); writeFileSync(join(dir, 'keep.txt'), 'keep');
-  await service.handle('archiveProject', { projectId: p.id }); expect(store.listSessions().every(s => s.archived)).toBe(true);
+  await expect(service.handle('archiveProject', { projectId: p.id })).rejects.toThrow('Unknown operation');
+  await expect(service.handle('deleteSession', { sessionId: a.id })).rejects.toThrow('Archive');
+  await service.handle('updateSession', { id: a.id, archived: true });
+  await service.handle('deleteSession', { sessionId: a.id });
+  expect(store.listSessions()).toHaveLength(1); expect(store.queued(a.id)).toHaveLength(0);
   await service.handle('deleteProject', { projectId: p.id }); expect(store.listSessions()).toEqual([]); expect(store.queued()).toEqual([]); expect(store.listProjects()).toEqual([]); expect(readFileSync(join(dir, 'keep.txt'), 'utf8')).toBe('keep');
 });
 it('copies attachments, persists drafts and queues, rejects traversal and video', async () => {
@@ -46,4 +43,18 @@ it('renders actual old and new line numbers across multiple hunks', () => {
   expect(lines.find(l => l.text === 'previous')).toMatchObject({ old: 20, kind: 'removed' });
   expect(lines.find(l => l.text === 'context')).toMatchObject({ old: 21, next: 21 });
   expect(lines.at(-1)).toMatchObject({ next: 102, kind: 'added' });
+});
+
+it('replaces the last turn atomically and copies a whole response across tools', async () => {
+  const { dir, store, service } = fixture(), session = store.createSession(store.addProject(dir).id, 'grok');
+  const first = store.begin(store.enqueue(session.id, 'first'), randomUUID());
+  for (const [kind, text] of [['assistant', 'Before'], ['tool', 'private tool log'], ['assistant', 'After']] as const)
+    store.saveMessage({ id: randomUUID(), sessionId: session.id, runId: first.runId, seq: 1, kind, text, title: '', state: 'done', createdAt: Date.now() });
+  expect(await service.handle('responseText', { sessionId: session.id, runId: first.runId })).toBe('Before\n\nAfter');
+  const last = store.begin(store.enqueue(session.id, 'last'), randomUUID());
+  await expect(service.handle('editMessage', { sessionId: session.id, messageId: first.id, text: 'invalid' })).rejects.toThrow('latest');
+  store.replaceLastTurn(session.id, last.position, null, 'retained history', 'replacement', []);
+  expect(store.listSessions()).toHaveLength(1);
+  expect(store.allMessages(session.id).map(m => m.text)).toEqual(['first', 'Before', 'private tool log', 'After']);
+  expect(store.queued(session.id)[0].text).toBe('replacement');
 });

@@ -78,6 +78,14 @@ export class Store {
     const row = this.db.select().from(table.messages).where(and(eq(table.messages.runId, runId), eq(table.messages.kind, 'user'))).get();
     if (row) this.saveMessage({ ...this.decode(row), nativeTurnId, seq: row.seq + 1 });
   }
+  deleteSession(sessionId: string) {
+    if (!this.session(sessionId).archived) throw new Error('Archive the conversation before deleting it');
+    this.sqlite.transaction(() => {
+      this.db.delete(table.queue).where(eq(table.queue.sessionId, sessionId)).run();
+      this.db.delete(table.messages).where(eq(table.messages.sessionId, sessionId)).run();
+      this.db.delete(table.sessions).where(eq(table.sessions.id, sessionId)).run();
+    })();
+  }
   deleteProject(projectId: string) {
     this.project(projectId);
     this.sqlite.transaction(() => {
@@ -89,12 +97,11 @@ export class Store {
       this.db.delete(table.projects).where(eq(table.projects.id, projectId)).run();
     })();
   }
-  branch(source: Session, retained: Message[], draft: string, attachments: Attachment[], nativeId: string | null, historySeed: string) {
-    return this.sqlite.transaction(() => {
-      const next = this.createSession(source.projectId, source.provider);
-      this.updateSession(next.id, { title: `${source.title || 'Conversation'} · ${this.listSessions().filter(s => s.projectId === source.projectId && s.title.startsWith(source.title)).length + 1}`, model: source.model, effort: source.effort, mode: source.mode, draft, draftAttachments: attachments, draftContext: source.draftContext, nativeId, historySeed });
-      for (const { position: _position, ...row } of retained) this.saveMessage({ ...row, id: randomUUID(), sessionId: next.id, state: row.state === 'pending' || row.state === 'running' ? 'expired' : row.state });
-      return this.session(next.id);
+  replaceLastTurn(sessionId: string, position: number, nativeId: string | null, historySeed: string, text: string, attachments: Attachment[], context?: import('../../shared/types').PromptContext) {
+    this.sqlite.transaction(() => {
+      this.sqlite.prepare('DELETE FROM messages WHERE session_id = ? AND position >= ?').run(sessionId, position);
+      this.updateSession(sessionId, { nativeId, historySeed, status: 'queued' });
+      this.enqueue(sessionId, text, attachments, context);
     })();
   }
   close() { this.sqlite.close(); }

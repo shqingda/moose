@@ -1,3 +1,4 @@
+import { JsonRpc } from './rpc';
 import { ClientSideConnection, ndJsonStream, PROTOCOL_VERSION, type SessionNotification, type RequestPermissionResponse } from '@agentclientprotocol/sdk';
 import { Readable, Writable } from 'node:stream';
 import { spawnAgent, terminate } from './process';
@@ -21,6 +22,7 @@ export function normalizeGrok(notification: SessionNotification, textKey: string
   return null;
 }
 export class GrokAdapter implements AgentAdapter {
+  private billingRpc?: JsonRpc;
   private child?: ReturnType<typeof spawnAgent>;
   private connection?: ClientSideConnection;
   private initialization?: Awaited<ReturnType<ClientSideConnection['initialize']>>;
@@ -33,6 +35,19 @@ export class GrokAdapter implements AgentAdapter {
   private permissions = new Map<string, { options: Set<string>; resolve(value: RequestPermissionResponse): void }>();
   private questions = new Map<string, { questions: { id: string; text: string; options: string[] }[]; resolve(value: Record<string, unknown>): void }>();
   constructor(private path: string) {}
+  async usage(): Promise<import('../../shared/types').UsageInfo> {
+    const rpc = this.billingRpc = new JsonRpc(this.path, ['agent', 'stdio']);
+    await rpc.request('initialize', { protocolVersion: '1', clientCapabilities: { fs: { readTextFile: false, writeTextFile: false }, terminal: false } }, 10000);
+    const billing = record(await rpc.request('_x.ai/billing', {}, 10000));
+    const config = billing.config ? record(billing.config) : billing;
+    const limit = record(config.monthlyLimit).val, used = record(record(config.usage).totalUsed).val;
+    const percent = typeof config.creditUsagePercent === 'number' ? config.creditUsagePercent : typeof limit === 'number' && limit > 0 && typeof used === 'number' ? used / limit * 100 : null;
+    const period = record(config.currentPeriod);
+    const end = config.billingPeriodEnd || period.end || record(config.billingCycle).billingPeriodEnd;
+    const reset = typeof end === 'string' ? Date.parse(end) / 1000 : NaN;
+    const kind = string(period.type);
+    return { context: null, limits: [{ name: 'Grok Build', plan: string(billing.subscription_tier || config.subscription_tier) || null, windows: percent === null ? [] : [{ usedPercent: percent, minutes: kind.includes('WEEKLY') ? 10080 : kind.includes('DAILY') ? 1440 : 43200, resetsAt: Number.isFinite(reset) ? reset : null }] }] };
+  }
   private async connect(context?: RunContext) {
     if (this.connection) return this.connection;
     const args = ['agent', '--no-leader'];
@@ -126,6 +141,7 @@ export class GrokAdapter implements AgentAdapter {
     await this.close();
   }
   async close() {
+    await this.billingRpc?.close();
     for (const pending of this.questions.values()) pending.resolve({ outcome: 'cancelled' });
     this.questions.clear();
     for (const pending of this.permissions.values()) pending.resolve({ outcome: { outcome: 'cancelled' } });

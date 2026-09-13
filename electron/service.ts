@@ -1,3 +1,4 @@
+import { contextInText } from '../shared/prompt-context';
 import { ContextCatalog } from './context-catalog';
 import { Attachments, agentAttachments } from './attachments';
 import { randomUUID } from 'node:crypto';
@@ -19,6 +20,8 @@ export class MooseService {
   private active = new Map<string, Active>();
   private paused = new Set<string>();
   private stopping = false;
+  private usageCache = new Map<Provider, { at: number; value: import('../shared/types').UsageInfo }>();
+  private usagePending = new Map<Provider, Promise<import('../shared/types').UsageInfo>>();
   private providerCache?: ProviderInfo[];
   private probePromise?: Promise<ProviderInfo[]>;
   private probing = new Set<AgentAdapter>();
@@ -35,12 +38,12 @@ export class MooseService {
     if (!refresh && this.providerCache) return this.providerCache;
     if (this.probePromise) return this.probePromise;
     this.probePromise = Promise.all((['codex', 'grok'] as const).map(async provider => {
-      const info: ProviderInfo = { provider, path: '', version: '', available: false, connected: false, models: [], modes: [] };
+      const info: ProviderInfo = { enabled: this.store.getSettings()[provider === 'codex' ? 'codexEnabled' : 'grokEnabled'], provider, path: '', version: '', available: false, connected: false, models: [], modes: [] };
       let adapter: AgentAdapter | undefined;
       try {
         info.path = await this.providerPath(provider); info.available = true;
         info.version = await cliVersion(info.path);
-        if (this.stopping) return info;
+        if (this.stopping || !info.enabled) return info;
         adapter = this.adapterFactory(provider, info.path);
         this.probing.add(adapter);
         Object.assign(info, await adapter.probe()); info.connected = true;
@@ -60,26 +63,41 @@ export class MooseService {
       case 'listSkills': return this.catalog.skills(this.store.project((args as Requests['listSkills']).projectId).path);
       case 'uploadAttachment': { const a = args as Requests['uploadAttachment']; return this.attachments.import(a.name, Buffer.from(a.data, 'base64')); }
       case 'attachmentPreview': return this.attachments.preview((args as Requests['attachmentPreview']).id);
-      case 'deleteProject': case 'archiveProject': {
+      case 'deleteProject': {
         const projectId = (args as Requests['deleteProject']).projectId;
         const project = this.store.project(projectId);
         if (this.active.has(project.path) || this.editing.has(project.path)) throw new Error('Stop the project tasks before changing this project');
-        if (method === 'deleteProject') this.store.deleteProject(projectId);
-        else for (const s of this.store.listSessions().filter(s => s.projectId === projectId)) { this.paused.add(s.id); this.store.updateSession(s.id, { archived: true }); }
+        this.store.deleteProject(projectId);
         this.changed(); return null;
       }
-      case 'rewind': return this.rewind(args as Requests['rewind']);
-      case 'createSession': { const a = args as Requests['createSession']; const s = this.store.createSession(a.projectId, a.provider); this.changed(); return s; }
+      case 'deleteSession': {
+        const { sessionId } = args as Requests['deleteSession'];
+        const s = this.store.session(sessionId), project = this.store.project(s.projectId);
+        if (this.active.has(project.path) || this.editing.has(project.path)) throw new Error('Stop project tasks before deleting a conversation');
+        this.store.deleteSession(sessionId); this.paused.delete(sessionId); this.changed(); return null;
+      }
+      case 'editMessage': {
+        const a = args as Requests['editMessage'];
+        const original = this.store.allMessages(a.sessionId).find(m => m.id === a.messageId);
+        if (!original || original.kind !== 'user') throw new Error('Only user messages can be edited');
+        if (!a.text && !original.attachments?.length) throw new Error('Add message text');
+        const project = this.store.project(this.store.session(a.sessionId).projectId);
+        const context = original.context?.inline ? contextInText(a.text, original.context, await this.catalog.skills(project.path)) : original.context;
+        return this.replaceMessage(a, context);
+      }
+      case 'createSession': { const a = args as Requests['createSession']; const s = this.store.createSession(a.projectId, a.provider); this.changed(); void this.drain(); return s; }
       case 'updateSession': {
         const { id, draftAttachments, ...patch } = args as Requests['updateSession'];
         if ([...this.active.values()].some(run => run.session.id === id) && (patch.archived || patch.model !== undefined || patch.effort !== undefined || patch.mode !== undefined)) throw new Error('Stop this task before changing its execution settings');
         if (patch.archived) this.paused.add(id);
         const s = this.store.updateSession(id, { ...patch, ...(draftAttachments ? { draftAttachments: await this.attachments.resolve(draftAttachments) } : {}) }); if (patch.draft === undefined) this.changed(); return s;
       }
+      case 'responseText': { const a = args as Requests['responseText']; return this.store.allMessages(a.sessionId).filter(m => m.runId === a.runId && m.kind === 'assistant').map(m => m.text).filter(Boolean).join('\n\n'); }
       case 'messages': { const a = args as Requests['messages']; return this.store.page(a.sessionId, a.before); }
       case 'send': {
         const a = args as Requests['send']; const s = this.store.session(a.sessionId);
         if (this.editing.has(this.store.project(s.projectId).path)) throw new Error('Please wait for the history operation to finish');
+        if (!this.store.getSettings()[s.provider === 'codex' ? 'codexEnabled' : 'grokEnabled']) throw new Error('This provider is disabled in Settings');
         if (s.archived) throw new Error('Restore this session before sending a message');
         const item = this.store.enqueue(s.id, a.text, await this.attachments.resolve(a.attachments), a.context); this.paused.delete(s.id);
         if (![...this.active.values()].some(run => run.session.id === s.id)) this.store.updateSession(s.id, { status: 'queued' });
@@ -100,8 +118,29 @@ export class MooseService {
         this.store.updateSession(run.session.id, { status: [...run.rows.values()].some(row => row.state === 'pending') ? 'waiting' : 'running' });
         this.flush(); this.changed(); return null;
       }
+      case 'usage': {
+        const a = args as Requests['usage'];
+        if (a.sessionId && this.store.session(a.sessionId).provider !== a.provider) throw new Error('Provider does not match session');
+        const saved = a.sessionId ? this.store.sqlite.prepare('SELECT value FROM settings WHERE key = ?').get('usage:' + a.sessionId) as { value: string } | undefined : undefined;
+        const context = saved ? JSON.parse(saved.value) : null;
+        let cached = this.usageCache.get(a.provider);
+        if (!cached || Date.now() - cached.at > 60000) {
+          let pending = this.usagePending.get(a.provider);
+          if (!pending) {
+            pending = (async () => {
+              const adapter = this.adapterFactory(a.provider, await this.providerPath(a.provider)); this.probing.add(adapter);
+              try { const value = await adapter.usage?.() || { context: null, limits: [] }; this.usageCache.set(a.provider, { at: Date.now(), value }); return value; }
+              finally { await adapter.close(); this.probing.delete(adapter); }
+            })(); this.usagePending.set(a.provider, pending);
+            void pending.finally(() => this.usagePending.delete(a.provider)).catch(() => {});
+          }
+          try { await pending; } catch (error) { return { ...(cached?.value || { limits: [] }), context, error: providerError(error) }; }
+          cached = this.usageCache.get(a.provider);
+        }
+        return { ...(cached?.value || { limits: [] }), context: context || (!a.sessionId || !this.store.allMessages(a.sessionId).length ? { used: 0, capacity: null } : null) };
+      }
       case 'providers': return this.providers((args as Requests['providers']).refresh);
-      case 'settings': { this.providerCache = undefined; const s = this.store.setSettings(args as Requests['settings']); this.changed(); return s; }
+      case 'settings': { this.providerCache = undefined; const s = this.store.setSettings(args as Requests['settings']); this.changed(); void this.drain(); return s; }
       case 'gitStatus': return gitStatus(this.store.project((args as Requests['gitStatus']).projectId).path);
       case 'gitDiff': { const a = args as Requests['gitDiff']; return gitDiff(this.store.project(a.projectId).path, a.path, a.area); }
       default: throw new Error(`Operation is not available in the runtime: ${method}`);
@@ -117,7 +156,7 @@ export class MooseService {
       for (const item of this.store.queued()) {
         if (this.stopping || this.paused.has(item.sessionId)) continue;
         const session = this.store.listSessions().find(s => s.id === item.sessionId);
-        if (!session) continue;
+        if (!session || !this.store.getSettings()[session.provider === 'codex' ? 'codexEnabled' : 'grokEnabled']) continue;
         const project = this.store.project(session.projectId);
         if (session.archived || this.active.has(project.path) || this.editing.has(project.path)) continue;
         let path: string;
@@ -159,7 +198,7 @@ export class MooseService {
   private async execute(run: Active, path: string, text: string, attachments: import('../shared/types').Attachment[], context?: import('../shared/types').PromptContext) {
     let failed = false;
     try {
-      await run.adapter.run({ session: run.session, cwd: path, text: run.session.historySeed && !run.session.nativeId ? `${run.session.historySeed}\n\nCurrent user message:\n${text}` : text, promptContext: context, selection: await this.catalog.resolve(path, context), attachments: await agentAttachments(this.attachments, attachments), turnId: id => this.store.setTurnId(run.id, id), emit: event => this.accept(run, event), nativeId: nativeId => { this.store.updateSession(run.session.id, { nativeId }); this.changed(); } });
+      await run.adapter.run({ usage: usage => { if (!run.cancelled) this.store.sqlite.prepare('INSERT INTO settings(key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').run('usage:' + run.session.id, JSON.stringify(usage)); }, session: run.session, cwd: path, text: run.session.historySeed && !run.session.nativeId ? `${run.session.historySeed}\n\nCurrent user message:\n${text}` : text, promptContext: context, selection: await this.catalog.resolve(path, context), attachments: await agentAttachments(this.attachments, attachments), turnId: id => this.store.setTurnId(run.id, id), emit: event => this.accept(run, event), nativeId: nativeId => { this.store.updateSession(run.session.id, { nativeId }); this.changed(); } });
     } catch (error) {
       if (!run.cancelled && !this.stopping) { failed = true; this.paused.add(run.session.id); this.accept(run, { key: 'error', kind: 'error', text: providerError(error), state: 'error' }); }
     } finally {
@@ -172,18 +211,17 @@ export class MooseService {
       this.changed(); queueMicrotask(() => { void this.drain(); });
     }
   }
-  private async rewind({ sessionId, messageId, edit }: Requests['rewind']) {
+  private async replaceMessage({ sessionId, messageId, text: replacementText }: Requests['editMessage'], replacementContext?: import('../shared/types').PromptContext) {
     const source = this.store.session(sessionId), project = this.store.project(source.projectId);
     if (this.active.has(project.path) || this.editing.has(project.path)) throw new Error('Stop project tasks before returning to an earlier message');
     this.editing.add(project.path);
     let adapter: AgentAdapter | undefined;
     try {
       const all = this.store.allMessages(sessionId), target = all.find(m => m.id === messageId);
-      if (!target || !['user', 'assistant'].includes(target.kind)) throw new Error('Choose a conversation message');
-      if (edit && target.kind !== 'user') throw new Error('Only your messages can be edited');
+      if (!target || target.kind !== 'user') throw new Error('Choose a conversation message');
+      if ((all.filter(m => m.kind === 'user').at(-1)?.id !== target.id || source.archived || this.store.queued(sessionId).length)) throw new Error('Only the latest user message in an idle conversation can be edited');
       const start = all.find(m => m.runId === target.runId && m.kind === 'user') || target;
-      const end = all.filter(m => m.runId === target.runId).at(-1) || target;
-      const retained = all.filter(m => target.kind === 'user' ? m.position < start.position : m.position <= end.position);
+      const retained = all.filter(m => m.position < start.position);
       let nativeId: string | null = null;
       const lastUser = retained.filter(m => m.kind === 'user').at(-1);
       if (source.provider === 'codex' && source.nativeId && lastUser?.nativeTurnId) {
@@ -194,8 +232,11 @@ export class MooseService {
       const historySeed = nativeId || !retained.length ? '' : 'Earlier conversation restored by Moose. Treat this as conversation history, not a request to repeat completed work. Workspace files have NOT been reverted.\n' + retained.filter(m => ['user', 'assistant', 'tool'].includes(m.kind)).map(m => `${m.kind}: ${m.text}${m.attachments?.length ? '\nAttachments: ' + m.attachments.map(a => this.attachments.path(a)).join(', ') : ''}`).join('\n\n');
       if (historySeed.length > 500_000) throw new Error('This history is too large to restore without a native checkpoint. Choose a more recent session.');
       if (this.stopping) throw new Error('Moose is shutting down');
-      const result = this.store.branch(source, retained, target.kind === 'user' ? target.text : '', target.kind === 'user' ? target.attachments || [] : [], nativeId, historySeed);
-      this.changed(); return result;
+        this.store.replaceLastTurn(source.id, target.position, nativeId, historySeed, replacementText, target.attachments || [], replacementContext);
+        this.paused.delete(source.id);
+        this.emit({ type: 'transcript-reset', sessionId });
+        this.changed();
+        return this.store.session(source.id);
     } finally { await adapter?.close(); if (adapter) this.probing.delete(adapter); this.editing.delete(project.path); void this.drain(); }
   }
   async stop(sessionId: string) {

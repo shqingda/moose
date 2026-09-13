@@ -35,6 +35,10 @@ test('opens a project, approves a real IPC turn, reviews diff, persists draft an
   const capability = await page.evaluate(() => ({ node: typeof (window as unknown as { require?: unknown }).require, keys: Object.keys(window.moose) })); expect(capability.node).toBe('undefined'); expect(capability.keys.sort()).toEqual(['request', 'subscribe']);
   await expect(page.evaluate(() => window.moose.request('openExternal', { url: 'file:///etc/passwd' }))).rejects.toThrow();
   await page.screenshot({ path: 'test-results/workspace-light.png' });
+  await page.locator('.review-panel').getByRole('button', { name: 'Close', exact: true }).click();
+  await expect(page.locator('.review-frame')).toHaveCSS('width', '0px');
+  await page.getByRole('button', { name: 'Review changes', exact: true }).click();
+  await expect(page.locator('.review-frame')).not.toHaveAttribute('inert', '');
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   await page.getByRole('combobox', { name: 'Theme', exact: true }).click(); await page.getByRole('option', { name: 'Dark', exact: true }).click();
   await expect(page.locator('html')).toHaveClass('dark');
@@ -63,7 +67,10 @@ test('handles 10,000 persisted events, paging, IME input, archive and restore', 
   await page.getByRole('button', { name: 'Load earlier messages' }).click(); await expect(page.locator('.markdown')).toHaveCount(160);
   await page.getByRole('button', { name: 'Rename', exact: true }).click(); await page.getByLabel('Session title').fill('Renamed conversation'); await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page.locator('.header-title')).toHaveText('Renamed conversation');
-  await page.getByRole('button', { name: 'Archive', exact: true }).click(); await page.getByRole('button', { name: 'Confirm', exact: true }).click(); await expect(page.locator('#composer')).toBeDisabled();
+  await page.getByRole('button', { name: 'Archive', exact: true }).click(); await page.getByRole('button', { name: 'Confirm', exact: true }).click(); await expect(page.locator('#composer')).toBeEnabled();
+  await expect(page.locator('.header-title')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Archived sessions', exact: true }).click();
+  await page.locator('.session-row').filter({ hasText: 'Renamed conversation' }).click();
   await page.getByRole('button', { name: 'Restore', exact: true }).click(); await expect(page.locator('#composer')).toBeEnabled();
   await app.close();
   const env = Object.fromEntries(Object.entries(process.env).filter((entry): entry is [string, string] => typeof entry[1] === 'string' && entry[0] !== 'ELECTRON_RUN_AS_NODE'));
@@ -74,7 +81,7 @@ test('Grok approval denial and questions travel through ACP, and cancellation pr
   const page = await launch(); const projectDir = join(dir, 'grok-project'); execFileSync('/usr/bin/git', ['init', '-q', projectDir]);
   await app.evaluate(({ dialog }, path) => { dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] }); }, projectDir);
   await page.locator('.welcome').getByRole('button', { name: 'Open project' }).click();
-  await page.getByRole('combobox', { name: 'Agent', exact: true }).click(); await page.getByRole('option', { name: 'Grok Build', exact: true }).click();
+  await page.getByRole('button', { name: 'Model', exact: true }).click(); await page.locator('.model-providers').getByRole('button', { name: 'Grok Build', exact: true }).click(); await page.locator('.model-option').first().click();
   await page.locator('#composer').fill('Change this'); await page.locator('#composer').press('Enter');
   await page.getByRole('button', { name: 'Deny', exact: true }).click(); await expect(page.locator('.markdown')).toContainText('Permission denied.');
   await page.locator('#composer').fill('ask'); await page.locator('#composer').press('Enter');
@@ -102,20 +109,41 @@ test('imports image and text attachments, persists permissions, copies and edits
   await page.locator('.message-user').hover();
   await page.locator('[data-align=end] .message-actions').getByRole('button', { name: 'Copy message', exact: true }).click(); await expect.poll(() => app.evaluate(({ clipboard }) => clipboard.readText())).toBe('inspect-input');
   await page.getByRole('button', { name: 'Edit message', exact: true }).click(); await page.getByRole('button', { name: 'Cancel', exact: true }).click(); await expect(page.locator('.user-text')).toHaveCount(1);
-  await page.getByRole('button', { name: 'Edit message', exact: true }).click(); await page.getByRole('button', { name: 'Confirm', exact: true }).click();
-  await expect(page.locator('#composer')).toHaveValue('inspect-input'); await expect(page.locator('.composer-region .attachment-chip')).toHaveCount(2); await expect(page.locator('.session-row')).toHaveCount(2);
+  await page.locator('.message-user').hover();
+  await page.getByRole('button', { name: 'Edit message', exact: true }).click();
+  await expect(page.locator('.message-inline-edit .attachment-chip')).toHaveCount(2);
+  await expect(page.locator('.message-inline-edit').getByRole('button', { name: /Remove attachment/ })).toHaveCount(0);
+  await page.getByRole('textbox', { name: 'Edit message', exact: true }).fill('inspect-input revised');
+  await page.locator('.message-inline-edit').getByRole('button', { name: 'Send message', exact: true }).click();
+  await expect(page.locator('.user-text')).toHaveText('inspect-input revised');
+  await expect(page.locator('.markdown')).toContainText('localImage');
+  await expect(page.locator('.markdown')).toContainText('Attached context');
+  await expect(page.locator('.composer-region .attachment-chip')).toHaveCount(0); await expect(page.locator('.session-row')).toHaveCount(1);
   await page.getByRole('button', { name: 'Toggle sidebar', exact: true }).click(); await expect(page.locator('.sidebar-frame')).toHaveAttribute('inert', '');
   await app.evaluate(({ Menu }) => { const item = Menu.getApplicationMenu()!.items.flatMap(i => i.submenu?.items || []).find(i => i.accelerator === 'CmdOrCtrl+B')!; item.click(); }); await expect(page.locator('.sidebar-frame')).not.toHaveAttribute('inert', '');
   await page.screenshot({ path: 'test-results/attachments-and-history.png' });
 });
 
-test('requires confirmation for project archive/delete and keeps code files', async () => {
+test('archives before deletion, opens an unsaved conversation and keeps project files', async () => {
   const page = await launch(store => { const project = store.addProject(dir); for (const title of ['One', 'Two']) { const s = store.createSession(project.id, 'codex'); store.updateSession(s.id, { title }); } });
   const { writeFile } = await import('node:fs/promises'); await writeFile(join(dir, 'keep.txt'), 'keep');
-  await page.getByRole('button', { name: /Project actions/ }).click(); await page.getByRole('menuitem', { name: 'Archive project conversations' }).click(); await page.getByRole('button', { name: 'Cancel', exact: true }).click(); await expect(page.locator('.session-row')).toHaveCount(2);
-  await page.getByRole('button', { name: /Project actions/ }).click(); await page.getByRole('menuitem', { name: 'Archive project conversations' }).click(); await page.getByRole('button', { name: 'Confirm', exact: true }).click(); await expect(page.locator('.session-row')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Archived sessions', exact: true }).click(); await expect(page.locator('.session-row')).toHaveCount(2);
-  await page.getByRole('button', { name: /Project actions/ }).click(); await page.getByRole('menuitem', { name: 'Delete project', exact: true }).click(); await page.getByRole('button', { name: 'Cancel', exact: true }).click(); await expect(page.locator('.project-group')).toHaveCount(1);
+  await page.locator('.sidebar-actions').getByRole('button', { name: /New session/ }).click();
+  await expect(page.locator('.session-row')).toHaveCount(2);
+  await expect(page.locator('#composer')).toBeEnabled();
+  await page.locator('.session-row').filter({ hasText: 'One' }).click();
+  await page.getByRole('button', { name: 'Archive', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm', exact: true }).click();
+  await expect(page.locator('.session-row')).toHaveCount(1); await expect(page.locator('#composer')).toBeEnabled();
+  await expect(page.locator('.header-title')).toHaveCount(0);
+  await page.locator('#composer').fill('inspect-input new conversation'); await page.locator('#composer').press('Enter');
+  await expect(page.locator('.session-row')).toHaveCount(2);
+  await page.getByRole('button', { name: 'Archived sessions', exact: true }).click();
+  await page.getByRole('button', { name: 'Session actions One', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Delete conversation', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm', exact: true }).click(); await expect(page.locator('.session-row')).toHaveCount(0);
+  await page.getByRole('button', { name: /Project actions/ }).click();
+  await expect(page.getByRole('menuitem', { name: 'Archive project conversations' })).toHaveCount(0);
+  await page.getByRole('menuitem', { name: 'Delete project', exact: true }).click(); await page.getByRole('button', { name: 'Cancel', exact: true }).click(); await expect(page.locator('.project-group')).toHaveCount(1);
   await page.getByRole('button', { name: /Project actions/ }).click(); await page.getByRole('menuitem', { name: 'Delete project', exact: true }).click(); await page.getByRole('button', { name: 'Confirm', exact: true }).click(); await expect(page.locator('.project-group')).toHaveCount(0); expect(await readFile(join(dir, 'keep.txt'), 'utf8')).toBe('keep');
 });
 
@@ -128,12 +156,13 @@ test('composer searches project context, selects skills and plan mode with keybo
  const input = page.locator('#composer');
  await input.fill('@aptsx'); await expect(page.getByRole('option', { name: /Application.tsx/ })).toBeVisible();
  await input.press('Enter'); await expect(input).toHaveValue('@"中文 folder/Application.tsx" ');
- await expect(page.locator('.context-chips')).toContainText('Application.tsx');
- await input.fill('/moose-fixture'); await expect(page.getByRole('option', { name: /moose-fixture/ })).toBeVisible(); await input.press('Tab');
- await input.fill('/plan'); await expect(page.getByRole('option', { name: /Plan mode/ })).toBeVisible();
- await input.dispatchEvent('keydown', { key: 'Enter', isComposing: true }); await expect(input).toHaveValue('/plan');
+ await expect(page.locator('.context-chips')).toHaveCount(0);
+ await input.press('End'); await input.pressSequentially('/moose-fixture'); await expect(page.getByRole('option', { name: /moose-fixture/ })).toBeVisible(); await input.press('Tab');
+ await expect(input).toHaveValue('@"中文 folder/Application.tsx" /moose-fixture ');
+ await input.pressSequentially('/plan'); await expect(page.getByRole('option', { name: /Plan mode/ })).toBeVisible();
+ await input.dispatchEvent('keydown', { key: 'Enter', isComposing: true }); await expect(input).toHaveValue('@"中文 folder/Application.tsx" /moose-fixture /plan');
  await input.press('Enter'); await expect(page.locator('.context-chips')).toContainText('Plan mode');
- await input.fill('inspect-input'); await input.press('Enter'); await expect(page.locator('.markdown')).toContainText('read-only');
+ await input.press('Home'); await input.pressSequentially('inspect-input '); await input.press('Enter'); await expect(page.locator('.markdown')).toContainText('read-only');
  await expect(page.locator('.markdown')).toContainText('moose-fixture'); await expect(page.locator('.markdown')).toContainText('mention');
  const snapshot = await page.evaluate(() => window.moose.request('snapshot', {}));
  expect(snapshot.sessions[0].projectId).toBe(projectId);
@@ -146,4 +175,173 @@ test('composer searches project context, selects skills and plan mode with keybo
  const back = await page.getByRole('button', { name: 'Back', exact: true }).boundingBox();
  const general = await page.getByRole('button', { name: 'General', exact: true }).boundingBox();
  expect(back!.width).toBe(general!.width); expect(back!.height).toBeGreaterThanOrEqual(40);
+});
+
+test('shows available reasoning and hides empty summaries', async () => {
+ const page = await launch(store => {
+  const session = store.createSession(store.addProject(dir).id, 'codex'); store.updateSession(session.id, { title: 'Reasoning check' });
+  const runId = randomUUID();
+  for (const [seq, text] of [[1, 'A visible summary from the agent'], [2, '']] as const) store.saveMessage({ id: randomUUID(), sessionId: session.id, runId, seq, kind: 'reasoning', title: '', text, state: 'done', createdAt: Date.now() });
+ });
+ await page.locator('.session-row').click();
+ await expect(page.locator('details.activity')).toHaveCount(1);
+ await page.locator('details.activity summary').click();
+ await expect(page.locator('details.activity pre')).toHaveText('A visible summary from the agent');
+ await expect(page.locator('.activity-empty')).toHaveCount(0);
+});
+
+test('project hover stays uniform and its compose button targets that project', async () => {
+ let firstId = '', secondId = '';
+ const page = await launch(store => {
+  const first = store.addProject(dir), second = store.addProject(join(dir, 'second')); firstId = first.id; secondId = second.id;
+  const session = store.createSession(first.id, 'codex'); store.updateSession(session.id, { title: 'Selected conversation' });
+ });
+ const { mkdir } = await import('node:fs/promises'); await mkdir(join(dir, 'second'));
+ await page.locator('.session-row').click();
+ const selected = page.locator('.session-entry').filter({ hasText: 'Selected conversation' });
+ const project = selected.locator('..').locator('..').locator('.project-heading-row');
+ await project.hover();
+ const selectedColor = await selected.evaluate(e => getComputedStyle(e).backgroundColor);
+ await expect(project).toHaveCSS('background-color', selectedColor);
+ const menu = project.getByRole('button', { name: /Project actions/ }); await menu.hover();
+ await expect(project).toHaveCSS('background-color', selectedColor);
+ await expect(menu).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+ const gap = await selected.evaluate(e => e.getBoundingClientRect().top - e.parentElement!.previousElementSibling!.getBoundingClientRect().bottom);
+ expect(gap).toBeGreaterThanOrEqual(2); expect(gap).toBeLessThanOrEqual(5);
+ await page.screenshot({ path: 'test-results/sidebar-project-hover.png' });
+ await menu.click(); await expect(page.getByRole('menuitem', { name: 'Delete project', exact: true })).toBeVisible(); await expect(page.getByRole('menuitem', { name: 'Delete project', exact: true })).toHaveCSS('white-space', 'nowrap'); await page.screenshot({ path: 'test-results/project-menu-english.png' }); await page.keyboard.press('Escape');
+ await selected.hover(); await expect(selected.getByRole('button', { name: 'Archive · Selected conversation', exact: true })).toBeVisible();
+ await expect(selected.getByRole('button', { name: /Session actions/ })).toHaveCount(0);
+ const add = page.locator('.project-add-button svg');
+ expect(await add.evaluate(e => e.getBoundingClientRect().height)).toBeCloseTo(await page.locator('.section-caption').evaluate(e => parseFloat(getComputedStyle(e).fontSize)), 0);
+ await page.getByRole('button', { name: 'New session · second', exact: true }).click();
+ await expect(page.locator('.header-path')).toHaveText('second');
+ await expect(page.locator('.session-row')).toHaveCount(1);
+ await page.locator('#composer').fill('inspect-input'); await page.locator('#composer').press('Enter');
+ await expect(page.locator('.markdown')).toBeVisible();
+ const snapshot = await page.evaluate(() => window.moose.request('snapshot', {}));
+ expect(snapshot.sessions.find(s => s.title === 'inspect-input')?.projectId).toBe(secondId);
+ expect(snapshot.sessions.find(s => s.title === 'Selected conversation')?.projectId).toBe(firstId);
+});
+
+test('copies one complete AI turn and only offers editing on the latest user message', async () => {
+  const page = await launch(store => {
+    const s = store.createSession(store.addProject(dir).id, 'codex');
+    store.updateSession(s.id, { title: 'Grouped reply', status: 'completed' });
+    for (const [runId, kind, text] of [
+      ['one', 'user', 'Earlier question'], ['one', 'assistant', 'Earlier answer'],
+      ['two', 'user', 'Latest question'], ['two', 'assistant', 'Before tool'],
+      ['two', 'tool', 'Tool output'], ['two', 'assistant', 'After tool'],
+    ] as const) store.saveMessage({ id: randomUUID(), sessionId: s.id, runId, kind, text, seq: 1, title: '', state: 'done', createdAt: Date.now() });
+  });
+  await page.getByRole('button', { name: 'Grouped reply', exact: true }).click();
+  await expect(page.locator('.message-user').first().getByRole('button', { name: 'Edit message', exact: true })).toHaveCount(0);
+  await expect(page.locator('.message-assistant').getByRole('button', { name: 'Return to this message', exact: true })).toHaveCount(0);
+  await expect(page.locator('.message-assistant .message-actions')).toHaveCount(2);
+  await page.locator('.message-assistant').last().hover();
+  await page.locator('.message-assistant').last().getByRole('button', { name: 'Copy message', exact: true }).click();
+  await expect.poll(() => app.evaluate(({ clipboard }) => clipboard.readText())).toBe('Before tool\n\nAfter tool');
+});
+
+test('keeps empty workspace chrome quiet and exposes native shortcuts and roomy provider settings', async () => {
+ const page = await launch();
+ await expect(page.locator('.add-first-project')).toHaveCount(0);
+ await expect(page.locator('.header-path')).toHaveText('');
+ const accelerators = await app.evaluate(({ Menu }) => Menu.getApplicationMenu()!.items.flatMap(i => i.submenu?.items || []).map(i => i.accelerator));
+ expect(accelerators).toContain('CmdOrCtrl+O');
+ expect(accelerators).toContain('CmdOrCtrl+Shift+B');
+ await page.getByRole('button', { name: 'Settings', exact: true }).click();
+ await expect(page.getByText('Keyboard shortcuts', { exact: true })).toBeVisible();
+ await page.screenshot({ path: 'test-results/settings-general-light.png' });
+ await page.getByRole('button', { name: 'Providers', exact: true }).click();
+ await page.locator('.provider-row').first().click();
+ await expect(page.getByLabel('Executable path', { exact: true })).toBeVisible();
+ await page.screenshot({ path: 'test-results/settings-providers-light.png' });
+ await page.evaluate(() => window.moose.request('settings', { theme: 'dark' }));
+ await expect(page.locator('html')).toHaveClass(/dark/);
+ await expect(page.locator('.settings-page')).toHaveCSS('background-color', 'rgb(32, 33, 36)');
+ await page.screenshot({ path: 'test-results/settings-providers-dark.png' });
+});
+
+test('provider switches persist and usage displays actual windows through Cmd U', async () => {
+ const page = await launch(store => { store.addProject(dir); });
+ await page.getByRole('button', { name: 'Settings', exact: true }).click();
+ await page.getByRole('button', { name: 'Providers', exact: true }).click();
+ const toggle = page.getByRole('switch', { name: 'Enable Codex', exact: true });
+ await expect(toggle).toBeChecked();
+ await toggle.click();
+ await expect(toggle).not.toBeChecked();
+ await expect.poll(() => page.evaluate(async () => (await window.moose.request('snapshot', {})).settings.codexEnabled)).toBe(false);
+ await expect(toggle).toBeEnabled();
+ await toggle.click(); await expect(toggle).toBeChecked();
+ await page.getByRole('button', { name: 'Back', exact: true }).click();
+ await app.evaluate(({ Menu }) => { Menu.getApplicationMenu()!.items.flatMap(i => i.submenu?.items || []).find(i => i.accelerator === 'CmdOrCtrl+U')!.click(); });
+ await expect(page.locator('.usage-popup')).toContainText('80% remaining');
+ await expect(page.locator('.usage-popup')).toContainText('40% remaining');
+ await expect(page.locator('.usage-popup')).toContainText('5h limit');
+ await expect(page.locator('.usage-popup')).toContainText('Weekly limit');
+ await page.screenshot({ path: 'test-results/usage-windows.png' });
+ await page.keyboard.press('Escape');
+ await page.getByRole('button', { name: 'Model', exact: true }).click();
+ await page.getByRole('textbox', { name: 'Search models…', exact: true }).fill('fixture');
+ await expect(page.locator('.model-option')).toHaveCount(1);
+ await page.locator('.model-option').click();
+ await expect(page.locator('.model-list-trigger')).toContainText('Fixture model');
+ await page.locator('#composer').fill('inspect-input');
+ await page.locator('#composer').press('Enter');
+ await expect(page.locator('.markdown')).toBeVisible();
+ await page.getByRole('button', { name: 'Usage', exact: true }).click();
+ await expect(page.locator('.usage-popup')).toContainText('1.2k /128.0k (1%)');
+
+});
+
+test('provider rows are compact without hover fill and project rows collapse conversations', async () => {
+ const page = await launch(store => { const p = store.addProject(dir); const s = store.createSession(p.id, 'codex'); store.updateSession(s.id, { title: 'Fold me' }); });
+ await expect(page.locator('.session-row')).toBeVisible();
+ await page.locator('.session-row').click();
+ const titleBefore = await page.locator('.header-title').textContent();
+ await page.locator('.project-heading').click();
+ await expect(page.locator('.session-row')).not.toBeVisible();
+ await expect(page.locator('.header-title')).toHaveText(titleBefore!);
+ await page.locator('.project-heading').click();
+ await expect(page.locator('.session-row')).toBeVisible();
+ await page.getByRole('button', { name: 'Settings', exact: true }).click();
+ await page.getByRole('button', { name: 'Providers', exact: true }).click();
+ const row = page.locator('.provider-row').first();
+ expect((await row.boundingBox())!.height).toBeLessThanOrEqual(64);
+ await row.hover();
+ await expect(row).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+ await page.screenshot({ path: 'test-results/provider-compact-no-hover.png' });
+ await page.getByRole('button', { name: 'Back', exact: true }).click();
+ await page.getByRole('button', { name: 'Model', exact: true }).click();
+ await expect(page.locator('.model-providers')).toBeVisible();
+ await page.screenshot({ path: 'test-results/combined-model-picker.png' });
+});
+
+test('aligns sidebar labels at unchanged row heights and reveals message times on hover', async () => {
+ const page = await launch(store => {
+   const p = store.addProject(dir), s = store.createSession(p.id, 'codex');
+   store.updateSession(s.id, { title: 'Timestamp check', status: 'completed' });
+   for (const kind of ['user', 'assistant'] as const) store.saveMessage({ id: randomUUID(), sessionId: s.id, runId: 'time-run', kind, text: kind, seq: 1, title: '', state: 'done', createdAt: new Date(2026, 8, 13, 23, 18).getTime() });
+ });
+ await page.locator('.session-row').click();
+ const sizes = await page.evaluate(() => ['.sidebar-actions button', '.project-heading', '.session-title', '.section-caption'].map(s => getComputedStyle(document.querySelector(s)!).fontSize));
+ expect(new Set(sizes).size).toBe(1);
+ const positions = await page.evaluate(() => {
+   const newIcon = document.querySelector('.sidebar-actions button svg')!.getBoundingClientRect();
+   const projectIcon = document.querySelector('.project-heading svg')!.getBoundingClientRect();
+   const projectText = document.querySelector('.project-heading span')!.getBoundingClientRect();
+   const sessionText = document.querySelector('.session-title')!.getBoundingClientRect();
+   return [newIcon.left - projectIcon.left, projectText.left - sessionText.left];
+ });
+ for (const delta of positions) expect(Math.abs(delta)).toBeLessThan(1);
+ expect((await page.locator('.session-row').boundingBox())!.height).toBe(32);
+ for (const kind of ['user', 'assistant']) {
+   const row = page.locator('.message-' + kind);
+   await row.hover();
+   await expect(row.locator('.message-actions')).toHaveCSS('opacity', '1');
+   await expect(row.locator('time')).toHaveText('23:18');
+   await expect(row.getByRole('button', { name: 'Return to this message', exact: true })).toHaveCount(0);
+ }
+ await page.screenshot({ path: 'test-results/sidebar-alignment-and-time.png' });
 });

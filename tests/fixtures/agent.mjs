@@ -18,6 +18,7 @@ function complete(text, write = true) {
   else {
     notify('item/agentMessage/delta', { threadId: sessionId, itemId: turnId + '-text', delta: text });
     notify('item/completed', { threadId: sessionId, item: { type: 'agentMessage', id: turnId + '-text', text } });
+    notify('thread/tokenUsage/updated', { threadId: sessionId, tokenUsage: { last: { totalTokens: 1200 }, modelContextWindow: 128000 } });
     notify('turn/completed', { threadId: sessionId, turn: { id: turnId, status: 'completed' } });
   }
 }
@@ -29,6 +30,7 @@ createInterface({ input: process.stdin }).on('line', line => {
     case 'initialize': result(m.id, acp ? { protocolVersion: 1, agentCapabilities: { loadSession: true }, authMethods: [{ id: 'cached_token', name: 'Cached' }], _meta: { modelState: { availableModels: [{ modelId: 'fixture', name: 'Fixture model' }] } } } : { userAgent: 'fixture' }); break;
     case 'initialized': break;
     case 'authenticate': result(m.id, {}); break;
+    case 'account/rateLimits/read': result(m.id, { rateLimitsByLimitId: { codex: { limitId: 'codex', limitName: 'Codex', planType: 'plus', primary: { usedPercent: 20, windowDurationMins: 300, resetsAt: 1900000000 }, secondary: { usedPercent: 60, windowDurationMins: 10080, resetsAt: 1900300000 } } } }); break;
     case 'account/read': result(m.id, { account: { type: 'chatgpt' } }); break;
     case 'model/list': result(m.id, { data: [{ id: 'fixture', model: 'fixture', displayName: 'Fixture model', hidden: false, supportedReasoningEfforts: [{ reasoningEffort: 'high' }] }], nextCursor: null }); break;
     case 'thread/fork': case 'thread/start': case 'thread/resume': cwd = p.cwd; threadSettings = p; sessionId = m.method === 'thread/fork' ? randomUUID() : p.threadId || randomUUID(); result(m.id, { thread: { id: sessionId } }); break;
@@ -39,7 +41,7 @@ createInterface({ input: process.stdin }).on('line', line => {
       if (acp && p.prompt[0].text === '/always-approve off') { result(m.id, { stopReason: 'end_turn' }); break; }
       turnId = randomUUID(); promptId = m.id; pendingPrompt = acp ? p.prompt[0].text : p.input[0].text;
       if (!acp) { result(m.id, { turn: { id: turnId } }); notify('turn/started', { threadId: sessionId, turn: { id: turnId } }); }
-      if (pendingPrompt === 'inspect-input') { complete(JSON.stringify({ input: p.input || p.prompt, settings: threadSettings }), false); break; }
+      if (pendingPrompt.startsWith('inspect-input')) { complete(JSON.stringify({ input: p.input || p.prompt, settings: threadSettings }), false); break; }
       if (pendingPrompt === 'hold') break;
       if (pendingPrompt === 'ask') {
         send({ id: 'question-1', method: acp ? '_x.ai/ask_user_question' : 'item/tool/requestUserInput', params: { threadId: sessionId, questions: [{ id: 'choice', question: 'Which approach?', options: [{ label: 'Small change' }, { label: 'Full rewrite' }] }] } }); break;

@@ -60,3 +60,26 @@ Run `pnpm test:live` after quota is available to repeat both live provider workf
 - 22 unit tests and six Electron end-to-end flows cover the updated behavior, including a protocol fixture exercising a native goal continuation. Visual evidence is in `test-results/` after running the E2E suite. Full manual VoiceOver auditing remains outside these checks.
 
 - The 0.3.0 arm64 `.app` and `.dmg` were built successfully. Launching the packaged executable confirmed version 0.3.0, renderer sandbox enabled, and SQLite-backed snapshot access. `scripts/package-smoke.ts` preserves this smoke check.
+
+## 0.4.0 conversation and panel corrections
+
+- Codex reasoning now accepts both summary and text delta notifications, reads completed summary/content, and does not overwrite previously streamed text with an empty final summary. An empty completed reasoning item displays an explicit unavailable-summary message instead of an empty disclosure.
+- Editing a user message opens a textarea in place, with Cancel/Send and read-only attachments. The backend takes attachment IDs from the original persisted message; renderer edit requests cannot replace them. Sending branches at the previous context and immediately submits the edited text, preserving the original conversation and workspace files.
+- New Conversation is an unsaved composer until its first send; empty session titles do not appear in navigation. Archiving the selected conversation returns to a fresh, enabled composer. Projects have Delete only; only archived conversations expose Delete, and the backend enforces that rule.
+- Both side panels use persistent width transitions with the same spring and inert hidden content. Review resizing remains immediate while dragging. The native titlebar draggable rectangle no longer overlaps the left toggle. System mouse clicks through Computer Use confirmed close and reopen in an isolated Electron instance, in addition to DOM-driven E2E checks.
+- Files and skills are inserted as ordinary editable `@path` and `/skill-name` text (quoted for spaces), without separate reference chips. Removing the text removes the corresponding structured send context. Existing chip-style session drafts are converted on load; Plan/Goal remain mode controls.
+- Automated checks now include 24 unit cases and seven Electron flows, adding reasoning fallback, archived-only deletion, in-place text editing with immutable attachments, fresh composition after archive, inline context filtering, and review collapse.
+
+## 0.4.1 sidebar refinement
+
+- Project hover and selected conversation share one background token, with a 3 px gap between rows. Project action hover changes only the icon color; its menu trigger and new-conversation button occupy the same continuous row surface.
+- The project compose action starts an unsaved conversation in that specific project. Active-list conversation rows expose a direct archive icon; archived conversations retain their restore/delete menu. The project heading uses an aligned plus icon at the caption's font size.
+- The seven existing Electron flows passed; an eighth sidebar flow verifies matching hover backgrounds, transparent menu-button hover, row spacing, icon sizing, direct archive access, and sending from the project-specific compose action. The new flow passed after correcting Base UI trigger-slot CSS targeting. Production build/typecheck passed.
+
+## 0.4.2 conversation corrections
+
+- Latest user message editing replaces its turn in the same Moose session, preserving earlier history and original attachments. Older user messages expose copy only; AI replies have no history action.
+- Copy aggregates every assistant segment in the run from persisted history, including segments separated by tools or pagination.
+- Project menu labels stay on one line. Busy session rows keep their 36px height and show a trailing spinner.
+- Codex explicitly requests reasoning summaries with `summary: auto`. A real Homebrew Codex probe with gpt-5.6-luna returned an answer but zero reasoning events; summaries remain dependent on upstream availability.
+- Typecheck, 25 unit tests, and 9 Electron end-to-end cases passed (8 full suite plus the new grouped-copy case).

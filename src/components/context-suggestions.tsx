@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { Box, File, Folder, Lightbulb, Target } from 'lucide-react';
 import type { ContextEntry, PromptContext, Provider } from '../../shared/types';
+import { referenceText } from '../../shared/prompt-context';
 import { useI18n } from '../lib/i18n';
 export function useSuggestions(projectId: string, provider: Provider, draft: string, onDraft: (text: string) => void, context: PromptContext, onContext: (value: PromptContext) => void, onError: (error: string) => void) {
   const t = useI18n(), [caret, setCaret] = useState(0), [dismissed, setDismissed] = useState(false), [entries, setEntries] = useState<ContextEntry[]>([]), [index, setIndex] = useState(0), [loading, setLoading] = useState(false);
@@ -23,7 +24,7 @@ export function useSuggestions(projectId: string, provider: Provider, draft: str
     const row = rows[at]; if (!row || !match) return;
     if (row.mode === 'plan' && provider !== 'codex') { onError(t('planUnavailable')); return; }
     const start = caret - query.length - 1;
-    const insertion = row.kind === 'file' || row.kind === 'folder' ? `@${JSON.stringify(row.path)} ` : '';
+    const insertion = row.kind === 'file' || row.kind === 'folder' ? `${referenceText('@', row.path)} ` : row.kind === 'skill' ? `${referenceText('/', row.name)} ` : '';
     onDraft(draft.slice(0, start) + insertion + draft.slice(caret));
     onContext(row.mode ? { ...context, mode: row.mode } : row.kind === 'skill' ? { ...context, skills: [...new Set([...context.skills, row.id])] } : { ...context, references: [...new Set([...context.references, row.path])] });
     setDismissed(true);

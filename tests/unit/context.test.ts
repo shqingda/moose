@@ -41,3 +41,13 @@ it('waits for a native goal continuation instead of finishing at the first turn'
   expect(text).toContain('Goal complete after continuation.');
  } finally { await adapter.close(); await rm(root, { recursive: true, force: true }); }
 });
+
+it('removing ordinary inline reference text removes its structured context', async () => {
+ const { contextInText, referenceText } = await import('../../shared/prompt-context');
+ const context = { mode: 'build' as const, references: ['src/中文 file.ts', 'README.md'], skills: ['design'] };
+ const skills = [{ id: 'design', name: 'apple-design' }];
+ expect(referenceText('@', 'README.md')).toBe('@README.md');
+ const selected = contextInText('@"src/中文 file.ts" /apple-design', context, skills);
+ expect(selected.references).toEqual(['src/中文 file.ts']); expect(selected.skills).toEqual(['design']);
+ expect(contextInText('ordinary text', selected, skills)).toMatchObject({ references: [], skills: [] });
+});

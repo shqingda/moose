@@ -14,13 +14,13 @@ export function normalizeCodex(method: string, input: unknown): AgentEvent | nul
   const p = record(input), item = record(p.item);
   const key = string(p.itemId) || string(item.id);
   if (method === 'item/agentMessage/delta') return { key, kind: 'assistant', delta: string(p.delta), state: 'running' };
-  if (method === 'item/reasoning/summaryTextDelta') return { key, kind: 'reasoning', delta: string(p.delta), state: 'running' };
+  if (method === 'item/reasoning/summaryTextDelta' || method === 'item/reasoning/textDelta') return { key, kind: 'reasoning', delta: string(p.delta), state: 'running' };
   if (method === 'item/commandExecution/outputDelta') return { key, kind: 'tool', delta: string(p.delta), state: 'running' };
   if (method !== 'item/started' && method !== 'item/completed') return null;
   const state = method === 'item/started' ? 'running' : item.status === 'failed' ? 'error' : 'done';
   switch (item.type) {
     case 'agentMessage': return { key, kind: 'assistant', text: string(item.text), state };
-    case 'reasoning': return { key, kind: 'reasoning', text: array(item.summary).map(string).join('\n'), state };
+    case 'reasoning': { const text = array(item.summary).map(string).filter(Boolean).join('\n') || array(item.content).map(string).filter(Boolean).join('\n'); return { key, kind: 'reasoning', ...(text ? { text } : {}), state }; }
     case 'commandExecution': return { key, kind: 'tool', title: string(item.command), text: string(item.aggregatedOutput), state };
     case 'fileChange': return { key, kind: 'tool', title: 'File changes', text: array(item.changes).map(change => { const c = record(change); return `${string(c.path)}\n${string(c.diff)}`; }).join('\n'), state };
     case 'mcpToolCall': return { key, kind: 'tool', title: `${string(item.server)} / ${string(item.tool)}`, text: readable(item.result ?? item.arguments ?? item.error), state };
@@ -46,6 +46,7 @@ export class CodexAdapter implements AgentAdapter {
     rpc.onNotification = (method, params) => {
       const p = record(params);
       if (!this.context || (p.threadId && p.threadId !== this.threadId)) return;
+      if (method === 'thread/tokenUsage/updated') { const usage = record(p.tokenUsage), last = record(usage.last); if (typeof last.totalTokens === 'number') this.context.usage?.({ used: last.totalTokens, capacity: typeof usage.modelContextWindow === 'number' ? usage.modelContextWindow : null }); }
       if (method === 'turn/started') { this.turnId = string(record(p.turn).id); this.context.turnId?.(this.turnId); }
       if (method === 'turn/completed') {
         const turn = record(p.turn);
@@ -71,6 +72,12 @@ export class CodexAdapter implements AgentAdapter {
     await rpc.request('initialize', { clientInfo: { name: 'moose', title: 'Moose', version: '0.1.0' }, capabilities: { experimentalApi: true } });
     rpc.send({ method: 'initialized', params: {} }); return rpc;
   }
+  async usage(): Promise<import('../../shared/types').UsageInfo> {
+    const rpc = await this.connect();
+    const result = await rpc.request<import('./generated/codex/v2/GetAccountRateLimitsResponse').GetAccountRateLimitsResponse>('account/rateLimits/read', {});
+    const buckets = result.rateLimitsByLimitId && Object.keys(result.rateLimitsByLimitId).length ? Object.values(result.rateLimitsByLimitId) : [result.rateLimits];
+    return { context: null, limits: buckets.filter(b => !!b).map(b => ({ name: b!.limitName || b!.limitId || 'Codex', plan: b!.planType, windows: [b!.primary, b!.secondary].filter(w => !!w).map(w => ({ usedPercent: w!.usedPercent, minutes: w!.windowDurationMins, resetsAt: w!.resetsAt })) })) };
+  }
   async probe(): Promise<Pick<ProviderInfo, 'models' | 'modes' | 'images'>> {
     const rpc = await this.connect();
     const result = await rpc.request<ModelListResponse>('model/list', { limit: 100, includeHidden: false });
@@ -92,7 +99,7 @@ export class CodexAdapter implements AgentAdapter {
     const completed = new Promise<void>((resolve, reject) => { this.finish = { resolve, reject }; });
     // Attach a handler before turn/start, since early errors may arrive before its response.
     void completed.catch(() => {});
-    const turn: TurnStartParams = { threadId: this.threadId, input: [{ type: 'text', text: context.text, text_elements: [] }, ...(context.selection?.references || []).map(a => ({ type: 'mention' as const, name: a.name, path: a.path })), ...(context.selection?.skills || []).map(a => ({ type: 'skill' as const, name: a.name, path: a.path })), ...(context.attachments || []).flatMap((a): TurnStartParams['input'] => a.mime.startsWith('image/') ? [{ type: 'localImage', path: a.path }] : [{ type: 'text', text: `Attached file: ${a.name}\nLocal path: ${a.path}${a.text !== undefined ? `\n<attachment>\n${a.text}\n</attachment>` : ''}`, text_elements: [] }])], ...(context.session.model ? { model: context.session.model } : {}), ...(context.session.effort ? { effort: context.session.effort as ReasoningEffort } : {}) };
+    const turn: TurnStartParams = { summary: 'auto', threadId: this.threadId, input: [{ type: 'text', text: context.text, text_elements: [] }, ...(context.selection?.references || []).map(a => ({ type: 'mention' as const, name: a.name, path: a.path })), ...(context.selection?.skills || []).map(a => ({ type: 'skill' as const, name: a.name, path: a.path })), ...(context.attachments || []).flatMap((a): TurnStartParams['input'] => a.mime.startsWith('image/') ? [{ type: 'localImage', path: a.path }] : [{ type: 'text', text: `Attached file: ${a.name}\nLocal path: ${a.path}${a.text !== undefined ? `\n<attachment>\n${a.text}\n</attachment>` : ''}`, text_elements: [] }])], ...(context.session.model ? { model: context.session.model } : {}), ...(context.session.effort ? { effort: context.session.effort as ReasoningEffort } : {}) };
     const started = record(await rpc.request('turn/start', turn));
     this.turnId = string(record(started.turn).id) || this.turnId; context.turnId?.(this.turnId);
     if (this.cancelled) await this.cancel();
