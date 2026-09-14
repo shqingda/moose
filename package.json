@@ -1,6 +1,6 @@
 {
   "name": "moose",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "private": true,
   "type": "module",
   "description": "A quiet workspace for your coding agents",
@@ -89,12 +89,15 @@
           ]
         }
       ],
-      "identity": null,
-      "icon": "build/icon.icns"
+      "identity": "-",
+      "icon": "build/icon.icns",
+      "hardenedRuntime": false,
+      "notarize": false
     },
     "dmg": {
       "title": "Moose",
       "artifactName": "Moose-${version}-${arch}.${ext}"
-    }
+    },
+    "afterSign": "scripts/verify-signature.cjs"
   }
 }

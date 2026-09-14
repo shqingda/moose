@@ -21,7 +21,7 @@ pnpm test
 pnpm test:e2e
 pnpm test:providers   # Real CLI handshake/authentication; no model prompts
 pnpm test:live        # Real model requests; creates temporary Git repositories
-pnpm dist            # release/Moose-0.5.4-arm64.dmg
+pnpm dist            # release/Moose-0.5.5-arm64.dmg
 ```
 
 `pnpm test:live` uses provider quota and edits only freshly created temporary test repositories. Protocol fixtures are confined to `tests/` and are not shipped in the application.
@@ -95,3 +95,7 @@ Plan currently requires Codex and runs read-only. Goal uses the provider's goal 
 [项目经历与逐项技术详解](docs/project-experience.md)：简历版本、实现原理、代码片段、测试依据及面试讲解边界。
 
 Editing the latest user message opens an inline text editor; Send replaces that turn in the same conversation with the original attachments. Earlier messages support copying only. Clicking a project heading toggles its conversation list without changing the selected conversation. Projects can be removed from Moose; conversations must be archived before they can be deleted. Archiving the current conversation returns to a new composer, and new conversations appear in navigation after the first send.
+
+### macOS 首次打开
+
+0.5.5 起使用 ad-hoc 签名并在打包时验证完整性，尚未做 Apple 公证。下载后可能仍需在“系统设置 → 隐私与安全性”中选择“仍要打开”。详情见 [0.5.5 发布说明](docs/releases/0.5.5.md)。
