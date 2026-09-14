@@ -1,7 +1,9 @@
+// 应用图标生成器：读取共享驼鹿矢量数据，绘制不同分辨率的 macOS 图标。
 import AppKit
 
 // One vector master for the interface mark and every Dock icon resolution.
 let mark = try JSONSerialization.jsonObject(with: Data(contentsOf: URL(fileURLWithPath: "src/assets/moose-mark.json"))) as! [String: String]
+// 把共享数据中的 M/L/C/Z 命令转换成可缩放的 AppKit 路径。
 func path(_ source: String) -> NSBezierPath {
     let tokens = source.split(separator: " ").map(String.init)
     let shape = NSBezierPath(); shape.windingRule = .evenOdd

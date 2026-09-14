@@ -99,3 +99,16 @@ Editing the latest user message opens an inline text editor; Send replaces that 
 ### macOS 首次打开
 
 0.5.5 起使用 ad-hoc 签名并在打包时验证完整性，尚未做 Apple 公证。下载后可能仍需在“系统设置 → 隐私与安全性”中选择“仍要打开”。详情见 [0.5.5 发布说明](docs/releases/0.5.5.md)。
+
+### 代码格式与检查
+
+使用 Oxfmt 格式化、Oxlint 检查，不依赖 ESLint。
+
+```sh
+pnpm format        # 格式化代码
+pnpm format:check  # 检查格式，适合 CI
+pnpm lint          # 基础正确性检查
+pnpm lint:fix      # 应用安全的自动修复
+```
+
+统一使用 2 空格缩进、单引号、分号及 100 列换行。生成的 Codex 协议类型、锁文件和技术文档不参与格式化，构建产物遵循 Git 忽略规则。当前启用 TypeScript、Unicorn、Oxc 基础规则，暂未接入 React Hooks / React Compiler 检查；类型检查仍使用 `pnpm typecheck`。

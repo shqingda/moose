@@ -1,32 +1,58 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Message, Snapshot, TranscriptPage } from '../../shared/types';
+/** 维护全局快照和错误；合并后台刷新通知，并阻止旧请求覆盖新快照。 */
 export function useWorkspace() {
   const [snapshot, setSnapshot] = useState<Snapshot>();
   const [error, setError] = useState('');
   const requestGeneration = useRef(0);
+  // 刷新快照并使用请求代次丢弃迟到结果。
   const refresh = useCallback(async () => {
     const generation = ++requestGeneration.current;
-    try { const data = await window.moose.request('snapshot', {}); if (generation === requestGeneration.current) setSnapshot(data); }
-    catch (error) { setError(String(error)); }
+    try {
+      const data = await window.moose.request('snapshot', {});
+      if (generation === requestGeneration.current) setSnapshot(data);
+    } catch (error) {
+      setError(String(error));
+    }
   }, []);
   useEffect(() => {
-    void refresh(); let timer: ReturnType<typeof setTimeout> | undefined;
-    const unsubscribe = window.moose.subscribe(event => {
-      if (event.type === 'changed' || event.type === 'appearance') { clearTimeout(timer); timer = setTimeout(() => { void refresh(); }, 60); }
+    void refresh();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const unsubscribe = window.moose.subscribe((event) => {
+      if (event.type === 'changed' || event.type === 'appearance') {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          void refresh();
+        }, 60);
+      }
       if (event.type === 'runtime-error') setError(event.error);
     });
-    return () => { unsubscribe(); clearTimeout(timer); };
+    return () => {
+      unsubscribe();
+      clearTimeout(timer);
+    };
   }, [refresh]);
-  const perform = useCallback(async <T,>(action: () => Promise<T>): Promise<T | undefined> => {
-    try { return await action(); } catch (error) { setError(error instanceof Error ? error.message : String(error)); return undefined; }
+  // 统一捕获界面异步操作错误，交由全局错误提示展示。
+  const perform = useCallback(async <T>(action: () => Promise<T>): Promise<T | undefined> => {
+    try {
+      return await action();
+    } catch (error) {
+      setError(error instanceof Error ? error.message : String(error));
+      return undefined;
+    }
   }, []);
   return { snapshot, error, setError, refresh, perform };
 }
+/** 按 ID 和 seq 合并消息版本，再按 position 恢复稳定时间线顺序。 */
 export function mergeMessages(previous: Message[], incoming: Message[]) {
-  const rows = new Map(previous.map(row => [row.id, row]));
-  for (const row of incoming) { const old = rows.get(row.id); if (!old || old.seq < row.seq) rows.set(row.id, row); }
+  const rows = new Map(previous.map((row) => [row.id, row]));
+  for (const row of incoming) {
+    const old = rows.get(row.id);
+    if (!old || old.seq < row.seq) rows.set(row.id, row);
+  }
   return [...rows.values()].sort((a, b) => a.position - b.position);
 }
+/** 管理会话分页与实时订阅；切换或重置会话时使旧异步请求失效。 */
 export function useTranscript(sessionId: string | undefined, report: (error: string) => void) {
   const [page, setPage] = useState<TranscriptPage>({ messages: [], hasMore: false });
   const [loading, setLoading] = useState(false);
@@ -41,24 +67,59 @@ export function useTranscript(sessionId: string | undefined, report: (error: str
       const requestGeneration = current;
       try {
         const data = await window.moose.request('messages', { sessionId });
-        if (requestGeneration === generation.current) setPage(old => ({ messages: mergeMessages(old.messages, data.messages), hasMore: initial ? data.hasMore : old.hasMore }));
-      } catch (error) { if (current === generation.current) report(String(error)); }
-      finally { if (current === generation.current) setLoading(false); }
+        if (requestGeneration === generation.current)
+          setPage((old) => ({
+            messages: mergeMessages(old.messages, data.messages),
+            hasMore: initial ? data.hasMore : old.hasMore,
+          }));
+      } catch (error) {
+        if (current === generation.current) report(String(error));
+      } finally {
+        if (current === generation.current) setLoading(false);
+      }
     };
-    const unsubscribe = window.moose.subscribe(event => {
-      if (event.type === 'transcript-reset' && event.sessionId === sessionId) { current = ++generation.current; setPage({ messages: [], hasMore: false }); void fetch(true); }
-      if (event.type === 'message' && event.message.sessionId === sessionId) setPage(old => ({ ...old, messages: mergeMessages(old.messages, [event.message]) }));
-      if (event.type === 'changed') { clearTimeout(refreshTimer); refreshTimer = setTimeout(() => { void fetch(); }, 100); }
+    const unsubscribe = window.moose.subscribe((event) => {
+      if (event.type === 'transcript-reset' && event.sessionId === sessionId) {
+        current = ++generation.current;
+        setPage({ messages: [], hasMore: false });
+        void fetch(true);
+      }
+      if (event.type === 'message' && event.message.sessionId === sessionId)
+        setPage((old) => ({ ...old, messages: mergeMessages(old.messages, [event.message]) }));
+      if (event.type === 'changed') {
+        clearTimeout(refreshTimer);
+        refreshTimer = setTimeout(() => {
+          void fetch();
+        }, 100);
+      }
     });
     void fetch(true);
-    return () => { generation.current++; unsubscribe(); clearTimeout(refreshTimer); };
+    return () => {
+      generation.current++;
+      unsubscribe();
+      clearTimeout(refreshTimer);
+    };
   }, [sessionId, report]);
+  /** 用最早消息的 position 加载上一页，并合并到现有时间线。 */
   const earlier = async () => {
     if (!sessionId || loading) return;
-    const current = generation.current; setLoading(true);
-    try { const data = await window.moose.request('messages', { sessionId, before: page.messages[0]?.position }); if (current === generation.current) setPage(old => ({ messages: mergeMessages(old.messages, data.messages), hasMore: data.hasMore })); }
-    catch (error) { report(String(error)); }
-    finally { if (current === generation.current) setLoading(false); }
+    const current = generation.current;
+    setLoading(true);
+    try {
+      const data = await window.moose.request('messages', {
+        sessionId,
+        before: page.messages[0]?.position,
+      });
+      if (current === generation.current)
+        setPage((old) => ({
+          messages: mergeMessages(old.messages, data.messages),
+          hasMore: data.hasMore,
+        }));
+    } catch (error) {
+      report(String(error));
+    } finally {
+      if (current === generation.current) setLoading(false);
+    }
   };
   return { ...page, loading, earlier };
 }

@@ -2,12 +2,11 @@
   "name": "moose",
   "version": "0.5.5",
   "private": true,
-  "type": "module",
   "description": "A quiet workspace for your coding agents",
-  "author": "Moose",
   "license": "UNLICENSED",
+  "author": "Moose",
+  "type": "module",
   "main": "dist-electron/main/main.js",
-  "packageManager": "pnpm@12.4.1",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
@@ -22,7 +21,11 @@
     "protocol:generate": "codex app-server generate-ts --out electron/providers/generated/codex",
     "postinstall": "install-electron && electron-builder install-app-deps",
     "test:live": "tsx scripts/live-providers.ts",
-    "icon:build": "swift scripts/icon.swift && iconutil -c icns build/icon.iconset -o build/icon.icns"
+    "icon:build": "swift scripts/icon.swift && iconutil -c icns build/icon.iconset -o build/icon.icns",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check .",
+    "lint": "oxlint .",
+    "lint:fix": "oxlint --fix ."
   },
   "dependencies": {
     "better-sqlite3": "13.0.3"
@@ -49,6 +52,8 @@
     "lucide-react": "1.45.0",
     "motion": "13.2.0",
     "node-gyp": "13.0.2",
+    "oxfmt": "0.67.0",
+    "oxlint": "1.82.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-markdown": "10.1.0",
@@ -65,6 +70,7 @@
     "vitest": "5.0.0",
     "zod": "4.6.4"
   },
+  "packageManager": "pnpm@12.4.1",
   "build": {
     "appId": "dev.moose.desktop",
     "productName": "Moose",
