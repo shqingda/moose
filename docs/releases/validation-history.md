@@ -1,5 +1,7 @@
 # Validation — 2026-09-13
 
+> 历史验收档案：以下日期、测试数量及外部额度状态保留原始记录，不代表当前版本。最新结果见 [验证说明](../testing.md)。
+
 Environment: Apple Silicon macOS, Node 26.8.2, pnpm 12.4.1, Electron 44.3.0, Vite 8.3.0, vite-plugin-electron 1.1.2.
 
 ## Passed

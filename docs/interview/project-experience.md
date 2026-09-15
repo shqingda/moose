@@ -1,5 +1,7 @@
 # Moose 项目经历：面试怎么讲，技术怎么理解
 
+> 版本范围：这份面试材料保留原有题目、讲解与历史示例，不作为最新功能清单。当前架构见 [技术架构](../architecture.md)，测试结果见 [验证说明](../testing.md)；0.6.0 新增 Pi，详见 [Pi 接入](../providers/pi.md)。
+
 这份材料按“先讲清项目，再回答追问”来读。开场先用下面的介绍；被问到实现时，再看后面的对应章节。代码片段用于理解和核对，不需要背代码或一串英文缩写。
 
 ## 面试开场：请介绍一下你的项目
@@ -78,21 +80,21 @@ Moose 是个人独立开发项目，应放在简历的“个人项目”或“�
 
 | 技术 | 当前用途与选择理由 | 对应代码 |
 | --- | --- | --- |
-| Electron | 提供原生窗口、文件选择、菜单、剪贴板、系统浏览器入口和后台进程能力 | [main.ts](../electron/main.ts) |
-| React | 组织会话时间线、输入区、设置页和 Git 审阅等交互；通过状态与事件同步界面 | [app.tsx](../src/app.tsx)、[workspace.ts](../src/lib/workspace.ts) |
-| TypeScript | 约束前后端 IPC、代理事件、项目与会话数据类型 | [types.ts](../shared/types.ts) |
-| Vite、vite-plugin-electron | 统一渲染端与 Electron 多入口开发构建，处理热更新和进程重启 | [vite.config.ts](../vite.config.ts) |
-| shadcn/Base UI | 复用 Select、Dialog、Menu 等交互组件，减少自行实现焦点管理与键盘交互的成本 | [ui](../src/components/ui)、[components.json](../components.json) |
-| Tailwind CSS | 配合语义颜色 tokens 和局部 CSS 调整排版、主题与组件状态 | [app.css](../src/app.css) |
-| Drizzle ORM | 类型化地操作 SQLite 表结构、查询和事务 | [schema.ts](../electron/db/schema.ts)、[store.ts](../electron/db/store.ts) |
-| SQLite、better-sqlite3 | 将历史、队列、草稿与设置保存在本地；同步数据库操作放到工作进程 | [store.ts](../electron/db/store.ts) |
-| Zod | 在运行时校验跨进程请求，补足 TypeScript 无法验证外部输入的问题 | [validation.ts](../shared/validation.ts) |
-| Motion | 实现可中途反向操作的侧栏动画，适配减少动态效果设置 | [app.tsx](../src/app.tsx) |
-| pnpm、ES module | 管理固定版本依赖与 lockfile；主进程和工作进程采用 ESM 输出 | [package.json](../package.json) |
+| Electron | 提供原生窗口、文件选择、菜单、剪贴板、系统浏览器入口和后台进程能力 | [main.ts](../../electron/main.ts) |
+| React | 组织会话时间线、输入区、设置页和 Git 审阅等交互；通过状态与事件同步界面 | [app.tsx](../../src/app.tsx)、[workspace.ts](../../src/lib/workspace.ts) |
+| TypeScript | 约束前后端 IPC、代理事件、项目与会话数据类型 | [types.ts](../../shared/types.ts) |
+| Vite、vite-plugin-electron | 统一渲染端与 Electron 多入口开发构建，处理热更新和进程重启 | [vite.config.ts](../../vite.config.ts) |
+| shadcn/Base UI | 复用 Select、Dialog、Menu 等交互组件，减少自行实现焦点管理与键盘交互的成本 | [ui](../../src/components/ui)、[components.json](../../components.json) |
+| Tailwind CSS | 配合语义颜色 tokens 和局部 CSS 调整排版、主题与组件状态 | [app.css](../../src/app.css) |
+| Drizzle ORM | 类型化地操作 SQLite 表结构、查询和事务 | [schema.ts](../../electron/db/schema.ts)、[store.ts](../../electron/db/store.ts) |
+| SQLite、better-sqlite3 | 将历史、队列、草稿与设置保存在本地；同步数据库操作放到工作进程 | [store.ts](../../electron/db/store.ts) |
+| Zod | 在运行时校验跨进程请求，补足 TypeScript 无法验证外部输入的问题 | [validation.ts](../../shared/validation.ts) |
+| Motion | 实现可中途反向操作的侧栏动画，适配减少动态效果设置 | [app.tsx](../../src/app.tsx) |
+| pnpm、ES module | 管理固定版本依赖与 lockfile；主进程和工作进程采用 ESM 输出 | [package.json](../../package.json) |
 
 首版是本地应用，没有引入 Hono 或 Cloudflare。同步、账号服务和远程协作不在当前范围内，没有必要为这些尚不存在的需求部署云基础设施。
 
-**阅读与版本说明**：本文按当前工作区解释关键交互；当前 package.json 为 0.5.3。测试数字属于 [验收记录](validation.md) 中对应版本的历史结果，不代表本次重新测试了当前版本。0.3.0 的“编辑后新建会话”已变化：当前编辑最新用户消息会在原会话中替换这一轮；另一个历史续聊入口仍可创建分支。代码片段为节选或简化示意，完整实现以链接文件为准。
+**阅读与版本说明**：本文按当前工作区解释关键交互；原稿对应 package.json 0.5.3。测试数字属于 [验收记录](../releases/validation-history.md) 中对应版本的历史结果，不代表本次重新测试了当前版本。0.3.0 的“编辑后新建会话”已变化：当前编辑最新用户消息会在原会话中替换这一轮；0.6.0 已移除独立历史续聊入口。代码片段为节选或简化示意，完整实现以链接文件为准。
 
 ## 三、第一条：接入代理，统一交互
 
@@ -106,7 +108,7 @@ Moose 是个人独立开发项目，应放在简历的“个人项目”或“�
 
 “本地”不表示模型离线运行。CLI 仍按其自身机制访问模型服务，用户输入和被代理读取的内容可能发送给服务商。Moose 不自行实现登录、不保存账号密码，也不将 CLI 凭据复制到自己的数据库。
 
-代码：[process.ts](../electron/providers/process.ts)、[settings-dialog.tsx](../src/components/settings-dialog.tsx)。
+代码：[process.ts](../../electron/providers/process.ts)、[settings-dialog.tsx](../../src/components/settings-dialog.tsx)。
 
 ### 3.2 Codex App Server 如何接入
 
@@ -129,7 +131,7 @@ rpc.send({ method: 'initialized', params: {} });
 
 片段中的 clientInfo 版本是当前适配器中的静态字符串，不是安装包版本号；安装包版本由 package.json 管理。协议类型由所选 Codex CLI 生成并保存在仓库中，但生成类型不能替代真实协议验证，也不能保证任意 CLI 版本兼容。
 
-代码：[codex.ts](../electron/providers/codex.ts)、[rpc.ts](../electron/providers/rpc.ts)、[generated/codex](../electron/providers/generated/codex)。
+代码：[codex.ts](../../electron/providers/codex.ts)、[rpc.ts](../../electron/providers/rpc.ts)、[generated/codex](../../electron/providers/generated/codex)。
 
 ### 3.3 Grok ACP 如何接入
 
@@ -141,7 +143,7 @@ Grok 使用 ACP SDK 的 `ClientSideConnection` 和 NDJSON 流连接 `grok agent 
 
 Grok 与 Codex 的会话、模型和权限格式不同。Moose 没有把两者硬套成完全相同的协议，而是在适配器内部处理差异，再向上提供统一接口。
 
-代码：[grok.ts](../electron/providers/grok.ts)。真实 Grok 握手、认证和模型发现已验证；实际生成曾因 HTTP 402 额度耗尽失败，文件修改与续聊不能写成已完成真实验证。
+代码：[grok.ts](../../electron/providers/grok.ts)。真实 Grok 握手、认证和模型发现已验证；实际生成曾因 HTTP 402 额度耗尽失败，文件修改与续聊不能写成已完成真实验证。
 
 ### 3.4 统一适配器与事件模型
 
@@ -181,7 +183,7 @@ run.dirty.add(id);
 
 当前单条文本最多保留 500,000 个字符，这是内存和展示上的保护边界，并非无限日志存储。工具记录保存的是代理返回的执行信息，Moose 没有另做一个通用终端。
 
-代码：[service.ts](../electron/service.ts)、[transcript.tsx](../src/components/transcript.tsx)。
+代码：[service.ts](../../electron/service.ts)、[transcript.tsx](../../src/components/transcript.tsx)。
 
 ### 3.6 权限审批如何准确关联
 
@@ -199,7 +201,7 @@ Codex 的三档权限对应如下：
 
 “帮我批准”调用 Codex 提供的审核机制，Moose 没有自行编写风险评分模型。停止任务或进程结束后，未回答审批会失效；迟到的点击不能作用到下一次执行。Grok 当前只暴露已支持的请求批准与完全访问，不伪装出风险自动审核能力。
 
-代码：[codexPermissions](../electron/providers/codex.ts)、[respond 处理](../electron/service.ts)。
+代码：[codexPermissions](../../electron/providers/codex.ts)、[respond 处理](../../electron/service.ts)。
 
 ### 3.7 交互提问如何区别于审批
 
@@ -235,7 +237,7 @@ flowchart LR
 
 SQLite 使用同步驱动，将其放在工作进程能避免同步查询直接阻塞主进程的窗口操作。隔离并不代表后台永远不会阻塞；大查询、文件遍历和事件合并仍需要控制规模。
 
-代码：[main.ts](../electron/main.ts)、[runtime-host.ts](../electron/runtime-host.ts)、[runtime.ts](../electron/runtime.ts)。
+代码：[main.ts](../../electron/main.ts)、[runtime-host.ts](../../electron/runtime-host.ts)、[runtime.ts](../../electron/runtime.ts)。
 
 ### 4.2 沙箱与能力边界
 
@@ -312,7 +314,7 @@ run.promise = this.execute(run, project.path, item.text, item.attachments || [],
 
 应用重新打开时，已有队列会进入暂停集合，需要用户明确继续，不会自动重放潜在的文件修改请求。排队消息的模式、文件引用与技能是提交时保存的上下文；模型与权限仍采用执行时的会话配置，并非所有配置都作为队列快照固化。
 
-代码：[enqueue / begin](../electron/db/store.ts)、[Composer 队列界面](../src/components/composer.tsx)。
+代码：[enqueue / begin](../../electron/db/store.ts)、[Composer 队列界面](../../src/components/composer.tsx)。
 
 ### 4.6 中断恢复的准确含义
 
@@ -326,7 +328,7 @@ WAL 是 SQLite 先写日志再整理到数据库的一种模式；外键约束�
 
 “恢复”并不是恢复被杀死进程的内存，也不保证恢复某条命令执行到一半的现场，更不自动重试所有中断操作。已产生的文件改动需要用户审阅后决定如何继续。
 
-代码：[Store 构造函数](../electron/db/store.ts)、[migrations.ts](../electron/db/migrations.ts)。
+代码：[Store 构造函数](../../electron/db/store.ts)、[migrations.ts](../../electron/db/migrations.ts)。
 
 ### 4.7 如何避免重复、迟到事件污染
 
@@ -336,7 +338,7 @@ WAL 是 SQLite 先写日志再整理到数据库的一种模式；外键约束�
 
 这里保障的是已归一化消息更新的顺序和幂等合并。对于 provider 本身重复发送、且没有可识别原始序号的同一段 delta，不能宣称端到端 exactly-once。
 
-代码：[accept](../electron/service.ts)、[saveMessage](../electron/db/store.ts)、[mergeMessages](../src/lib/workspace.ts)。
+代码：[accept](../../electron/service.ts)、[saveMessage](../../electron/db/store.ts)、[mergeMessages](../../src/lib/workspace.ts)。
 
 ### 4.8 关窗口与退出应用
 
@@ -360,13 +362,13 @@ CLI 在独立进程组内启动，清理时先 SIGTERM，超时再 SIGKILL，尽
 
 归档与删除经过确认弹窗；有运行中任务或历史操作时，后台拒绝相关项目变更，避免只靠界面禁用按钮。当前项目菜单保留删除，已归档会话才允许删除；不要沿用旧版“项目归档”的介绍。
 
-代码：[sidebar.tsx](../src/components/sidebar.tsx)、[confirm-dialog.tsx](../src/components/confirm-dialog.tsx)、[service.ts](../electron/service.ts)。
+代码：[sidebar.tsx](../../src/components/sidebar.tsx)、[confirm-dialog.tsx](../../src/components/confirm-dialog.tsx)、[service.ts](../../electron/service.ts)。
 
 ### 5.2 历史分支续聊与编辑消息
 
 **先区分两件事**：编辑最新消息，是修正刚才的需求并重新执行；历史续聊，是从之前的对话位置另开一个分支。对话记录变化不会撤销已经写进文件的代码，不能把它当成 Git 回滚。
 
-复制消息通过受限通信接口写入系统剪贴板。当前界面只给最新用户消息提供编辑和历史续聊入口。编辑发送后，后台在原会话中替换最后一轮，保留更早历史和原附件，并重新排队执行；会话须空闲、未归档且没有待处理消息。历史续聊走另一个分支流程，保留原会话，并将选中消息放入新会话草稿。
+复制消息通过受限通信接口写入系统剪贴板。当前界面只给最新用户消息提供编辑入口，已移除独立历史续聊入口。编辑发送后，后台在原会话中替换最后一轮，保留更早历史和原附件，并重新排队执行；会话须空闲、未归档且没有待处理消息。早期历史续聊流程曾保留原会话并生成新草稿；这不是当前界面的能力。
 
 准备此前的对话上下文时，Codex 有有效的原生 turn ID 时，调用 `thread/fork` 并传入 `lastTurnId`；否则将保留的可见消息组织为历史上下文供新会话继续。Grok 当前采用后者。
 
@@ -391,7 +393,7 @@ if (source.provider === 'codex' && source.nativeId && lastUser?.nativeTurnId) {
 
 Grok 1.0.30 的 ACP 没有声明图片输入能力，界面和适配器会阻止向它发送图片，不把路径字符串假装成图片理解。
 
-代码：[attachments.ts](../electron/attachments.ts)、[attachments.tsx](../src/components/attachments.tsx)。
+代码：[attachments.ts](../../electron/attachments.ts)、[attachments.tsx](../../src/components/attachments.tsx)。
 
 ### 5.4 Git 改动审阅
 
@@ -405,7 +407,7 @@ Grok 1.0.30 的 ACP 没有声明图片输入能力，界面和适配器会阻止
 
 审阅范围是整个工作区当前改动，包含运行代理前已有的修改，不宣称能精确证明每一行都是本轮 AI 生成。当前没有内置提交、推送或通用文件编辑器。
 
-代码：[git.ts](../electron/git.ts)、[diff.ts](../src/lib/diff.ts)、[review-panel.tsx](../src/components/review-panel.tsx)。
+代码：[git.ts](../../electron/git.ts)、[diff.ts](../../src/lib/diff.ts)、[review-panel.tsx](../../src/components/review-panel.tsx)。
 
 ### 5.5 `@` 文件与文件夹模糊搜索
 
@@ -417,7 +419,7 @@ Grok 1.0.30 的 ACP 没有声明图片输入能力，界面和适配器会阻止
 
 选择后保存项目相对路径；真正执行前重新解析 realpath 并检查目录归属，避免索引中的旧路径或越界链接直接成为后台读文件入口。macOS `/var` 与 `/private/var` 的别名需要统一后再比较。
 
-代码：[context-catalog.ts](../electron/context-catalog.ts)、[context-suggestions.tsx](../src/components/context-suggestions.tsx)。
+代码：[context-catalog.ts](../../electron/context-catalog.ts)、[context-suggestions.tsx](../../src/components/context-suggestions.tsx)。
 
 ### 5.6 技能发现与选择
 
@@ -476,7 +478,7 @@ Codex 使用 `thread/goal/set` 和 `thread/goal/get` 管理持久化目标。当
 
 这不表示所有 provider 原始错误都经过完整本地化，也不表示代理输出会自动翻译。
 
-代码：[i18n.tsx](../src/lib/i18n.tsx)、[app.tsx](../src/app.tsx)、[app.css](../src/app.css)。
+代码：[i18n.tsx](../../src/lib/i18n.tsx)、[app.tsx](../../src/app.tsx)、[app.css](../../src/app.css)。
 
 ### 6.2 键盘、输入法与交互细节
 
@@ -516,7 +518,7 @@ better-sqlite3 包含原生二进制，必须匹配 Electron ABI 与 arm64 架�
 
 当前只验证 Apple Silicon macOS，不能把 Electron 理论上的跨平台能力写成已交付 Windows/Linux。安装包未配置 Developer ID 签名、公证和自动更新。
 
-代码：[vite.config.ts](../vite.config.ts)、[package.json](../package.json)、[dev-smoke.ts](../scripts/dev-smoke.ts)。
+代码：[vite.config.ts](../../vite.config.ts)、[package.json](../../package.json)、[dev-smoke.ts](../../scripts/dev-smoke.ts)。
 
 ### 6.5 22 项单元测试分别验证什么
 
@@ -524,12 +526,12 @@ better-sqlite3 包含原生二进制，必须匹配 Electron ABI 与 arm64 架�
 
 | 测试文件 | 主要验证点 |
 | --- | --- |
-| [store.test.ts](../tests/unit/store.test.ts) | 数据库升级、重启状态、消息幂等合并、分页、队列事务 |
-| [service.test.ts](../tests/unit/service.test.ts) | 同目录串行与跨目录并行、审批失效、取消后迟到事件、显式恢复队列 |
-| [protocol.test.ts](../tests/unit/protocol.test.ts) | Codex/Grok 事件归一化、能力数据、错误展开、IPC 参数拒绝 |
-| [git.test.ts](../tests/unit/git.test.ts) | Git 状态与特殊路径、二进制/大文件/符号链接、路径限制 |
-| [conversation.test.ts](../tests/unit/conversation.test.ts) | 保留原历史的分支、项目删除范围、附件保存、权限映射、diff 行号 |
-| [context.test.ts](../tests/unit/context.test.ts) | 文件模糊搜索、目录越界、技能发现与校验、原生目标续轮等待 |
+| [store.test.ts](../../tests/unit/store.test.ts) | 数据库升级、重启状态、消息幂等合并、分页、队列事务 |
+| [service.test.ts](../../tests/unit/service.test.ts) | 同目录串行与跨目录并行、审批失效、取消后迟到事件、显式恢复队列 |
+| [protocol.test.ts](../../tests/unit/protocol.test.ts) | Codex/Grok 事件归一化、能力数据、错误展开、IPC 参数拒绝 |
+| [git.test.ts](../../tests/unit/git.test.ts) | Git 状态与特殊路径、二进制/大文件/符号链接、路径限制 |
+| [conversation.test.ts](../../tests/unit/conversation.test.ts) | 保留原历史的分支、项目删除范围、附件保存、权限映射、diff 行号 |
+| [context.test.ts](../../tests/unit/context.test.ts) | 文件模糊搜索、目录越界、技能发现与校验、原生目标续轮等待 |
 
 22 指当时通过的测试用例数，不是断言总数、覆盖率或“没有缺陷”的保证。测试替身可以稳定制造审批、取消与协议事件，属于可重复验证，不替代真实服务商调用。
 
@@ -546,7 +548,7 @@ Playwright 启动真实 Electron 应用，跨越 renderer、preload、main、run
 5. 项目归档/删除确认及取消，检查代码文件保留。
 6. `@` 搜索、技能与 Plan 键盘选择、结构化协议输入、设置返回按钮点击区域。
 
-代码：[workspace.spec.ts](../tests/e2e/workspace.spec.ts)、[agent.mjs](../tests/fixtures/agent.mjs)。测试 fixture 不进入生产安装包。
+代码：[workspace.spec.ts](../../tests/e2e/workspace.spec.ts)、[agent.mjs](../../tests/fixtures/agent.mjs)。测试 fixture 不进入生产安装包。
 
 ### 6.7 真实调用与安装包验证
 
@@ -556,7 +558,7 @@ Playwright 启动真实 Electron 应用，跨越 renderer、preload、main、run
 
 真实 Codex 的普通工作区写入没有触发审批，审批路径通过专门协议 fixture 验证；不能将两者拼接描述成“真实模型所有审批场景均已通过”。Grok 的真实生成仍受账号额度影响。
 
-完整证据与复现入口：[validation.md](validation.md)、[check-revision.ts](../scripts/check-revision.ts)、[check-modes.ts](../scripts/check-modes.ts)、[package-smoke.ts](../scripts/package-smoke.ts)。真实模型脚本会消耗服务商额度。
+完整证据与复现入口：[validation.md](../releases/validation-history.md)、[check-revision.ts](../../scripts/check-revision.ts)、[check-modes.ts](../../scripts/check-modes.ts)、[package-smoke.ts](../../scripts/package-smoke.ts)。真实模型脚本会消耗服务商额度。
 
 **这一条可以这样讲：**“我不仅验证 React 页面，还用 Playwright 跑实际 Electron 多进程链路，并单独验证真实 CLI 和安装包。自动化测试、真实服务商调用和打包后运行各自解决不同的问题。”
 
@@ -598,4 +600,4 @@ Playwright 启动真实 Electron 应用，跨越 renderer、preload、main、run
 
 > 我把验证分成几层：用业务逻辑测试检查排队和数据保存；用 Playwright 启动真实 Electron 应用，检查用户操作流程；再单独用真实 Codex 检查文件修改和继续对话；最后启动打包后的应用，确认本地数据库能正常使用。模拟协议的测试不等于真实模型测试，Grok 的真实生成仍有额度造成的验证缺口。
 
-**数字怎么说**：验收文档记录了 0.3.0 的 22 项单元测试、6 条 Electron 流程，以及 0.4.2 的 25 项单元测试、9 条 Electron 用例等后续结果。这些是历史记录，不是当前 0.5.3 在本次编辑中重新验证的成绩。没有测量过用户量、提效比例和覆盖率，就不写这些数字。
+**数字怎么说**：验收文档记录了 0.3.0 的 22 项单元测试、6 条 Electron 流程，以及 0.4.2 的 25 项单元测试、9 条 Electron 用例等后续结果。这些是历史记录，不是 0.6.0 的验证成绩；当前结果以测试与验证文档为准。没有测量过用户量、提效比例和覆盖率，就不写这些数字。
