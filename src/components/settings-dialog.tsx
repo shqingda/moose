@@ -1,5 +1,5 @@
 import { providerDefinitions, providerIds } from '../../shared/providers';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   ArrowLeft,
   BookOpen,
@@ -42,19 +42,6 @@ export function SettingsDialog({
   const t = useI18n(),
     [page, setPage] = useState<'general' | 'providers' | 'guide'>('general'),
     [expanded, setExpanded] = useState('');
-  const [paths, setPaths] = useState({
-    codexPath: settings.codexPath,
-    grokPath: settings.grokPath,
-    piPath: settings.piPath,
-  });
-  useEffect(() => {
-    if (open)
-      setPaths({
-        codexPath: settings.codexPath,
-        grokPath: settings.grokPath,
-        piPath: settings.piPath,
-      });
-  }, [open, settings.codexPath, settings.grokPath, settings.piPath]);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="settings-dialog settings-page" showCloseButton={false}>
@@ -208,7 +195,9 @@ export function SettingsDialog({
                             {t(provider)} <small>{info?.version}</small>
                           </strong>
                           <span className="provider-path">
-                            {checking ? t('checking') : info?.path || t('unavailable')}
+                            {checking
+                              ? t('checking')
+                              : info?.path || `${t('notInPath')} ${provider}`}
                             {!checking &&
                               info?.connected &&
                               ` · ${info.models.length} ${t('model')}`}
@@ -237,32 +226,27 @@ export function SettingsDialog({
                           <FieldLabel htmlFor={key}>{t('cliPath')}</FieldLabel>
                           <Input
                             id={key}
-                            value={paths[key]}
-                            onChange={(e) => setPaths((old) => ({ ...old, [key]: e.target.value }))}
+                            defaultValue={settings[key]}
                             placeholder={t('autoDetect')}
+                            onBlur={(e) => {
+                              const value = e.currentTarget.value.trim();
+                              e.currentTarget.value = value;
+                              if (value === settings[key]) return;
+                              void onSave({ [key]: value })
+                                .then(onReconnect)
+                                .catch((error) => onError(String(error)));
+                            }}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
                                 e.preventDefault();
-                                void onSave(paths)
-                                  .then(onReconnect)
-                                  .catch((error) => onError(String(error)));
+                                e.currentTarget.blur();
                               }
                             }}
                           />
-                          <FieldDescription>
-                            {info?.error || `${info?.models.length || 0} ${t('model')}`}
-                          </FieldDescription>
+                          {info?.error && (info.available || settings[key]) && (
+                            <FieldDescription>{info.error}</FieldDescription>
+                          )}
                         </Field>
-                        <Button
-                          disabled={checking}
-                          onClick={() => {
-                            void onSave(paths)
-                              .then(onReconnect)
-                              .catch((error) => onError(String(error)));
-                          }}
-                        >
-                          {t('reconnect')}
-                        </Button>
                       </FieldGroup>
                     )}
                   </section>

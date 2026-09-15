@@ -4,7 +4,7 @@
 
 1. 安装官方 CLI：`npm install -g --ignore-scripts @earendil-works/pi-coding-agent`。
 2. 在终端启动 `pi`，用 `/login` 登录所需模型服务，或按 Pi 文档配置 API 模型。
-3. Moose 设置 → 服务商 → Pi，刷新检测；不在 PATH 中时填写可执行文件的绝对路径。
+3. Moose 设置 → 服务商 → Pi，刷新检测；自动发现读取 shell PATH，并覆盖 PNPM_HOME 与 `~/Library/pnpm/bin`；仍找不到时填写可执行文件的绝对路径，点击空白处自动保存。
 4. 输入区模型选择器中选 Pi 和实际可用模型，明确选择“完全访问”后发送。
 
 Moose 不安装或捆绑 Pi，也不复制其凭据。实现依据 Pi 0.85.1 的 RPC 协议；模型和推理档位实时查询，不内置模型目录。

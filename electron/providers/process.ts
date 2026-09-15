@@ -1,7 +1,8 @@
+import { randomUUID } from 'node:crypto';
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { access } from 'node:fs/promises';
 import { constants } from 'node:fs';
-import { homedir } from 'node:os';
+import { homedir, userInfo } from 'node:os';
 import { delimiter, isAbsolute, join } from 'node:path';
 import type { Provider } from '../../shared/types';
 const children = new Set<ChildProcessWithoutNullStreams>();
@@ -16,11 +17,79 @@ process.once('exit', () => {
   }
 });
 
+let shellPath = '';
+let shellPathRequest: Promise<void> | undefined;
+let shellPathCheckedAt = 0;
+
+/** 只读取 PATH；标记分隔 shell 欢迎输出，超时后回退并回收整个进程组。 */
+export async function readShellPath(shell: string, timeout = 3000): Promise<string> {
+  if (!isAbsolute(shell)) return '';
+  const marker = `MOOSE_PATH_${randomUUID().replaceAll('-', '')}`;
+  const child = spawnAgent(shell, ['-ilc', `printf '\n${marker}%s${marker}\n' "$PATH"`], homedir());
+  return new Promise((resolve) => {
+    let output = '',
+      settled = false;
+    const finish = (value = '') => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(value);
+    };
+    const timer = setTimeout(() => {
+      finish();
+      void terminate(child);
+    }, timeout);
+    child.stdout.setEncoding('utf8');
+    child.stdout.on('data', (chunk: string) => {
+      output += chunk;
+      if (output.length > 65536) {
+        finish();
+        void terminate(child);
+      }
+    });
+    child.stderr.resume();
+    child.on('error', () => finish());
+    child.on('exit', (code) => {
+      const start = output.indexOf(marker),
+        end = output.indexOf(marker, start + marker.length);
+      finish(
+        code === 0 && start >= 0 && end > start ? output.slice(start + marker.length, end) : '',
+      );
+    });
+  });
+}
+
+/** 并发探测共用一次 shell 查询；短期缓存避免每个代理重复启动登录 shell。 */
+async function loadShellPath() {
+  if (shellPathRequest) return shellPathRequest;
+  if (Date.now() - shellPathCheckedAt < 30000) return;
+  shellPathRequest = readShellPath(process.env.SHELL || userInfo().shell || '/bin/zsh')
+    .then((path) => {
+      shellPath = path;
+      shellPathCheckedAt = Date.now();
+    })
+    .finally(() => {
+      shellPathRequest = undefined;
+    });
+  return shellPathRequest;
+}
+
+/** 终端 PATH 优先，显式包管理器目录及常用安装位置作为补充；子进程复用相同环境。 */
 export const agentEnvironment = () => ({
   ...process.env,
   PATH: [
     ...new Set([
       ...(process.env.PATH || '').split(delimiter),
+      ...(process.env.PNPM_HOME ? [process.env.PNPM_HOME, join(process.env.PNPM_HOME, 'bin')] : []),
+      ...shellPath.split(delimiter),
+      ...(process.env.BUN_INSTALL ? [join(process.env.BUN_INSTALL, 'bin')] : []),
+      ...(process.env.VOLTA_HOME ? [join(process.env.VOLTA_HOME, 'bin')] : []),
+      join(homedir(), '.bun/bin'),
+      join(homedir(), '.volta/bin'),
+      join(homedir(), '.npm-global/bin'),
+      join(homedir(), '.local/share/pnpm'),
+      join(homedir(), 'Library/pnpm/bin'),
+      join(homedir(), 'Library/pnpm'),
       '/opt/homebrew/bin',
       '/usr/local/bin',
       '/usr/bin',
@@ -29,10 +98,13 @@ export const agentEnvironment = () => ({
       join(homedir(), '.grok/bin'),
       join(homedir(), '.cargo/bin'),
     ]),
-  ].join(delimiter),
+  ]
+    .filter(isAbsolute)
+    .join(delimiter),
 });
 /** 优先使用配置路径，否则逐个搜索可执行 CLI；找不到时返回可诊断错误。 */
 export async function discover(provider: Provider, configured: string): Promise<string> {
+  await loadShellPath();
   const candidates = configured
     ? [configured]
     : agentEnvironment()

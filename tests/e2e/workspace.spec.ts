@@ -669,3 +669,28 @@ test('selects Pi and persists a streamed RPC conversation', async () => {
   expect(snapshot.sessions[0]).toMatchObject({ provider: 'pi', model: 'test/model', mode: 'full' });
   expect(snapshot.sessions[0].nativeId).toContain('pi-session.jsonl');
 });
+
+// 路径失焦自动保存，只提交当前字段；缺少 CLI 的行直接说明检测结果。
+test('provider path saves on blur without a save button or duplicate model count', async () => {
+  const page = await launch((store) => store.setSettings({ piPath: '/missing/pi' }));
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await page
+    .locator('.settings-navigation')
+    .getByRole('button', { name: 'Providers', exact: true })
+    .click();
+  const row = page
+    .locator('.provider-card')
+    .filter({ has: page.locator('.provider-row strong').filter({ hasText: /^Pi/ }) });
+  await expect(row.locator('.provider-path')).toHaveText('Not found in PATH: pi');
+  await row.locator('.provider-row').click();
+  await expect(row.locator('.provider-details button')).toHaveCount(0);
+  await row.locator('input').fill(resolve('tests/fixtures/pi.mjs'));
+  await page.getByRole('heading', { name: 'Providers', exact: true }).click();
+  await expect
+    .poll(
+      async () => (await page.evaluate(() => window.moose.request('snapshot', {}))).settings.piPath,
+    )
+    .toBe(resolve('tests/fixtures/pi.mjs'));
+  await expect(row.locator('.provider-path')).toContainText('1 Model');
+  await expect(row.locator('.provider-details [data-slot="field-description"]')).toHaveCount(0);
+});
