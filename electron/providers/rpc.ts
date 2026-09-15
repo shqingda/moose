@@ -7,6 +7,11 @@ export type RpcMessage = {
   result?: unknown;
   error?: { code?: number; message?: string };
 };
+/** 只转换协议信封，复用请求关联、缓冲限制、超时及子进程清理。 */
+export interface RpcCodec {
+  encode(message: RpcMessage): unknown;
+  decode(message: unknown): RpcMessage;
+}
 export class JsonRpc {
   readonly child;
   onNotification: (method: string, params: unknown) => void = () => {};
@@ -24,7 +29,12 @@ export class JsonRpc {
   private buffer = '';
   private ended = false;
   /** 启动 CLI，并把按行输出的 JSON 分派给响应、通知或反向请求处理器。 */
-  constructor(path: string, args: string[], cwd?: string) {
+  constructor(
+    path: string,
+    args: string[],
+    cwd?: string,
+    private codec?: RpcCodec,
+  ) {
     this.child = spawnAgent(path, args, cwd);
     this.child.stdout.setEncoding('utf8');
     this.child.stdout.on('data', (chunk: string) => {
@@ -40,7 +50,8 @@ export class JsonRpc {
         this.buffer = this.buffer.slice(end + 1);
         if (!line.trim()) continue;
         try {
-          this.receive(JSON.parse(line) as RpcMessage);
+          const parsed: unknown = JSON.parse(line);
+          this.receive(this.codec ? this.codec.decode(parsed) : (parsed as RpcMessage));
         } catch {
           this.fail(new Error('Agent sent an invalid protocol message'));
           void this.close();
@@ -84,7 +95,9 @@ export class JsonRpc {
   /** 将 JSON-RPC 对象编码为一行 JSON 写入 CLI stdin。 */
   send(message: RpcMessage) {
     if (this.ended) throw new Error('Agent connection is closed');
-    this.child.stdin.write(`${JSON.stringify(message)}\n`);
+    this.child.stdin.write(
+      `${JSON.stringify(this.codec ? this.codec.encode(message) : message)}\n`,
+    );
   }
   /** 分配请求 ID 并等待响应；超时后清理 pending 记录。 */
   request<T = unknown>(method: string, params: unknown, timeout = 20000): Promise<T> {

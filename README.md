@@ -1,6 +1,6 @@
 # Moose
 
-A quiet, local macOS workspace for **Codex** and **Grok Build**. Built for Apple Silicon with Electron, TypeScript, React, Vite 8, shadcn / Base UI, Tailwind, and SQLite.
+A quiet, local macOS workspace for **Codex**, **Grok Build**, and **Pi**. Built for Apple Silicon with Electron, TypeScript, React, Vite 8, shadcn / Base UI, Tailwind, and SQLite.
 
 Moose talks to your installed agents. Their official CLIs own authentication, model access, tool execution, and subscription usage. There is no Moose account, cloud backend, telemetry, or credential database.
 
@@ -21,7 +21,7 @@ pnpm test
 pnpm test:e2e
 pnpm test:providers   # Real CLI handshake/authentication; no model prompts
 pnpm test:live        # Real model requests; creates temporary Git repositories
-pnpm dist            # release/Moose-0.5.5-arm64.dmg
+pnpm dist            # release/Moose-0.6.0-arm64.dmg
 ```
 
 `pnpm test:live` uses provider quota and edits only freshly created temporary test repositories. Protocol fixtures are confined to `tests/` and are not shipped in the application.
@@ -30,6 +30,7 @@ pnpm dist            # release/Moose-0.5.5-arm64.dmg
 
 - [Codex CLI](https://developers.openai.com/codex/cli): install and run `codex login` using the account you want Moose to use.
 - [Grok Build](https://docs.x.ai/build/overview): install and sign in through the official CLI with your Grok/SuperGrok account.
+- [Pi](https://pi.dev): install `@earendil-works/pi-coding-agent`, run `pi` and `/login` (or configure a model through the CLI), then select Pi in Moose. [Integration and capability details](docs/pi.md).
 - Open Moose → Settings → Agent connections, optionally provide an absolute executable path, then save and reconnect.
 
 Codex is discovered from your system, including Homebrew at `/opt/homebrew/bin/codex`. Moose does not install or bundle Codex. Generated protocol types are retained from Codex 0.154.0; `pnpm protocol:generate` uses your installed CLI. Model lists come from the CLI, not a hardcoded catalog.
@@ -56,7 +57,8 @@ Electron main — native windows, menus, folder picker, external opening
   ↕ private utility-process messages
 Moose runtime — session scheduler, Drizzle/SQLite, Git, provider adapters
   ├─ Codex app-server / stdio (versioned generated protocol types)
-  └─ Grok agent stdio / ACP SDK
+  ├─ Grok agent stdio / ACP SDK
+  └─ Pi --mode rpc / JSONL
 ```
 
 Application code is TypeScript/ES modules. Only the sandboxed preload artifact is emitted as one CommonJS file, as required by Electron's sandbox. The renderer has no Node.js access. Navigation and permission requests are restricted, Markdown cannot execute HTML/scripts, and external links are restricted to HTTP(S).

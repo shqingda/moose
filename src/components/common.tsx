@@ -34,7 +34,9 @@ export function Picker({
   disabled,
   className,
   title,
+  placeholder,
 }: {
+  placeholder?: string;
   title?: string;
   label: string;
   value: string;
@@ -53,7 +55,7 @@ export function Picker({
       disabled={disabled}
     >
       <SelectTrigger aria-label={label} title={title} className={className}>
-        <SelectValue />
+        <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent alignItemWithTrigger={false}>
         <SelectGroup>

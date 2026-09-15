@@ -19,7 +19,13 @@ async function launch(seed?: (store: Store) => void) {
   const fixture = resolve('tests/fixtures/agent.mjs');
   await chmod(fixture, 0o755);
   const store = new Store(join(dir, 'moose.sqlite'));
-  store.setSettings({ language: 'en', theme: 'light', codexPath: fixture, grokPath: fixture });
+  store.setSettings({
+    language: 'en',
+    theme: 'light',
+    codexPath: fixture,
+    grokPath: fixture,
+    piPath: resolve('tests/fixtures/pi.mjs'),
+  });
   seed?.(store);
   store.close();
   const env: Record<string, string> = Object.fromEntries(
@@ -638,4 +644,28 @@ test('aligns sidebar labels at unchanged row heights and reveals message times o
     ).toHaveCount(0);
   }
   await page.screenshot({ path: 'test-results/sidebar-alignment-and-time.png' });
+});
+
+// 验证第三种协议贯穿模型选择、权限选择、发送与持久化，未接触真实模型额度。
+test('selects Pi and persists a streamed RPC conversation', async () => {
+  const page = await launch((store) => {
+    store.addProject(dir);
+  });
+  await page.getByRole('button', { name: 'Model', exact: true }).click();
+  await page.getByRole('button', { name: 'Pi', exact: true }).click();
+  await page.locator('.model-option').filter({ hasText: 'Test Pi' }).click();
+  await page.locator('.permission-picker').click();
+  await page.getByRole('option', { name: 'Full access', exact: true }).click();
+  await page.locator('#composer').fill('Hello Pi');
+  await page.locator('#composer').press('Enter');
+  await expect(page.locator('.markdown')).toContainText('Pi response');
+  await expect
+    .poll(
+      async () =>
+        (await page.evaluate(() => window.moose.request('snapshot', {}))).sessions[0]?.status,
+    )
+    .toBe('completed');
+  const snapshot = await page.evaluate(() => window.moose.request('snapshot', {}));
+  expect(snapshot.sessions[0]).toMatchObject({ provider: 'pi', model: 'test/model', mode: 'full' });
+  expect(snapshot.sessions[0].nativeId).toContain('pi-session.jsonl');
 });

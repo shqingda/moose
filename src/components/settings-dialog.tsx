@@ -1,3 +1,4 @@
+import { providerDefinitions, providerIds } from '../../shared/providers';
 import { useEffect, useState } from 'react';
 import {
   ArrowLeft,
@@ -44,10 +45,16 @@ export function SettingsDialog({
   const [paths, setPaths] = useState({
     codexPath: settings.codexPath,
     grokPath: settings.grokPath,
+    piPath: settings.piPath,
   });
   useEffect(() => {
-    if (open) setPaths({ codexPath: settings.codexPath, grokPath: settings.grokPath });
-  }, [open, settings.codexPath, settings.grokPath]);
+    if (open)
+      setPaths({
+        codexPath: settings.codexPath,
+        grokPath: settings.grokPath,
+        piPath: settings.piPath,
+      });
+  }, [open, settings.codexPath, settings.grokPath, settings.piPath]);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="settings-dialog settings-page" showCloseButton={false}>
@@ -179,9 +186,9 @@ export function SettingsDialog({
                   {t('refresh')}
                 </Button>
               </div>
-              {(['codex', 'grok'] as const).map((provider) => {
+              {providerIds.map((provider) => {
                 const info = providers.find((p) => p.provider === provider),
-                  key = provider === 'codex' ? 'codexPath' : 'grokPath';
+                  key = providerDefinitions[provider].pathKey;
                 return (
                   <section className="provider-card" key={provider}>
                     <div className="provider-summary">
@@ -212,11 +219,11 @@ export function SettingsDialog({
                       {info?.available && (
                         <Switch
                           aria-label={`${t('enableProvider')} ${t(provider)}`}
-                          checked={settings[provider === 'codex' ? 'codexEnabled' : 'grokEnabled']}
+                          checked={settings[providerDefinitions[provider].enabledKey]}
                           disabled={checking}
                           onCheckedChange={(enabled) => {
                             void onSave({
-                              [provider === 'codex' ? 'codexEnabled' : 'grokEnabled']: enabled,
+                              [providerDefinitions[provider].enabledKey]: enabled,
                             })
                               .then(onReconnect)
                               .catch((error) => onError(String(error)));
@@ -266,21 +273,16 @@ export function SettingsDialog({
           {page === 'guide' && (
             <section className="setup-guide">
               <p>{t('guideIntro')}</p>
-              {(['codex', 'grok'] as const).map((provider) => (
+              {providerIds.map((provider) => (
                 <section key={provider}>
                   <h3>{t(provider)}</h3>
-                  <pre>
-                    {provider === 'codex' ? 'brew install --cask codex\ncodex login' : 'grok'}
-                  </pre>
+                  <pre>{providerDefinitions[provider].guide}</pre>
                   <Button
                     variant="outline"
                     onClick={() => {
                       void window.moose
                         .request('openExternal', {
-                          url:
-                            provider === 'codex'
-                              ? 'https://developers.openai.com/codex/cli'
-                              : 'https://docs.x.ai/build/overview',
+                          url: providerDefinitions[provider].url,
                         })
                         .catch((error) => onError(String(error)));
                     }}

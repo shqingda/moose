@@ -91,10 +91,10 @@ export class ContextCatalog {
   /** 发现用户与项目技能目录，读取 SKILL.md 元数据，以真实路径去重。 */
   async skills(root: string): Promise<ContextEntry[]> {
     const bases: [string, 'global' | 'project'][] = [
-      ...['.agents/skills', '.codex/skills', '.grok/skills'].map(
+      ...['.agents/skills', '.codex/skills', '.grok/skills', '.pi/agent/skills'].map(
         (path) => [join(this.home, path), 'global'] as [string, 'global'],
       ),
-      ...['.agents/skills', '.codex/skills', '.grok/skills'].map(
+      ...['.agents/skills', '.codex/skills', '.grok/skills', '.pi/skills'].map(
         (path) => [join(root, path), 'project'] as [string, 'project'],
       ),
     ];

@@ -1,7 +1,7 @@
 // 发行包验收：先验证签名，再用临时数据启动 .app，检查版本、沙箱和 SQLite。
 import { execFileSync } from 'node:child_process';
 import { _electron as electron } from '@playwright/test';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, rm, readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 execFileSync('/usr/bin/codesign', [
@@ -10,6 +10,7 @@ execFileSync('/usr/bin/codesign', [
   '--strict',
   resolve('release/mac-arm64/Moose.app'),
 ]);
+const { version } = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
 const dir = await mkdtemp(join(tmpdir(), 'moose-package-'));
 const env = Object.fromEntries(
   Object.entries(process.env).filter(
@@ -33,9 +34,9 @@ try {
     ).getLastWebPreferences().sandbox,
   }));
   const snapshot = await page.evaluate(() => window.moose.request('snapshot', {}));
-  if (details.version !== '0.5.5' || !details.sandbox || !Array.isArray(snapshot.projects))
+  if (details.version !== version || !details.sandbox || !Array.isArray(snapshot.projects))
     throw new Error('Packaged smoke failed');
-  await page.screenshot({ path: 'test-results/package-0.5.5.png' });
+  await page.screenshot({ path: `test-results/package-${version}.png` });
   console.log(JSON.stringify({ ...details, sqlite: 'ready' }));
 } finally {
   await app.close();

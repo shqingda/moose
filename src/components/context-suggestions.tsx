@@ -1,3 +1,4 @@
+import { providerDefinitions } from '../../shared/providers';
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { Box, File, Folder, Lightbulb, Target } from 'lucide-react';
 import type { ContextEntry, PromptContext, Provider } from '../../shared/types';
@@ -80,7 +81,11 @@ export function useSuggestions(
             { id: 'plan', name: t('planMode'), description: t('planDescription') },
             { id: 'goal', name: t('goalMode'), description: t('goalDescription') },
           ] as const
-        ).filter((item) => `${item.id} ${item.name}`.toLowerCase().includes(query.toLowerCase()))
+        ).filter(
+          (item) =>
+            (providerDefinitions[provider].taskModes as readonly string[]).includes(item.id) &&
+            `${item.id} ${item.name}`.toLowerCase().includes(query.toLowerCase()),
+        )
       : [];
   const rows = [
     ...modes.map((item) => ({

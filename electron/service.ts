@@ -1,11 +1,11 @@
+import { providerDefinitions, providerIds } from '../shared/providers';
+import { createAdapter } from './providers/registry';
 import { contextInText } from '../shared/prompt-context';
 import { ContextCatalog } from './context-catalog';
 import { Attachments, agentAttachments } from './attachments';
 import { randomUUID } from 'node:crypto';
 import { realpath } from 'node:fs/promises';
 import { Store } from './db/store';
-import { CodexAdapter } from './providers/codex';
-import { GrokAdapter } from './providers/grok';
 import { discover, cliVersion } from './providers/process';
 import { gitDiff, gitStatus } from './git';
 import { providerError, type AgentAdapter, type AgentEvent } from './providers/types';
@@ -42,8 +42,7 @@ export class MooseService {
   constructor(
     readonly store: Store,
     private emit: (event: AppEvent) => void,
-    private adapterFactory = (provider: Provider, path: string): AgentAdapter =>
-      provider === 'codex' ? new CodexAdapter(path) : new GrokAdapter(path),
+    private adapterFactory = createAdapter,
   ) {
     this.attachments = new Attachments(store.sqlite.name);
     for (const item of store.queued()) this.paused.add(item.sessionId);
@@ -62,16 +61,16 @@ export class MooseService {
   /** 根据用户配置或默认搜索路径定位本机代理 CLI。 */
   private async providerPath(provider: Provider) {
     const settings = this.store.getSettings();
-    return discover(provider, provider === 'codex' ? settings.codexPath : settings.grokPath);
+    return discover(provider, settings[providerDefinitions[provider].pathKey]);
   }
   /** 并行探测代理版本与能力；缓存结果，并合并重复探测请求。 */
   async providers(refresh = false): Promise<ProviderInfo[]> {
     if (!refresh && this.providerCache) return this.providerCache;
     if (this.probePromise) return this.probePromise;
     this.probePromise = Promise.all(
-      (['codex', 'grok'] as const).map(async (provider) => {
+      providerIds.map(async (provider) => {
         const info: ProviderInfo = {
-          enabled: this.store.getSettings()[provider === 'codex' ? 'codexEnabled' : 'grokEnabled'],
+          enabled: this.store.getSettings()[providerDefinitions[provider].enabledKey],
           provider,
           path: '',
           version: '',
@@ -210,7 +209,7 @@ export class MooseService {
         const s = this.store.session(a.sessionId);
         if (this.editing.has(this.store.project(s.projectId).path))
           throw new Error('Please wait for the history operation to finish');
-        if (!this.store.getSettings()[s.provider === 'codex' ? 'codexEnabled' : 'grokEnabled'])
+        if (!this.store.getSettings()[providerDefinitions[s.provider].enabledKey])
           throw new Error('This provider is disabled in Settings');
         if (s.archived) throw new Error('Restore this session before sending a message');
         const item = this.store.enqueue(
@@ -342,10 +341,7 @@ export class MooseService {
       for (const item of this.store.queued()) {
         if (this.stopping || this.paused.has(item.sessionId)) continue;
         const session = this.store.listSessions().find((s) => s.id === item.sessionId);
-        if (
-          !session ||
-          !this.store.getSettings()[session.provider === 'codex' ? 'codexEnabled' : 'grokEnabled']
-        )
+        if (!session || !this.store.getSettings()[providerDefinitions[session.provider].enabledKey])
           continue;
         const project = this.store.project(session.projectId);
         if (session.archived || this.active.has(project.path) || this.editing.has(project.path))

@@ -1,3 +1,4 @@
+import { providerDefinitions } from '../../shared/providers';
 import { ArrowUp, Square, ChevronUp, Trash2, Pencil, Play, Paperclip, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type {
@@ -343,7 +344,12 @@ export function Composer({
                     : 'askDescription',
               )}
               label={t('permissionsLabel')}
-              value={options.mode || 'ask'}
+              placeholder={t('permissionsLabel')}
+              value={
+                info?.modes.length && !info.modes.some((m) => m.id === (options.mode || 'ask'))
+                  ? ''
+                  : options.mode || 'ask'
+              }
               onChange={(mode) => onOptions({ mode: mode as PermissionMode })}
               disabled={busy}
               options={(info?.modes.length ? info.modes : [{ id: 'ask' }]).map((m) => ({
@@ -358,7 +364,15 @@ export function Composer({
               providers={providers}
               locked={!!session}
               onChange={(next, model) => {
-                if (next !== provider) onProvider(next);
+                if (next !== provider) {
+                  onProvider(next);
+                  if (
+                    !(providerDefinitions[next].taskModes as readonly string[]).includes(
+                      context.mode,
+                    )
+                  )
+                    updateContext({ ...context, mode: 'build' });
+                }
                 onOptions({ model, effort: '' });
               }}
               disabled={busy}

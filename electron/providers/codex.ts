@@ -1,3 +1,4 @@
+import { attachmentText } from './prompt';
 import { JsonRpc } from './rpc';
 import {
   array,
@@ -346,7 +347,7 @@ export class CodexAdapter implements AgentAdapter {
             : [
                 {
                   type: 'text',
-                  text: `Attached file: ${a.name}\nLocal path: ${a.path}${a.text !== undefined ? `\n<attachment>\n${a.text}\n</attachment>` : ''}`,
+                  text: attachmentText(a),
                   text_elements: [],
                 },
               ],

@@ -296,11 +296,10 @@ function Workspace({
     }
     return false;
   };
-  /** 保存配置并重新探测代理，刷新受设置影响的能力列表。 */
+  /** 保存配置并刷新快照；代理重连由设置页统一触发，避免重复探测。 */
   const saveSettings = async (settings: Partial<Settings>) => {
     const result = await perform(() => window.moose.request('settings', settings));
     await refresh();
-    if (settings.codexEnabled !== undefined || settings.grokEnabled !== undefined) await connect();
     return result;
   };
   /** 已有会话更新后台配置，新会话先保存界面中的待用选项。 */

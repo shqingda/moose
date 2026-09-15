@@ -1,3 +1,4 @@
+import { providerIds } from './providers';
 import { z } from 'zod';
 import type { Method, Requests } from './types';
 const id = z.string().uuid();
@@ -12,7 +13,7 @@ const context = z.strictObject({
   goalBudget: z.number().int().min(1000).max(1_000_000).optional(),
 });
 export const schemas = {
-  usage: z.strictObject({ provider: z.enum(['codex', 'grok']), sessionId: id.optional() }),
+  usage: z.strictObject({ provider: z.enum(providerIds), sessionId: id.optional() }),
   searchFiles: z.strictObject({ projectId: id, query: z.string().max(300) }),
   listSkills: z.strictObject({ projectId: id }),
   responseText: z.strictObject({ sessionId: id, runId: z.string().min(1).max(500) }),
@@ -35,7 +36,7 @@ export const schemas = {
       .regex(/^[A-Za-z0-9+/]*={0,2}$/),
   }),
   attachmentPreview: z.strictObject({ id }),
-  createSession: z.strictObject({ projectId: id, provider: z.enum(['codex', 'grok']) }),
+  createSession: z.strictObject({ projectId: id, provider: z.enum(providerIds) }),
   updateSession: z.strictObject({
     id,
     title: z.string().trim().min(1).max(160).optional(),
@@ -70,10 +71,12 @@ export const schemas = {
   settings: z.strictObject({
     codexEnabled: z.boolean().optional(),
     grokEnabled: z.boolean().optional(),
+    piEnabled: z.boolean().optional(),
     theme: z.enum(['system', 'light', 'dark']).optional(),
     language: z.enum(['system', 'en', 'zh-CN']).optional(),
     codexPath: z.string().max(4096).optional(),
     grokPath: z.string().max(4096).optional(),
+    piPath: z.string().max(4096).optional(),
     fontScale: z.number().min(0.85).max(1.4).optional(),
   }),
   gitStatus: z.strictObject({ projectId: id }),

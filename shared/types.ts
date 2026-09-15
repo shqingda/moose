@@ -1,3 +1,4 @@
+import type { providerIds } from './providers';
 // 跨进程公共契约：请求、响应、事件和数据实体；此文件只描述类型，不负责运行时校验。
 export interface PromptContext {
   inline?: boolean;
@@ -27,7 +28,7 @@ export interface Attachment {
   mime: string;
   size: number;
 }
-export type Provider = 'codex' | 'grok';
+export type Provider = (typeof providerIds)[number];
 export type Status =
   | 'idle'
   | 'queued'
@@ -102,8 +103,10 @@ export interface Settings {
   language: 'system' | 'en' | 'zh-CN';
   codexEnabled: boolean;
   grokEnabled: boolean;
+  piEnabled: boolean;
   codexPath: string;
   grokPath: string;
+  piPath: string;
   fontScale: number;
 }
 export interface ModelOption {
@@ -249,8 +252,10 @@ export const defaultSettings: Settings = {
   language: 'system',
   codexEnabled: true,
   grokEnabled: true,
+  piEnabled: true,
   codexPath: '',
   grokPath: '',
+  piPath: '',
   fontScale: 1,
 };
 

@@ -1,3 +1,4 @@
+import { attachmentText, promptText } from './prompt';
 import { JsonRpc } from './rpc';
 import {
   ClientSideConnection,
@@ -314,14 +315,14 @@ export class GrokAdapter implements AgentAdapter {
       prompt: [
         {
           type: 'text',
-          text: `${context.promptContext?.mode === 'goal' ? '/goal ' : ''}${context.text}${(context.selection?.references || []).map((a) => `\nReferenced ${a.kind}: ${a.path}`).join('')}${(context.selection?.skills || []).map((a) => `\nUse skill ${a.name}. Read its instructions at ${a.path}`).join('')}`,
+          text: `${context.promptContext?.mode === 'goal' ? '/goal ' : ''}${promptText(context)}`,
         },
         ...(context.attachments || []).map((a) =>
           a.mime.startsWith('image/')
             ? { type: 'image' as const, mimeType: a.mime, data: a.data! }
             : {
                 type: 'text' as const,
-                text: `Attached file: ${a.name}\nLocal path: ${a.path}${a.text !== undefined ? `\n<attachment>\n${a.text}\n</attachment>` : ''}`,
+                text: attachmentText(a),
               },
         ),
       ],
