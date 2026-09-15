@@ -11,6 +11,7 @@
 | Pi 如何接入、哪些能力不支持 | [Pi 接入](providers/pi.md) |
 | 简历项目经历及逐点讲解 | [项目经历](interview/project-experience.md) |
 | 面试复习题与对应答案 | [题目](interview/questions.md) · [答案](interview/answers.md) |
+| Moose 从启动到一轮会话完成，怎么按源码讲 | [流程面试题](interview/start-to-session-end.md) |
 
 ## 发布记录
 
