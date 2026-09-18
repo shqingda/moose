@@ -34,6 +34,7 @@ import { Marker, MarkerContent } from './ui/marker';
 import { Skeleton } from './ui/skeleton';
 import { AttachmentList } from './attachments';
 import { Picker, IconButton } from './common';
+import { SubagentActivity } from './subagent-activity';
 
 /** 渲染带代码高亮的 Markdown，链接通过受限系统入口打开。 */
 const Markdown = memo(function Markdown({
@@ -211,6 +212,8 @@ const TranscriptRow = memo(function TranscriptRow({
         )}
       </div>
     );
+  if (message.delegation)
+    return <SubagentActivity message={message} delegation={message.delegation} />;
   if (message.kind === 'reasoning' && !message.text.trim()) return null;
   if (message.kind === 'tool' || message.kind === 'reasoning')
     return (

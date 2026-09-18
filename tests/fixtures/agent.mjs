@@ -53,6 +53,26 @@ function complete(text, write = true) {
 createInterface({ input: process.stdin }).on('line', (line) => {
   const m = JSON.parse(line),
     p = m.params || {};
+  if (m.id === 'subagent-approval' && !m.method) {
+    notify('item/completed', {
+      threadId: sessionId,
+      item: {
+        type: 'collabAgentToolCall',
+        id: 'delegation-wait',
+        tool: 'wait',
+        status: 'completed',
+        receiverThreadIds: ['child-fixture'],
+        agentsStates: {
+          'child-fixture': { status: 'completed', message: 'Subagent verified the tests.' },
+        },
+      },
+    });
+    complete(
+      m.result?.decision === 'accept' ? 'Delegated work complete.' : 'Subagent approval rejected.',
+      false,
+    );
+    return;
+  }
   if (m.id === permissionId && !m.method) {
     complete(
       m.result?.decision === 'decline' || m.result?.outcome?.optionId === 'deny'
@@ -160,6 +180,54 @@ createInterface({ input: process.stdin }).on('line', (line) => {
       }
       if (pendingPrompt.startsWith('inspect-input')) {
         complete(JSON.stringify({ input: p.input || p.prompt, settings: threadSettings }), false);
+        break;
+      }
+      if (pendingPrompt.startsWith('delegate-fixture')) {
+        if (!pendingPrompt.includes('Use native subagents')) {
+          complete('Missing delegation request.', false);
+          break;
+        }
+        if (acp) {
+          update({
+            sessionUpdate: 'tool_call',
+            toolCallId: 'delegate',
+            title: 'Delegate test review',
+            rawInput: { task: 'Inspect the tests' },
+            status: 'in_progress',
+          });
+          update({
+            sessionUpdate: 'tool_call_update',
+            toolCallId: 'delegate',
+            rawOutput: { summary: 'Subagent verified the tests.' },
+            status: 'completed',
+          });
+          complete('Delegated work complete.', false);
+        } else {
+          const item = {
+            type: 'collabAgentToolCall',
+            id: 'delegation-spawn',
+            tool: 'spawnAgent',
+            receiverThreadIds: ['child-fixture'],
+            prompt: 'Inspect the tests',
+            model: 'fixture',
+            agentsStates: { 'child-fixture': { status: 'running', message: '' } },
+          };
+          notify('item/started', { threadId: sessionId, item: { ...item, status: 'inProgress' } });
+          notify('item/completed', { threadId: sessionId, item: { ...item, status: 'completed' } });
+          notify('turn/completed', {
+            threadId: 'child-fixture',
+            turn: { id: 'child-turn', status: 'completed' },
+          });
+          send({
+            id: 'subagent-approval',
+            method: 'item/commandExecution/requestApproval',
+            params: {
+              threadId: 'child-fixture',
+              command: 'Read test report',
+              reason: 'Subagent review',
+            },
+          });
+        }
         break;
       }
       if (pendingPrompt === 'hold') break;

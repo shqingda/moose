@@ -25,7 +25,13 @@ let shellPathCheckedAt = 0;
 export async function readShellPath(shell: string, timeout = 3000): Promise<string> {
   if (!isAbsolute(shell)) return '';
   const marker = `MOOSE_PATH_${randomUUID().replaceAll('-', '')}`;
-  const child = spawnAgent(shell, ['-ilc', `printf '\n${marker}%s${marker}\n' "$PATH"`], homedir());
+  // 探测输入不能包含上次的 shellPath，否则刷新会保留已从配置删除的目录。
+  const child = spawnAgent(
+    shell,
+    ['-ilc', `printf '\n${marker}%s${marker}\n' "$PATH"`],
+    homedir(),
+    process.env,
+  );
   return new Promise((resolve) => {
     let output = '',
       settled = false;
@@ -125,15 +131,16 @@ export async function discover(provider: Provider, configured: string): Promise<
       : `${provider} CLI was not found. Install it or select its absolute path in Settings.`,
   );
 }
-/** 启动带统一环境的代理进程，并登记到退出清理集合。 */
+/** 默认使用代理环境；环境探测可传入原始环境，所有进程统一登记退出清理。 */
 export function spawnAgent(
   path: string,
   args: string[],
   cwd?: string,
+  env: NodeJS.ProcessEnv = agentEnvironment(),
 ): ChildProcessWithoutNullStreams {
   const child = spawn(path, args, {
     cwd,
-    env: agentEnvironment(),
+    env,
     stdio: ['pipe', 'pipe', 'pipe'],
     detached: process.platform !== 'win32',
   });

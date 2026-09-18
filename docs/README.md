@@ -1,6 +1,6 @@
 # 文档目录
 
-日常使用从使用指南开始，开发维护从技术架构开始。当前实现以源码与 0.6.0 文档为准；面试示例和历史验收分别保留在自己的目录中。
+日常使用从使用指南开始，开发维护从技术架构开始。当前实现以源码及对应版本文档为准；面试示例和历史验收分别保留在自己的目录中。
 
 | 你想了解什么 | 文档 |
 | --- | --- |
@@ -9,11 +9,14 @@
 | 开发命令、格式规范、原生依赖和打包 | [开发与打包](development.md) |
 | 测试怎么运行，哪些能力实际验过 | [测试与验证](testing.md) |
 | Pi 如何接入、哪些能力不支持 | [Pi 接入](providers/pi.md) |
+| 子代理、Goal／Plan、思考摘要和主流功能差距 | [原生能力与当前缺口](providers/native-capabilities.md) |
 | 简历项目经历及逐点讲解 | [项目经历](interview/project-experience.md) |
 | 面试复习题与对应答案 | [题目](interview/questions.md) · [答案](interview/answers.md) |
 | Moose 从启动到一轮会话完成，怎么按源码讲 | [流程面试题](interview/start-to-session-end.md) |
 
 ## 发布记录
+
+- [0.7.0：原生子代理与连接状态修复](releases/0.7.0.md)
 
 - [0.6.1：通用 CLI 发现与设置精简](releases/0.6.1.md)
 

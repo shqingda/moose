@@ -1,5 +1,24 @@
 import { createContext, useContext } from 'react';
 export const en = {
+  subagents: 'Subagents',
+  subagentsDescription:
+    'Ask the agent to delegate independent work and collect the results. Uses additional model capacity.',
+  agentSpawn: 'Delegate',
+  agentMessage: 'Send task',
+  agentResume: 'Resume',
+  agentWait: 'Collect results',
+  agentClose: 'Close',
+  agentInterrupt: 'Interrupt',
+  agentList: 'List agents',
+  agentActivity: 'Activity',
+  agentPending: 'Starting',
+  agentRunning: 'Running',
+  agentCompleted: 'Completed',
+  agentInterrupted: 'Interrupted',
+  agentFailed: 'Failed',
+  agentClosed: 'Closed',
+  agentUnknown: 'Status unavailable',
+
   enableProvider: 'Enable',
   usage: 'Usage',
   contextWindow: 'Context window',
@@ -180,6 +199,24 @@ export const en = {
 };
 export type TranslationKey = keyof typeof en;
 export const zh: Record<TranslationKey, string> = {
+  subagents: '子代理',
+  subagentsDescription: '请求主代理分派独立任务并汇总结果，会使用额外模型额度。',
+  agentSpawn: '分派任务',
+  agentMessage: '发送任务',
+  agentResume: '恢复',
+  agentWait: '汇总结果',
+  agentClose: '关闭',
+  agentInterrupt: '中断',
+  agentList: '代理列表',
+  agentActivity: '活动',
+  agentPending: '启动中',
+  agentRunning: '运行中',
+  agentCompleted: '已完成',
+  agentInterrupted: '已中断',
+  agentFailed: '失败',
+  agentClosed: '已关闭',
+  agentUnknown: '状态未知',
+
   enableProvider: '启用',
   usage: '用量',
   contextWindow: '上下文窗口',

@@ -6,6 +6,7 @@ export interface PromptContext {
   references: string[];
   skills: string[];
   goalBudget?: number;
+  subagents?: boolean;
 }
 export const emptyContext: PromptContext = {
   inline: true,
@@ -88,7 +89,18 @@ export interface Message {
   nativeTurnId?: string;
   choices?: Choice[];
   questions?: Question[];
+  delegation?: Delegation;
   createdAt: number;
+}
+/** 原生代理的委派活动；工具调用完成不代表子任务完成。 */
+export interface Delegation {
+  operation: 'spawn' | 'message' | 'resume' | 'wait' | 'close' | 'interrupt' | 'list' | 'activity';
+  agents: {
+    id: string;
+    status: 'pending' | 'running' | 'completed' | 'interrupted' | 'failed' | 'closed' | 'unknown';
+    message: string;
+  }[];
+  model?: string;
 }
 export interface QueueItem {
   id: string;

@@ -8,6 +8,7 @@ export type AgentEvent = {
   state?: Message['state'];
   choices?: Choice[];
   questions?: Question[];
+  delegation?: Message['delegation'];
 };
 export interface RunContext {
   usage?(usage: import('../../shared/types').ContextUsage): void;

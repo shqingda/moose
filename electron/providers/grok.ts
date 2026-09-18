@@ -69,9 +69,11 @@ export function normalizeGrok(
                   : readable(c);
             })
             .join('\n')
-        : update.rawInput
-          ? readable(update.rawInput)
-          : undefined,
+        : update.rawOutput !== undefined
+          ? readable(update.rawOutput)
+          : update.rawInput
+            ? readable(update.rawInput)
+            : undefined,
       state:
         update.status === 'completed' ? 'done' : update.status === 'failed' ? 'error' : 'running',
     };

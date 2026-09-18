@@ -1,4 +1,5 @@
-import { attachmentText } from './prompt';
+import { attachmentText, taskText } from './prompt';
+import { codexDelegation } from './codex-subagents';
 import { JsonRpc } from './rpc';
 import {
   array,
@@ -42,6 +43,8 @@ export function normalizeCodex(method: string, input: unknown): AgentEvent | nul
     return { key, kind: 'tool', delta: string(p.delta), state: 'running' };
   if (method !== 'item/started' && method !== 'item/completed') return null;
   const state = method === 'item/started' ? 'running' : item.status === 'failed' ? 'error' : 'done';
+  const delegation = codexDelegation(item, state);
+  if (delegation) return delegation;
   switch (item.type) {
     case 'agentMessage':
       return { key, kind: 'assistant', text: string(item.text), state };
@@ -93,6 +96,7 @@ export class CodexAdapter implements AgentAdapter {
   private context?: RunContext;
   private turnId = '';
   private threadId = '';
+  private childThreads = new Set<string>();
   private requests = new Map<
     string,
     {
@@ -113,6 +117,15 @@ export class CodexAdapter implements AgentAdapter {
     rpc.onExit = (error) => this.finish?.reject(error);
     rpc.onNotification = (method, params) => {
       const p = record(params);
+      if (method === 'thread/started' && this.context) {
+        const thread = record(p.thread);
+        const source = record(record(record(thread.source).subagent).thread_spawn);
+        const parent = string(thread.parentThreadId) || string(source.parent_thread_id);
+        if (parent && (parent === this.threadId || this.childThreads.has(parent))) {
+          const id = string(thread.id);
+          if (id) this.childThreads.add(id);
+        }
+      }
       if (!this.context || (p.threadId && p.threadId !== this.threadId)) return;
       if (method === 'thread/tokenUsage/updated') {
         const usage = record(p.tokenUsage),
@@ -151,12 +164,16 @@ export class CodexAdapter implements AgentAdapter {
         } else this.finish?.resolve();
       }
       const event = normalizeCodex(method, params);
+      for (const agent of event?.delegation?.agents || []) this.childThreads.add(agent.id);
       if (event?.key) this.context.emit(event);
     };
     rpc.onRequest = (id, method, input) => {
       const p = record(input),
         key = `request:${id}`;
-      if (!this.context || (p.threadId && p.threadId !== this.threadId)) {
+      if (
+        !this.context ||
+        (p.threadId && p.threadId !== this.threadId && !this.childThreads.has(string(p.threadId)))
+      ) {
         rpc.send({ id, error: { code: -32601, message: 'No active Moose session' } });
         return;
       }
@@ -191,7 +208,13 @@ export class CodexAdapter implements AgentAdapter {
           title:
             string(p.command) ||
             (p.permissions ? 'Additional permissions' : 'File change approval'),
-          text: [string(p.reason), readable(p.permissions || p.changes)].filter(Boolean).join('\n'),
+          text: [
+            p.threadId && p.threadId !== this.threadId ? `Subagent: ${string(p.threadId)}` : '',
+            string(p.reason),
+            readable(p.permissions || p.changes),
+          ]
+            .filter(Boolean)
+            .join('\n'),
           choices,
           state: 'pending',
         });
@@ -330,7 +353,7 @@ export class CodexAdapter implements AgentAdapter {
       summary: 'auto',
       threadId: this.threadId,
       input: [
-        { type: 'text', text: context.text, text_elements: [] },
+        { type: 'text', text: taskText(context), text_elements: [] },
         ...(context.selection?.references || []).map((a) => ({
           type: 'mention' as const,
           name: a.name,

@@ -35,6 +35,7 @@ export class MooseService {
   >();
   private usagePending = new Map<Provider, Promise<import('../shared/types').UsageInfo>>();
   private providerCache?: ProviderInfo[];
+  private providerRevision = 0;
   private probePromise?: Promise<ProviderInfo[]>;
   private probing = new Set<AgentAdapter>();
   private flushTimer: ReturnType<typeof setInterval>;
@@ -67,44 +68,55 @@ export class MooseService {
   async providers(refresh = false): Promise<ProviderInfo[]> {
     if (!refresh && this.providerCache) return this.providerCache;
     if (this.probePromise) return this.probePromise;
-    this.probePromise = Promise.all(
-      providerIds.map(async (provider) => {
-        const info: ProviderInfo = {
-          enabled: this.store.getSettings()[providerDefinitions[provider].enabledKey],
-          provider,
-          path: '',
-          version: '',
-          available: false,
-          connected: false,
-          models: [],
-          modes: [],
-        };
-        let adapter: AgentAdapter | undefined;
-        try {
-          info.path = await this.providerPath(provider);
-          info.available = true;
-          info.version = await cliVersion(info.path);
-          if (this.stopping || !info.enabled) return info;
-          adapter = this.adapterFactory(provider, info.path);
-          this.probing.add(adapter);
-          Object.assign(info, await adapter.probe());
-          info.connected = true;
-        } catch (error) {
-          info.error = providerError(error);
-        } finally {
-          if (adapter) {
-            await adapter.close();
-            this.probing.delete(adapter);
-          }
-        }
-        return info;
-      }),
-    );
+    this.probePromise = this.probeProviders();
     try {
-      this.providerCache = await this.probePromise;
-      return this.providerCache;
+      return await this.probePromise;
     } finally {
       this.probePromise = undefined;
+    }
+  }
+  /** 一轮使用同一份配置；保存期间过期的结果不返回、不缓存，合并到最新配置重试。 */
+  private async probeProviders(): Promise<ProviderInfo[]> {
+    while (true) {
+      const revision = this.providerRevision;
+      const settings = this.store.getSettings();
+      const results = await Promise.all(
+        providerIds.map(async (provider) => {
+          const info: ProviderInfo = {
+            enabled: settings[providerDefinitions[provider].enabledKey],
+            provider,
+            path: '',
+            version: '',
+            available: false,
+            connected: false,
+            models: [],
+            modes: [],
+          };
+          let adapter: AgentAdapter | undefined;
+          try {
+            info.path = await discover(provider, settings[providerDefinitions[provider].pathKey]);
+            info.available = true;
+            info.version = await cliVersion(info.path);
+            if (this.stopping || !info.enabled) return info;
+            adapter = this.adapterFactory(provider, info.path);
+            this.probing.add(adapter);
+            Object.assign(info, await adapter.probe());
+            info.connected = true;
+          } catch (error) {
+            info.error = providerError(error);
+          } finally {
+            if (adapter) {
+              await adapter.close();
+              this.probing.delete(adapter);
+            }
+          }
+          return info;
+        }),
+      );
+      if (this.stopping) return results;
+      if (revision !== this.providerRevision) continue;
+      this.providerCache = results;
+      return results;
     }
   }
   /** 后台业务入口：校验 IPC 参数后分发项目、消息、审批、用量和 Git 操作。 */
@@ -311,8 +323,9 @@ export class MooseService {
       case 'providers':
         return this.providers((args as Requests['providers']).refresh);
       case 'settings': {
-        this.providerCache = undefined;
         const s = this.store.setSettings(args as Requests['settings']);
+        this.providerRevision++;
+        this.providerCache = undefined;
         this.changed();
         void this.drain();
         return s;
@@ -427,6 +440,7 @@ export class MooseService {
     if (event.state) row.state = event.state;
     if (event.choices) row.choices = event.choices;
     if (event.questions) row.questions = event.questions;
+    if (event.delegation) row.delegation = event.delegation;
     run.rows.set(id, row);
     run.dirty.add(id);
     if (row.state === 'pending') {

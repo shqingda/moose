@@ -124,10 +124,17 @@ export class Store {
   }
   /** 按消息 ID 更新记录；seq 不增加时拒绝覆盖，保持流式更新顺序。 */
   saveMessage(message: Omit<Message, 'position'>): Message {
-    const { choices, questions, attachments, nativeTurnId, context, ...data } = message;
+    const { choices, questions, attachments, nativeTurnId, context, delegation, ...data } = message;
     const row = {
       ...data,
-      details: JSON.stringify({ choices, questions, attachments, nativeTurnId, context }),
+      details: JSON.stringify({
+        choices,
+        questions,
+        attachments,
+        nativeTurnId,
+        context,
+        delegation,
+      }),
     };
     const existing = this.db
       .select()

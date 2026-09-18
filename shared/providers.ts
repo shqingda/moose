@@ -7,6 +7,7 @@ export const providerDefinitions = {
     guide: 'brew install --cask codex\ncodex login',
     url: 'https://developers.openai.com/codex/cli',
     taskModes: ['build', 'plan', 'goal'],
+    subagents: true,
   },
   grok: {
     pathKey: 'grokPath',
@@ -14,6 +15,7 @@ export const providerDefinitions = {
     guide: 'grok',
     url: 'https://docs.x.ai/build/overview',
     taskModes: ['build', 'goal'],
+    subagents: true,
   },
   pi: {
     pathKey: 'piPath',
@@ -21,5 +23,6 @@ export const providerDefinitions = {
     guide: 'npm install -g --ignore-scripts @earendil-works/pi-coding-agent\npi\n/login',
     url: 'https://pi.dev',
     taskModes: ['build'],
+    subagents: false,
   },
 } as const;

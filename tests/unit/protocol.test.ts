@@ -4,6 +4,8 @@ import { normalizeCodex } from '../../electron/providers/codex';
 import { grokModels, normalizeGrok } from '../../electron/providers/grok';
 import { validate } from '../../shared/validation';
 import { providerError } from '../../electron/providers/types';
+import { taskText } from '../../electron/providers/prompt';
+import type { RunContext } from '../../electron/providers/types';
 it('surfaces actionable Grok billing errors hidden inside generic JSON-RPC errors', () => {
   expect(
     providerError({
@@ -94,4 +96,107 @@ it('preserves streamed reasoning when the completed item has an empty summary', 
       item: { type: 'reasoning', id: 'r', summary: [], content: ['Visible content'] },
     }),
   ).toMatchObject({ text: 'Visible content' });
+});
+
+it('keeps delegation call completion separate from child completion and preserves results', () => {
+  expect(
+    normalizeCodex('item/completed', {
+      item: {
+        type: 'collabAgentToolCall',
+        id: 'spawn',
+        tool: 'spawnAgent',
+        status: 'completed',
+        receiverThreadIds: ['child'],
+        prompt: 'Inspect tests',
+        model: 'test',
+        agentsStates: { child: { status: 'running', message: '' } },
+      },
+    }),
+  ).toMatchObject({
+    kind: 'tool',
+    key: 'spawn',
+    state: 'done',
+    text: 'Inspect tests',
+    delegation: { operation: 'spawn', agents: [{ id: 'child', status: 'running' }], model: 'test' },
+  });
+  expect(
+    normalizeCodex('item/completed', {
+      item: {
+        type: 'collabAgentToolCall',
+        id: 'wait',
+        tool: 'wait',
+        status: 'completed',
+        receiverThreadIds: ['ok', 'failed'],
+        agentsStates: {
+          ok: { status: 'completed', message: 'Passed' },
+          failed: { status: 'errored', message: 'Error details' },
+        },
+      },
+    })?.delegation?.agents,
+  ).toEqual([
+    { id: 'ok', status: 'completed', message: 'Passed' },
+    { id: 'failed', status: 'failed', message: 'Error details' },
+  ]);
+  expect(
+    normalizeCodex('item/completed', {
+      item: {
+        type: 'subAgentActivity',
+        id: 'activity',
+        kind: 'interrupted',
+        agentThreadId: 'child',
+        agentPath: '/root/tests',
+      },
+    }),
+  ).toMatchObject({
+    delegation: { operation: 'activity', agents: [{ id: 'child', status: 'interrupted' }] },
+  });
+});
+
+it('retains ACP raw tool results when no content blocks are sent', () => {
+  expect(
+    normalizeGrok(
+      {
+        sessionId: 's',
+        update: {
+          sessionUpdate: 'tool_call_update',
+          toolCallId: 'delegate',
+          status: 'completed',
+          rawOutput: { summary: 'Child result' },
+        },
+      },
+      'unused',
+    ),
+  ).toMatchObject({ key: 'delegate', state: 'done', text: '{\n  "summary": "Child result"\n}' });
+});
+
+it('requests native delegation only when opted in and rejects unsupported providers', () => {
+  const context: RunContext = {
+    text: 'Review tests',
+    cwd: '/tmp',
+    nativeId() {},
+    emit() {},
+    session: {
+      id: 'session',
+      projectId: 'project',
+      provider: 'codex',
+      title: '',
+      archived: false,
+      nativeId: null,
+      model: '',
+      effort: '',
+      mode: 'ask',
+      draft: '',
+      status: 'idle',
+      createdAt: 0,
+      updatedAt: 0,
+    },
+    promptContext: { mode: 'build', references: [], skills: [], subagents: false },
+  };
+  expect(taskText(context)).toBe('Review tests');
+  context.promptContext!.subagents = true;
+  expect(taskText(context)).toContain('Use native subagents');
+  context.session.provider = 'grok';
+  expect(taskText(context)).toContain('wait for the delegated work');
+  context.session.provider = 'pi';
+  expect(() => taskText(context)).toThrow('does not support native subagent');
 });

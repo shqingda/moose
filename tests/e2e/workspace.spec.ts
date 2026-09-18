@@ -694,3 +694,49 @@ test('provider path saves on blur without a save button or duplicate model count
   await expect(row.locator('.provider-path')).toContainText('1 Model');
   await expect(row.locator('.provider-details [data-slot="field-description"]')).toHaveCount(0);
 });
+
+for (const provider of ['codex', 'grok'] as const) {
+  test(`${provider} delegates from the composer and persists native results`, async () => {
+    let sessionId = '';
+    const page = await launch((store) => {
+      const session = store.createSession(store.addProject(dir).id, provider);
+      sessionId = session.id;
+      store.updateSession(session.id, { title: 'Subagent test' });
+    });
+    await page.locator('.session-row').first().click();
+    const toggle = page.getByRole('button', { name: 'Subagents', exact: true });
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    await page.locator('#composer').fill('delegate-fixture');
+    await page.locator('#composer').press('Enter');
+    if (provider === 'codex') {
+      await expect(page.locator('.subagent-activity').first()).toContainText('Delegate');
+      await page.getByRole('button', { name: 'Allow once', exact: true }).click();
+    }
+    await expect(page.locator('.markdown')).toContainText('Delegated work complete.');
+    const history = await page.evaluate(
+      (sessionId) => window.moose.request('messages', { sessionId }),
+      sessionId,
+    );
+    expect(history.messages.find((message) => message.kind === 'user')?.context?.subagents).toBe(
+      true,
+    );
+    if (provider === 'codex') {
+      expect(
+        history.messages.find((message) => message.delegation?.operation === 'wait')?.delegation
+          ?.agents,
+      ).toEqual([
+        { id: 'child-fixture', status: 'completed', message: 'Subagent verified the tests.' },
+      ]);
+    }
+    await page.reload();
+    const activity =
+      provider === 'codex'
+        ? page.locator('.subagent-activity').filter({ hasText: 'Collect results' })
+        : page.locator('.activity').filter({ hasText: 'Delegate test review' });
+    await activity.locator('summary').click();
+    await expect(activity.locator('pre').last()).toContainText('Subagent verified the tests.');
+    await page.screenshot({ path: `test-results/${provider}-subagents.png` });
+  });
+}

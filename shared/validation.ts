@@ -11,6 +11,7 @@ const context = z.strictObject({
   references: z.array(z.string().min(1).max(4096)).max(30),
   skills: z.array(z.string().regex(/^[a-f0-9]{64}$/)).max(20),
   goalBudget: z.number().int().min(1000).max(1_000_000).optional(),
+  subagents: z.boolean().optional(),
 });
 export const schemas = {
   usage: z.strictObject({ provider: z.enum(providerIds), sessionId: id.optional() }),
