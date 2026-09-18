@@ -1,6 +1,6 @@
 # 原生能力、Moose 接入与当前缺口
 
-核查日期：2026-09-18。下表描述 0.7.0 源码与本次验证；安装包验收见对应发布记录。
+核查日期：2026-09-18 至 2026-09-19。下表描述 0.8.0 源码与本次验证；安装包验收见对应发布记录。
 
 ## 子代理
 
@@ -19,10 +19,18 @@ Grok 使用原生 ACP 运行委派，活动按 CLI 的工具标题展示，结�
 | 能力 | Codex | Grok | Pi |
 | --- | --- | --- | --- |
 | Goal | 原生 `thread/goal/set`、`get`，底座继续执行；支持 token budget 与暂停 | 通过 ACP 发送原生 `/goal ...` 命令 | 未接入 |
-| Plan | Moose 注入规划指令，设置只读 sandbox、禁止提权；不是原生 Plan 协作模式 | Moose 暂未接入，尽管 Grok 自己支持 `/plan` | 未接入 |
+| Plan | 原生 `collaborationMode: plan`；计划审阅、修改版本、批准后切回 `default` 执行 | Moose 暂未接入，尽管 Grok 自己支持 `/plan` | 未接入 |
 | Subagent | 原生委派工具 + 结构化活动和审批 | 原生委派工具 + ACP 工具活动 | 未接入 |
 
-任务模式的选择菜单由 Moose 实现，不意味着三个底座有相同命令语义。Codex Plan 当前缺少原生计划审批与批准后执行的完整流程。[Codex app-server 文档](https://learn.chatgpt.com/docs/app-server)描述了原生协作模式；实际接入还应核对安装版本与协议生成类型，不能仅把 `/plan` 当普通文本发送。[Grok Plan 文档](https://docs.x.ai/build/features/plan-mode)描述的是 Grok 自己的功能，不代表 Moose 已支持。
+任务模式的选择菜单由 Moose 实现，不意味着三个底座有相同命令语义。Codex 先检查 `collaborationMode/list`，用原生 Plan 生成计划；Moose 持久化计划版本，提供审阅和修改，再将批准的正文发送到同一原生会话执行。审批界面与版本约束由 Moose 管理。规划仍保留只读 sandbox、禁止提权；执行恢复该会话选择的权限档位。计划结束后暂停后续队列，不自动执行。[Codex app-server 文档](https://learn.chatgpt.com/docs/app-server)描述了原生协作模式；当前已启用协议生成的实验字段，并核对了本机 CLI 的接口与真实事件。[Grok Plan 文档](https://docs.x.ai/build/features/plan-mode)描述的是 Grok 自己的功能，不代表 Moose 已支持。
+
+## 原生 Plan 与插话验证
+
+本机 Codex 0.155.0、`gpt-5.6-luna`／low 实测：收到原生 plan item；规划阶段目录内容不变；同一会话切到执行模式后按修改后的内容写入隔离测试文件；插话返回同一 turn ID，最终回复包含插话要求的标记。复现脚本 `scripts/check-native-workflows.ts` 会使用真实模型额度。
+
+插话记录先保存再投递，区分接收、拒绝与结果未知；明确拒绝保留输入，超时／断连不自动重发。同一 request ID 不会再次调用底座。运行已结束、取消中或任务模式不同则拒绝插话；它不会改变当前回合的权限或模型。插话消息暂不支持原地编辑。
+
+Grok 1.0.34 的真实 ACP `session/new` 握手只报告 model 和 reasoning_effort 配置，未报告 modes。本轮没有把 Grok 的终端 `/plan` 能力当成可用的 ACP 审批流程；Grok Plan 接入仍待验证。
 
 ## 思考过程
 
@@ -34,10 +42,12 @@ Moose 对 Codex 显式传入 `summary: auto`，接收 `item/reasoning/summaryTex
 
 ## 优先补齐的产品能力
 
+分阶段接入方案与验收标准见[实施计划](native-capabilities-plan.md)。该计划不代表功能已经实现。
+
 | 优先级 | 能力 | 当前 Moose 状态 |
 | --- | --- | --- |
-| 高 | 原生 Plan → 审阅／修改计划 → 批准执行 | 仅 Codex 的 Moose 只读规划模式 |
-| 高 | 运行中插话、调整任务方向 | 当前后续输入进入队列，没有接 `turn/steer` |
+| 高 | 原生 Plan → 审阅／修改计划 → 批准执行 | Codex 已接原生 Plan、版本化修改与批准执行；Grok／Pi 未接入 |
+| 高 | 运行中插话、调整任务方向 | Codex 已接 `turn/steer`；“立即发送”插话，普通发送保持排队；Grok／Pi 保持队列 |
 | 高 | 子代理独立面板与控制 | 本次新增委派活动，尚无完整子会话管理 |
 | 高 | Worktree 隔离、多任务并行与合并 | 同目录串行；没有 worktree 创建／清理／合并界面 |
 | 中 | Git 操作与原生代码审查 | 有 diff 预览；没有暂存、提交、PR 和原生 `review/start` 流程 |

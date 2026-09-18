@@ -57,7 +57,8 @@ for (const mode of ['plan', 'goal'] as const) {
         session.nativeId = id;
       },
       emit: (event) => {
-        if (event.kind === 'assistant') answer = event.text ?? answer + (event.delta || '');
+        if (event.kind === 'assistant' || event.kind === 'plan')
+          answer = event.text ?? answer + (event.delta || '');
         if (event.kind === 'approval') throw new Error('Unexpected approval');
       },
     });

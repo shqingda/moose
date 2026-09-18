@@ -740,3 +740,120 @@ for (const provider of ['codex', 'grok'] as const) {
     await page.screenshot({ path: `test-results/${provider}-subagents.png` });
   });
 }
+
+test('reviews, edits and approves a native plan, restoring execution permissions', async () => {
+  let sessionId = '';
+  const page = await launch((store) => {
+    const session = store.createSession(store.addProject(dir).id, 'codex');
+    sessionId = session.id;
+    store.updateSession(session.id, {
+      title: 'Native plan test',
+      draftContext: { mode: 'plan', references: [], skills: [] },
+    });
+  });
+  await page.getByRole('button', { name: 'Native plan test', exact: true }).click();
+  await page.locator('#composer').fill('plan-fixture');
+  await page.locator('#composer').press('Enter');
+  const plan = page.getByRole('region', { name: 'Review plan' });
+  await expect(plan.getByRole('button', { name: 'Approve and execute' })).toBeEnabled();
+  await expect(plan).toContainText('Create the approved file.');
+  await expect(readFile(join(dir, 'approved.txt'))).rejects.toThrow();
+  await plan.getByRole('button', { name: 'Edit plan' }).click();
+  await plan
+    .getByLabel('Plan text')
+    .fill('# Edited plan\n\nOnly create the approved file and report EDITED_SCOPE.');
+  await plan.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(plan).toContainText('v2');
+  await page.reload();
+  await page.getByRole('button', { name: 'Native plan test', exact: true }).click();
+  await expect(plan).toContainText('EDITED_SCOPE');
+  await page.screenshot({ path: 'test-results/native-plan-review.png' });
+  await plan.getByRole('button', { name: 'Approve and execute' }).click();
+  await expect(page.locator('.message-assistant')).toContainText('Executed approved text:');
+  await expect(page.locator('.message-assistant')).toContainText('EDITED_SCOPE');
+  expect(await readFile(join(dir, 'approved.txt'), 'utf8')).toBe('moose-approved\n');
+  const messages = await page.evaluate(
+    (sessionId) => window.moose.request('messages', { sessionId }),
+    sessionId,
+  );
+  expect(messages.messages.filter((m) => m.kind === 'user')).toHaveLength(2);
+  expect(messages.messages.find((m) => m.kind === 'plan')?.plan?.queueId).toBeTruthy();
+  await expect(page.getByRole('button', { name: 'Approve and execute' })).toHaveCount(0);
+  await expect(page.locator('.context-chips')).toHaveCount(0);
+});
+
+test('steers the active Codex turn and persists delivery without enqueueing a new turn', async () => {
+  let sessionId = '';
+  const page = await launch((store) => {
+    const session = store.createSession(store.addProject(dir).id, 'codex');
+    sessionId = session.id;
+    store.updateSession(session.id, { title: 'Steering test' });
+  });
+  await page.getByRole('button', { name: 'Steering test', exact: true }).click();
+  await page.locator('#composer').fill('steer-fixture');
+  await page.locator('#composer').press('Enter');
+  await expect(page.locator('.markdown')).toContainText('Waiting for steering.');
+  await page.locator('#composer').fill('Use the revised direction');
+  await page.getByRole('button', { name: 'Send now', exact: true }).click();
+  await expect(page.locator('.message-assistant').last()).toContainText(
+    'Use the revised direction',
+  );
+  await expect(page.getByText('Added to the active turn', { exact: true })).toBeVisible();
+  const messages = await page.evaluate(
+    (sessionId) => window.moose.request('messages', { sessionId }),
+    sessionId,
+  );
+  const users = messages.messages.filter((m) => m.kind === 'user');
+  expect(users).toHaveLength(2);
+  expect(users[0].runId).toBe(users[1].runId);
+  expect(users[0].nativeTurnId).toBe(users[1].nativeTurnId);
+  expect(
+    await page.evaluate((sessionId) => window.moose.request('queue', { sessionId }), sessionId),
+  ).toEqual([]);
+  await page.reload();
+  await page.getByRole('button', { name: 'Steering test', exact: true }).click();
+  await expect(page.getByText('Added to the active turn', { exact: true })).toBeVisible();
+  await page.screenshot({ path: 'test-results/native-steering.png' });
+});
+
+test('retains rejected steering input and marks disconnects unknown without retrying', async () => {
+  let sessionId = '';
+  const page = await launch((store) => {
+    const session = store.createSession(store.addProject(dir).id, 'codex');
+    sessionId = session.id;
+    store.updateSession(session.id, { title: 'Steering failures' });
+  });
+  await page.getByRole('button', { name: 'Steering failures', exact: true }).click();
+  await page.locator('#composer').fill('steer-fixture');
+  await page.locator('#composer').press('Enter');
+  await expect(page.locator('.markdown')).toContainText('Waiting for steering.');
+  await page.evaluate(
+    (id) =>
+      window.moose.request('updateSession', {
+        id,
+        draftContext: { mode: 'plan', references: [], skills: [] },
+      }),
+    sessionId,
+  );
+  await expect(page.locator('.context-chips')).toContainText('Plan mode');
+  await page.locator('#composer').fill('Rejected mode change');
+  await page.getByRole('button', { name: 'Send now', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Not sent' })).toBeVisible();
+  await expect(page.locator('#composer')).toHaveValue('Rejected mode change');
+  await page.locator('.context-chips button').click();
+  await page.locator('#composer').fill('drop-steer-fixture');
+  await page.getByRole('button', { name: 'Send now', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Delivery unknown' })).toBeVisible();
+  await expect(page.locator('#composer')).toHaveValue('');
+  expect(
+    await page.evaluate((sessionId) => window.moose.request('queue', { sessionId }), sessionId),
+  ).toEqual([]);
+  const messages = await page.evaluate(
+    (sessionId) => window.moose.request('messages', { sessionId }),
+    sessionId,
+  );
+  expect(messages.messages.filter((m) => m.delivery).map((m) => m.delivery?.status)).toEqual([
+    'rejected',
+    'unknown',
+  ]);
+});

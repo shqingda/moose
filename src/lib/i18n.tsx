@@ -1,5 +1,17 @@
 import { createContext, useContext } from 'react';
 export const en = {
+  planReview: 'Review plan',
+  planText: 'Plan text',
+  approvePlan: 'Approve and execute',
+  editPlan: 'Edit plan',
+  planApproved: 'Approved · execution queued in this conversation',
+  queueMessage: 'Add to queue',
+  steerNow: 'Send now',
+  steerAccepted: 'Added to the active turn',
+  steerRejected: 'Not sent · input retained; you can queue it',
+  steerSending: 'Sending to the active turn…',
+  steerUnknown: 'Delivery unknown · check the agent response before sending again',
+
   subagents: 'Subagents',
   subagentsDescription:
     'Ask the agent to delegate independent work and collect the results. Uses additional model capacity.',
@@ -199,6 +211,18 @@ export const en = {
 };
 export type TranslationKey = keyof typeof en;
 export const zh: Record<TranslationKey, string> = {
+  planReview: '审阅计划',
+  planText: '计划正文',
+  approvePlan: '批准并执行',
+  editPlan: '修改计划',
+  planApproved: '已批准 · 执行任务已加入本会话',
+  queueMessage: '加入队列',
+  steerNow: '立即发送',
+  steerAccepted: '已加入当前回合',
+  steerRejected: '未发送 · 输入已保留，可加入队列',
+  steerSending: '正在发送到当前回合…',
+  steerUnknown: '投递结果未知 · 再次发送前请核对代理回复',
+
   subagents: '子代理',
   subagentsDescription: '请求主代理分派独立任务并汇总结果，会使用额外模型额度。',
   agentSpawn: '分派任务',

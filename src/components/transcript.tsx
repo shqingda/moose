@@ -1,7 +1,6 @@
 import { memo, useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeHighlight from 'rehype-highlight';
+import { Markdown } from './markdown';
+import { PlanReview } from './plan-review';
 import {
   Check,
   ChevronRight,
@@ -36,43 +35,6 @@ import { AttachmentList } from './attachments';
 import { Picker, IconButton } from './common';
 import { SubagentActivity } from './subagent-activity';
 
-/** 渲染带代码高亮的 Markdown，链接通过受限系统入口打开。 */
-const Markdown = memo(function Markdown({
-  text,
-  onError,
-}: {
-  text: string;
-  onError(error: string): void;
-}) {
-  return (
-    <div className="markdown">
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeHighlight]}
-        skipHtml
-        components={{
-          a: ({ href, children }) => (
-            <a
-              href={href}
-              onClick={(e) => {
-                e.preventDefault();
-                if (href)
-                  void window.moose
-                    .request('openExternal', { url: href })
-                    .catch((error) => onError(String(error)));
-              }}
-            >
-              {children}
-            </a>
-          ),
-          img: ({ alt }) => <span className="image-placeholder">{alt || 'Image'}</span>,
-        }}
-      >
-        {text}
-      </ReactMarkdown>
-    </div>
-  );
-});
 /** 展示代理提问并提交答案，由后台校验请求是否仍有效。 */
 function Questions({ message, onError }: { message: MessageData; onError(error: string): void }) {
   const t = useI18n();
@@ -154,6 +116,8 @@ const TranscriptRow = memo(function TranscriptRow({
     [editing, setEditing] = useState(false),
     [edited, setEdited] = useState(message.text),
     [sending, setSending] = useState(false);
+  if (message.kind === 'plan')
+    return <PlanReview message={message} busy={busy} onError={onError} />;
   if (message.kind === 'error')
     return (
       <Alert variant="destructive">
@@ -274,7 +238,23 @@ const TranscriptRow = memo(function TranscriptRow({
           <BubbleContent>
             {!!message.attachments?.length && <AttachmentList items={message.attachments} />}
             {message.kind === 'user' ? (
-              <div className="user-text">{message.text}</div>
+              <div>
+                <div className="user-text">{message.text}</div>
+                {message.delivery && (
+                  <small role="status">
+                    {t(
+                      message.delivery.status === 'accepted'
+                        ? 'steerAccepted'
+                        : message.delivery.status === 'rejected'
+                          ? 'steerRejected'
+                          : message.delivery.status === 'sending' && message.state === 'pending'
+                            ? 'steerSending'
+                            : 'steerUnknown',
+                    )}
+                    {message.delivery.error && ` · ${message.delivery.error}`}
+                  </small>
+                )}
+              </div>
             ) : (
               <Markdown text={message.text || '…'} onError={onError} />
             )}
@@ -305,7 +285,7 @@ const TranscriptRow = memo(function TranscriptRow({
             >
               {copied ? <Check /> : <Copy />}
             </IconButton>
-            {message.kind === 'user' && latestUser && (
+            {message.kind === 'user' && latestUser && !message.delivery && (
               <IconButton
                 label={t('editMessage')}
                 disabled={busy}
@@ -387,7 +367,9 @@ export function Transcript({
                     lastAssistant={lastAssistants.get(message.runId) === message.id}
                     onError={onError}
                     onEdit={onEdit}
-                    busy={['running', 'waiting', 'queued'].includes(session.status)}
+                    busy={
+                      session.archived || ['running', 'waiting', 'queued'].includes(session.status)
+                    }
                   />
                 </MessageScrollerItem>
               ))}

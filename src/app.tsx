@@ -254,7 +254,7 @@ function Workspace({
     [],
   );
   /** 首次发送时创建会话并保存选项，再把输入提交到后台队列。 */
-  const onSend = async (context: PromptContext) => {
+  const onSend = async (context: PromptContext, delivery?: 'steer') => {
     const text = (drafts[draftKey] ?? session?.draft ?? '').trim();
     if (!project || (!text && !attachments.length)) return;
     const target =
@@ -270,14 +270,16 @@ function Workspace({
       ))
     )
       return;
-    const item = await perform(() =>
-      window.moose.request('send', {
-        sessionId: target.id,
-        text,
-        attachments: attachments.map((a) => a.id),
-        context,
-      }),
-    );
+    const args = { sessionId: target.id, text, attachments: attachments.map((a) => a.id), context };
+    const item =
+      delivery === 'steer'
+        ? await (async () => {
+            const result = await perform(() =>
+              window.moose.request('steer', { ...args, requestId: crypto.randomUUID() }),
+            );
+            return result?.delivery?.status === 'rejected' ? undefined : result;
+          })()
+        : await perform(() => window.moose.request('send', args));
     if (item) {
       setAttachmentDrafts((old) => ({ ...old, [draftKey]: [], [target.id]: [] }));
       clearTimeout(saveTimers.current.get(target.id));

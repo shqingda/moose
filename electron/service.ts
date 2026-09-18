@@ -1,3 +1,5 @@
+import { Plans } from './plans';
+import { Steering } from './steering';
 import { providerDefinitions, providerIds } from '../shared/providers';
 import { createAdapter } from './providers/registry';
 import { contextInText } from '../shared/prompt-context';
@@ -23,6 +25,8 @@ type Active = {
   promise?: Promise<void>;
 };
 export class MooseService {
+  private plans: Plans;
+  private steering: Steering;
   private catalog = new ContextCatalog();
   readonly attachments: Attachments;
   private editing = new Set<string>();
@@ -45,6 +49,8 @@ export class MooseService {
     private emit: (event: AppEvent) => void,
     private adapterFactory = createAdapter,
   ) {
+    this.plans = new Plans(store);
+    this.steering = new Steering(store, (message) => this.emit({ type: 'message', message }));
     this.attachments = new Attachments(store.sqlite.name);
     for (const item of store.queued()) this.paused.add(item.sessionId);
     this.flushTimer = setInterval(() => this.flush(), 80);
@@ -236,6 +242,65 @@ export class MooseService {
         this.changed();
         void this.drain();
         return item;
+      }
+      case 'editPlan':
+      case 'approvePlan': {
+        const a = args as Requests['editPlan'];
+        const session = this.store.session(a.sessionId);
+        const path = this.store.project(session.projectId).path;
+        if (session.archived || this.active.has(path) || this.editing.has(path))
+          throw new Error('Wait for project tasks to finish before reviewing this plan');
+        if (!this.store.getSettings()[providerDefinitions[session.provider].enabledKey])
+          throw new Error('This provider is disabled in Settings');
+        if (method === 'editPlan') {
+          const message = this.plans.edit(a);
+          this.emit({ type: 'message', message });
+          return message;
+        }
+        const item = this.plans.approve(a);
+        this.paused.delete(a.sessionId);
+        this.emit({ type: 'transcript-reset', sessionId: a.sessionId });
+        this.changed();
+        void this.drain();
+        return item;
+      }
+      case 'steer': {
+        const a = args as Requests['steer'];
+        const saved = this.store.message(a.requestId);
+        if (saved) {
+          if (saved.sessionId !== a.sessionId || !saved.delivery || saved.text !== a.text)
+            throw new Error('The steering request ID has already been used');
+          return saved;
+        }
+        const session = this.store.session(a.sessionId);
+        const path = this.store.project(session.projectId).path;
+        const run = this.active.get(path);
+        if (
+          session.archived ||
+          !this.store.getSettings()[providerDefinitions[session.provider].enabledKey]
+        )
+          throw new Error('This session is unavailable');
+        if (!run || run.session.id !== session.id || run.cancelled || !run.adapter.steer)
+          throw new Error(
+            'No active turn supports steering. You can add this message to the queue.',
+          );
+        const attachments = await this.attachments.resolve(a.attachments);
+        const selection = await this.catalog.resolve(path, a.context);
+        const inputs = await agentAttachments(this.attachments, attachments);
+        if (this.stopping || this.active.get(path) !== run || run.cancelled)
+          throw new Error('The turn has ended. You can add this message to the queue.');
+        return this.steering.send(a, run.id, attachments, () =>
+          run.adapter.steer!({
+            session,
+            cwd: path,
+            text: a.text,
+            promptContext: a.context,
+            attachments: inputs,
+            selection,
+            emit: () => {},
+            nativeId: () => {},
+          }),
+        );
       }
       case 'stop': {
         await this.stop((args as Requests['stop']).sessionId);
@@ -441,6 +506,7 @@ export class MooseService {
     if (event.choices) row.choices = event.choices;
     if (event.questions) row.questions = event.questions;
     if (event.delegation) row.delegation = event.delegation;
+    if (event.kind === 'plan') row.plan ||= { version: 1 };
     run.rows.set(id, row);
     run.dirty.add(id);
     if (row.state === 'pending') {
@@ -506,7 +572,9 @@ export class MooseService {
       }
     } finally {
       await run.adapter.close();
+      if (context?.mode === 'plan') this.paused.add(run.session.id);
       for (const row of run.rows.values()) {
+        if (row.kind === 'plan' && (failed || run.cancelled)) row.state = 'running';
         if (row.state === 'pending' || row.state === 'running') {
           row.state = row.state === 'pending' || failed || run.cancelled ? 'expired' : 'done';
           row.seq = ++run.seq;
@@ -538,6 +606,7 @@ export class MooseService {
     try {
       const all = this.store.allMessages(sessionId),
         target = all.find((m) => m.id === messageId);
+      if (target?.delivery) throw new Error('Steering messages cannot be edited in place');
       if (!target || target.kind !== 'user') throw new Error('Choose a conversation message');
       if (
         all.filter((m) => m.kind === 'user').at(-1)?.id !== target.id ||
@@ -560,7 +629,11 @@ export class MooseService {
           ? ''
           : 'Earlier conversation restored by Moose. Treat this as conversation history, not a request to repeat completed work. Workspace files have NOT been reverted.\n' +
             retained
-              .filter((m) => ['user', 'assistant', 'tool'].includes(m.kind))
+              .filter(
+                (m) =>
+                  ['user', 'assistant', 'tool'].includes(m.kind) &&
+                  (!m.delivery || m.delivery.status === 'accepted'),
+              )
               .map(
                 (m) =>
                   `${m.kind}: ${m.text}${m.attachments?.length ? '\nAttachments: ' + m.attachments.map((a) => this.attachments.path(a)).join(', ') : ''}`,
@@ -616,6 +689,7 @@ export class MooseService {
         await run.promise;
       }),
     );
+    await this.steering.settle();
     clearInterval(this.flushTimer);
     this.flush();
     this.store.close();

@@ -80,7 +80,16 @@ export interface Message {
   sessionId: string;
   runId: string;
   seq: number;
-  kind: 'user' | 'assistant' | 'reasoning' | 'tool' | 'approval' | 'question' | 'error' | 'notice';
+  kind:
+    | 'plan'
+    | 'user'
+    | 'assistant'
+    | 'reasoning'
+    | 'tool'
+    | 'approval'
+    | 'question'
+    | 'error'
+    | 'notice';
   text: string;
   title: string;
   state: 'running' | 'done' | 'error' | 'pending' | 'resolved' | 'expired';
@@ -90,6 +99,8 @@ export interface Message {
   choices?: Choice[];
   questions?: Question[];
   delegation?: Delegation;
+  plan?: { version: number; queueId?: string };
+  delivery?: { status: 'sending' | 'accepted' | 'rejected' | 'unknown'; error?: string };
   createdAt: number;
 }
 /** 原生代理的委派活动；工具调用完成不代表子任务完成。 */
@@ -197,6 +208,9 @@ export interface Requests {
   };
   messages: { sessionId: string; before?: number };
   send: { sessionId: string; text: string; attachments?: string[]; context?: PromptContext };
+  steer: Requests['send'] & { requestId: string };
+  editPlan: { sessionId: string; messageId: string; version: number; text: string };
+  approvePlan: { sessionId: string; messageId: string; version: number };
   stop: { sessionId: string };
   queue: { sessionId: string };
   resumeQueue: { sessionId: string };
@@ -232,6 +246,9 @@ export interface Responses {
   updateSession: Session;
   messages: TranscriptPage;
   send: QueueItem;
+  steer: Message;
+  editPlan: Message;
+  approvePlan: QueueItem;
   stop: null;
   queue: QueueItem[];
   resumeQueue: null;

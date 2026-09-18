@@ -124,6 +124,9 @@ createInterface({ input: process.stdin }).on('line', (line) => {
     case 'account/read':
       result(m.id, { account: { type: 'chatgpt' } });
       break;
+    case 'collaborationMode/list':
+      result(m.id, { data: [{ name: 'Plan', mode: 'plan' }] });
+      break;
     case 'model/list':
       result(m.id, {
         data: [
@@ -144,7 +147,7 @@ createInterface({ input: process.stdin }).on('line', (line) => {
       cwd = p.cwd;
       threadSettings = p;
       sessionId = m.method === 'thread/fork' ? randomUUID() : p.threadId || randomUUID();
-      result(m.id, { thread: { id: sessionId } });
+      result(m.id, { thread: { id: sessionId }, model: 'fixture' });
       break;
     case 'thread/goal/get':
       result(m.id, { goal });
@@ -176,7 +179,53 @@ createInterface({ input: process.stdin }).on('line', (line) => {
       pendingPrompt = acp ? p.prompt[0].text : p.input[0].text;
       if (!acp) {
         result(m.id, { turn: { id: turnId } });
-        notify('turn/started', { threadId: sessionId, turn: { id: turnId } });
+        if (pendingPrompt !== 'steer-response-first')
+          notify('turn/started', { threadId: sessionId, turn: { id: turnId } });
+      }
+      if (pendingPrompt === 'steer-response-first') break;
+      if (pendingPrompt.startsWith('plan-fixture')) {
+        if (p.collaborationMode?.mode !== 'plan' || threadSettings.sandbox !== 'read-only') {
+          complete('Native plan settings missing', false);
+          break;
+        }
+        notify('item/started', {
+          threadId: sessionId,
+          item: { type: 'plan', id: 'plan-native', text: '' },
+        });
+        notify('item/plan/delta', {
+          threadId: sessionId,
+          itemId: 'plan-native',
+          delta: '# Native plan\n\nCreate the approved file.',
+        });
+        notify('item/completed', {
+          threadId: sessionId,
+          item: {
+            type: 'plan',
+            id: 'plan-native',
+            text: '# Native plan\n\nCreate the approved file.',
+          },
+        });
+        notify('turn/completed', {
+          threadId: sessionId,
+          turn: { id: turnId, status: 'completed' },
+        });
+        break;
+      }
+      if (pendingPrompt.startsWith('Implement the following user-approved plan')) {
+        if (p.collaborationMode?.mode !== 'default' || threadSettings.sandbox === 'read-only') {
+          complete('Execution mode was not restored', false);
+          break;
+        }
+        complete('Executed approved text: ' + pendingPrompt);
+        break;
+      }
+      if (pendingPrompt === 'steer-fixture') {
+        notify('item/agentMessage/delta', {
+          threadId: sessionId,
+          itemId: 'working',
+          delta: 'Waiting for steering.',
+        });
+        break;
       }
       if (pendingPrompt.startsWith('inspect-input')) {
         complete(JSON.stringify({ input: p.input || p.prompt, settings: threadSettings }), false);
@@ -278,6 +327,17 @@ createInterface({ input: process.stdin }).on('line', (line) => {
         });
       break;
     }
+    case 'turn/steer':
+      if (p.input?.[0]?.text === 'drop-steer-fixture') {
+        process.exit(0);
+      }
+      if (p.expectedTurnId !== turnId)
+        send({ id: m.id, error: { code: -32602, message: 'Turn ended' } });
+      else {
+        result(m.id, { turnId });
+        complete('Steered: ' + JSON.stringify(p.input), false);
+      }
+      break;
     case 'turn/interrupt':
       result(m.id, {});
       notify('turn/completed', {

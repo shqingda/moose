@@ -124,7 +124,17 @@ export class Store {
   }
   /** 按消息 ID 更新记录；seq 不增加时拒绝覆盖，保持流式更新顺序。 */
   saveMessage(message: Omit<Message, 'position'>): Message {
-    const { choices, questions, attachments, nativeTurnId, context, delegation, ...data } = message;
+    const {
+      choices,
+      questions,
+      attachments,
+      nativeTurnId,
+      context,
+      delegation,
+      plan,
+      delivery,
+      ...data
+    } = message;
     const row = {
       ...data,
       details: JSON.stringify({
@@ -134,6 +144,8 @@ export class Store {
         nativeTurnId,
         context,
         delegation,
+        plan,
+        delivery,
       }),
     };
     const existing = this.db
@@ -150,6 +162,10 @@ export class Store {
     return this.decode(
       this.db.select().from(table.messages).where(eq(table.messages.id, message.id)).get()!,
     );
+  }
+  message(id: string): Message | undefined {
+    const row = this.db.select().from(table.messages).where(eq(table.messages.id, id)).get();
+    return row ? this.decode(row) : undefined;
   }
   /** 把 details JSON 中的附件、审批与上下文字段还原为 Message。 */
   private decode(row: typeof table.messages.$inferSelect): Message {

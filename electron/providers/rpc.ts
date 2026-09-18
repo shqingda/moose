@@ -12,6 +12,7 @@ export interface RpcCodec {
   encode(message: RpcMessage): unknown;
   decode(message: unknown): RpcMessage;
 }
+export class RpcRejected extends Error {}
 export class JsonRpc {
   readonly child;
   onNotification: (method: string, params: unknown) => void = () => {};
@@ -77,7 +78,9 @@ export class JsonRpc {
       this.pending.delete(message.id);
       clearTimeout(pending.timer);
       if (message.error)
-        pending.reject(new Error(string(record(message.error).message) || 'Agent request failed'));
+        pending.reject(
+          new RpcRejected(string(record(message.error).message) || 'Agent request failed'),
+        );
       else pending.resolve(message.result);
     }
   }

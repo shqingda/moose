@@ -58,6 +58,26 @@ export const schemas = {
       attachments: z.array(id).max(10).optional(),
     })
     .refine((a) => a.text.length > 0 || !!a.attachments?.length, 'Add a message or attachment'),
+  steer: z
+    .strictObject({
+      sessionId: id,
+      requestId: id,
+      text: z.string().trim().max(100_000),
+      context: context.optional(),
+      attachments: z.array(id).max(10).optional(),
+    })
+    .refine((a) => a.text.length > 0 || !!a.attachments?.length, 'Add a message or attachment'),
+  editPlan: z.strictObject({
+    sessionId: id,
+    messageId: z.string().min(1).max(500),
+    version: z.number().int().positive(),
+    text,
+  }),
+  approvePlan: z.strictObject({
+    sessionId: id,
+    messageId: z.string().min(1).max(500),
+    version: z.number().int().positive(),
+  }),
   stop: z.strictObject({ sessionId: id }),
   queue: z.strictObject({ sessionId: id }),
   resumeQueue: z.strictObject({ sessionId: id }),

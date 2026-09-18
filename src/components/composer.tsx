@@ -61,7 +61,7 @@ export function Composer({
   onDraft(text: string): void;
   onProvider(provider: Provider): void;
   onOptions(patch: { model?: string; effort?: string; mode?: PermissionMode }): void;
-  onSend(context: PromptContext): Promise<boolean | undefined>;
+  onSend(context: PromptContext, delivery?: 'steer'): Promise<boolean | undefined>;
   onStop(): void;
   onError(error: string): void;
   disabled?: boolean;
@@ -72,6 +72,9 @@ export function Composer({
   const [skills, setSkills] = useState<ContextEntry[]>([]),
     [skillsReady, setSkillsReady] = useState(false);
   const migrated = useRef(false);
+  useEffect(() => {
+    if (session?.draftContext) setContext(session.draftContext);
+  }, [session?.draftContext?.mode]);
   useEffect(() => {
     let live = true;
     void window.moose
@@ -153,7 +156,7 @@ export function Composer({
     };
   }, [session?.id, onError]);
   /** 提交输入并根据发送结果清理草稿，失败时保留内容供重试。 */
-  const send = async () => {
+  const send = async (delivery?: 'steer') => {
     if (
       (!draft.trim() && !attachments.length) ||
       sending ||
@@ -164,7 +167,7 @@ export function Composer({
       return;
     setSending(true);
     try {
-      if (await onSend(contextInText(draft, context, skills)))
+      if (await onSend(contextInText(draft, context, skills), delivery))
         setContext({ ...context, skills: [], references: [] });
     } finally {
       setSending(false);
@@ -425,10 +428,28 @@ export function Composer({
                 <Square fill="currentColor" />
               </IconButton>
             )}
+            {provider === 'codex' && session && ['running', 'waiting'].includes(session.status) && (
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={
+                  disabled ||
+                  sending ||
+                  unsupportedImages ||
+                  info?.enabled === false ||
+                  session.archived ||
+                  (!draft.trim() && !attachments.length)
+                }
+                onClick={() => void send('steer')}
+              >
+                {t('steerNow')}
+              </Button>
+            )}
             <Button
               size="icon"
               className="send-button"
-              aria-label={t('send')}
+              aria-label={t(busy ? 'queueMessage' : 'send')}
+              title={t(busy ? 'queueMessage' : 'send')}
               onClick={() => {
                 void send();
               }}

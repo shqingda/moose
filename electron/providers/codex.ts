@@ -1,6 +1,6 @@
-import { attachmentText, taskText } from './prompt';
+import { codexInput } from './codex-input';
 import { codexDelegation } from './codex-subagents';
-import { JsonRpc } from './rpc';
+import { JsonRpc, RpcRejected } from './rpc';
 import {
   array,
   readable,
@@ -35,6 +35,8 @@ export function normalizeCodex(method: string, input: unknown): AgentEvent | nul
   const p = record(input),
     item = record(p.item);
   const key = string(p.itemId) || string(item.id);
+  if (method === 'item/plan/delta')
+    return { key, kind: 'plan', delta: string(p.delta), state: 'running' };
   if (method === 'item/agentMessage/delta')
     return { key, kind: 'assistant', delta: string(p.delta), state: 'running' };
   if (method === 'item/reasoning/summaryTextDelta' || method === 'item/reasoning/textDelta')
@@ -84,7 +86,7 @@ export function normalizeCodex(method: string, input: unknown): AgentEvent | nul
         state,
       };
     case 'plan':
-      return { key, kind: 'assistant', title: 'Plan', text: string(item.text), state };
+      return { key, kind: 'plan', title: 'Plan', text: string(item.text), state };
     case 'webSearch':
       return { key, kind: 'tool', title: 'Web search', text: string(item.query), state };
     default:
@@ -95,6 +97,7 @@ export class CodexAdapter implements AgentAdapter {
   private rpc?: JsonRpc;
   private context?: RunContext;
   private turnId = '';
+  private completedTurnId = '';
   private threadId = '';
   private childThreads = new Set<string>();
   private requests = new Map<
@@ -142,7 +145,9 @@ export class CodexAdapter implements AgentAdapter {
         this.context.turnId?.(this.turnId);
       }
       if (method === 'turn/completed') {
+        this.turnId = '';
         const turn = record(p.turn);
+        this.completedTurnId = string(turn.id);
         if (turn.status === 'failed')
           this.finish?.reject(new Error(string(record(turn.error).message) || 'Codex turn failed'));
         else if (this.pursuingGoal && !this.cancelled) {
@@ -306,12 +311,19 @@ export class CodexAdapter implements AgentAdapter {
     const rpc = await this.connect(context.cwd);
     if (this.cancelled) return;
     const planning = context.promptContext?.mode === 'plan';
+    if (planning) {
+      const modes = await rpc.request<
+        import('./generated/codex/v2/CollaborationModeListResponse').CollaborationModeListResponse
+      >('collaborationMode/list', {});
+      if (!modes.data?.some((mode) => mode.mode === 'plan'))
+        throw new Error(
+          'This Codex CLI does not provide native Plan mode. Update Codex and reconnect.',
+        );
+    }
     const params: ThreadStartParams = {
       cwd: context.cwd,
+      developerInstructions: '',
       ...codexPermissions(context.session.mode),
-      developerInstructions: planning
-        ? 'Moose Plan mode: explore with read-only tools, ask clarifying questions when needed, and produce an implementation plan. Do not modify files, execute changes, or use tools that mutate external state.'
-        : '',
       ...(planning
         ? ({
             sandbox: 'read-only',
@@ -352,36 +364,26 @@ export class CodexAdapter implements AgentAdapter {
     const turn: TurnStartParams = {
       summary: 'auto',
       threadId: this.threadId,
-      input: [
-        { type: 'text', text: taskText(context), text_elements: [] },
-        ...(context.selection?.references || []).map((a) => ({
-          type: 'mention' as const,
-          name: a.name,
-          path: a.path,
-        })),
-        ...(context.selection?.skills || []).map((a) => ({
-          type: 'skill' as const,
-          name: a.name,
-          path: a.path,
-        })),
-        ...(context.attachments || []).flatMap((a): TurnStartParams['input'] =>
-          a.mime.startsWith('image/')
-            ? [{ type: 'localImage', path: a.path }]
-            : [
-                {
-                  type: 'text',
-                  text: attachmentText(a),
-                  text_elements: [],
-                },
-              ],
-        ),
-      ],
+      input: codexInput(context),
+      collaborationMode: {
+        mode: planning ? 'plan' : 'default',
+        settings: {
+          model: context.session.model || string(result.model),
+          reasoning_effort: context.session.effort
+            ? (context.session.effort as ReasoningEffort)
+            : null,
+          developer_instructions: null,
+        },
+      },
       ...(context.session.model ? { model: context.session.model } : {}),
       ...(context.session.effort ? { effort: context.session.effort as ReasoningEffort } : {}),
     };
+    if (!turn.collaborationMode?.settings.model)
+      throw new Error('Codex did not return the active model');
     const started = record(await rpc.request('turn/start', turn));
-    this.turnId = string(record(started.turn).id) || this.turnId;
-    context.turnId?.(this.turnId);
+    const startedId = string(record(started.turn).id);
+    if (startedId && startedId !== this.completedTurnId) this.turnId = startedId;
+    context.turnId?.(startedId);
     if (this.cancelled) await this.cancel();
     await completed;
     if (context.promptContext?.mode === 'goal' && !this.cancelled) {
@@ -404,6 +406,23 @@ export class CodexAdapter implements AgentAdapter {
       if (this.cancelled) await this.cancel();
       await pursuit;
     }
+  }
+  /** 向当前回合追加输入；拒绝结果与超时分别交给服务层处理。 */
+  async steer(context: RunContext): Promise<string> {
+    if (!this.rpc || !this.turnId || this.cancelled)
+      throw new RpcRejected('The turn has ended. You can add this message to the queue.');
+    if ((context.promptContext?.mode || 'build') !== (this.context?.promptContext?.mode || 'build'))
+      throw new RpcRejected(
+        'Steering cannot change the active task mode. Add this message to the queue.',
+      );
+    const result = await this.rpc.request<
+      import('./generated/codex/v2/TurnSteerResponse').TurnSteerResponse
+    >('turn/steer', {
+      threadId: this.threadId,
+      expectedTurnId: this.turnId,
+      input: codexInput(context),
+    });
+    return result.turnId;
   }
   /** 从指定原生 turn 准备编辑前的上下文；不会创建新的 Moose 侧栏会话。 */
   async fork(session: RunContext['session'], cwd: string, lastTurnId: string) {

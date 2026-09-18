@@ -20,6 +20,7 @@ class ControlledAgent implements AgentAdapter {
       this.complete = resolve;
     });
   }
+  steer = vi.fn(async (_context: RunContext) => 'native-turn');
   respond() {}
   async cancel() {
     this.complete();
@@ -104,4 +105,75 @@ it('retains editable queued followups after stop, then resumes on explicit actio
   await service.handle('resumeQueue', { sessionId: session.id });
   await vi.waitFor(() => expect(agents.filter((a) => a.context)).toHaveLength(2));
   expect(agents[1].context?.text).toBe('edited');
+});
+
+it('pauses queued followups after planning and blocks approval until the run is finished', async () => {
+  const { dir, store, service, agents } = fixture();
+  const session = store.createSession(store.addProject(dir).id, 'codex');
+  await service.handle('send', {
+    sessionId: session.id,
+    text: 'plan',
+    context: { mode: 'plan', references: [], skills: [] },
+  });
+  await vi.waitFor(() => expect(agents[0]?.context).toBeDefined());
+  agents[0].context!.emit({
+    key: 'plan',
+    kind: 'plan',
+    text: 'Review before execution',
+    state: 'done',
+  });
+  await vi.waitFor(() =>
+    expect(store.allMessages(session.id).some((m) => m.kind === 'plan')).toBe(true),
+  );
+  const plan = store.allMessages(session.id).find((m) => m.kind === 'plan')!;
+  const args = { sessionId: session.id, messageId: plan.id, version: 1 };
+  await expect(service.handle('approvePlan', args)).rejects.toThrow('Wait for project tasks');
+  await service.handle('send', { sessionId: session.id, text: 'must remain queued' });
+  agents[0].complete();
+  await vi.waitFor(() => expect(store.session(session.id).status).toBe('completed'));
+  expect(store.queued(session.id)).toHaveLength(1);
+  expect(agents).toHaveLength(1);
+  await expect(service.handle('approvePlan', args)).rejects.toThrow('queued messages');
+  store.updateQueue(store.queued(session.id)[0].id, undefined, true);
+  await service.handle('approvePlan', args);
+  await vi.waitFor(() => expect(agents[1]?.context?.promptContext?.mode).toBe('build'));
+  expect(agents[1].context?.text).toContain('Review before execution');
+});
+it('expires a plan when its run is cancelled even if its item was already completed', async () => {
+  const { dir, store, service, agents } = fixture();
+  const session = store.createSession(store.addProject(dir).id, 'codex');
+  await service.handle('send', {
+    sessionId: session.id,
+    text: 'plan',
+    context: { mode: 'plan', references: [], skills: [] },
+  });
+  await vi.waitFor(() => expect(agents[0]?.context).toBeDefined());
+  agents[0].context!.emit({ key: 'plan', kind: 'plan', text: 'Incomplete run', state: 'done' });
+  await service.stop(session.id);
+  const plan = store.allMessages(session.id).find((m) => m.kind === 'plan')!;
+  expect(plan.state).toBe('expired');
+  await expect(
+    service.handle('approvePlan', { sessionId: session.id, messageId: plan.id, version: 1 }),
+  ).rejects.toThrow('not ready');
+});
+it('persists steering separately from queue and rejects it after stopping', async () => {
+  const { dir, store, service, agents } = fixture();
+  const session = store.createSession(store.addProject(dir).id, 'codex');
+  await service.handle('send', { sessionId: session.id, text: 'original' });
+  await vi.waitFor(() => expect(agents[0]?.context).toBeDefined());
+  const requestId = crypto.randomUUID();
+  await service.handle('steer', { sessionId: session.id, requestId, text: 'new direction' });
+  expect(store.message(requestId)?.delivery?.status).toBe('accepted');
+  expect(store.queued(session.id)).toHaveLength(0);
+  expect(agents[0].steer).toHaveBeenCalledTimes(1);
+  await service.stop(session.id);
+  await service.handle('steer', { sessionId: session.id, requestId, text: 'new direction' });
+  expect(agents[0].steer).toHaveBeenCalledTimes(1);
+  await expect(
+    service.handle('steer', {
+      sessionId: session.id,
+      requestId: crypto.randomUUID(),
+      text: 'too late',
+    }),
+  ).rejects.toThrow('No active turn');
 });

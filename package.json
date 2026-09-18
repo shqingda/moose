@@ -1,6 +1,6 @@
 {
   "name": "moose",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": true,
   "description": "A quiet workspace for your coding agents",
   "license": "UNLICENSED",
@@ -18,7 +18,7 @@
     "native:rebuild": "electron-builder install-app-deps",
     "package": "pnpm build && electron-builder --mac dir --arm64",
     "dist": "pnpm build && electron-builder --mac dmg --arm64",
-    "protocol:generate": "codex app-server generate-ts --out electron/providers/generated/codex",
+    "protocol:generate": "codex app-server generate-ts --experimental --out electron/providers/generated/codex",
     "postinstall": "install-electron && electron-builder install-app-deps",
     "test:live": "tsx scripts/live-providers.ts",
     "icon:build": "swift scripts/icon.swift && iconutil -c icns build/icon.iconset -o build/icon.icns",

@@ -24,7 +24,7 @@ Oxfmt 负责格式，Oxlint 负责基础正确性检查，不依赖 ESLint。统
 
 better-sqlite3 是运行时依赖；安装与打包会准备原生模块，打包按 Electron arm64 ABI 重建，并将 `.node` 从 ASAR 解包。手动修复使用 `pnpm native:rebuild`。数据库与代理处理在 utility process，renderer 无 Node 权限。
 
-`MOOSE_DATA_DIR` 可指定隔离数据目录，测试不应使用正式用户数据库。Codex 协议类型基于 0.154.0，`pnpm protocol:generate` 用当前系统 CLI 重新生成，更新后需检查兼容性。
+`MOOSE_DATA_DIR` 可指定隔离数据目录，测试不应使用正式用户数据库。Codex 协议类型基于 0.155.0（包含 `--experimental` 字段），`pnpm protocol:generate` 用当前系统 CLI 重新生成，更新后需检查兼容性。
 
 ## 发布流程
 
