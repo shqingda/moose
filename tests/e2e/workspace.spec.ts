@@ -130,17 +130,20 @@ test('handles 10,000 persisted events, paging, IME input, archive and restore', 
   ).toBe(0);
   await page.getByRole('button', { name: 'Load earlier messages' }).click();
   await expect(page.locator('.markdown')).toHaveCount(160);
-  await page.getByRole('button', { name: 'Rename', exact: true }).click();
+  await page.getByRole('button', { name: 'Workspace tools', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Rename', exact: true }).click();
   await page.getByLabel('Session title').fill('Renamed conversation');
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page.locator('.header-title')).toHaveText('Renamed conversation');
-  await page.getByRole('button', { name: 'Archive', exact: true }).click();
+  await page.getByRole('button', { name: 'Workspace tools', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Archive', exact: true }).click();
   await page.getByRole('button', { name: 'Confirm', exact: true }).click();
   await expect(page.locator('#composer')).toBeEnabled();
   await expect(page.locator('.header-title')).toHaveCount(0);
   await page.getByRole('button', { name: 'Archived sessions', exact: true }).click();
   await page.locator('.session-row').filter({ hasText: 'Renamed conversation' }).click();
-  await page.getByRole('button', { name: 'Restore', exact: true }).click();
+  await page.getByRole('button', { name: 'Workspace tools', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Restore', exact: true }).click();
   await expect(page.locator('#composer')).toBeEnabled();
   await app.close();
   const env = Object.fromEntries(
@@ -283,7 +286,8 @@ test('archives before deletion, opens an unsaved conversation and keeps project 
   await expect(page.locator('.session-row')).toHaveCount(2);
   await expect(page.locator('#composer')).toBeEnabled();
   await page.locator('.session-row').filter({ hasText: 'One' }).click();
-  await page.getByRole('button', { name: 'Archive', exact: true }).click();
+  await page.getByRole('button', { name: 'Workspace tools', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Archive', exact: true }).click();
   await page.getByRole('button', { name: 'Confirm', exact: true }).click();
   await expect(page.locator('.session-row')).toHaveCount(1);
   await expect(page.locator('#composer')).toBeEnabled();
@@ -853,4 +857,44 @@ test('retains rejected steering input and marks disconnects unknown without retr
     'rejected',
     'unknown',
   ]);
+});
+
+test('keeps workspace tools keyboard accessible and restores focus after dialogs at narrow width', async () => {
+  const title = 'A long conversation title that must leave room for workspace actions';
+  const page = await launch((store) => {
+    const project = store.addProject(dir);
+    const session = store.createSession(project.id, 'codex');
+    store.updateSession(session.id, { title });
+  });
+  await page.getByRole('button', { name: title, exact: true }).click();
+  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(900, 740));
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const trigger = page.getByRole('button', { name: 'Workspace tools', exact: true });
+  await expect(trigger).toBeInViewport();
+  await expect(page.getByRole('button', { name: 'Review changes', exact: true })).toBeInViewport();
+  await expect(
+    page.getByRole('button', { name: 'Background commands & schedules', exact: true }),
+  ).toBeInViewport();
+  await trigger.focus();
+  await page.keyboard.press('ArrowDown');
+  const history = page.getByRole('menuitem', { name: 'Native sessions', exact: true });
+  await expect(history).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('dialog', { name: 'Native sessions', exact: true })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(trigger).toBeFocused();
+  await trigger.click();
+  await page.getByRole('menuitem', { name: 'Rename', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Rename', exact: true })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(trigger).toBeFocused();
+  await trigger.click();
+  await page.screenshot({ path: 'test-results/workspace-tools-light.png', animations: 'disabled' });
+  await page.keyboard.press('Escape');
+  await expect(trigger).toBeFocused();
+  await page.evaluate(() => window.moose.request('settings', { theme: 'dark', language: 'zh-CN' }));
+  const localized = page.getByRole('button', { name: '工作区工具', exact: true });
+  await localized.click();
+  await expect(page.getByRole('menuitem', { name: '原生会话', exact: true })).toBeVisible();
+  await page.screenshot({ path: 'test-results/workspace-tools-dark.png', animations: 'disabled' });
 });

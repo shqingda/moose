@@ -31,7 +31,8 @@ async function launch() {
   const page = await app.firstWindow();
   await page.waitForSelector('.app-shell');
   await page.getByText('Extension checks', { exact: true }).first().click();
-  await page.getByRole('button', { name: 'Configuration & extensions', exact: true }).click();
+  await page.getByRole('button', { name: 'Workspace tools', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Configuration & extensions', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Configuration & extensions', exact: true });
   await expect(dialog.getByRole('tab', { name: 'MCP', exact: true })).toBeVisible();
   return {

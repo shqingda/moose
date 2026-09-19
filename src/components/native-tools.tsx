@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react';
-import { History } from 'lucide-react';
 import type { Project, Provider, Session } from '../../shared/types';
 import type { NativeCapabilities, NativeEntry, NativeThread } from '../../shared/native-sessions';
 import { useI18n } from '../lib/i18n';
 import { useTranscript } from '../lib/workspace';
-import { IconButton } from './common';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { NativePreview } from './native-preview';
@@ -14,21 +12,23 @@ export function NativeTools({
   provider,
   session,
   onSelect,
+  open,
+  onOpenChange: setOpen,
+  returnFocus,
 }: {
+  open: boolean;
+  onOpenChange(open: boolean): void;
+  returnFocus: React.RefObject<HTMLButtonElement | null>;
   project: Project;
   provider: Provider;
   session?: Session;
   onSelect(session: Session): void;
 }) {
   const t = useI18n();
-  const [open, setOpen] = useState(false);
   return (
     <>
-      <IconButton label={t('nativeTools')} onClick={() => setOpen(true)}>
-        <History />
-      </IconButton>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="native-dialog">
+        <DialogContent className="native-dialog" finalFocus={returnFocus}>
           <DialogHeader>
             <DialogTitle>{t('nativeTools')}</DialogTitle>
             <DialogDescription>
@@ -148,7 +148,7 @@ function NativeToolsContent({
       {notice && <p role="status">{notice}</p>}
       {caps?.reason && <p className="text-sm text-muted-foreground">{caps.reason}</p>}
       {session?.nativeId && (
-        <section className="flex flex-col gap-2 rounded-lg border p-3">
+        <section className="native-session-section">
           <h3>{t('nativeCurrent')}</h3>
           <code className="break-all text-xs">{session.nativeId}</code>
           {session.nativeOrigin && (

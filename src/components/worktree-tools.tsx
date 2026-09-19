@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
-import { GitBranch } from 'lucide-react';
 import type { Project, Provider, Session } from '../../shared/types';
 import type { Worktree, WorktreeStatus } from '../../shared/worktrees';
 import { useI18n } from '../lib/i18n';
-import { IconButton } from './common';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Badge } from './ui/badge';
@@ -17,22 +15,23 @@ export function WorktreeTools({
   provider,
   session,
   onSelect,
+  open,
+  onOpenChange: setOpen,
+  returnFocus,
 }: {
+  open: boolean;
+  onOpenChange(open: boolean): void;
+  returnFocus: React.RefObject<HTMLButtonElement | null>;
   project: Project;
   provider: Provider;
   session?: Session;
   onSelect(s: Session): void;
 }) {
-  const t = useI18n(),
-    [open, setOpen] = useState(false);
+  const t = useI18n();
   return (
     <>
-      {session?.worktreeId && <Badge variant="outline">Worktree</Badge>}
-      <IconButton label={t('wtTools')} onClick={() => setOpen(true)}>
-        <GitBranch />
-      </IconButton>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="native-dialog">
+        <DialogContent className="native-dialog" finalFocus={returnFocus}>
           <DialogHeader>
             <DialogTitle>{t('wtTools')}</DialogTitle>
             <DialogDescription>{project.name}</DialogDescription>
@@ -176,7 +175,7 @@ function WorktreeContent({
         ))}
       </div>
       {w && status && (
-        <section className="flex flex-col gap-3 rounded-lg border p-3">
+        <section className="native-session-section">
           <strong>{w.branch}</strong>
           <code className="break-all text-xs">{w.path}</code>
           <p className="text-sm">

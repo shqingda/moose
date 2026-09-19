@@ -55,7 +55,8 @@ async function launch() {
   return { page, root, project, session };
 }
 async function create(page: Page, branch: string) {
-  await page.getByRole('button', { name: 'Worktrees', exact: true }).click();
+  await page.getByRole('button', { name: 'Workspace tools', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Worktrees', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByRole('textbox', { name: 'New branch', exact: true }).fill(branch);
   await dialog.getByRole('button', { name: 'Create isolated conversation' }).click();
@@ -85,7 +86,8 @@ test('isolates agent writes and diff, merges reviewed changes, and safely cleans
   await page.locator('.review-panel').getByRole('button', { name: 'Close', exact: true }).click();
   git(path, 'add', 'approved.txt');
   git(path, 'commit', '-qm', 'agent change');
-  await page.getByRole('button', { name: 'Worktrees', exact: true }).click();
+  await page.getByRole('button', { name: 'Workspace tools', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Worktrees', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog).toContainText('+moose-approved');
   await dialog.getByRole('button', { name: 'Prepare merge into project', exact: true }).click();

@@ -94,6 +94,20 @@ try {
         ).data,
     )
     .toContain('PACKAGED_PTY_OK\r\n');
+  await page.evaluate(() => window.moose.request('settings', { language: 'en' }));
+  await page.getByRole('button', { name: 'Background commands & schedules', exact: true }).click();
+  for (const position of ['Bottom', 'Right', 'Window']) {
+    await page.getByRole('combobox', { name: 'Panel position', exact: true }).click();
+    await page.getByRole('option', { name: position, exact: true }).click();
+    await expect(page.locator('.xterm-screen')).toBeVisible();
+  }
+  const retained = await page.evaluate(
+    (projectId) => window.moose.request('terminalList', { projectId }),
+    project.id,
+  );
+  if (retained.length !== 1 || retained[0].id !== terminal.id || retained[0].status !== 'running')
+    throw new Error('Packaged terminal placement lost its running session');
+  await page.getByRole('dialog').getByRole('button', { name: 'Close', exact: true }).click();
   await page.evaluate((id) => window.moose.request('terminalStop', { id }), terminal.id);
   const schedule = await page.evaluate(async (projectId) => {
     const original = await window.moose.request('scheduleCreate', {
@@ -134,7 +148,7 @@ try {
       ...details,
       sqlite: 'ready',
       command: 'completed',
-      terminal: 'verified',
+      terminal: 'verified-window-bottom-right',
       schedule: 'edited-paused',
     }),
   );

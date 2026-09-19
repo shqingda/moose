@@ -353,6 +353,10 @@ kbd {
   flex-shrink: 0;
 }
 .header-path button {
+  max-width: min(12rem, 35vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   flex-shrink: 0;
   background: none;
   border: none;
@@ -368,6 +372,7 @@ kbd {
   text-overflow: ellipsis;
 }
 .header-actions {
+  flex-shrink: 0;
   margin-left: auto;
   display: flex;
   align-items: center;
@@ -1283,6 +1288,10 @@ kbd {
 .header-title,
 .header-path,
 .header-path button {
+  max-width: min(12rem, 35vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 0.95rem;
 }
 .project-heading-row,

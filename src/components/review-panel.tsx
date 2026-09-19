@@ -49,47 +49,49 @@ function FileReview({
   const lines = useMemo(() => diffLines(diff?.text || ''), [diff?.text]);
   return (
     <section className="review-file">
-      <button
-        className="change-file"
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
-      >
-        <ChevronRight className={open ? 'rotated' : ''} size={16} />
-        <FileCode2 size={18} />
-        <span title={file.path}>{file.path}</span>
-        {diff && !diff.binary ? (
-          <span className="diff-counts">
-            <b>+{lines.filter((l) => l.kind === 'added').length}</b>
-            <em>−{lines.filter((l) => l.kind === 'removed').length}</em>
-          </span>
-        ) : (
-          <span className="file-status">{file.status}</span>
-        )}
-      </button>
-      <Button
-        size="sm"
-        variant="ghost"
-        disabled={staging}
-        className="ml-8 mb-1"
-        onClick={async () => {
-          setStaging(true);
-          try {
-            await window.moose.request('gitStage', {
-              projectId,
-              sessionId,
-              path: file.path,
-              staged: file.area !== 'staged',
-            });
-            changed();
-          } catch (error) {
-            onError(String(error));
-          } finally {
-            setStaging(false);
-          }
-        }}
-      >
-        {t(file.area === 'staged' ? 'gitUnstage' : 'gitStage')}
-      </Button>
+      <div className="review-file-row">
+        <button
+          className="change-file"
+          aria-expanded={open}
+          onClick={() => setOpen((value) => !value)}
+        >
+          <ChevronRight className={open ? 'rotated' : ''} size={16} />
+          <FileCode2 size={18} />
+          <span title={file.path}>{file.path}</span>
+          {diff && !diff.binary ? (
+            <span className="diff-counts">
+              <b>+{lines.filter((l) => l.kind === 'added').length}</b>
+              <em>−{lines.filter((l) => l.kind === 'removed').length}</em>
+            </span>
+          ) : (
+            <span className="file-status">{file.status}</span>
+          )}
+        </button>
+        <Button
+          size="sm"
+          variant="ghost"
+          disabled={staging}
+          className="shrink-0"
+          onClick={async () => {
+            setStaging(true);
+            try {
+              await window.moose.request('gitStage', {
+                projectId,
+                sessionId,
+                path: file.path,
+                staged: file.area !== 'staged',
+              });
+              changed();
+            } catch (error) {
+              onError(String(error));
+            } finally {
+              setStaging(false);
+            }
+          }}
+        >
+          {t(file.area === 'staged' ? 'gitUnstage' : 'gitStage')}
+        </Button>
+      </div>
       {open && (
         <div className="diff-container">
           {!diff ? (

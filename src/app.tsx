@@ -1,21 +1,8 @@
-import { BackgroundTools } from './components/background-tools';
-import { ExtensionTools } from './components/extension-tools';
-import { WorktreeTools } from './components/worktree-tools';
-import { NativeTools } from './components/native-tools';
+import { BackgroundTools, type BackgroundPlacement } from './components/background-tools';
+import { WorkspaceTools } from './components/workspace-tools';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { MotionConfig, motion, useReducedMotion } from 'motion/react';
-import {
-  Archive,
-  ArrowUpRight,
-  ChevronDown,
-  Folder,
-  PanelRight,
-  Pencil,
-  Search,
-  X,
-  CircleAlert,
-  PanelLeft,
-} from 'lucide-react';
+import { ChevronDown, Folder, PanelRight, Search, X, CircleAlert, PanelLeft } from 'lucide-react';
 import type {
   Attachment,
   PromptContext,
@@ -128,6 +115,13 @@ function Workspace({
   const [confirmation, setConfirmation] = useState<Confirmation>();
   const [attachmentDrafts, setAttachmentDrafts] = useState<Record<string, Attachment[]>>({});
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [dockHost, setDockHost] = useState<HTMLDivElement | null>(null);
+  const [dock, setDock] = useState<BackgroundPlacement | null>(null);
+  const onDockChange = useCallback((position: BackgroundPlacement | null) => {
+    setDock(position);
+    if (position === 'right') setReview(false);
+  }, []);
+  const toolsTrigger = useRef<HTMLButtonElement>(null);
   const saveTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   const pendingDrafts = useRef(new Map<string, string>());
   const session = snapshot.sessions.find((s) => s.id === selected);
@@ -439,175 +433,154 @@ function Workspace({
           onArchived={() => setArchived((value) => !value)}
         />
       </motion.div>
-      <main className="workspace">
-        <header className="workspace-header">
-          <div className="header-path">
-            {project && (
-              <>
-                <Folder size={14} />
-                <button onClick={() => openProject('finder')}>{project.name}</button>
-              </>
+      <div className="workspace-stage" data-dock={dock || undefined}>
+        <div className="workspace-main">
+          <main className="workspace">
+            <header className="workspace-header">
+              <div className="header-path">
+                {project && (
+                  <>
+                    <Folder size={14} />
+                    <button title={project.path} onClick={() => openProject('finder')}>
+                      {project.name}
+                    </button>
+                  </>
+                )}
+                {session && (
+                  <>
+                    <span className="path-divider">/</span>
+                    <span className="header-title" title={session.title || t('untitled')}>
+                      {session.title || t('untitled')}
+                    </span>
+                  </>
+                )}
+              </div>
+              <div className="header-actions">
+                {project && (
+                  <BackgroundTools
+                    reviewOpen={review}
+                    dockHost={dockHost}
+                    onDockChange={onDockChange}
+                    key={`${project.id}:${session?.id}`}
+                    scope={{ projectId: project.id, sessionId: session?.id }}
+                  />
+                )}
+                {project && (
+                  <WorkspaceTools
+                    trigger={toolsTrigger}
+                    key={`${project.id}:${session?.id}:${currentProvider}`}
+                    project={project}
+                    provider={currentProvider}
+                    session={session}
+                    busy={busy}
+                    onSelect={(target) => {
+                      setSelected(target.id);
+                      setProjectId(target.projectId);
+                      setArchived(target.archived);
+                      void refresh();
+                    }}
+                    onRename={() => {
+                      if (session) {
+                        setTitle(session.title);
+                        setRenaming(true);
+                      }
+                    }}
+                    onArchive={() => {
+                      if (session) void archiveSession(session);
+                    }}
+                    onEditor={() => void openProject('editor')}
+                  />
+                )}
+                <span className="header-action-divider" />
+                <IconButton
+                  label={t('review')}
+                  onClick={() => setReview((value) => !value)}
+                  disabled={!project}
+                  aria-pressed={review}
+                >
+                  <PanelRight />
+                </IconButton>
+              </div>
+            </header>
+            {error && (
+              <Alert variant="destructive" className="workspace-error">
+                <CircleAlert />
+                <AlertDescription>{error}</AlertDescription>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  aria-label={t('dismiss')}
+                  onClick={() => setError('')}
+                >
+                  <X />
+                </Button>
+              </Alert>
             )}
-            {session && (
-              <>
-                <span className="path-divider">/</span>
-                <span className="header-title">{session.title || t('untitled')}</span>
-              </>
-            )}
-          </div>
-          <div className="header-actions">
-            {project && (
-              <BackgroundTools
-                key={`${project.id}:${session?.id}`}
-                scope={{ projectId: project.id, sessionId: session?.id }}
-              />
-            )}
-            {project && (
-              <ExtensionTools
-                key={`${project.id}:${session?.id}:${currentProvider}`}
-                scope={{ projectId: project.id, sessionId: session?.id, provider: currentProvider }}
-              />
-            )}
-            {project && (
-              <WorktreeTools
-                project={project}
-                provider={currentProvider}
+            {session?.title ? (
+              <Transcript
+                key={`transcript:${session.id}`}
                 session={session}
-                onSelect={(target) => {
-                  setSelected(target.id);
-                  setProjectId(target.projectId);
-                  setArchived(target.archived);
-                  void refresh();
+                onError={setError}
+                onEdit={editMessage}
+              />
+            ) : (
+              <Welcome
+                projectName={project?.name}
+                onAdd={() => {
+                  void addProject();
+                }}
+                onPrompt={(text) => {
+                  onDraft(text);
+                  document.getElementById('composer')?.focus();
                 }}
               />
             )}
             {project && (
-              <NativeTools
-                project={project}
-                provider={currentProvider}
+              <Composer
+                projectId={project.id}
+                attachments={attachments}
+                onAttachments={onAttachments}
+                key={`composer:${draftKey}`}
                 session={session}
-                onSelect={(target) => {
-                  setSelected(target.id);
-                  setProjectId(target.projectId);
-                  setArchived(target.archived);
-                  void refresh();
+                options={session || newOptions}
+                provider={currentProvider}
+                providers={providers}
+                draft={drafts[draftKey] ?? session?.draft ?? ''}
+                onDraft={onDraft}
+                onProvider={(value) => {
+                  setProvider(value);
+                  setNewOptions({ model: '', effort: '', mode: 'ask' });
                 }}
+                onOptions={updateSession}
+                onSend={onSend}
+                onStop={() => {
+                  if (session)
+                    void perform(() => window.moose.request('stop', { sessionId: session.id }));
+                }}
+                onError={setError}
               />
             )}
-            {session && (
-              <>
-                <IconButton
-                  label={t('rename')}
-                  onClick={() => {
-                    setTitle(session.title);
-                    setRenaming(true);
-                  }}
-                >
-                  <Pencil />
-                </IconButton>
-                <IconButton
-                  label={t(session.archived ? 'restore' : 'archive')}
-                  disabled={busy}
-                  onClick={() => archiveSession(session)}
-                >
-                  <Archive />
-                </IconButton>
-              </>
+            {!checking && providers.length > 0 && !providers.some((p) => p.connected) && (
+              <button className="connection-banner" onClick={() => setSettingsOpen(true)}>
+                {t('noAgent')}
+                <ChevronDown size={12} />
+              </button>
             )}
-            <IconButton
-              label={t('editor')}
-              disabled={!project}
-              onClick={() => openProject('editor')}
-            >
-              <ArrowUpRight />
-            </IconButton>
-            <span className="header-action-divider" />
-            <IconButton
-              label={t('review')}
-              onClick={() => setReview((value) => !value)}
-              disabled={!project}
-              aria-pressed={review}
-            >
-              <PanelRight />
-            </IconButton>
-          </div>
-        </header>
-        {error && (
-          <Alert variant="destructive" className="workspace-error">
-            <CircleAlert />
-            <AlertDescription>{error}</AlertDescription>
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              aria-label={t('dismiss')}
-              onClick={() => setError('')}
-            >
-              <X />
-            </Button>
-          </Alert>
-        )}
-        {session?.title ? (
-          <Transcript
-            key={`transcript:${session.id}`}
-            session={session}
-            onError={setError}
-            onEdit={editMessage}
-          />
-        ) : (
-          <Welcome
-            projectName={project?.name}
-            onAdd={() => {
-              void addProject();
-            }}
-            onPrompt={(text) => {
-              onDraft(text);
-              document.getElementById('composer')?.focus();
-            }}
-          />
-        )}
-        {project && (
-          <Composer
-            projectId={project.id}
-            attachments={attachments}
-            onAttachments={onAttachments}
-            key={`composer:${draftKey}`}
-            session={session}
-            options={session || newOptions}
-            provider={currentProvider}
-            providers={providers}
-            draft={drafts[draftKey] ?? session?.draft ?? ''}
-            onDraft={onDraft}
-            onProvider={(value) => {
-              setProvider(value);
-              setNewOptions({ model: '', effort: '', mode: 'ask' });
-            }}
-            onOptions={updateSession}
-            onSend={onSend}
-            onStop={() => {
-              if (session)
-                void perform(() => window.moose.request('stop', { sessionId: session.id }));
-            }}
-            onError={setError}
-          />
-        )}
-        {!checking && providers.length > 0 && !providers.some((p) => p.connected) && (
-          <button className="connection-banner" onClick={() => setSettingsOpen(true)}>
-            {t('noAgent')}
-            <ChevronDown size={12} />
-          </button>
-        )}
-      </main>
-      {project && (
-        <ReviewPanel
-          open={review}
-          key={`${project.id}:${session?.id}`}
-          project={project}
-          sessionId={session?.id}
-          onClose={() => setReview(false)}
-          onError={setError}
-          reduceMotion={!!reduceMotion || snapshot.reduceMotion}
-        />
-      )}
+          </main>
+          {project && (
+            <ReviewPanel
+              open={review}
+              key={`${project.id}:${session?.id}`}
+              project={project}
+              sessionId={session?.id}
+              onClose={() => setReview(false)}
+              onError={setError}
+              reduceMotion={!!reduceMotion || snapshot.reduceMotion}
+            />
+          )}
+        </div>
+        <div className="workspace-dock" ref={setDockHost} />
+      </div>
       <ConfirmDialog
         value={confirmation}
         onClose={() => setConfirmation(undefined)}
@@ -658,7 +631,7 @@ function Workspace({
         </DialogContent>
       </Dialog>
       <Dialog open={renaming} onOpenChange={setRenaming}>
-        <DialogContent>
+        <DialogContent finalFocus={toolsTrigger}>
           <DialogHeader>
             <DialogTitle>{t('rename')}</DialogTitle>
           </DialogHeader>

@@ -1,6 +1,8 @@
+import { createPortal } from 'react-dom';
+import { Picker } from './common';
 import { TerminalPanel } from './terminal-panel';
 import { useEffect, useState } from 'react';
-import { Terminal } from 'lucide-react';
+import { Terminal, X } from 'lucide-react';
 import type { BackgroundScope, CommandJob, Schedule } from '../../shared/background';
 import { useI18n } from '../lib/i18n';
 import { IconButton } from './common';
@@ -12,7 +14,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { SchedulePanel } from './schedule-panel';
 import { Alert, AlertDescription } from './ui/alert';
-export function BackgroundTools({ scope }: { scope: BackgroundScope }) {
+export type BackgroundPlacement = 'dialog' | 'bottom' | 'right';
+export function BackgroundTools({
+  scope,
+  dockHost,
+  onDockChange,
+  reviewOpen,
+}: {
+  reviewOpen: boolean;
+  scope: BackgroundScope;
+  dockHost: HTMLDivElement | null;
+  onDockChange(position: BackgroundPlacement | null): void;
+}) {
   const t = useI18n(),
     [open, setOpen] = useState(false),
     [jobs, setJobs] = useState<Omit<CommandJob, 'output'>[]>([]),
@@ -25,6 +38,19 @@ export function BackgroundTools({ scope }: { scope: BackgroundScope }) {
     [error, setError] = useState(''),
     [input, setInput] = useState(''),
     [cwd, setCwd] = useState('');
+  const [placement, setPlacement] = useState<BackgroundPlacement>(() => {
+    const saved = localStorage.getItem('moose.terminalPlacement');
+    return saved === 'bottom' || saved === 'right' ? saved : 'dialog';
+  });
+  useEffect(() => {
+    if (open && reviewOpen && placement === 'right') setPlacement('bottom');
+  }, [open, reviewOpen, placement]);
+  const [tab, setTab] = useState('terminal');
+  const [terminalId, setTerminalId] = useState('');
+  useEffect(() => {
+    onDockChange(open && placement !== 'dialog' ? placement : null);
+  }, [open, placement, onDockChange]);
+  useEffect(() => () => onDockChange(null), [onDockChange]);
   const read = () =>
     Promise.all([
       window.moose.request('commandList', scope),
@@ -85,143 +111,179 @@ export function BackgroundTools({ scope }: { scope: BackgroundScope }) {
       setRequestId(crypto.randomUUID());
     });
   }
+  const content = (
+    <div className="background-content">
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      <Tabs
+        value={tab}
+        onValueChange={(value) => setTab(String(value))}
+        className="background-tabs"
+      >
+        <div className="background-bar">
+          <TabsList variant="line" aria-label={t('bgTitle')}>
+            <TabsTrigger value="terminal">{t('ptyTitle')}</TabsTrigger>
+            <TabsTrigger value="commands">{t('bgTabCommands')}</TabsTrigger>
+            <TabsTrigger value="schedules">{t('bgTabSchedules')}</TabsTrigger>
+          </TabsList>
+          <Picker
+            label={t('bgPosition')}
+            value={placement}
+            options={(['dialog', 'bottom', 'right'] as const).map((value) => ({
+              value,
+              label: t(`bgPosition_${value}`),
+            }))}
+            onChange={(value) => {
+              const next = value as BackgroundPlacement;
+              setPlacement(next);
+              localStorage.setItem('moose.terminalPlacement', next);
+            }}
+          />
+          <IconButton label={t('close')} onClick={() => setOpen(false)}>
+            <X />
+          </IconButton>
+        </div>
+        <TabsContent value="terminal" className="background-terminal">
+          <TerminalPanel scope={scope} selected={terminalId} onSelect={setTerminalId} />
+        </TabsContent>
+        <TabsContent value="commands" className="extension-section background-scroll">
+          <p className="extension-note break-all">{cwd}</p>
+          <FieldGroup>
+            <Field>
+              <FieldLabel htmlFor="bg-command">{t('bgCommand')}</FieldLabel>
+              <Textarea
+                id="bg-command"
+                disabled={busy}
+                value={command}
+                onChange={(e) => {
+                  setCommand(e.target.value);
+                  setRequestId(crypto.randomUUID());
+                }}
+                placeholder="pnpm test"
+              />
+            </Field>
+            <Button disabled={busy || !command.trim()} onClick={start}>
+              {t('bgRun')}
+            </Button>
+          </FieldGroup>
+          <h3>{t('bgJobs')}</h3>
+          {jobs.length === 0 && <p>{t('bgEmpty')}</p>}
+          {jobs.map((row) => (
+            <Button
+              key={row.id}
+              variant="outline"
+              className="h-auto justify-start whitespace-normal text-left"
+              onClick={() => {
+                setSelected(row.id);
+                setJob(undefined);
+                setInput('');
+              }}
+            >
+              {row.command.slice(0, 100)} · {row.status}
+            </Button>
+          ))}
+          {job && (
+            <section className="flex flex-col gap-2" aria-label={t('bgOutput')}>
+              <p className="break-all">Moose · {job.cwd}</p>
+              <p>
+                {job.status} · {t('bgExit')}: {job.exitCode ?? '—'} {job.signal}
+              </p>
+              {job.truncated && <p>{t('bgTruncated')}</p>}
+              <pre
+                className="max-h-64 overflow-auto whitespace-pre-wrap break-all rounded-md border p-3"
+                data-testid="command-output"
+              >
+                {job.output}
+              </pre>
+              {job.status === 'running' && (
+                <>
+                  <Field>
+                    <FieldLabel htmlFor="bg-input">{t('bgInput')}</FieldLabel>
+                    <Input id="bg-input" value={input} onChange={(e) => setInput(e.target.value)} />
+                  </Field>
+                  <div className="flex gap-2">
+                    <Button
+                      disabled={busy}
+                      onClick={() =>
+                        void act(async () => {
+                          await window.moose.request('commandInput', {
+                            id: job.id,
+                            text: input + '\n',
+                          });
+                          setInput('');
+                        })
+                      }
+                    >
+                      {t('bgSend')}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      disabled={busy}
+                      onClick={() =>
+                        void act(() =>
+                          window.moose.request('commandInput', {
+                            id: job.id,
+                            text: '',
+                            eof: true,
+                          }),
+                        )
+                      }
+                    >
+                      {t('bgEof')}
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      disabled={busy}
+                      onClick={() =>
+                        void act(() => window.moose.request('commandStop', { id: job.id }))
+                      }
+                    >
+                      {t('bgStop')}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </section>
+          )}
+        </TabsContent>
+        <TabsContent value="schedules" className="extension-section background-scroll">
+          <SchedulePanel scope={scope} cwd={cwd} schedules={schedules} onChanged={refresh} />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
   return (
     <>
-      <IconButton label={t('bgTitle')} onClick={() => setOpen(true)}>
+      <IconButton
+        label={t('bgTitle')}
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
+      >
         <Terminal />
       </IconButton>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="native-dialog background-dialog">
-          <DialogHeader>
-            <DialogTitle>{t('bgTitle')}</DialogTitle>
-            <DialogDescription>{t('bgHint')}</DialogDescription>
-          </DialogHeader>
-          <div className="native-dialog-body flex flex-col gap-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            <Tabs defaultValue="terminal" className="extension-tabs">
-              <TabsList variant="line" aria-label={t('bgTitle')}>
-                <TabsTrigger value="terminal">{t('ptyTitle')}</TabsTrigger>
-                <TabsTrigger value="commands">{t('bgJobs')}</TabsTrigger>
-                <TabsTrigger value="schedules">{t('bgSchedules')}</TabsTrigger>
-              </TabsList>
-              <TabsContent value="terminal" className="extension-section">
-                <TerminalPanel scope={scope} />
-              </TabsContent>
-              <TabsContent value="commands" className="extension-section">
-                <p className="extension-note break-all">{cwd}</p>
-                <FieldGroup>
-                  <Field>
-                    <FieldLabel htmlFor="bg-command">{t('bgCommand')}</FieldLabel>
-                    <Textarea
-                      id="bg-command"
-                      disabled={busy}
-                      value={command}
-                      onChange={(e) => {
-                        setCommand(e.target.value);
-                        setRequestId(crypto.randomUUID());
-                      }}
-                      placeholder="pnpm test"
-                    />
-                  </Field>
-                  <Button disabled={busy || !command.trim()} onClick={start}>
-                    {t('bgRun')}
-                  </Button>
-                </FieldGroup>
-                <h3>{t('bgJobs')}</h3>
-                {jobs.length === 0 && <p>{t('bgEmpty')}</p>}
-                {jobs.map((row) => (
-                  <Button
-                    key={row.id}
-                    variant="outline"
-                    className="h-auto justify-start whitespace-normal text-left"
-                    onClick={() => {
-                      setSelected(row.id);
-                      setJob(undefined);
-                      setInput('');
-                    }}
-                  >
-                    {row.command.slice(0, 100)} · {row.status}
-                  </Button>
-                ))}
-                {job && (
-                  <section className="flex flex-col gap-2" aria-label={t('bgOutput')}>
-                    <p className="break-all">Moose · {job.cwd}</p>
-                    <p>
-                      {job.status} · {t('bgExit')}: {job.exitCode ?? '—'} {job.signal}
-                    </p>
-                    {job.truncated && <p>{t('bgTruncated')}</p>}
-                    <pre
-                      className="max-h-64 overflow-auto whitespace-pre-wrap break-all rounded-md border p-3"
-                      data-testid="command-output"
-                    >
-                      {job.output}
-                    </pre>
-                    {job.status === 'running' && (
-                      <>
-                        <Field>
-                          <FieldLabel htmlFor="bg-input">{t('bgInput')}</FieldLabel>
-                          <Input
-                            id="bg-input"
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                          />
-                        </Field>
-                        <div className="flex gap-2">
-                          <Button
-                            disabled={busy}
-                            onClick={() =>
-                              void act(async () => {
-                                await window.moose.request('commandInput', {
-                                  id: job.id,
-                                  text: input + '\n',
-                                });
-                                setInput('');
-                              })
-                            }
-                          >
-                            {t('bgSend')}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            disabled={busy}
-                            onClick={() =>
-                              void act(() =>
-                                window.moose.request('commandInput', {
-                                  id: job.id,
-                                  text: '',
-                                  eof: true,
-                                }),
-                              )
-                            }
-                          >
-                            {t('bgEof')}
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            disabled={busy}
-                            onClick={() =>
-                              void act(() => window.moose.request('commandStop', { id: job.id }))
-                            }
-                          >
-                            {t('bgStop')}
-                          </Button>
-                        </div>
-                      </>
-                    )}
-                  </section>
-                )}
-              </TabsContent>
-              <TabsContent value="schedules" className="extension-section">
-                <SchedulePanel scope={scope} cwd={cwd} schedules={schedules} onChanged={refresh} />
-              </TabsContent>
-            </Tabs>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {placement === 'dialog' ? (
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogContent className="background-dialog" showCloseButton={false}>
+            <DialogHeader className="sr-only">
+              <DialogTitle>{t('bgTitle')}</DialogTitle>
+              <DialogDescription>{t('bgHint')}</DialogDescription>
+            </DialogHeader>
+            {content}
+          </DialogContent>
+        </Dialog>
+      ) : (
+        open &&
+        dockHost &&
+        createPortal(
+          <section className="background-docked" aria-label={t('bgTitle')}>
+            {content}
+          </section>,
+          dockHost,
+        )
+      )}
     </>
   );
 }

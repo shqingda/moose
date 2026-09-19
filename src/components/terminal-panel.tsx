@@ -2,14 +2,21 @@ import { useEffect, useState } from 'react';
 import type { BackgroundScope } from '../../shared/background';
 import type { TerminalSession } from '../../shared/terminal';
 import { useI18n } from '../lib/i18n';
-import { Button } from './ui/button';
 import { Alert, AlertDescription } from './ui/alert';
 import { TerminalView } from './terminal-view';
-import { Picker } from './common';
-export function TerminalPanel({ scope }: { scope: BackgroundScope }) {
+import { Picker, IconButton } from './common';
+import { Plus, Square } from 'lucide-react';
+export function TerminalPanel({
+  scope,
+  selected,
+  onSelect: setSelected,
+}: {
+  scope: BackgroundScope;
+  selected: string;
+  onSelect(id: string): void;
+}) {
   const t = useI18n(),
     [sessions, setSessions] = useState<TerminalSession[]>([]),
-    [selected, setSelected] = useState(''),
     [busy, setBusy] = useState(false),
     [error, setError] = useState('');
   const session = sessions.find((item) => item.id === selected);
@@ -23,7 +30,7 @@ export function TerminalPanel({ scope }: { scope: BackgroundScope }) {
         const rows = await window.moose.request('terminalList', scope);
         if (live) {
           setSessions(rows);
-          setSelected((id) => id || rows[0]?.id || '');
+          if (!selected && rows[0]) setSelected(rows[0].id);
         }
       } catch (e) {
         if (live) setError(String(e));
@@ -37,7 +44,7 @@ export function TerminalPanel({ scope }: { scope: BackgroundScope }) {
       live = false;
       clearInterval(timer);
     };
-  }, [scope.projectId, scope.sessionId]);
+  }, [scope.projectId, scope.sessionId, selected, setSelected]);
   async function act(action: () => Promise<void>) {
     setBusy(true);
     setError('');
@@ -64,8 +71,8 @@ export function TerminalPanel({ scope }: { scope: BackgroundScope }) {
             }))}
           />
         )}
-        <Button
-          variant="outline"
+        <IconButton
+          label={t('ptyNew')}
           disabled={busy}
           onClick={() =>
             void act(async () => {
@@ -79,11 +86,11 @@ export function TerminalPanel({ scope }: { scope: BackgroundScope }) {
             })
           }
         >
-          {t('ptyNew')}
-        </Button>
+          <Plus />
+        </IconButton>
         {session?.status === 'running' && (
-          <Button
-            variant="ghost"
+          <IconButton
+            label={t('ptyStop')}
             disabled={busy}
             onClick={() =>
               void act(async () => {
@@ -91,8 +98,14 @@ export function TerminalPanel({ scope }: { scope: BackgroundScope }) {
               })
             }
           >
-            {t('ptyStop')}
-          </Button>
+            <Square />
+          </IconButton>
+        )}
+        {session && (
+          <span className="terminal-context" title={session.cwd}>
+            {session.cwd.split('/').pop()}
+            {session.status !== 'running' && ` · ${t('ptyEnded')} (${session.exitCode ?? '—'})`}
+          </span>
         )}
       </div>
       {error && (
@@ -102,16 +115,11 @@ export function TerminalPanel({ scope }: { scope: BackgroundScope }) {
       )}
       {session ? (
         <>
-          <p className="extension-note break-all">
-            {session.cwd}
-            {session.status !== 'running' && ` · ${t('ptyEnded')} (${session.exitCode ?? '—'})`}
-          </p>
           <TerminalView key={session.id} session={session} onError={setError} />
         </>
       ) : (
         <p className="extension-note">{t('ptyEmpty')}</p>
       )}
-      <p className="extension-note">{t('ptyHint')}</p>
     </div>
   );
 }

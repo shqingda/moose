@@ -1,7 +1,6 @@
 import { ExtensionConfirm } from './extension-confirm';
 import { McpRegistrationForm } from './mcp-registration-form';
 import { useEffect, useState } from 'react';
-import { Puzzle } from 'lucide-react';
 import type {
   ExtensionScope,
   ExtensionSnapshot,
@@ -9,16 +8,24 @@ import type {
   ExtensionAuth,
 } from '../../shared/extensions';
 import { useI18n } from '../lib/i18n';
-import { IconButton } from './common';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Badge } from './ui/badge';
 import { Empty, EmptyHeader, EmptyTitle } from './ui/empty';
 import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogDescription } from './ui/dialog';
-export function ExtensionTools({ scope }: { scope: ExtensionScope }) {
+export function ExtensionTools({
+  scope,
+  open,
+  onOpenChange: setOpen,
+  returnFocus,
+}: {
+  scope: ExtensionScope;
+  open: boolean;
+  onOpenChange(open: boolean): void;
+  returnFocus: React.RefObject<HTMLButtonElement | null>;
+}) {
   const t = useI18n(),
-    [open, setOpen] = useState(false),
     [snapshot, setSnapshot] = useState<ExtensionSnapshot>(),
     [sourceId, setSourceId] = useState(''),
     [busy, setBusy] = useState(false),
@@ -131,11 +138,8 @@ export function ExtensionTools({ scope }: { scope: ExtensionScope }) {
   }
   return (
     <>
-      <IconButton label={t('extTitle')} onClick={() => setOpen(true)}>
-        <Puzzle />
-      </IconButton>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="native-dialog extensions-dialog">
+        <DialogContent className="native-dialog extensions-dialog" finalFocus={returnFocus}>
           <DialogHeader>
             <DialogTitle>{t('extTitle')}</DialogTitle>
             <DialogDescription>{t('extHint')}</DialogDescription>

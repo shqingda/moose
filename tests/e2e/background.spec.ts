@@ -42,7 +42,7 @@ test('runs background commands, sends stdin and stops a command from the desktop
   const { page } = await launch();
   await page.getByRole('button', { name: 'Background commands & schedules', exact: true }).click();
   const dialog = page.getByRole('dialog');
-  await dialog.getByRole('tab', { name: 'Recent commands', exact: true }).click();
+  await dialog.getByRole('tab', { name: 'Commands', exact: true }).click();
   await dialog
     .getByRole('textbox', { name: 'Shell command', exact: true })
     .fill('read line; printf "received:%s" "$line"');
@@ -55,7 +55,7 @@ test('runs background commands, sends stdin and stops a command from the desktop
   await dialog.getByRole('button', { name: 'Run command', exact: true }).click();
   await dialog.getByRole('button', { name: 'Stop command', exact: true }).click();
   await expect(dialog.getByRole('region', { name: 'Command output' })).toContainText('cancelled');
-  await dialog.getByRole('tab', { name: 'Scheduled tasks', exact: true }).click();
+  await dialog.getByRole('tab', { name: 'Schedules', exact: true }).click();
   await dialog.getByRole('button', { name: 'New schedule', exact: true }).click();
   await dialog.getByRole('textbox', { name: 'Schedule name' }).fill('Future inspection');
   await dialog
@@ -66,9 +66,7 @@ test('runs background commands, sends stdin and stops a command from the desktop
   await expect(dialog.getByRole('button', { name: 'Pause future runs' })).toBeVisible();
   await dialog.getByRole('button', { name: 'Pause future runs' }).click();
   await expect(dialog.getByRole('button', { name: 'Resume schedule' })).toBeVisible();
-  await expect(
-    dialog.getByRole('heading', { name: 'Background commands & schedules' }),
-  ).toBeInViewport();
+  await expect(dialog.getByRole('tab', { name: 'Schedules', exact: true })).toBeInViewport();
   await page.screenshot({ path: 'test-results/background-panel.png' });
 });
 test('dispatches a one-time command while the window is closed and never replays it after restart', async () => {
@@ -134,7 +132,7 @@ test('edits paused schedules with review, preserves their timezone, and rejects 
   await page.getByRole('button', { name: 'Background commands & schedules', exact: true }).click();
   const dialog = page.getByRole('dialog'),
     row = dialog.getByRole('region', { name: 'Editable schedule', exact: true });
-  await dialog.getByRole('tab', { name: 'Scheduled tasks', exact: true }).click();
+  await dialog.getByRole('tab', { name: 'Schedules', exact: true }).click();
   await expect(row.getByRole('button', { name: 'Edit schedule', exact: true })).toBeDisabled();
   await row.getByRole('button', { name: 'Pause future runs' }).click();
   await row.getByRole('button', { name: 'Edit schedule', exact: true }).click();
@@ -372,7 +370,7 @@ test('previews timezone calendar runs and preserves weekdays when editing', asyn
   const { page, scope } = await launch();
   await page.getByRole('button', { name: 'Background commands & schedules', exact: true }).click();
   const dialog = page.getByRole('dialog');
-  await dialog.getByRole('tab', { name: 'Scheduled tasks', exact: true }).click();
+  await dialog.getByRole('tab', { name: 'Schedules', exact: true }).click();
   await dialog.getByRole('button', { name: 'New schedule', exact: true }).click();
   await dialog.getByRole('textbox', { name: 'Schedule name' }).fill('Weekday inspection');
   await dialog.getByRole('textbox', { name: 'Task content' }).fill('Inspect only');
@@ -403,4 +401,72 @@ test('previews timezone calendar runs and preserves weekdays when editing', asyn
   const edited = await page.evaluate((scope) => window.moose.request('scheduleList', scope), scope);
   expect(edited[0].calendar?.weekdays).toEqual([1, 2, 3, 4, 5, 6, 7]);
   expect(edited[0].enabled).toBe(false);
+});
+
+test('moves the same terminal between window, bottom and right without stopping its shell', async () => {
+  const { page, scope } = await launch();
+  await page.getByRole('button', { name: 'Background commands & schedules', exact: true }).click();
+  await page.getByRole('button', { name: 'New terminal', exact: true }).click();
+  await expect(page.locator('.xterm-screen')).toBeVisible();
+  const id = (await page.evaluate((scope) => window.moose.request('terminalList', scope), scope))[0]
+    .id;
+  await page.evaluate(
+    (id) =>
+      window.moose.request('terminalInput', { id, text: 'export MOOSE_DOCK_CHECK=preserved\r' }),
+    id,
+  );
+  const change = async (name: string) => {
+    await page.getByRole('combobox', { name: 'Panel position', exact: true }).click();
+    await page.getByRole('option', { name, exact: true }).click();
+    await expect(page.locator('.xterm-screen')).toBeVisible();
+  };
+  await change('Bottom');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.locator('.workspace-stage')).toHaveAttribute('data-dock', 'bottom');
+  await page.locator('#composer').fill('Draft beside terminal');
+  await page.screenshot({ path: 'test-results/terminal-bottom.png', animations: 'disabled' });
+  await change('Right');
+  await expect(page.locator('#composer')).toHaveValue('Draft beside terminal');
+  await page.evaluate(
+    (id) =>
+      window.moose.request('terminalInput', {
+        id,
+        text: 'printf \'DOCK_%s\\n\' "$MOOSE_DOCK_CHECK"\r',
+      }),
+    id,
+  );
+  await expect
+    .poll(
+      async () =>
+        (await page.evaluate((id) => window.moose.request('terminalRead', { id, offset: 0 }), id))
+          .data,
+    )
+    .toContain('DOCK_preserved\r\n');
+  expect(
+    await page.evaluate((scope) => window.moose.request('terminalList', scope), scope),
+  ).toHaveLength(1);
+  await page.screenshot({ path: 'test-results/terminal-right.png', animations: 'disabled' });
+  await page.getByRole('button', { name: 'Review changes', exact: true }).click();
+  await expect(page.locator('.workspace-stage')).toHaveAttribute('data-dock', 'bottom');
+  await page.locator('.review-panel').getByRole('button', { name: 'Close', exact: true }).click();
+  await change('Right');
+  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(900, 740));
+  await page.evaluate(() => window.moose.request('settings', { theme: 'dark' }));
+  await expect(page.locator('html')).toHaveClass(/dark/);
+  await expect(
+    page.getByRole('combobox', { name: 'Panel position', exact: true }),
+  ).toBeInViewport();
+  await page.screenshot({
+    path: 'test-results/terminal-right-narrow-dark.png',
+    animations: 'disabled',
+  });
+  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(1280, 860));
+  await page.evaluate(() => window.moose.request('settings', { theme: 'light' }));
+  await expect(page.locator('html')).not.toHaveClass(/dark/);
+  await change('Window');
+  const screen = await page.locator('.terminal-screen').boundingBox();
+  const dialog = await page.getByRole('dialog').boundingBox();
+  expect(screen!.height / dialog!.height).toBeGreaterThan(0.7);
+  await page.screenshot({ path: 'test-results/terminal-window.png', animations: 'disabled' });
+  await page.getByRole('button', { name: 'Close terminal', exact: true }).click();
 });

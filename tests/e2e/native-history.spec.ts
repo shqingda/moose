@@ -35,7 +35,8 @@ async function launch(provider: 'codex' | 'grok' = 'codex') {
 }
 test('imports paginated native history once, forks with lineage and waits for compaction completion', async () => {
   const { page, project } = await launch();
-  await page.getByRole('button', { name: 'Native sessions', exact: true }).click();
+  await page.getByRole('button', { name: 'Workspace tools', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Native sessions', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByRole('button', { name: 'Load more history', exact: true }).click();
   await expect(dialog.getByRole('button', { name: 'Second native conversation' })).toBeVisible();
@@ -61,7 +62,8 @@ test('imports paginated native history once, forks with lineage and waits for co
   ).toHaveLength(1);
   await page.reload();
   await page.waitForSelector('.app-shell');
-  await page.getByRole('button', { name: 'Native sessions', exact: true }).click();
+  await page.getByRole('button', { name: 'Workspace tools', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Native sessions', exact: true }).click();
   await dialog.getByRole('button', { name: 'Native history first page.', exact: true }).click();
   await dialog.getByRole('button', { name: 'Fork from selected turn' }).click();
   await expect(page.locator('.header-title')).toHaveText('Forked native conversation');
@@ -73,7 +75,8 @@ test('imports paginated native history once, forks with lineage and waits for co
     sourceNativeId: 'history-root',
     forkTurnId: 'history-turn',
   });
-  await page.getByRole('button', { name: 'Native sessions', exact: true }).click();
+  await page.getByRole('button', { name: 'Workspace tools', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Native sessions', exact: true }).click();
   await dialog.getByRole('button', { name: 'Compact native context', exact: true }).click();
   await expect(dialog.getByRole('status')).toContainText('Working');
   await expect(dialog.getByRole('status')).toContainText('Native context compaction completed.');
@@ -81,13 +84,15 @@ test('imports paginated native history once, forks with lineage and waits for co
 });
 test('replays Grok native history without claiming unsupported lifecycle controls', async () => {
   const { page } = await launch('grok');
-  await page.getByRole('button', { name: 'Native sessions', exact: true }).click();
+  await page.getByRole('button', { name: 'Workspace tools', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Native sessions', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByRole('button', { name: 'Grok native history', exact: true }).click();
   await expect(dialog).toContainText('Grok history answer');
   await dialog.getByRole('button', { name: 'Import or open conversation' }).click();
   await expect(page.locator('.header-title')).toHaveText('Grok native history');
-  await page.getByRole('button', { name: 'Native sessions', exact: true }).click();
+  await page.getByRole('button', { name: 'Workspace tools', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Native sessions', exact: true }).click();
   await expect(
     dialog.getByRole('button', { name: 'Compact native context', exact: true }),
   ).toBeDisabled();
