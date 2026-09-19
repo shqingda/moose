@@ -6,7 +6,7 @@ import type { GitDiff, GitFile, GitStatus } from '../shared/types';
 const execute = promisify(execFile);
 const env = { ...process.env, GIT_OPTIONAL_LOCKS: '0', GIT_LITERAL_PATHSPECS: '1' };
 /** 以参数数组执行 Git，设置超时及输出上限，不拼接 shell 命令。 */
-async function git(cwd: string, args: string[]) {
+export async function git(cwd: string, args: string[]) {
   return (
     await execute('/usr/bin/git', ['-c', 'core.quotePath=false', ...args], {
       cwd,

@@ -1,3 +1,4 @@
+import { SubagentPanel } from './subagent-panel';
 import { ChevronRight, Users } from 'lucide-react';
 import type { Delegation, Message } from '../../shared/types';
 import { useI18n } from '../lib/i18n';
@@ -54,6 +55,7 @@ export function SubagentActivity({
           <div key={agent.id} className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center gap-2">
               <code>{agent.id}</code>
+              <SubagentPanel sessionId={message.sessionId} nativeId={agent.id} />
               <Badge variant={agent.status === 'failed' ? 'destructive' : 'outline'}>
                 {t(statusLabels[agent.status])}
               </Badge>

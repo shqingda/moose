@@ -45,7 +45,7 @@ function Questions({ message, onError }: { message: MessageData; onError(error: 
     <div className="request-surface">
       <div className="request-heading">
         <ShieldCheck size={16} />
-        <span>{t('pending')}</span>
+        <span>{message.title || t('pending')}</span>
       </div>
       <FieldGroup>
         {message.questions?.map((q) => (

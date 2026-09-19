@@ -1,5 +1,60 @@
 import { createContext, useContext } from 'react';
 export const en = {
+  wtOpenTarget: 'Open merge target in editor',
+  wtTools: 'Worktrees',
+  wtRef: 'Starting Git ref',
+  wtBranch: 'New branch',
+  wtCreate: 'Create isolated conversation',
+  wtCreateHint:
+    'Starts from the selected committed ref. Uncommitted project files and conversation history are not copied. Separate worktrees can run concurrently.',
+  wtKept: 'Kept',
+  wtKeep: 'Keep worktree',
+  wtUnkeep: 'Allow cleanup',
+  wtRefresh: 'Refresh worktree status',
+  wtRemove: 'Remove worktree',
+  wtRemoveHint:
+    'Remove this managed directory only after it is idle, clean (including ignored files) and merged into the project branch. The branch and saved conversations are retained. Conversations in a removed directory cannot run.',
+  wtTarget: 'Merge target',
+  wtMerge: 'Prepare merge into project',
+  wtMergeHint:
+    'Review source and target first. Preparing a merge does not commit it. Resolve conflicts in the target directory, then mark each resolved file. Tasks in both directories pause until the merge completes or is aborted.',
+  wtComplete: 'Commit reviewed merge',
+  wtResolve: 'Mark resolved and stage',
+  wtAbort: 'Abort merge',
+  wtAbortHint:
+    'Git will abort this merge, discarding changes made to resolve it. Other worktrees remain intact.',
+  wtMerged: 'All worktree commits are in the project branch.',
+  wtNoChanges: 'No differences to display.',
+
+  nativeUser: 'You',
+  nativeAssistant: 'Agent',
+  nativeRecord: 'Record',
+  nativeResumeUnsupported:
+    'Resuming a closed child task requires the parent agent; loading history alone does not resume execution.',
+  nativeTools: 'Native sessions',
+  nativeHistory: 'Browse native history',
+  nativeCurrent: 'Current conversation',
+  nativeOrigin: 'Source',
+  nativeForkHint:
+    'Choose a completed turn to fork. Forks share the same project files; this does not create a worktree.',
+  nativeFork: 'Fork from selected turn',
+  nativeCompact: 'Compact native context',
+  nativeCompactHint:
+    'Compaction may use model tokens. Wait for the provider completion event; closing this panel keeps the operation running.',
+  nativeCompacted: 'Native context compaction completed.',
+  nativeWorking: 'Working…',
+  nativeMore: 'Load more history',
+  nativeOlderTurns: 'Load earlier checkpoints',
+  nativeImport: 'Import or open conversation',
+  nativeOpenChild: 'Open subagent',
+  nativeParent: 'Parent thread',
+  nativeRefresh: 'Refresh native history',
+  nativeChildMessage: 'Message to subagent',
+  nativeChildSend: 'Send to subagent',
+  nativeChildHint:
+    'Controls require the parent to be running and native direct input support. Approvals appear in the parent conversation with the child ID. If unavailable, ask the parent agent to continue the child task.',
+  nativeControlAccepted: 'Request accepted. This does not mean the child task has completed.',
+
   planReview: 'Review plan',
   planText: 'Plan text',
   approvePlan: 'Approve and execute',
@@ -209,6 +264,57 @@ export const en = {
 };
 export type TranslationKey = keyof typeof en;
 export const zh: Record<TranslationKey, string> = {
+  wtOpenTarget: '在编辑器中打开合并目标',
+  wtTools: '独立工作目录',
+  wtRef: '起始 Git 引用',
+  wtBranch: '新分支',
+  wtCreate: '创建隔离会话',
+  wtCreateHint:
+    '从指定的已提交版本开始，不复制未提交文件和聊天历史。不同工作目录中的任务可以并行。',
+  wtKept: '已保留',
+  wtKeep: '保留工作目录',
+  wtUnkeep: '允许清理',
+  wtRefresh: '刷新工作目录状态',
+  wtRemove: '清理工作目录',
+  wtRemoveHint:
+    '仅清理空闲、干净（含被忽略文件）且提交已合入项目分支的受管目录。分支和聊天记录会保留；已清理目录中的会话不能继续执行。',
+  wtTarget: '合并目标',
+  wtMerge: '准备合并到项目',
+  wtMergeHint:
+    '先审阅来源与目标。准备合并不会立即提交；在目标目录解决冲突后逐一标记。合并完成或中止前，两个目录的任务都会暂停。',
+  wtComplete: '提交已审阅的合并',
+  wtResolve: '已解决并暂存',
+  wtAbort: '中止合并',
+  wtAbortHint: 'Git 会中止当前合并，丢弃本次解决冲突的改动。其他工作目录不受影响。',
+  wtMerged: '工作目录中的提交已全部合入项目分支。',
+  wtNoChanges: '没有可展示的差异。',
+
+  nativeUser: '用户',
+  nativeAssistant: '代理',
+  nativeRecord: '记录',
+  nativeResumeUnsupported: '关闭后的子任务需要主代理恢复；仅加载历史不会恢复执行。',
+  nativeTools: '原生会话',
+  nativeHistory: '浏览原生历史',
+  nativeCurrent: '当前会话',
+  nativeOrigin: '来源',
+  nativeForkHint: '选择已完成的回合进行分叉。分叉仍共享项目文件，不会创建独立工作目录。',
+  nativeFork: '从所选回合分叉',
+  nativeCompact: '压缩原生上下文',
+  nativeCompactHint: '压缩可能消耗模型 token；收到完成通知后才算成功。关闭面板不会停止操作。',
+  nativeCompacted: '原生上下文压缩已完成。',
+  nativeWorking: '处理中…',
+  nativeMore: '加载更多历史',
+  nativeOlderTurns: '加载更早的分叉点',
+  nativeImport: '导入或打开会话',
+  nativeOpenChild: '打开子代理',
+  nativeParent: '父线程',
+  nativeRefresh: '刷新原生历史',
+  nativeChildMessage: '给子代理的消息',
+  nativeChildSend: '发送给子代理',
+  nativeChildHint:
+    '控制需要父任务仍在运行，并且底座允许直接输入。审批会标注子线程 ID，显示在父会话中。控制不可用时，请让主代理继续子任务。',
+  nativeControlAccepted: '底座已接收请求，不代表子任务已完成。',
+
   planReview: '审阅计划',
   planText: '计划正文',
   approvePlan: '批准并执行',

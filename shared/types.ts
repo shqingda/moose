@@ -47,6 +47,8 @@ export interface Project {
   createdAt: number;
 }
 export interface Session {
+  worktreeId?: string | null;
+  nativeOrigin?: import('./native-sessions').NativeOrigin | null;
   id: string;
   projectId: string;
   provider: Provider;
@@ -100,6 +102,7 @@ export interface Message {
   choices?: Choice[];
   questions?: Question[];
   delegation?: Delegation;
+  sourceThreadId?: string;
   plan?: { version: number; queueId?: string };
   delivery?: { status: 'sending' | 'accepted' | 'rejected' | 'unknown'; error?: string };
   createdAt: number;
@@ -182,9 +185,48 @@ export interface TranscriptPage {
   hasMore: boolean;
 }
 export interface Requests {
+  worktreeList: { projectId: string };
+  worktreeCreate: {
+    projectId: string;
+    provider: Provider;
+    ref: string;
+    branch: string;
+    requestId: string;
+  };
+  worktreeStatus: { id: string };
+  worktreeKeep: { id: string; kept: boolean };
+  worktreeRemove: { id: string };
+  worktreeMerge: { id: string; sourceCommit: string; targetCommit: string; targetBranch: string };
+  worktreeResolve: { id: string; path: string };
+  worktreeComplete: { id: string; indexFingerprint: string };
+  worktreeAbort: { id: string };
+  workspacePath: { projectId: string; sessionId?: string };
+
+  nativeCapabilities: { provider: Provider };
+  nativeList: { projectId: string; sessionId?: string; provider: Provider; cursor?: string };
+  nativeRead: {
+    projectId: string;
+    sessionId?: string;
+    provider: Provider;
+    nativeId: string;
+    cursor?: string;
+  };
+  nativeImport: { projectId: string; sessionId?: string; provider: Provider; nativeId: string };
+  nativeFork: { sessionId: string; turnId: string; requestId: string };
+  nativeCompact: { sessionId: string; requestId: string };
+  childThreads: { sessionId: string };
+  childRead: { sessionId: string; nativeId: string; cursor?: string };
+  childControl: {
+    sessionId: string;
+    nativeId: string;
+    action: 'send' | 'stop' | 'resume';
+    text?: string;
+    requestId: string;
+  };
+
   usage: { provider: Provider; sessionId?: string };
-  searchFiles: { projectId: string; query: string };
-  listSkills: { projectId: string };
+  searchFiles: { projectId: string; sessionId?: string; query: string };
+  listSkills: { projectId: string; sessionId?: string };
   copyText: { text: string };
   responseText: { sessionId: string; runId: string };
   snapshot: Record<string, never>;
@@ -224,12 +266,36 @@ export interface Requests {
   };
   providers: { refresh?: boolean };
   settings: Partial<Settings>;
-  gitStatus: { projectId: string };
-  gitDiff: { projectId: string; path: string; area: GitFile['area'] };
-  openProject: { projectId: string; target: 'finder' | 'editor' };
+  gitStatus: { projectId: string; sessionId?: string };
+  gitDiff: { projectId: string; sessionId?: string; path: string; area: GitFile['area'] };
+  openProject: { projectId: string; sessionId?: string; target: 'finder' | 'editor' };
   openExternal: { url: string };
 }
 export interface Responses {
+  worktreeList: import('./worktrees').Worktree[];
+  worktreeCreate: Session;
+  worktreeStatus: import('./worktrees').WorktreeStatus;
+  worktreeKeep: import('./worktrees').Worktree;
+  worktreeRemove: import('./worktrees').Worktree;
+  worktreeMerge: import('./worktrees').WorktreeStatus;
+  worktreeResolve: import('./worktrees').WorktreeStatus;
+  worktreeComplete: import('./worktrees').WorktreeStatus;
+  worktreeAbort: import('./worktrees').WorktreeStatus;
+  workspacePath: string;
+
+  nativeCapabilities: import('./native-sessions').NativeCapabilities;
+  nativeList: import('./native-sessions').NativePage<import('./native-sessions').NativeThread>;
+  nativeRead: {
+    thread: import('./native-sessions').NativeThread;
+    items: import('./native-sessions').NativePage<import('./native-sessions').NativeEntry>;
+  };
+  nativeImport: Session;
+  nativeFork: Session;
+  nativeCompact: null;
+  childThreads: import('./native-sessions').ChildThread[];
+  childRead: Responses['nativeRead'] & { controllable: boolean };
+  childControl: null;
+
   usage: UsageInfo;
   responseText: string;
   deleteProject: null;

@@ -1,3 +1,5 @@
+import { Worktrees, isWorktreeMethod } from './worktrees';
+import { NativeHistory, isNativeMethod } from './native-history';
 import { Plans } from './plans';
 import { Steering } from './steering';
 import { providerDefinitions, providerIds } from '../shared/providers';
@@ -25,6 +27,8 @@ type Active = {
   promise?: Promise<void>;
 };
 export class MooseService {
+  private worktrees: Worktrees;
+  private native: NativeHistory;
   private plans: Plans;
   private steering: Steering;
   private catalog = new ContextCatalog();
@@ -49,6 +53,38 @@ export class MooseService {
     private emit: (event: AppEvent) => void,
     private adapterFactory = createAdapter,
   ) {
+    this.worktrees = new Worktrees(store, {
+      busy: (path) => this.active.has(path) || this.editing.has(path),
+      lock: (paths) => {
+        if (paths.some((path) => this.active.has(path) || this.editing.has(path)))
+          throw new Error('Wait for tasks and directory operations to finish');
+        for (const path of paths) this.editing.add(path);
+        return () => {
+          for (const path of paths) this.editing.delete(path);
+          void this.drain();
+        };
+      },
+      changed: () => this.changed(),
+    });
+    this.native = new NativeHistory(store, {
+      adapter: async (provider) => {
+        if (!store.getSettings()[providerDefinitions[provider].enabledKey])
+          throw new Error('This provider is disabled in Settings');
+        return this.adapterFactory(provider, await this.providerPath(provider));
+      },
+      active: (id) =>
+        [...this.active.values()].find((run) => run.session.id === id && !run.cancelled)?.adapter,
+      lock: (path) => {
+        if (this.active.has(path) || this.editing.has(path) || this.worktrees.blocks(path))
+          throw new Error('Wait for project tasks to finish');
+        this.editing.add(path);
+        return () => {
+          this.editing.delete(path);
+          void this.drain();
+        };
+      },
+      changed: () => this.changed(),
+    });
     this.plans = new Plans(store);
     this.steering = new Steering(store, (message) => this.emit({ type: 'message', message }));
     this.attachments = new Attachments(store.sqlite.name);
@@ -129,7 +165,13 @@ export class MooseService {
   async handle(method: string, input: unknown): Promise<unknown> {
     if (this.stopping) throw new Error('Moose is shutting down');
     const args = validate(method as keyof Requests, input);
+    if (isWorktreeMethod(method)) return this.worktrees.handle(method, args);
+    if (isNativeMethod(method)) return this.native.handle(method, args);
     switch (method) {
+      case 'workspacePath': {
+        const a = args as Requests['workspacePath'];
+        return this.store.directory(a.projectId, a.sessionId);
+      }
       case 'snapshot':
         return {
           projects: this.store.listProjects(),
@@ -138,12 +180,12 @@ export class MooseService {
         };
       case 'searchFiles': {
         const a = args as Requests['searchFiles'];
-        return this.catalog.search(this.store.project(a.projectId).path, a.query);
+        return this.catalog.search(this.store.directory(a.projectId, a.sessionId), a.query);
       }
-      case 'listSkills':
-        return this.catalog.skills(
-          this.store.project((args as Requests['listSkills']).projectId).path,
-        );
+      case 'listSkills': {
+        const a = args as Requests['listSkills'];
+        return this.catalog.skills(this.store.directory(a.projectId, a.sessionId));
+      }
       case 'uploadAttachment': {
         const a = args as Requests['uploadAttachment'];
         return this.attachments.import(a.name, Buffer.from(a.data, 'base64'));
@@ -162,8 +204,8 @@ export class MooseService {
       case 'deleteSession': {
         const { sessionId } = args as Requests['deleteSession'];
         const s = this.store.session(sessionId),
-          project = this.store.project(s.projectId);
-        if (this.active.has(project.path) || this.editing.has(project.path))
+          path = this.store.sessionPath(s);
+        if (this.active.has(path) || this.editing.has(path))
           throw new Error('Stop project tasks before deleting a conversation');
         this.store.deleteSession(sessionId);
         this.paused.delete(sessionId);
@@ -176,9 +218,10 @@ export class MooseService {
         if (!original || original.kind !== 'user')
           throw new Error('Only user messages can be edited');
         if (!a.text && !original.attachments?.length) throw new Error('Add message text');
-        const project = this.store.project(this.store.session(a.sessionId).projectId);
+        const source = this.store.session(a.sessionId);
+        const directory = this.store.directory(source.projectId, source.id);
         const context = original.context?.inline
-          ? contextInText(a.text, original.context, await this.catalog.skills(project.path))
+          ? contextInText(a.text, original.context, await this.catalog.skills(directory))
           : original.context;
         return this.replaceMessage(a, context);
       }
@@ -191,14 +234,20 @@ export class MooseService {
       }
       case 'updateSession': {
         const { id, draftAttachments, ...patch } = args as Requests['updateSession'];
+        const changesExecution =
+          patch.archived ||
+          patch.model !== undefined ||
+          patch.effort !== undefined ||
+          patch.mode !== undefined;
+        const projectPath = this.store.sessionPath(this.store.session(id));
         if (
-          [...this.active.values()].some((run) => run.session.id === id) &&
-          (patch.archived ||
-            patch.model !== undefined ||
-            patch.effort !== undefined ||
-            patch.mode !== undefined)
+          changesExecution &&
+          ([...this.active.values()].some((run) => run.session.id === id) ||
+            this.editing.has(projectPath))
         )
-          throw new Error('Stop this task before changing its execution settings');
+          throw new Error(
+            'Wait for this task and native history operations to finish before changing execution settings',
+          );
         if (patch.archived) this.paused.add(id);
         const s = this.store.updateSession(id, {
           ...patch,
@@ -225,7 +274,10 @@ export class MooseService {
       case 'send': {
         const a = args as Requests['send'];
         const s = this.store.session(a.sessionId);
-        if (this.editing.has(this.store.project(s.projectId).path))
+        if (
+          this.editing.has(this.store.directory(s.projectId, s.id)) ||
+          this.worktrees.blocks(this.store.directory(s.projectId, s.id))
+        )
           throw new Error('Please wait for the history operation to finish');
         if (!this.store.getSettings()[providerDefinitions[s.provider].enabledKey])
           throw new Error('This provider is disabled in Settings');
@@ -247,8 +299,13 @@ export class MooseService {
       case 'approvePlan': {
         const a = args as Requests['editPlan'];
         const session = this.store.session(a.sessionId);
-        const path = this.store.project(session.projectId).path;
-        if (session.archived || this.active.has(path) || this.editing.has(path))
+        const path = this.store.directory(session.projectId, session.id);
+        if (
+          session.archived ||
+          this.active.has(path) ||
+          this.editing.has(path) ||
+          this.worktrees.blocks(path)
+        )
           throw new Error('Wait for project tasks to finish before reviewing this plan');
         if (!this.store.getSettings()[providerDefinitions[session.provider].enabledKey])
           throw new Error('This provider is disabled in Settings');
@@ -273,7 +330,7 @@ export class MooseService {
           return saved;
         }
         const session = this.store.session(a.sessionId);
-        const path = this.store.project(session.projectId).path;
+        const path = this.store.directory(session.projectId, session.id);
         const run = this.active.get(path);
         if (
           session.archived ||
@@ -395,11 +452,13 @@ export class MooseService {
         void this.drain();
         return s;
       }
-      case 'gitStatus':
-        return gitStatus(this.store.project((args as Requests['gitStatus']).projectId).path);
+      case 'gitStatus': {
+        const a = args as Requests['gitStatus'];
+        return gitStatus(this.store.directory(a.projectId, a.sessionId));
+      }
       case 'gitDiff': {
         const a = args as Requests['gitDiff'];
-        return gitDiff(this.store.project(a.projectId).path, a.path, a.area);
+        return gitDiff(this.store.directory(a.projectId, a.sessionId), a.path, a.area);
       }
       default:
         throw new Error(`Operation is not available in the runtime: ${method}`);
@@ -421,11 +480,17 @@ export class MooseService {
         const session = this.store.listSessions().find((s) => s.id === item.sessionId);
         if (!session || !this.store.getSettings()[providerDefinitions[session.provider].enabledKey])
           continue;
-        const project = this.store.project(session.projectId);
-        if (session.archived || this.active.has(project.path) || this.editing.has(project.path))
+        const location = this.store.sessionPath(session);
+        if (
+          session.archived ||
+          this.active.has(location) ||
+          this.editing.has(location) ||
+          this.worktrees.blocks(location)
+        )
           continue;
-        let path: string;
+        let path: string, cwd: string;
         try {
+          cwd = await this.worktrees.ensure(session);
           path = await this.providerPath(session.provider);
         } catch (error) {
           this.paused.add(session.id);
@@ -445,11 +510,14 @@ export class MooseService {
           continue;
         }
         if (this.stopping) break;
+        const current = this.store.queued(session.id).find((queued) => queued.id === item.id);
         if (
-          this.editing.has(project.path) ||
+          this.active.has(cwd) ||
+          this.editing.has(cwd) ||
+          this.worktrees.blocks(cwd) ||
           !this.store.listSessions().some((s) => s.id === session.id && !s.archived) ||
           this.paused.has(session.id) ||
-          !this.store.queued(session.id).some((queued) => queued.id === item.id)
+          !current
         )
           continue;
         const run: Active = {
@@ -461,15 +529,15 @@ export class MooseService {
           rows: new Map(),
           dirty: new Set(),
         };
-        this.active.set(project.path, run);
-        this.emit({ type: 'message', message: this.store.begin(item, run.id) });
+        this.active.set(cwd, run);
+        this.emit({ type: 'message', message: this.store.begin(current, run.id) });
         this.changed();
         run.promise = this.execute(
           run,
-          project.path,
-          item.text,
-          item.attachments || [],
-          item.context,
+          cwd,
+          current.text,
+          current.attachments || [],
+          current.context,
         );
       }
     } finally {
@@ -506,6 +574,7 @@ export class MooseService {
     if (event.choices) row.choices = event.choices;
     if (event.questions) row.questions = event.questions;
     if (event.delegation) row.delegation = event.delegation;
+    if (event.sourceThreadId) row.sourceThreadId = event.sourceThreadId;
     if (event.kind === 'plan') row.plan ||= { version: 1 };
     run.rows.set(id, row);
     run.dirty.add(id);
@@ -534,6 +603,9 @@ export class MooseService {
   ) {
     let failed = false;
     try {
+      const selection = await this.catalog.resolve(path, context);
+      const inputs = await agentAttachments(this.attachments, attachments);
+      if (run.cancelled || this.stopping) return;
       await run.adapter.run({
         usage: (usage) => {
           if (!run.cancelled)
@@ -550,8 +622,8 @@ export class MooseService {
             ? `${run.session.historySeed}\n\nCurrent user message:\n${text}`
             : text,
         promptContext: context,
-        selection: await this.catalog.resolve(path, context),
-        attachments: await agentAttachments(this.attachments, attachments),
+        selection,
+        attachments: inputs,
         turnId: (id) => this.store.setTurnId(run.id, id),
         emit: (event) => this.accept(run, event),
         nativeId: (nativeId) => {
@@ -598,8 +670,12 @@ export class MooseService {
     replacementContext?: import('../shared/types').PromptContext,
   ) {
     const source = this.store.session(sessionId),
-      project = this.store.project(source.projectId);
-    if (this.active.has(project.path) || this.editing.has(project.path))
+      project = { path: this.store.directory(source.projectId, source.id) };
+    if (
+      this.active.has(project.path) ||
+      this.editing.has(project.path) ||
+      this.worktrees.blocks(project.path)
+    )
       throw new Error('Stop project tasks before returning to an earlier message');
     this.editing.add(project.path);
     let adapter: AgentAdapter | undefined;
@@ -666,6 +742,8 @@ export class MooseService {
   }
   /** 暂停后续队列并取消当前执行，等待代理退出后再通知界面。 */
   async stop(sessionId: string) {
+    if (this.editing.has(this.store.sessionPath(this.store.session(sessionId))))
+      throw new Error('Wait for the native history operation to finish');
     this.paused.add(sessionId);
     const run = [...this.active.values()].find((run) => run.session.id === sessionId);
     if (run) {
@@ -689,6 +767,8 @@ export class MooseService {
         await run.promise;
       }),
     );
+    await this.worktrees.close();
+    await this.native.close();
     await this.steering.settle();
     clearInterval(this.flushTimer);
     this.flush();

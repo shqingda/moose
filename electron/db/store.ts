@@ -1,3 +1,5 @@
+import { realpathSync } from 'node:fs';
+import type { Worktree } from '../../shared/worktrees';
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { and, asc, desc, eq, inArray, lt, sql } from 'drizzle-orm';
@@ -36,6 +38,46 @@ export class Store {
       .set({ state: 'expired' })
       .where(inArray(table.messages.state, ['pending', 'running']))
       .run();
+  }
+  listWorktrees(projectId: string): Worktree[] {
+    return this.db
+      .select()
+      .from(table.worktrees)
+      .where(eq(table.worktrees.projectId, projectId))
+      .all()
+      .map((row) => row.data);
+  }
+  worktree(id: string): Worktree {
+    const row = this.db.select().from(table.worktrees).where(eq(table.worktrees.id, id)).get();
+    if (!row) throw new Error('Worktree not found');
+    return row.data;
+  }
+  saveWorktree(worktree: Worktree) {
+    this.db
+      .insert(table.worktrees)
+      .values({ id: worktree.id, projectId: worktree.projectId, data: worktree })
+      .onConflictDoUpdate({ target: table.worktrees.id, set: { data: worktree } })
+      .run();
+    return worktree;
+  }
+  sessionPath(session: Session): string {
+    return session.worktreeId
+      ? this.worktree(session.worktreeId).path
+      : this.project(session.projectId).path;
+  }
+  /** 统一解析会话目录；移除或被替换的受管目录不能悄悄退回项目根目录。 */
+  directory(projectId: string, sessionId?: string): string {
+    const project = this.project(projectId);
+    if (!sessionId) return realpathSync(project.path);
+    const session = this.session(sessionId);
+    if (session.projectId !== projectId) throw new Error('Session does not belong to this project');
+    if (!session.worktreeId) return realpathSync(project.path);
+    const worktree = this.worktree(session.worktreeId);
+    if (worktree.projectId !== projectId || worktree.status !== 'ready')
+      throw new Error('This worktree is unavailable; check its status');
+    if (realpathSync(worktree.path) !== worktree.path)
+      throw new Error('The worktree directory was replaced by a symbolic link');
+    return worktree.path;
   }
   /** 按加入时间倒序读取项目列表。 */
   listProjects(): Project[] {
@@ -131,6 +173,7 @@ export class Store {
       nativeTurnId,
       context,
       delegation,
+      sourceThreadId,
       plan,
       delivery,
       ...data
@@ -144,6 +187,7 @@ export class Store {
         nativeTurnId,
         context,
         delegation,
+        sourceThreadId,
         plan,
         delivery,
       }),
@@ -278,6 +322,11 @@ export class Store {
     if (!this.session(sessionId).archived)
       throw new Error('Archive the conversation before deleting it');
     this.sqlite.transaction(() => {
+      this.sqlite
+        .prepare(
+          "DELETE FROM settings WHERE key LIKE 'native-operation:%' AND json_extract(value, '$.sessionId') = ?",
+        )
+        .run(sessionId);
       this.db.delete(table.queue).where(eq(table.queue.sessionId, sessionId)).run();
       this.db.delete(table.messages).where(eq(table.messages.sessionId, sessionId)).run();
       this.db.delete(table.sessions).where(eq(table.sessions.id, sessionId)).run();
@@ -286,8 +335,16 @@ export class Store {
   /** 删除项目及关联会话数据；不会删除真实工作目录中的文件。 */
   deleteProject(projectId: string) {
     this.project(projectId);
+    if (this.listWorktrees(projectId).some((w) => w.status !== 'removed'))
+      throw new Error('Clean up managed worktrees before deleting this project');
     this.sqlite.transaction(() => {
+      this.db.delete(table.worktrees).where(eq(table.worktrees.projectId, projectId)).run();
       for (const session of this.listSessions().filter((s) => s.projectId === projectId)) {
+        this.sqlite
+          .prepare(
+            "DELETE FROM settings WHERE key LIKE 'native-operation:%' AND json_extract(value, '$.sessionId') = ?",
+          )
+          .run(session.id);
         this.db.delete(table.queue).where(eq(table.queue.sessionId, session.id)).run();
         this.db.delete(table.messages).where(eq(table.messages.sessionId, session.id)).run();
         this.db.delete(table.sessions).where(eq(table.sessions.id, session.id)).run();

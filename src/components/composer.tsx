@@ -68,7 +68,7 @@ export function Composer({
   useEffect(() => {
     let live = true;
     void window.moose
-      .request('listSkills', { projectId })
+      .request('listSkills', { projectId, sessionId: session?.id })
       .then((items) => {
         if (live) {
           setSkills(items);
@@ -79,7 +79,7 @@ export function Composer({
     return () => {
       live = false;
     };
-  }, [projectId, onError]);
+  }, [projectId, session?.id, onError]);
   /** 同步引用与模式选择，并保存为当前草稿上下文。 */
   const updateContext = (value: PromptContext) => {
     setContext(value);
@@ -116,6 +116,7 @@ export function Composer({
     context,
     updateContext,
     onError,
+    session?.id,
   );
   const busy = !!session && ['running', 'waiting', 'queued'].includes(session.status);
   const [sending, setSending] = useState(false),

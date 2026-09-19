@@ -13,6 +13,7 @@ export function useSuggestions(
   context: PromptContext,
   onContext: (value: PromptContext) => void,
   onError: (error: string) => void,
+  sessionId?: string,
 ) {
   const t = useI18n(),
     [caret, setCaret] = useState(0),
@@ -37,8 +38,8 @@ export function useSuggestions(
     const timer = setTimeout(() => {
       const result =
         trigger === '@'
-          ? window.moose.request('searchFiles', { projectId, query })
-          : window.moose.request('listSkills', { projectId });
+          ? window.moose.request('searchFiles', { projectId, sessionId, query })
+          : window.moose.request('listSkills', { projectId, sessionId });
       void result
         .then((items) => {
           if (live)
@@ -61,7 +62,7 @@ export function useSuggestions(
       live = false;
       clearTimeout(timer);
     };
-  }, [projectId, trigger, query, open, onError]);
+  }, [projectId, sessionId, trigger, query, open, onError]);
   useEffect(() => {
     if (!open) return;
     const dismiss = (event: PointerEvent) => {

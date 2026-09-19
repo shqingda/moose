@@ -229,7 +229,10 @@ else {
         }
         if (method === 'openProject') {
           const p = params as Requests['openProject'],
-            path = (await runtime.request('_projectPath', { projectId: p.projectId })) as string;
+            path = (await runtime.request('workspacePath', {
+              projectId: p.projectId,
+              sessionId: p.sessionId,
+            })) as string;
           if (p.target === 'finder') {
             const error = await shell.openPath(path);
             if (error) throw new Error(error);

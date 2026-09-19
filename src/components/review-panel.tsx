@@ -9,11 +9,13 @@ import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from './ui/empty';
 /** 按需读取单个文件 diff，展示行号、二进制或截断提示。 */
 function FileReview({
   projectId,
+  sessionId,
   file,
   revision,
   onError,
 }: {
   projectId: string;
+  sessionId?: string;
   file: GitFile;
   revision: number;
   onError(error: string): void;
@@ -25,7 +27,7 @@ function FileReview({
     let live = true;
     if (open) {
       void window.moose
-        .request('gitDiff', { projectId, path: file.path, area: file.area })
+        .request('gitDiff', { projectId, sessionId, path: file.path, area: file.area })
         .then((d) => {
           if (live) setDiff(d);
         })
@@ -36,7 +38,7 @@ function FileReview({
     return () => {
       live = false;
     };
-  }, [projectId, file.path, file.area, revision, open, onError]);
+  }, [projectId, sessionId, file.path, file.area, revision, open, onError]);
   const lines = useMemo(() => diffLines(diff?.text || ''), [diff?.text]);
   return (
     <section className="review-file">
@@ -89,12 +91,14 @@ function FileReview({
 export function ReviewPanel({
   open,
   project,
+  sessionId,
   onClose,
   onError,
   reduceMotion,
 }: {
   open: boolean;
   project: Project;
+  sessionId?: string;
   onClose(): void;
   onError(error: string): void;
   reduceMotion: boolean;
@@ -121,7 +125,7 @@ export function ReviewPanel({
       inFlight = true;
       setLoading(true);
       try {
-        const next = await window.moose.request('gitStatus', { projectId: project.id });
+        const next = await window.moose.request('gitStatus', { projectId: project.id, sessionId });
         if (live) {
           setStatus(next);
           setRevision((n) => n + 1);
@@ -141,7 +145,7 @@ export function ReviewPanel({
       live = false;
       clearInterval(timer);
     };
-  }, [open, project.id, refreshKey, onError]);
+  }, [open, project.id, sessionId, refreshKey, onError]);
   return (
     <motion.div
       className="review-frame"
@@ -235,6 +239,7 @@ export function ReviewPanel({
                     <FileReview
                       key={file.path}
                       projectId={project.id}
+                      sessionId={sessionId}
                       file={file}
                       revision={revision}
                       onError={onError}

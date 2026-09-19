@@ -37,7 +37,7 @@ describe('durable workspace', () => {
       draft: 'unfinished',
     });
     expect(restored.queued()).toHaveLength(1);
-    expect(restored.sqlite.pragma('user_version', { simple: true })).toBe(3);
+    expect(restored.sqlite.pragma('user_version', { simple: true })).toBe(5);
     restored.close();
   });
   it('deduplicates by id and sequence and paginates without losing ordering', () => {
@@ -83,7 +83,7 @@ it('upgrades a version-one database without losing existing conversation data', 
   store.updateSession(session.id, { title: 'Existing history', draft: 'existing draft' });
   store.enqueue(session.id, 'existing queue');
   store.sqlite.exec(
-    'ALTER TABLE sessions DROP COLUMN draft_context; ALTER TABLE queue DROP COLUMN context; ALTER TABLE sessions DROP COLUMN draft_attachments; ALTER TABLE sessions DROP COLUMN history_seed; ALTER TABLE queue DROP COLUMN attachments; PRAGMA user_version = 1;',
+    'ALTER TABLE sessions DROP COLUMN native_origin; ALTER TABLE sessions DROP COLUMN worktree_id; DROP TABLE worktrees; ALTER TABLE sessions DROP COLUMN draft_context; ALTER TABLE queue DROP COLUMN context; ALTER TABLE sessions DROP COLUMN draft_attachments; ALTER TABLE sessions DROP COLUMN history_seed; ALTER TABLE queue DROP COLUMN attachments; PRAGMA user_version = 1;',
   );
   store.close();
   const upgraded = new Store(file);

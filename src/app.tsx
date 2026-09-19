@@ -1,3 +1,5 @@
+import { WorktreeTools } from './components/worktree-tools';
+import { NativeTools } from './components/native-tools';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { MotionConfig, motion, useReducedMotion } from 'motion/react';
 import {
@@ -380,7 +382,13 @@ function Workspace({
   /** 通过主进程在 Finder 或系统默认编辑器中打开当前项目。 */
   const openProject = (target: 'finder' | 'editor') => {
     if (project)
-      void perform(() => window.moose.request('openProject', { projectId: project.id, target }));
+      void perform(() =>
+        window.moose.request('openProject', {
+          projectId: project.id,
+          sessionId: session?.id,
+          target,
+        }),
+      );
   };
   const sessions = snapshot.sessions.filter(
     (s) =>
@@ -446,6 +454,32 @@ function Workspace({
             )}
           </div>
           <div className="header-actions">
+            {project && (
+              <WorktreeTools
+                project={project}
+                provider={currentProvider}
+                session={session}
+                onSelect={(target) => {
+                  setSelected(target.id);
+                  setProjectId(target.projectId);
+                  setArchived(target.archived);
+                  void refresh();
+                }}
+              />
+            )}
+            {project && (
+              <NativeTools
+                project={project}
+                provider={currentProvider}
+                session={session}
+                onSelect={(target) => {
+                  setSelected(target.id);
+                  setProjectId(target.projectId);
+                  setArchived(target.archived);
+                  void refresh();
+                }}
+              />
+            )}
             {session && (
               <>
                 <IconButton
@@ -552,8 +586,9 @@ function Workspace({
       {project && (
         <ReviewPanel
           open={review}
-          key={project.id}
+          key={`${project.id}:${session?.id}`}
           project={project}
+          sessionId={session?.id}
           onClose={() => setReview(false)}
           onError={setError}
           reduceMotion={!!reduceMotion || snapshot.reduceMotion}

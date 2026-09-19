@@ -75,7 +75,24 @@ export class RuntimeHost {
           this.pending.delete(id);
           reject(new Error(`Operation timed out: ${method}`));
         },
-        method === 'providers' ? 65000 : 20000,
+        (
+          {
+            providers: 65000,
+            worktreeCreate: 90000,
+            worktreeStatus: 90000,
+            worktreeRemove: 90000,
+            worktreeMerge: 120000,
+            worktreeResolve: 90000,
+            worktreeComplete: 90000,
+            worktreeAbort: 90000,
+            nativeCompact: 180000,
+            nativeImport: 180000,
+            nativeFork: 180000,
+            nativeRead: 65000,
+            childRead: 65000,
+            childControl: 85000,
+          } as Record<string, number>
+        )[method] || 20000,
       );
       this.pending.set(id, { resolve, reject, timer });
       this.child!.postMessage({ id, method, params });

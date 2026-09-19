@@ -2,7 +2,7 @@ import type Database from 'better-sqlite3';
 /** 按 user_version 逐级执行事务迁移；遇到更高版本数据库时拒绝降级读取。 */
 export function migrate(db: Database.Database) {
   const version = db.pragma('user_version', { simple: true }) as number;
-  if (version > 3) throw new Error('This database was created by a newer Moose version.');
+  if (version > 5) throw new Error('This database was created by a newer Moose version.');
   if (version === 0)
     db.transaction(() => {
       db.exec(`
@@ -25,6 +25,16 @@ export function migrate(db: Database.Database) {
     db.transaction(() => {
       db.exec(
         'ALTER TABLE sessions ADD COLUMN draft_context TEXT; ALTER TABLE queue ADD COLUMN context TEXT; PRAGMA user_version = 3;',
+      );
+    })();
+  if (version < 4)
+    db.transaction(() => {
+      db.exec('ALTER TABLE sessions ADD COLUMN native_origin TEXT; PRAGMA user_version = 4;');
+    })();
+  if (version < 5)
+    db.transaction(() => {
+      db.exec(
+        'ALTER TABLE sessions ADD COLUMN worktree_id TEXT; CREATE TABLE worktrees (id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id), data TEXT NOT NULL); PRAGMA user_version = 5;',
       );
     })();
 }

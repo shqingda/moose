@@ -13,10 +13,76 @@ const context = z.strictObject({
   goalBudget: z.number().int().min(1000).max(1_000_000).optional(),
   subagents: z.boolean().optional(),
 });
+const nativeId = z.string().min(1).max(200);
+const cursor = z.string().min(1).max(4096).optional();
+const gitRef = z
+  .string()
+  .trim()
+  .min(1)
+  .max(240)
+  .refine((v) => !v.startsWith('-') && !v.includes('\0'));
 export const schemas = {
+  worktreeList: z.strictObject({ projectId: id }),
+  worktreeCreate: z.strictObject({
+    projectId: id,
+    provider: z.enum(providerIds),
+    ref: gitRef,
+    branch: gitRef,
+    requestId: id,
+  }),
+  worktreeStatus: z.strictObject({ id }),
+  worktreeKeep: z.strictObject({ id, kept: z.boolean() }),
+  worktreeRemove: z.strictObject({ id }),
+  worktreeMerge: z.strictObject({
+    id,
+    sourceCommit: z.string().regex(/^[a-f0-9]{40,64}$/),
+    targetCommit: z.string().regex(/^[a-f0-9]{40,64}$/),
+    targetBranch: gitRef,
+  }),
+  worktreeResolve: z.strictObject({ id, path: z.string().min(1).max(4096) }),
+  worktreeComplete: z.strictObject({ id, indexFingerprint: z.string().regex(/^[a-f0-9]{64}$/) }),
+  worktreeAbort: z.strictObject({ id }),
+  workspacePath: z.strictObject({ projectId: id, sessionId: id.optional() }),
+
+  nativeCapabilities: z.strictObject({ provider: z.enum(providerIds) }),
+  nativeList: z.strictObject({
+    sessionId: id.optional(),
+    projectId: id,
+    provider: z.enum(providerIds),
+    cursor,
+  }),
+  nativeRead: z.strictObject({
+    sessionId: id.optional(),
+    projectId: id,
+    provider: z.enum(providerIds),
+    nativeId,
+    cursor,
+  }),
+  nativeImport: z.strictObject({
+    sessionId: id.optional(),
+    projectId: id,
+    provider: z.enum(providerIds),
+    nativeId,
+  }),
+  nativeFork: z.strictObject({ sessionId: id, turnId: nativeId, requestId: id }),
+  nativeCompact: z.strictObject({ sessionId: id, requestId: id }),
+  childThreads: z.strictObject({ sessionId: id }),
+  childRead: z.strictObject({ sessionId: id, nativeId, cursor }),
+  childControl: z.strictObject({
+    sessionId: id,
+    nativeId,
+    action: z.enum(['send', 'stop', 'resume']),
+    text: text.optional(),
+    requestId: id,
+  }),
+
   usage: z.strictObject({ provider: z.enum(providerIds), sessionId: id.optional() }),
-  searchFiles: z.strictObject({ projectId: id, query: z.string().max(300) }),
-  listSkills: z.strictObject({ projectId: id }),
+  searchFiles: z.strictObject({
+    sessionId: id.optional(),
+    projectId: id,
+    query: z.string().max(300),
+  }),
+  listSkills: z.strictObject({ sessionId: id.optional(), projectId: id }),
   responseText: z.strictObject({ sessionId: id, runId: z.string().min(1).max(500) }),
   copyText: z.strictObject({ text: z.string().max(1_000_000) }),
   snapshot: empty,
@@ -100,9 +166,18 @@ export const schemas = {
     piPath: z.string().max(4096).optional(),
     fontScale: z.number().min(0.85).max(1.4).optional(),
   }),
-  gitStatus: z.strictObject({ projectId: id }),
-  gitDiff: z.strictObject({ projectId: id, path: z.string().min(1).max(4096), area }),
-  openProject: z.strictObject({ projectId: id, target: z.enum(['finder', 'editor']) }),
+  gitStatus: z.strictObject({ sessionId: id.optional(), projectId: id }),
+  gitDiff: z.strictObject({
+    sessionId: id.optional(),
+    projectId: id,
+    path: z.string().min(1).max(4096),
+    area,
+  }),
+  openProject: z.strictObject({
+    sessionId: id.optional(),
+    projectId: id,
+    target: z.enum(['finder', 'editor']),
+  }),
   openExternal: z.strictObject({
     url: z
       .url()

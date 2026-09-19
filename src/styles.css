@@ -127,3 +127,20 @@
     @apply font-sans;
   }
 }
+
+.native-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(760px, calc(100vw - 48px));
+  max-width: 760px;
+  max-height: 85vh;
+  overflow: hidden;
+}
+.native-dialog > [data-slot='dialog-header'] {
+  flex-shrink: 0;
+}
+.native-history-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}

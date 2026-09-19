@@ -9,6 +9,7 @@ export type AgentEvent = {
   choices?: Choice[];
   questions?: Question[];
   delegation?: Message['delegation'];
+  sourceThreadId?: string;
 };
 export interface RunContext {
   usage?(usage: import('../../shared/types').ContextUsage): void;
@@ -26,6 +27,7 @@ export interface RunContext {
   nativeId(id: string): void;
 }
 export interface AgentAdapter {
+  sessions?: import('./native-types').NativeSessions;
   usage?(): Promise<import('../../shared/types').UsageInfo>;
   probe(): Promise<Pick<ProviderInfo, 'models' | 'modes' | 'images'>>;
   fork?(session: Session, cwd: string, lastTurnId: string): Promise<string>;

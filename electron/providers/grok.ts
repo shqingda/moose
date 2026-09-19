@@ -1,3 +1,4 @@
+import { GrokSessions } from './grok-sessions';
 import { attachmentText, promptText } from './prompt';
 import { JsonRpc } from './rpc';
 import {
@@ -102,7 +103,10 @@ export class GrokAdapter implements AgentAdapter {
       resolve(value: Record<string, unknown>): void;
     }
   >();
-  constructor(private path: string) {}
+  readonly sessions: GrokSessions;
+  constructor(private path: string) {
+    this.sessions = new GrokSessions(path);
+  }
   /** 通过 Grok billing 扩展查询套餐用量与重置时间，转换为统一额度结构。 */
   async usage(): Promise<import('../../shared/types').UsageInfo> {
     const rpc = (this.billingRpc = new JsonRpc(this.path, ['agent', 'stdio']));
@@ -370,6 +374,7 @@ export class GrokAdapter implements AgentAdapter {
   }
   /** 关闭用量查询通道与代理子进程，清理未完成的等待。 */
   async close() {
+    await this.sessions.close();
     await this.billingRpc?.close();
     for (const pending of this.questions.values()) pending.resolve({ outcome: 'cancelled' });
     this.questions.clear();

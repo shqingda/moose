@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // Deterministic protocol peer for tests ONLY. Never bundled with Moose.
+import { nativeHistoryPeer } from './native-history.mjs';
 import { createInterface } from 'node:readline';
 import { randomUUID } from 'node:crypto';
 import { writeFileSync } from 'node:fs';
@@ -87,6 +88,7 @@ createInterface({ input: process.stdin }).on('line', (line) => {
     complete('Answer received.', false);
     return;
   }
+  if (nativeHistoryPeer(m, { result, notify, session: sessionId, cwd })) return;
   switch (m.method) {
     case 'initialize':
       result(
@@ -94,13 +96,13 @@ createInterface({ input: process.stdin }).on('line', (line) => {
         acp
           ? {
               protocolVersion: 1,
-              agentCapabilities: { loadSession: true },
+              agentCapabilities: { loadSession: true, sessionCapabilities: { list: {} } },
               authMethods: [{ id: 'cached_token', name: 'Cached' }],
               _meta: {
                 modelState: { availableModels: [{ modelId: 'fixture', name: 'Fixture model' }] },
               },
             }
-          : { userAgent: 'fixture' },
+          : { userAgent: 'Moose protocol fixture/0.155.1' },
       );
       break;
     case 'initialized':

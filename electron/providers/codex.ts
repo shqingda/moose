@@ -1,3 +1,6 @@
+import { CodexSessions } from './codex-sessions';
+import { codexPermissions } from './codex-permissions';
+export { codexPermissions } from './codex-permissions';
 import { codexInput } from './codex-input';
 import { codexDelegation } from './codex-subagents';
 import { JsonRpc, RpcRejected } from './rpc';
@@ -15,20 +18,6 @@ import type { ThreadStartParams } from './generated/codex/v2/ThreadStartParams';
 import type { TurnStartParams } from './generated/codex/v2/TurnStartParams';
 import type { ReasoningEffort } from './generated/codex/ReasoningEffort';
 import type { ProviderInfo } from '../../shared/types';
-
-/** 把界面权限档位映射为 Codex 审批策略、审批人和沙箱配置。 */
-export function codexPermissions(
-  mode: string,
-): Pick<ThreadStartParams, 'approvalPolicy' | 'approvalsReviewer' | 'sandbox' | 'config'> {
-  return mode === 'full'
-    ? { approvalPolicy: 'never', approvalsReviewer: 'user', sandbox: 'danger-full-access' }
-    : {
-        approvalPolicy: 'on-request',
-        approvalsReviewer: mode === 'auto' ? 'auto_review' : 'user',
-        sandbox: 'workspace-write',
-        config: { 'sandbox_workspace_write.network_access': false, web_search: 'disabled' },
-      };
-}
 
 /** 把 Codex 通知转换为统一消息事件，屏蔽协议字段差异。 */
 export function normalizeCodex(method: string, input: unknown): AgentEvent | null {
@@ -94,6 +83,7 @@ export function normalizeCodex(method: string, input: unknown): AgentEvent | nul
   }
 }
 export class CodexAdapter implements AgentAdapter {
+  readonly sessions = new CodexSessions(() => this.connect(), normalizeCodex);
   private rpc?: JsonRpc;
   private context?: RunContext;
   private turnId = '';
@@ -117,9 +107,13 @@ export class CodexAdapter implements AgentAdapter {
   private async connect(cwd?: string) {
     if (this.rpc) return this.rpc;
     const rpc = (this.rpc = new JsonRpc(this.path, ['app-server'], cwd));
-    rpc.onExit = (error) => this.finish?.reject(error);
+    rpc.onExit = (error) => {
+      this.sessions.disconnected(error);
+      this.finish?.reject(error);
+    };
     rpc.onNotification = (method, params) => {
       const p = record(params);
+      this.sessions.notification(method, p);
       if (method === 'thread/started' && this.context) {
         const thread = record(p.thread);
         const source = record(record(record(thread.source).subagent).thread_spawn);
@@ -129,7 +123,22 @@ export class CodexAdapter implements AgentAdapter {
           if (id) this.childThreads.add(id);
         }
       }
-      if (!this.context || (p.threadId && p.threadId !== this.threadId)) return;
+      if (!this.context) return;
+      if (p.threadId && p.threadId !== this.threadId) {
+        if (this.childThreads.has(string(p.threadId))) {
+          const event = normalizeCodex(method, params);
+          if (event?.delegation) {
+            for (const agent of event.delegation.agents)
+              if (agent.id !== this.threadId) this.childThreads.add(agent.id);
+            this.context.emit({
+              ...event,
+              key: `${p.threadId}:${event.key}`,
+              sourceThreadId: string(p.threadId),
+            });
+          }
+        }
+        return;
+      }
       if (method === 'thread/tokenUsage/updated') {
         const usage = record(p.tokenUsage),
           last = record(usage.last);
@@ -210,6 +219,7 @@ export class CodexAdapter implements AgentAdapter {
         this.context.emit({
           key,
           kind: 'approval',
+          sourceThreadId: string(p.threadId) || undefined,
           title:
             string(p.command) ||
             (p.permissions ? 'Additional permissions' : 'File change approval'),
@@ -228,7 +238,9 @@ export class CodexAdapter implements AgentAdapter {
         this.context.emit({
           key,
           kind: 'question',
-          title: '',
+          sourceThreadId: string(p.threadId) || undefined,
+          title:
+            p.threadId && p.threadId !== this.threadId ? `Subagent: ${string(p.threadId)}` : '',
           state: 'pending',
           questions: array(p.questions).map((value) => {
             const q = record(value);
@@ -243,10 +255,13 @@ export class CodexAdapter implements AgentAdapter {
       } else
         rpc.send({ id, error: { code: -32601, message: `Moose does not implement ${method}` } });
     };
-    await rpc.request('initialize', {
-      clientInfo: { name: 'moose', title: 'Moose', version: '0.1.0' },
-      capabilities: { experimentalApi: true },
-    });
+    const initialized = record(
+      await rpc.request('initialize', {
+        clientInfo: { name: 'moose', title: 'Moose', version: '0.1.0' },
+        capabilities: { experimentalApi: true },
+      }),
+    );
+    this.sessions.handshake(string(initialized.userAgent));
     rpc.send({ method: 'initialized', params: {} });
     return rpc;
   }

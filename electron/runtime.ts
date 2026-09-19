@@ -24,7 +24,6 @@ port.on('message', async ({ data: request }) => {
       result = await Promise.all(
         (params.paths as string[]).map((path) => service.attachments.importPath(path)),
       );
-    else if (method === '_projectPath') result = store.project(params.projectId).path;
     else result = await service.handle(method, params);
     port.postMessage({ id, result });
   } catch (error) {

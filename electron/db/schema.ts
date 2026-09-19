@@ -16,7 +16,11 @@ export const sessions = sqliteTable('sessions', {
   provider: text('provider').notNull(),
   title: text('title').notNull(),
   archived: integer('archived', { mode: 'boolean' }).notNull().default(false),
+  worktreeId: text('worktree_id'),
   nativeId: text('native_id'),
+  nativeOrigin: text('native_origin', { mode: 'json' }).$type<
+    import('../../shared/native-sessions').NativeOrigin
+  >(),
   model: text('model').notNull().default(''),
   effort: text('effort').notNull().default(''),
   mode: text('mode').notNull().default(''),
@@ -71,4 +75,13 @@ export const queue = sqliteTable('queue', {
 export const settings = sqliteTable('settings', {
   key: text('key').primaryKey(),
   value: text('value').notNull(),
+});
+
+/** 受管目录独立于会话保存，删除会话不会丢失磁盘目录的管理记录。 */
+export const worktrees = sqliteTable('worktrees', {
+  id: text('id').primaryKey(),
+  projectId: text('project_id')
+    .notNull()
+    .references(() => projects.id),
+  data: text('data', { mode: 'json' }).$type<import('../../shared/worktrees').Worktree>().notNull(),
 });
