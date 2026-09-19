@@ -1,3 +1,4 @@
+import { ReviewWorkbench, isReviewMethod } from './review-workbench';
 import { Worktrees, isWorktreeMethod } from './worktrees';
 import { NativeHistory, isNativeMethod } from './native-history';
 import { Plans } from './plans';
@@ -27,6 +28,7 @@ type Active = {
   promise?: Promise<void>;
 };
 export class MooseService {
+  private workbench: ReviewWorkbench;
   private worktrees: Worktrees;
   private native: NativeHistory;
   private plans: Plans;
@@ -67,29 +69,36 @@ export class MooseService {
       changed: () => this.changed(),
     });
     this.native = new NativeHistory(store, {
-      adapter: async (provider) => {
-        if (!store.getSettings()[providerDefinitions[provider].enabledKey])
-          throw new Error('This provider is disabled in Settings');
-        return this.adapterFactory(provider, await this.providerPath(provider));
-      },
+      adapter: (provider) => this.enabledAdapter(provider),
       active: (id) =>
         [...this.active.values()].find((run) => run.session.id === id && !run.cancelled)?.adapter,
-      lock: (path) => {
-        if (this.active.has(path) || this.editing.has(path) || this.worktrees.blocks(path))
-          throw new Error('Wait for project tasks to finish');
-        this.editing.add(path);
-        return () => {
-          this.editing.delete(path);
-          void this.drain();
-        };
-      },
+      lock: (path) => this.lockDirectory(path),
       changed: () => this.changed(),
+    });
+    this.workbench = new ReviewWorkbench(store, {
+      lock: (path) => this.lockDirectory(path),
+      changed: () => this.changed(),
+      adapter: (provider) => this.enabledAdapter(provider),
     });
     this.plans = new Plans(store);
     this.steering = new Steering(store, (message) => this.emit({ type: 'message', message }));
     this.attachments = new Attachments(store.sqlite.name);
     for (const item of store.queued()) this.paused.add(item.sessionId);
     this.flushTimer = setInterval(() => this.flush(), 80);
+  }
+  private async enabledAdapter(provider: Provider) {
+    if (!this.store.getSettings()[providerDefinitions[provider].enabledKey])
+      throw new Error('This provider is disabled in Settings');
+    return this.adapterFactory(provider, await this.providerPath(provider));
+  }
+  private lockDirectory(path: string) {
+    if (this.active.has(path) || this.editing.has(path) || this.worktrees.blocks(path))
+      throw new Error('Wait for project tasks and directory operations to finish');
+    this.editing.add(path);
+    return () => {
+      this.editing.delete(path);
+      void this.drain();
+    };
   }
   /** 通知界面重新读取项目、会话或队列快照。 */
   changed() {
@@ -165,6 +174,7 @@ export class MooseService {
   async handle(method: string, input: unknown): Promise<unknown> {
     if (this.stopping) throw new Error('Moose is shutting down');
     const args = validate(method as keyof Requests, input);
+    if (isReviewMethod(method)) return this.workbench.handle(method, args);
     if (isWorktreeMethod(method)) return this.worktrees.handle(method, args);
     if (isNativeMethod(method)) return this.native.handle(method, args);
     switch (method) {
@@ -767,6 +777,7 @@ export class MooseService {
         await run.promise;
       }),
     );
+    await this.workbench.close();
     await this.worktrees.close();
     await this.native.close();
     await this.steering.settle();

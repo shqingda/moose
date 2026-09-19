@@ -222,7 +222,7 @@ Drizzle 定义见 [schema.ts](../electron/db/schema.ts)；**实际启动迁移�
 - **技能**：发现用户目录和项目目录中的 `.agents/skills`、`.codex/skills`、`.grok/skills`，读取 SKILL.md 元数据。发送前重新解析技能 ID 与路径。
 - **输入同步**：[prompt-context.ts](../shared/prompt-context.ts) 根据编辑后的内联文字过滤仍然有效的文件和技能引用，避免删除文字后继续隐式携带引用。
 - **附件**：[attachments.ts](../electron/attachments.ts) 将文件复制到受控目录，以 ID 访问；单文件上限 20 MB，不支持视频。小型文本可内嵌，图片按代理能力传递，其他文件提供路径。
-- **Git**：[git.ts](../electron/git.ts) 解析 NUL 分隔的 porcelain 状态，区分 staged、unstaged、untracked。diff 限制为 256 KiB，处理二进制与截断，关闭外部 diff/textconv。审阅只读，不自动提交或回滚。
+- **Git**：[git.ts](../electron/git.ts) 解析 NUL 分隔的 porcelain 状态，区分 staged、unstaged、untracked。diff 限制为 256 KiB，处理二进制与截断，关闭外部 diff/textconv。diff 读取与写入操作分开；[git-actions.ts](../electron/git-actions.ts)负责逐文件暂存及带 HEAD／暂存区指纹的提交，[pull-requests.ts](../electron/pull-requests.ts)负责明确 GitHub origin／base／head 的草稿 PR，[review-workbench.ts](../electron/review-workbench.ts)管理目录锁、持久化操作回执与独立原生审查。只有用户显式操作才会暂存、提交或创建 PR，不自动推送或回滚。
 
 文件引用解析时使用 realpath 检查项目边界；Git diff 还会确认目标仍属于当前改动列表。通过参数数组调用 Git，避免将文件名拼接成 shell 命令。
 

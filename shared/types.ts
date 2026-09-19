@@ -1,3 +1,4 @@
+import type { GitRequests, GitResponses } from './git-actions';
 import type { providerIds } from './providers';
 // 跨进程公共契约：请求、响应、事件和数据实体；此文件只描述类型，不负责运行时校验。
 export interface PromptContext {
@@ -184,7 +185,7 @@ export interface TranscriptPage {
   messages: Message[];
   hasMore: boolean;
 }
-export interface Requests {
+export interface Requests extends GitRequests {
   worktreeList: { projectId: string };
   worktreeCreate: {
     projectId: string;
@@ -271,7 +272,7 @@ export interface Requests {
   openProject: { projectId: string; sessionId?: string; target: 'finder' | 'editor' };
   openExternal: { url: string };
 }
-export interface Responses {
+export interface Responses extends GitResponses {
   worktreeList: import('./worktrees').Worktree[];
   worktreeCreate: Session;
   worktreeStatus: import('./worktrees').WorktreeStatus;

@@ -109,7 +109,7 @@ export const agentEnvironment = () => ({
     .join(delimiter),
 });
 /** 优先使用配置路径，否则逐个搜索可执行 CLI；找不到时返回可诊断错误。 */
-export async function discover(provider: Provider, configured: string): Promise<string> {
+export async function discover(provider: Provider | 'gh', configured: string): Promise<string> {
   await loadShellPath();
   const candidates = configured
     ? [configured]

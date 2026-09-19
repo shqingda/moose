@@ -1,6 +1,6 @@
 # 原生产品能力实施计划
 
-基线：0.7.0。状态：第一阶段 Codex 原生 Plan 与插话已实现，纳入 0.8.0；第二、三阶段纳入 0.9.0，支持范围及限制见[第二阶段验收](phase-two-testing.md)。第三阶段见[Worktree 验收](phase-three-testing.md)。Grok／Pi 原生 Plan 与第四阶段起仍待实现。对应[能力缺口](native-capabilities.md#优先补齐的产品能力)。
+基线：0.7.0。状态：第一阶段 Codex 原生 Plan 与插话已实现，纳入 0.8.0；第二、三阶段纳入 0.9.0，支持范围及限制见[第二阶段验收](phase-two-testing.md)。第三阶段见[Worktree 验收](phase-three-testing.md)。第四阶段纳入 0.10.0，见[Git 与原生审查验收](phase-four-testing.md)。Grok／Pi 原生 Plan 与第五阶段起仍待实现。对应[能力缺口](native-capabilities.md#优先补齐的产品能力)。
 
 ## 接入原则
 
@@ -53,6 +53,8 @@ Grok、Pi 只有在验证对应原生能力后才显示立即发送；其余保�
 验收：同项目两个 worktree 实际并行且修改隔离；符号链接不绕过目录锁；有未保存工作时不误删；合并冲突及重启恢复可处理。
 
 ## 第四阶段：Git 与原生审查
+
+状态：已实现，纳入 0.10.0。逐文件暂存／取消暂存、提交预览及指纹校验、GitHub 草稿 PR／状态、Codex 独立只读 `review/start` 已接通。PR 限同一 GitHub origin 的已推送分支，不自动推送，不支持跨 fork／其他托管平台；审查保留底座返回的文件与行号文本。真实 Git 与模拟 CLI／Electron 验收见[第四阶段验收](phase-four-testing.md)，本轮不调用真实模型或创建真实 PR。
 
 在既有 diff 上增加暂存／取消暂存、提交预览与提交，再接 PR 创建和状态。Git 操作使用结构化参数和已选工作目录。Codex 原生 `review/start` 使用明确的审查目标，将结果与执行会话区分。
 

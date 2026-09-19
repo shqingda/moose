@@ -324,7 +324,7 @@ export class Store {
     this.sqlite.transaction(() => {
       this.sqlite
         .prepare(
-          "DELETE FROM settings WHERE key LIKE 'native-operation:%' AND json_extract(value, '$.sessionId') = ?",
+          "DELETE FROM settings WHERE (key LIKE 'native-operation:%' OR key LIKE 'code-review:%') AND json_extract(value, '$.sessionId') = ?",
         )
         .run(sessionId);
       this.db.delete(table.queue).where(eq(table.queue.sessionId, sessionId)).run();
@@ -338,11 +338,16 @@ export class Store {
     if (this.listWorktrees(projectId).some((w) => w.status !== 'removed'))
       throw new Error('Clean up managed worktrees before deleting this project');
     this.sqlite.transaction(() => {
+      this.sqlite
+        .prepare(
+          "DELETE FROM settings WHERE (key LIKE 'workbench:%' OR key LIKE 'code-review:%') AND json_extract(value, '$.projectId') = ?",
+        )
+        .run(projectId);
       this.db.delete(table.worktrees).where(eq(table.worktrees.projectId, projectId)).run();
       for (const session of this.listSessions().filter((s) => s.projectId === projectId)) {
         this.sqlite
           .prepare(
-            "DELETE FROM settings WHERE key LIKE 'native-operation:%' AND json_extract(value, '$.sessionId') = ?",
+            "DELETE FROM settings WHERE (key LIKE 'native-operation:%' OR key LIKE 'code-review:%') AND json_extract(value, '$.sessionId') = ?",
           )
           .run(session.id);
         this.db.delete(table.queue).where(eq(table.queue.sessionId, session.id)).run();

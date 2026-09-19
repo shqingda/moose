@@ -78,6 +78,10 @@ export class RuntimeHost {
         (
           {
             providers: 65000,
+            prPreview: 120000,
+            prCreate: 180000,
+            reviewStart: 90000,
+            gitCommit: 30000,
             worktreeCreate: 90000,
             worktreeStatus: 90000,
             worktreeRemove: 90000,

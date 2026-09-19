@@ -1,3 +1,7 @@
+import { GitCommit } from './git-commit';
+import { PullRequestTools } from './pull-request-tools';
+import { CodeReviewTools } from './code-review-tools';
+import { Button } from './ui/button';
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import { Check, ChevronRight, FileCode2, GitBranch, RefreshCw, X } from 'lucide-react';
@@ -13,14 +17,17 @@ function FileReview({
   file,
   revision,
   onError,
+  changed,
 }: {
   projectId: string;
   sessionId?: string;
   file: GitFile;
   revision: number;
   onError(error: string): void;
+  changed(): void;
 }) {
   const t = useI18n(),
+    [staging, setStaging] = useState(false),
     [open, setOpen] = useState(false),
     [diff, setDiff] = useState<GitDiff>();
   useEffect(() => {
@@ -59,6 +66,30 @@ function FileReview({
           <span className="file-status">{file.status}</span>
         )}
       </button>
+      <Button
+        size="sm"
+        variant="ghost"
+        disabled={staging}
+        className="ml-8 mb-1"
+        onClick={async () => {
+          setStaging(true);
+          try {
+            await window.moose.request('gitStage', {
+              projectId,
+              sessionId,
+              path: file.path,
+              staged: file.area !== 'staged',
+            });
+            changed();
+          } catch (error) {
+            onError(String(error));
+          } finally {
+            setStaging(false);
+          }
+        }}
+      >
+        {t(file.area === 'staged' ? 'gitUnstage' : 'gitStage')}
+      </Button>
       {open && (
         <div className="diff-container">
           {!diff ? (
@@ -215,6 +246,16 @@ export function ReviewPanel({
           <GitBranch size={16} />
           <span>{status?.branch || project.name}</span>
         </div>
+        {status?.isRepo && (
+          <div className="flex flex-wrap gap-2 border-b p-3">
+            <GitCommit
+              scope={{ projectId: project.id, sessionId }}
+              changed={() => setRefreshKey((key) => key + 1)}
+            />
+            <PullRequestTools scope={{ projectId: project.id, sessionId }} />
+            <CodeReviewTools scope={{ projectId: project.id, sessionId }} />
+          </div>
+        )}
         {!status ? (
           <p className="panel-placeholder">{t('loading')}</p>
         ) : !status.isRepo || !status.files.length ? (
@@ -242,6 +283,7 @@ export function ReviewPanel({
                       sessionId={sessionId}
                       file={file}
                       revision={revision}
+                      changed={() => setRefreshKey((key) => key + 1)}
                       onError={onError}
                     />
                   ))}

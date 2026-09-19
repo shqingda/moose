@@ -37,6 +37,8 @@ export function normalizeCodex(method: string, input: unknown): AgentEvent | nul
   const delegation = codexDelegation(item, state);
   if (delegation) return delegation;
   switch (item.type) {
+    case 'exitedReviewMode':
+      return { key, kind: 'assistant', text: string(item.review), title: 'Code review', state };
     case 'agentMessage':
       return { key, kind: 'assistant', text: string(item.text), state };
     case 'reasoning': {
@@ -102,6 +104,7 @@ export class CodexAdapter implements AgentAdapter {
   private finish?: { resolve(): void; reject(error: Error): void };
   private cancelled = false;
   private pursuingGoal = false;
+  private reviewing = false;
   constructor(private path: string) {}
   /** 启动 app-server 并握手，注册流式通知、审批及提问的回调。 */
   private async connect(cwd?: string) {
@@ -158,7 +161,13 @@ export class CodexAdapter implements AgentAdapter {
         const turn = record(p.turn);
         this.completedTurnId = string(turn.id);
         if (turn.status === 'failed')
-          this.finish?.reject(new Error(string(record(turn.error).message) || 'Codex turn failed'));
+          this.finish?.reject(
+            this.reviewing
+              ? new RpcRejected(string(record(turn.error).message) || 'Codex review failed')
+              : new Error(string(record(turn.error).message) || 'Codex turn failed'),
+          );
+        else if (this.reviewing && turn.status !== 'completed')
+          this.finish?.reject(new RpcRejected('Review did not complete'));
         else if (this.pursuingGoal && !this.cancelled) {
           void rpc
             .request('thread/goal/get', { threadId: this.threadId })
@@ -196,7 +205,7 @@ export class CodexAdapter implements AgentAdapter {
         method === 'item/fileChange/requestApproval' ||
         method === 'item/permissions/requestApproval'
       ) {
-        if (this.context.promptContext?.mode === 'plan') {
+        if (this.reviewing || this.context.promptContext?.mode === 'plan') {
           rpc.send({
             id,
             result:
@@ -234,6 +243,16 @@ export class CodexAdapter implements AgentAdapter {
           state: 'pending',
         });
       } else if (method === 'item/tool/requestUserInput') {
+        if (this.reviewing) {
+          rpc.send({
+            id,
+            error: {
+              code: -32601,
+              message: 'Interactive questions are unavailable during native code review',
+            },
+          });
+          return;
+        }
         this.requests.set(key, { id, method, options: new Set() });
         this.context.emit({
           key,
@@ -421,6 +440,48 @@ export class CodexAdapter implements AgentAdapter {
       if (this.cancelled) await this.cancel();
       await pursuit;
     }
+  }
+  /** 审查使用新线程和只读权限，原执行线程不进入 review mode。 */
+  async review(context: RunContext, target: import('../../shared/git-actions').ReviewTarget) {
+    this.reviewing = true;
+    this.context = context;
+    const rpc = await this.connect(context.cwd);
+    if (!(await this.sessions.capabilities()).history)
+      throw new RpcRejected('Native review requires the verified Codex 0.155+ protocol');
+    if (this.cancelled) return;
+    const result = record(
+      await rpc.request('thread/start', {
+        cwd: context.cwd,
+        sandbox: 'read-only',
+        approvalPolicy: 'never',
+        approvalsReviewer: 'user',
+        ...(context.session.model ? { model: context.session.model } : {}),
+        config: {
+          web_search: 'disabled',
+          ...(context.session.effort ? { model_reasoning_effort: context.session.effort } : {}),
+        },
+      } satisfies ThreadStartParams),
+    );
+    this.threadId = string(record(result.thread).id);
+    if (!this.threadId) throw new Error('Codex did not return a review thread ID');
+    context.nativeId(this.threadId);
+    if (this.cancelled) return;
+    const completed = new Promise<void>((resolve, reject) => {
+      this.finish = { resolve, reject };
+    });
+    void completed.catch(() => {});
+    const response = await rpc.request<
+      import('./generated/codex/v2/ReviewStartResponse').ReviewStartResponse
+    >('review/start', {
+      threadId: this.threadId,
+      delivery: 'inline',
+      target: target.type === 'commit' ? { ...target, title: null } : target,
+    } satisfies import('./generated/codex/v2/ReviewStartParams').ReviewStartParams);
+    if (response.reviewThreadId !== this.threadId)
+      throw new Error('Codex returned an unexpected review thread');
+    if (response.turn.id !== this.completedTurnId) this.turnId = response.turn.id;
+    if (this.cancelled) await this.cancel();
+    await completed;
   }
   /** 向当前回合追加输入；拒绝结果与超时分别交给服务层处理。 */
   async steer(context: RunContext): Promise<string> {

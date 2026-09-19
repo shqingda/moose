@@ -32,6 +32,10 @@ export interface AgentAdapter {
   probe(): Promise<Pick<ProviderInfo, 'models' | 'modes' | 'images'>>;
   fork?(session: Session, cwd: string, lastTurnId: string): Promise<string>;
   run(context: RunContext): Promise<void>;
+  review?(
+    context: RunContext,
+    target: import('../../shared/git-actions').ReviewTarget,
+  ): Promise<void>;
   steer?(context: RunContext): Promise<string>;
   respond(key: string, choice?: string, answers?: Record<string, string>): void;
   cancel(): Promise<void>;

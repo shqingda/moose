@@ -54,6 +54,11 @@ function complete(text, write = true) {
 createInterface({ input: process.stdin }).on('line', (line) => {
   const m = JSON.parse(line),
     p = m.params || {};
+  if (m.id === 'review-question' && !m.method) {
+    if (!m.error) process.exit(3);
+    complete('Review continued after an unavailable interactive question.', false);
+    return;
+  }
   if (m.id === 'subagent-approval' && !m.method) {
     notify('item/completed', {
       threadId: sessionId,
@@ -170,6 +175,55 @@ createInterface({ input: process.stdin }).on('line', (line) => {
       sessionId = p.sessionId || randomUUID();
       result(m.id, { sessionId });
       break;
+    case 'review/start': {
+      if (
+        threadSettings.sandbox !== 'read-only' ||
+        threadSettings.approvalPolicy !== 'never' ||
+        p.delivery !== 'inline'
+      ) {
+        send({
+          id: m.id,
+          error: { code: -32602, message: 'Review must use an isolated read-only inline thread' },
+        });
+        break;
+      }
+      turnId = randomUUID();
+      result(m.id, { reviewThreadId: sessionId, turn: { id: turnId, status: 'inProgress' } });
+      notify('turn/started', { threadId: sessionId, turn: { id: turnId } });
+      notify('turn/completed', {
+        threadId: 'unrelated-thread',
+        turn: { id: 'other', status: 'completed' },
+      });
+      if (p.target.type === 'baseBranch' && p.target.branch === 'needs-input') {
+        send({
+          id: 'review-question',
+          method: 'item/tool/requestUserInput',
+          params: {
+            threadId: sessionId,
+            questions: [{ id: 'question', question: 'Can this review ask?' }],
+          },
+        });
+        break;
+      }
+      if (p.target.type === 'commit' && p.target.sha === 'deadbee') break;
+      setTimeout(() => {
+        notify('item/completed', {
+          threadId: sessionId,
+          item: {
+            id: 'review-result',
+            type: 'exitedReviewMode',
+            review:
+              '[P2] Validate input at src/example.ts:12 — reject empty values. Target: ' +
+              JSON.stringify(p.target),
+          },
+        });
+        notify('turn/completed', {
+          threadId: sessionId,
+          turn: { id: turnId, status: 'completed' },
+        });
+      }, 100);
+      break;
+    }
     case 'turn/start':
     case 'session/prompt': {
       if (acp && p.prompt[0].text === '/always-approve off') {

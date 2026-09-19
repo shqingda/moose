@@ -1,5 +1,35 @@
 import { createContext, useContext } from 'react';
 export const en = {
+  gitStage: 'Stage file',
+  gitUnstage: 'Unstage file',
+  gitCommitPreview: 'Preview commit',
+  gitMessage: 'Commit message',
+  gitCommit: 'Commit reviewed changes',
+  gitCommitted: 'Committed',
+  gitCommitHint:
+    'Only staged changes are committed. A changed index or HEAD requires a fresh preview. Git hooks and signing remain enabled.',
+  prTools: 'Pull requests',
+  prHint:
+    'GitHub origin only; gh must be installed and signed in. Publish your branch to origin first. Preview compares committed changes and creates a draft PR; uncommitted files are excluded.',
+  prBase: 'Base branch',
+  prPreview: 'Preview / refresh PR status',
+  prTitle: 'PR title',
+  prBody: 'PR description',
+  prCreate: 'Create draft PR',
+  codeReview: 'Native code review',
+  codeReviewHint:
+    'Codex 0.155+ only. Runs in a separate, read-only native thread and uses model tokens. Execution history stays separate. Results show file locations supplied by Codex.',
+  reviewUncommitted: 'Uncommitted changes',
+  reviewBranch: 'Against branch',
+  reviewCommit: 'Commit',
+  reviewRef: 'Branch or commit SHA',
+  reviewStart: 'Start native review',
+  reviewRunning: 'Review running',
+  reviewCompleted: 'Review completed',
+  reviewCancelled: 'Review stopped',
+  reviewUnknown: 'Result unknown',
+  reviewFailed: 'Review failed',
+
   wtOpenTarget: 'Open merge target in editor',
   wtTools: 'Worktrees',
   wtRef: 'Starting Git ref',
@@ -264,6 +294,35 @@ export const en = {
 };
 export type TranslationKey = keyof typeof en;
 export const zh: Record<TranslationKey, string> = {
+  gitStage: '暂存文件',
+  gitUnstage: '取消暂存',
+  gitCommitPreview: '提交预览',
+  gitMessage: '提交说明',
+  gitCommit: '提交已审阅的改动',
+  gitCommitted: '已提交',
+  gitCommitHint: '仅提交暂存区内容。HEAD 或暂存区变化后必须重新预览；沿用 Git hooks 和签名配置。',
+  prTools: '拉取请求',
+  prHint:
+    '支持 GitHub origin，需要安装并登录 gh。请先将当前分支推送到 origin。预览已提交的改动并创建草稿 PR；不包含未提交文件。',
+  prBase: '目标分支',
+  prPreview: '预览／刷新 PR 状态',
+  prTitle: 'PR 标题',
+  prBody: 'PR 描述',
+  prCreate: '创建草稿 PR',
+  codeReview: '原生代码审查',
+  codeReviewHint:
+    '仅支持 Codex 0.155+，会消耗模型额度。在独立的只读原生线程中审查，结果与执行历史分开，保留 Codex 提供的文件位置。',
+  reviewUncommitted: '未提交改动',
+  reviewBranch: '相对分支',
+  reviewCommit: '指定提交',
+  reviewRef: '分支或提交 SHA',
+  reviewStart: '开始原生审查',
+  reviewRunning: '审查中',
+  reviewCompleted: '审查完成',
+  reviewCancelled: '审查已停止',
+  reviewUnknown: '结果未知',
+  reviewFailed: '审查失败',
+
   wtOpenTarget: '在编辑器中打开合并目标',
   wtTools: '独立工作目录',
   wtRef: '起始 Git 引用',
