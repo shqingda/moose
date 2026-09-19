@@ -324,7 +324,7 @@ export class Store {
     this.sqlite.transaction(() => {
       this.sqlite
         .prepare(
-          "DELETE FROM settings WHERE (key LIKE 'native-operation:%' OR key LIKE 'code-review:%') AND json_extract(value, '$.sessionId') = ?",
+          "DELETE FROM settings WHERE (key LIKE 'native-operation:%' OR key LIKE 'background-command:%' OR key LIKE 'background-schedule:%' OR key LIKE 'code-review:%') AND json_extract(value, '$.sessionId') = ?",
         )
         .run(sessionId);
       this.db.delete(table.queue).where(eq(table.queue.sessionId, sessionId)).run();
@@ -340,14 +340,14 @@ export class Store {
     this.sqlite.transaction(() => {
       this.sqlite
         .prepare(
-          "DELETE FROM settings WHERE (key LIKE 'workbench:%' OR key LIKE 'code-review:%') AND json_extract(value, '$.projectId') = ?",
+          "DELETE FROM settings WHERE (key LIKE 'workbench:%' OR key LIKE 'background-command:%' OR key LIKE 'background-schedule:%' OR key LIKE 'code-review:%' OR key LIKE 'extension-operation:%') AND json_extract(value, '$.projectId') = ?",
         )
         .run(projectId);
       this.db.delete(table.worktrees).where(eq(table.worktrees.projectId, projectId)).run();
       for (const session of this.listSessions().filter((s) => s.projectId === projectId)) {
         this.sqlite
           .prepare(
-            "DELETE FROM settings WHERE (key LIKE 'native-operation:%' OR key LIKE 'code-review:%') AND json_extract(value, '$.sessionId') = ?",
+            "DELETE FROM settings WHERE (key LIKE 'native-operation:%' OR key LIKE 'background-command:%' OR key LIKE 'background-schedule:%' OR key LIKE 'code-review:%') AND json_extract(value, '$.sessionId') = ?",
           )
           .run(session.id);
         this.db.delete(table.queue).where(eq(table.queue.sessionId, session.id)).run();

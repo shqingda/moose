@@ -391,11 +391,12 @@ createInterface({ input: process.stdin }).on('line', (line) => {
       }
       break;
     case 'turn/interrupt':
-      result(m.id, {});
+      // Completion is allowed to precede the interrupt acknowledgement.
       notify('turn/completed', {
         threadId: sessionId,
         turn: { id: turnId, status: 'interrupted' },
       });
+      result(m.id, {});
       break;
     case 'session/cancel':
       result(promptId, { stopReason: 'cancelled' });

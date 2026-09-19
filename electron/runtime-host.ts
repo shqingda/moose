@@ -78,6 +78,9 @@ export class RuntimeHost {
         (
           {
             providers: 65000,
+            extensionsRead: 180000,
+            extensionsChange: 240000,
+            extensionsLogin: 180000,
             prPreview: 120000,
             prCreate: 180000,
             reviewStart: 90000,

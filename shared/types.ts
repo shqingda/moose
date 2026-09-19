@@ -1,3 +1,5 @@
+import type { BackgroundRequests, BackgroundResponses } from './background';
+import type { ExtensionRequests, ExtensionResponses } from './extensions';
 import type { GitRequests, GitResponses } from './git-actions';
 import type { providerIds } from './providers';
 // 跨进程公共契约：请求、响应、事件和数据实体；此文件只描述类型，不负责运行时校验。
@@ -185,7 +187,7 @@ export interface TranscriptPage {
   messages: Message[];
   hasMore: boolean;
 }
-export interface Requests extends GitRequests {
+export interface Requests extends GitRequests, ExtensionRequests, BackgroundRequests {
   worktreeList: { projectId: string };
   worktreeCreate: {
     projectId: string;
@@ -272,7 +274,7 @@ export interface Requests extends GitRequests {
   openProject: { projectId: string; sessionId?: string; target: 'finder' | 'editor' };
   openExternal: { url: string };
 }
-export interface Responses extends GitResponses {
+export interface Responses extends GitResponses, ExtensionResponses, BackgroundResponses {
   worktreeList: import('./worktrees').Worktree[];
   worktreeCreate: Session;
   worktreeStatus: import('./worktrees').WorktreeStatus;

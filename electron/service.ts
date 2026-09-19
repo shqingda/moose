@@ -1,3 +1,5 @@
+import { Background, isBackgroundMethod } from './background';
+import { Extensions, isExtensionMethod } from './extensions';
 import { ReviewWorkbench, isReviewMethod } from './review-workbench';
 import { Worktrees, isWorktreeMethod } from './worktrees';
 import { NativeHistory, isNativeMethod } from './native-history';
@@ -28,6 +30,9 @@ type Active = {
   promise?: Promise<void>;
 };
 export class MooseService {
+  private background: Background;
+  private extensions: Extensions;
+  private configuring = false;
   private workbench: ReviewWorkbench;
   private worktrees: Worktrees;
   private native: NativeHistory;
@@ -80,11 +85,63 @@ export class MooseService {
       changed: () => this.changed(),
       adapter: (provider) => this.enabledAdapter(provider),
     });
+    this.extensions = new Extensions(store, {
+      path: async (scope) => {
+        if (!store.getSettings()[providerDefinitions[scope.provider].enabledKey])
+          throw new Error('Provider disabled');
+        return this.providerPath(scope.provider);
+      },
+      lock: () => {
+        if (this.configuring || this.active.size || this.editing.size)
+          throw new Error('Wait for tasks and configuration operations to finish');
+        this.configuring = true;
+        return () => {
+          this.configuring = false;
+          void this.drain();
+        };
+      },
+    });
     this.plans = new Plans(store);
     this.steering = new Steering(store, (message) => this.emit({ type: 'message', message }));
     this.attachments = new Attachments(store.sqlite.name);
     for (const item of store.queued()) this.paused.add(item.sessionId);
     this.flushTimer = setInterval(() => this.flush(), 80);
+    this.background = new Background(store, {
+      lock: (cwd) => this.lockDirectory(cwd),
+      ready: (schedule) => {
+        if (
+          this.configuring ||
+          this.active.has(schedule.cwd) ||
+          this.editing.has(schedule.cwd) ||
+          this.worktrees.blocks(schedule.cwd)
+        )
+          return false;
+        if (schedule.sessionId) {
+          const session = store.session(schedule.sessionId);
+          if (session.archived) throw new Error('Conversation archived');
+          if (schedule.task.kind === 'agent') {
+            if (!store.getSettings()[providerDefinitions[session.provider].enabledKey])
+              throw new Error('Provider disabled');
+            if (this.paused.has(session.id) || store.queued(session.id).length) return false;
+          }
+        }
+        return true;
+      },
+      enqueue: (schedule) => {
+        if (!schedule.sessionId) throw new Error('Conversation required');
+        const item = store.enqueue(schedule.sessionId, schedule.task.text, [], {
+          mode: 'build',
+          references: [],
+          skills: [],
+        });
+        store.updateSession(schedule.sessionId, { status: 'queued' });
+        return item.id;
+      },
+      wake: () => {
+        this.changed();
+        void this.drain();
+      },
+    });
   }
   private async enabledAdapter(provider: Provider) {
     if (!this.store.getSettings()[providerDefinitions[provider].enabledKey])
@@ -92,6 +149,7 @@ export class MooseService {
     return this.adapterFactory(provider, await this.providerPath(provider));
   }
   private lockDirectory(path: string) {
+    if (this.configuring) throw new Error('Wait for configuration changes to finish');
     if (this.active.has(path) || this.editing.has(path) || this.worktrees.blocks(path))
       throw new Error('Wait for project tasks and directory operations to finish');
     this.editing.add(path);
@@ -174,6 +232,8 @@ export class MooseService {
   async handle(method: string, input: unknown): Promise<unknown> {
     if (this.stopping) throw new Error('Moose is shutting down');
     const args = validate(method as keyof Requests, input);
+    if (isBackgroundMethod(method)) return this.background.handle(method, args);
+    if (isExtensionMethod(method)) return this.extensions.handle(method, args);
     if (isReviewMethod(method)) return this.workbench.handle(method, args);
     if (isWorktreeMethod(method)) return this.worktrees.handle(method, args);
     if (isNativeMethod(method)) return this.native.handle(method, args);
@@ -383,6 +443,7 @@ export class MooseService {
       case 'updateQueue': {
         const a = args as Requests['updateQueue'];
         this.store.updateQueue(a.id, a.text, a.remove);
+        if (a.remove) this.background.schedules.removed(a.id);
         this.changed();
         return null;
       }
@@ -478,6 +539,7 @@ export class MooseService {
   private drainAgain = false;
   /** 按入队顺序启动可执行任务；同目录串行，不同目录可并行。 */
   private async drain() {
+    if (this.configuring) return;
     if (this.stopping) return;
     if (this.draining) {
       this.drainAgain = true;
@@ -504,6 +566,7 @@ export class MooseService {
           path = await this.providerPath(session.provider);
         } catch (error) {
           this.paused.add(session.id);
+          this.background.schedules.failedToStart(item.id);
           this.store.updateSession(session.id, { status: 'failed' });
           this.store.saveMessage({
             id: randomUUID(),
@@ -519,7 +582,7 @@ export class MooseService {
           this.changed();
           continue;
         }
-        if (this.stopping) break;
+        if (this.stopping || this.configuring) break;
         const current = this.store.queued(session.id).find((queued) => queued.id === item.id);
         if (
           this.active.has(cwd) ||
@@ -541,6 +604,7 @@ export class MooseService {
         };
         this.active.set(cwd, run);
         this.emit({ type: 'message', message: this.store.begin(current, run.id) });
+        this.background.schedules.started(current.id, run.id);
         this.changed();
         run.promise = this.execute(
           run,
@@ -664,6 +728,16 @@ export class MooseService {
         }
       }
       this.flush();
+      this.background.schedules.finished(
+        run.id,
+        this.stopping
+          ? 'interrupted'
+          : run.cancelled
+            ? 'cancelled'
+            : failed
+              ? 'failed'
+              : 'completed',
+      );
       this.active.delete(path);
       this.store.updateSession(run.session.id, {
         status: run.cancelled ? 'cancelled' : failed ? 'failed' : 'completed',
@@ -767,6 +841,7 @@ export class MooseService {
   /** 退出应用时停止接收任务，关闭探测与执行进程，最后落库并关闭数据库。 */
   async close() {
     this.stopping = true;
+    this.background.schedules.close();
     await Promise.all([...this.probing].map((adapter) => adapter.close()));
     await this.probePromise?.catch(() => {});
     await Promise.all(
@@ -777,6 +852,8 @@ export class MooseService {
         await run.promise;
       }),
     );
+    await this.background.close();
+    await this.extensions.close();
     await this.workbench.close();
     await this.worktrees.close();
     await this.native.close();

@@ -1,3 +1,4 @@
+import { mcpRegistration } from './mcp-registration';
 import { providerIds } from './providers';
 import { z } from 'zod';
 import type { Method, Requests } from './types';
@@ -21,7 +22,49 @@ const gitRef = z
   .min(1)
   .max(240)
   .refine((v) => !v.startsWith('-') && !v.includes('\0'));
+const backgroundScope = { projectId: id, sessionId: id.optional() };
+const scheduleDefinition = {
+  name: z.string().trim().min(1).max(100),
+  task: z.strictObject({
+    kind: z.enum(['command', 'agent']),
+    text: z.string().trim().min(1).max(16000),
+  }),
+  timezone: z
+    .string()
+    .max(100)
+    .refine((value) => {
+      try {
+        new Intl.DateTimeFormat('en', { timeZone: value });
+        return true;
+      } catch {
+        return false;
+      }
+    }),
+  startAt: z.number().int().min(0).max(8640000000000000),
+  intervalMs: z.number().int().min(60000).max(31536000000).nullable(),
+};
 export const schemas = {
+  commandList: z.strictObject(backgroundScope),
+  commandRead: z.strictObject({ id }),
+  commandStart: z.strictObject({
+    ...backgroundScope,
+    requestId: id,
+    command: z.string().trim().min(1).max(16000),
+  }),
+  commandInput: z.strictObject({ id, text: z.string().max(16000), eof: z.boolean().optional() }),
+  commandStop: z.strictObject({ id }),
+  scheduleList: z.strictObject(backgroundScope),
+  scheduleCreate: z.strictObject({
+    ...backgroundScope,
+    requestId: id,
+    ...scheduleDefinition,
+  }),
+  scheduleUpdate: z.strictObject({
+    id,
+    version: z.number().int().positive(),
+    ...scheduleDefinition,
+  }),
+  scheduleSet: z.strictObject({ id, version: z.number().int().positive(), enabled: z.boolean() }),
   worktreeList: z.strictObject({ projectId: id }),
   worktreeCreate: z.strictObject({
     projectId: id,
@@ -166,6 +209,65 @@ export const schemas = {
     piPath: z.string().max(4096).optional(),
     fontScale: z.number().min(0.85).max(1.4).optional(),
   }),
+  extensionsRead: z.strictObject({
+    projectId: id,
+    sessionId: id.optional(),
+    provider: z.enum(providerIds),
+  }),
+  extensionsChange: z.strictObject({
+    projectId: id,
+    sessionId: id.optional(),
+    provider: z.enum(providerIds),
+    requestId: id,
+    change: z.discriminatedUnion('type', [
+      z.strictObject({
+        type: z.literal('mcpAdd'),
+        sourceId: z.string().length(64),
+        version: z.string().min(1).max(500),
+        name: z
+          .string()
+          .max(100)
+          .regex(/^[A-Za-z0-9_-]+$/),
+        server: mcpRegistration,
+      }),
+      z.strictObject({
+        type: z.literal('config'),
+        sourceId: z.string().length(64),
+        version: z.string().min(1).max(500),
+        key: z.enum(['model', 'model_reasoning_effort']),
+        value: z
+          .string()
+          .min(1)
+          .max(100)
+          .regex(/^[a-zA-Z0-9._/-]+$/),
+      }),
+      z.strictObject({
+        type: z.literal('toggle'),
+        sourceId: z.string().length(64),
+        version: z.string().min(1).max(500),
+        category: z.enum(['mcp', 'plugin']),
+        name: z
+          .string()
+          .min(1)
+          .max(300)
+          .refine((value) => [...value].every((char) => char.charCodeAt(0) >= 32)),
+        enabled: z.boolean(),
+      }),
+      z.strictObject({
+        type: z.literal('plugin'),
+        id: z.string().min(1).max(300),
+        action: z.enum(['install', 'uninstall']),
+      }),
+    ]),
+  }),
+  extensionsLogin: z.strictObject({
+    projectId: id,
+    sessionId: id.optional(),
+    provider: z.enum(providerIds),
+    name: z.string().min(1).max(300),
+    requestId: id,
+  }),
+  extensionsAuth: z.strictObject({ id, cancel: z.boolean().optional() }),
   gitStage: z.strictObject({
     projectId: id,
     sessionId: id.optional(),

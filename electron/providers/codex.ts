@@ -160,7 +160,8 @@ export class CodexAdapter implements AgentAdapter {
         this.turnId = '';
         const turn = record(p.turn);
         this.completedTurnId = string(turn.id);
-        if (turn.status === 'failed')
+        if (this.reviewing && this.cancelled) this.finish?.resolve();
+        else if (turn.status === 'failed')
           this.finish?.reject(
             this.reviewing
               ? new RpcRejected(string(record(turn.error).message) || 'Codex review failed')

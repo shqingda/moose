@@ -137,11 +137,12 @@ export function spawnAgent(
   args: string[],
   cwd?: string,
   env: NodeJS.ProcessEnv = agentEnvironment(),
+  watchParent = false,
 ): ChildProcessWithoutNullStreams {
   const child = spawn(path, args, {
     cwd,
     env,
-    stdio: ['pipe', 'pipe', 'pipe'],
+    stdio: watchParent ? ['pipe', 'pipe', 'pipe', 'pipe'] : ['pipe', 'pipe', 'pipe'],
     detached: process.platform !== 'win32',
   });
   children.add(child);

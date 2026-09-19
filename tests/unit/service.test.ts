@@ -177,3 +177,72 @@ it('persists steering separately from queue and rejects it after stopping', asyn
     }),
   ).rejects.toThrow('No active turn');
 });
+it('holds queued agents during user configuration writes and rejects writes during a run', async () => {
+  const { dir, store, service, agents } = fixture();
+  const { resolve } = await import('node:path');
+  const { randomUUID } = await import('node:crypto');
+  store.setSettings({ codexPath: resolve('tests/fixtures/extensions.mjs') });
+  const project = store.addProject(dir),
+    session = store.createSession(project.id, 'codex');
+  const scope = { projectId: project.id, sessionId: session.id, provider: 'codex' };
+  const snapshot = (await service.handle(
+    'extensionsRead',
+    scope,
+  )) as import('../../shared/extensions').ExtensionSnapshot;
+  const args = {
+    ...scope,
+    requestId: randomUUID(),
+    change: {
+      type: 'config',
+      sourceId: snapshot.sources[0].id,
+      version: snapshot.sources[0].version,
+      key: 'model',
+      value: 'new-model',
+    },
+  };
+  const writing = service.handle('extensionsChange', args);
+  await service.handle('send', { sessionId: session.id, text: 'queued during configuration' });
+  expect(agents).toHaveLength(0);
+  await writing;
+  await vi.waitFor(() => expect(agents[0]?.context).toBeDefined());
+  await expect(
+    service.handle('extensionsChange', { ...args, requestId: randomUUID() }),
+  ).rejects.toThrow('Wait');
+  agents[0].complete();
+});
+it('dispatches scheduled agent messages through the normal queue and records their completion', async () => {
+  const { dir, store, service, agents } = fixture();
+  const { resolve } = await import('node:path');
+  const { randomUUID } = await import('node:crypto');
+  store.setSettings({ codexPath: resolve('tests/fixtures/agent.mjs') });
+  const project = store.addProject(dir),
+    session = store.createSession(project.id, 'codex'),
+    scope = { projectId: project.id, sessionId: session.id };
+  const args = {
+    ...scope,
+    requestId: randomUUID(),
+    name: 'Inspect',
+    task: { kind: 'agent', text: 'scheduled inspection' },
+    timezone: 'Asia/Shanghai',
+    startAt: Date.now() + 100,
+    intervalMs: null,
+  };
+  await service.handle('scheduleCreate', args);
+  await vi.waitFor(() => expect(agents[0]?.context?.text).toBe('scheduled inspection'), {
+    timeout: 4000,
+  });
+  expect(agents[0].context?.promptContext?.mode).toBe('build');
+  agents[0].complete();
+  await vi.waitFor(async () =>
+    expect(
+      (
+        (await service.handle(
+          'scheduleList',
+          scope,
+        )) as import('../../shared/background').Schedule[]
+      )[0].last?.status,
+    ).toBe('completed'),
+  );
+  await service.handle('scheduleCreate', args);
+  expect(agents).toHaveLength(1);
+});

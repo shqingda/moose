@@ -1,6 +1,6 @@
 # 原生能力、Moose 接入与当前缺口
 
-核查日期：2026-09-18 至 2026-09-19。下表描述 0.10.0 的接入能力；安装包验收见对应发布记录。
+核查日期：2026-09-18 至 2026-09-19。下表以 0.11.0 为发布基线；安装包验收见对应发布记录。
 
 ## 子代理
 
@@ -55,8 +55,8 @@ Moose 对 Codex 显式传入 `summary: auto`，接收 `item/reasoning/summaryTex
 | 高 | 子代理独立面板与控制 | Codex 独立历史面板、受能力约束的发送／停止；恢复关闭子任务需主代理，Grok 保持工具活动展示 |
 | 高 | Worktree 隔离、多任务并行与合并 | 已接受管 worktree 创建、同项目多目录并行、保留／安全清理、合并预览／冲突／继续／中止；同目录仍串行 |
 | 中 | Git 操作与原生代码审查 | 已接逐文件暂存／取消、提交预览与指纹校验、GitHub 草稿 PR／状态、Codex 独立只读审查（0.10.0）；见[第四阶段验收](phase-four-testing.md) |
-| 中 | MCP、插件、hooks、代理配置管理 | 有 skill 引用；未提供统一安装、认证、配置和错误诊断界面。CLI 自己加载的配置仍可能生效 |
+| 中 | MCP、插件、hooks、代理配置管理 | 0.11.0 已接 Codex 配置来源、用户级设置／开关、插件 CLI 安装卸载、新增 HTTP／STDIO MCP、MCP OAuth、hooks 只读诊断；Grok／Pi 未适配，限制见[第五阶段验收](phase-five-testing.md) |
 | 中 | 原生会话导入、分叉、上下文压缩管理 | Codex 历史分页导入、显式分叉和手动压缩；Grok 历史回放导入；Pi 未接入 |
-| 中 | 后台终端与定时任务 | 可关闭窗口继续任务；没有后台命令列表／交互终端和定时调度 |
+| 中 | 后台终端与定时任务 | 0.11.0 已接 Moose 管理的后台文本命令、单次／固定间隔命令及代理消息调度；支持窗口关闭后执行、目录互斥、暂停后编辑与保存预览、版本冲突保护、失败暂停及重启核对命令／队列。完整 PTY／日历 cron 未实现；见[第六阶段验收](phase-six-testing.md) |
 
 这些是客户端接入差距，不是底座模型能力评判。可对照 [Codex app-server 接口](https://learn.chatgpt.com/docs/app-server)、[Codex 子代理](https://learn.chatgpt.com/docs/agent-configuration/subagents)、[Grok 子代理](https://docs.x.ai/build/features/subagents)与 [Grok 扩展能力](https://docs.x.ai/build/features/skills-plugins-marketplaces)。

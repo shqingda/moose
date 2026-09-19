@@ -139,6 +139,11 @@
 .native-dialog > [data-slot='dialog-header'] {
   flex-shrink: 0;
 }
+.native-dialog-body {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+}
 .native-history-entries {
   display: flex;
   flex-direction: column;

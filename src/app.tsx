@@ -1,3 +1,5 @@
+import { BackgroundTools } from './components/background-tools';
+import { ExtensionTools } from './components/extension-tools';
 import { WorktreeTools } from './components/worktree-tools';
 import { NativeTools } from './components/native-tools';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -454,6 +456,18 @@ function Workspace({
             )}
           </div>
           <div className="header-actions">
+            {project && (
+              <BackgroundTools
+                key={`${project.id}:${session?.id}`}
+                scope={{ projectId: project.id, sessionId: session?.id }}
+              />
+            )}
+            {project && (
+              <ExtensionTools
+                key={`${project.id}:${session?.id}:${currentProvider}`}
+                scope={{ projectId: project.id, sessionId: session?.id, provider: currentProvider }}
+              />
+            )}
             {project && (
               <WorktreeTools
                 project={project}
