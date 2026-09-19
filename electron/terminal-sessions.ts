@@ -1,3 +1,4 @@
+import { hostname, userInfo } from 'node:os';
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
@@ -67,16 +68,11 @@ export class TerminalSessions {
   }
   list(projectId: string) {
     this.store.project(projectId);
-    const rows = this.store.sqlite
-      .prepare(
-        "SELECT json_remove(value, '$.output') AS value FROM settings WHERE key LIKE 'terminal:%' AND json_extract(value, '$.projectId')=? ORDER BY json_extract(value, '$.createdAt') DESC LIMIT 30",
-      )
-      .all(projectId) as { value: string }[];
-    return rows.map((row) => {
-      const record = JSON.parse(row.value);
-      return this.summary(this.active.get(record.id)?.record || record);
-    });
+    return [...this.active.values()]
+      .filter((item) => item.record.projectId === projectId && item.record.status === 'running')
+      .map((item) => this.summary(item.record));
   }
+
   read({ id, offset }: TerminalRequests['terminalRead']): TerminalOutput {
     const record = this.get(id),
       start = record.offset - record.output.length;
@@ -106,6 +102,7 @@ export class TerminalSessions {
       projectId: args.projectId,
       sessionId: args.sessionId,
       cwd,
+      title: `${userInfo().username}@${hostname().replace(/\.local$/, '')}`,
       status: 'running',
       createdAt: Date.now(),
       exitCode: null,

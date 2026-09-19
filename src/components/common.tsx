@@ -1,5 +1,5 @@
 import mark from '../assets/moose-mark.json';
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { Button } from './ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import {
@@ -35,7 +35,9 @@ export function Picker({
   className,
   title,
   placeholder,
+  icon,
 }: {
+  icon?: ReactNode;
   placeholder?: string;
   title?: string;
   label: string;
@@ -55,6 +57,7 @@ export function Picker({
       disabled={disabled}
     >
       <SelectTrigger aria-label={label} title={title} className={className}>
+        {icon}
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent alignItemWithTrigger={false}>

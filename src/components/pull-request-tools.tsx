@@ -1,3 +1,4 @@
+import { Field, FieldLabel } from './ui/field';
 import { useState } from 'react';
 import type { PullRequestPreview, WorkspaceScope } from '../../shared/git-actions';
 import { useI18n } from '../lib/i18n';
@@ -14,16 +15,26 @@ export function PullRequestTools({ scope }: { scope: WorkspaceScope }) {
     [preview, setPreview] = useState<PullRequestPreview>(),
     [busy, setBusy] = useState(false),
     [url, setUrl] = useState(''),
-    [failure, setFailure] = useState('');
+    [failure, setFailure] = useState(''),
+    [sameBranch, setSameBranch] = useState(false),
+    [targetOpen, setTargetOpen] = useState(false);
   async function load() {
     setBusy(true);
+    setSameBranch(false);
     setFailure('');
     setPreview(undefined);
     setUrl('');
     try {
-      setPreview(await window.moose.request('prPreview', { ...scope, base }));
+      const next = await window.moose.request('prPreview', { ...scope, base });
+      setPreview(next);
+      setTitle((value) => value || next.branch.replace(/[-_/]/g, ' '));
     } catch (error) {
-      setFailure(String(error));
+      if (String(error).includes('Choose a different PR base branch')) {
+        setSameBranch(true);
+        setTargetOpen(true);
+      } else {
+        setFailure(String(error));
+      }
     } finally {
       setBusy(false);
     }
@@ -63,72 +74,108 @@ export function PullRequestTools({ scope }: { scope: WorkspaceScope }) {
   }
   return (
     <>
-      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => {
+          setOpen(true);
+          void load();
+        }}
+      >
         {t('prTools')}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="native-dialog">
+        <DialogContent className="git-action-dialog">
           <DialogHeader>
             <DialogTitle>{t('prTools')}</DialogTitle>
             <DialogDescription>{t('prHint')}</DialogDescription>
           </DialogHeader>
-          <div className="native-dialog-body space-y-3">
+          <div className="git-action-body">
             {failure && (
-              <p role="alert" className="text-destructive break-words">
-                {failure}
-              </p>
+              <div>
+                <p role="alert" className="text-destructive break-words">
+                  {failure}
+                </p>
+                <Button variant="outline" disabled={busy || !base.trim()} onClick={load}>
+                  {t('refresh')}
+                </Button>
+              </div>
             )}
-            <Input
-              aria-label={t('prBase')}
-              value={base}
-              disabled={busy}
-              onChange={(e) => {
-                setBase(e.target.value);
-                setPreview(undefined);
-                setUrl('');
-              }}
-            />
-            <Button variant="outline" disabled={busy || !base.trim()} onClick={load}>
-              {t('prPreview')}
-            </Button>
+            {sameBranch && <p role="status">{t('prSameBranch')}</p>}
+            <details
+              className="git-action-details"
+              open={targetOpen}
+              onToggle={(event) => setTargetOpen(event.currentTarget.open)}
+            >
+              <summary>
+                {t('prTarget')}: {base}
+              </summary>
+              <Field>
+                <FieldLabel htmlFor="pr-base">{t('prBase')}</FieldLabel>
+                <Input
+                  id="pr-base"
+                  aria-label={t('prBase')}
+                  value={base}
+                  disabled={busy}
+                  onChange={(e) => {
+                    setBase(e.target.value);
+                    setSameBranch(false);
+                    setPreview(undefined);
+                    setUrl('');
+                  }}
+                />
+              </Field>
+              <Button variant="outline" disabled={busy || !base.trim()} onClick={load}>
+                {t('prPreview')}
+              </Button>
+            </details>
+            {busy && <p role="status">{t('loading')}</p>}
             {preview && (
               <>
                 <p>
                   {preview.repository}: {preview.branch} → {preview.base}
-                </p>
-                <p className="text-xs">
-                  {preview.head.slice(0, 12)} → {preview.baseCommit.slice(0, 12)}
                 </p>
                 {preview.existing.map((pr) => (
                   <Button key={pr.number} variant="link" onClick={() => visit(pr.url)}>
                     #{pr.number} {pr.state}: {pr.title}
                   </Button>
                 ))}
-                <pre className="whitespace-pre-wrap break-all text-xs">{preview.commits}</pre>
-                <pre className="whitespace-pre-wrap break-all text-xs">{preview.diff}</pre>
-                {preview.truncated && <p>{t('truncated')}</p>}
+                <details className="git-action-details">
+                  <summary>{t('gitViewChanges')}</summary>
+                  <pre>{preview.commits}</pre>
+                  <pre className="whitespace-pre-wrap break-all text-xs">{preview.diff}</pre>
+                  {preview.truncated && <p>{t('truncated')}</p>}
+                </details>
               </>
             )}
             {url ? (
               <Button variant="link" onClick={() => visit(url)}>
                 {url}
               </Button>
-            ) : preview?.existing.some((pr) => pr.state === 'OPEN') ? null : (
+            ) : !preview || preview.existing.some((pr) => pr.state === 'OPEN') ? null : (
               <>
-                <Input
-                  aria-label={t('prTitle')}
-                  placeholder={t('prTitle')}
-                  value={title}
-                  disabled={busy}
-                  onChange={(e) => setTitle(e.target.value)}
-                />
-                <Textarea
-                  aria-label={t('prBody')}
-                  placeholder={t('prBody')}
-                  value={body}
-                  disabled={busy}
-                  onChange={(e) => setBody(e.target.value)}
-                />
+                <Field>
+                  <FieldLabel htmlFor="pr-title">{t('prTitle')}</FieldLabel>
+                  <Input
+                    id="pr-title"
+                    aria-label={t('prTitle')}
+                    placeholder={t('prTitle')}
+                    value={title}
+                    disabled={busy}
+                    onChange={(e) => setTitle(e.target.value)}
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="pr-body">{t('prBody')}</FieldLabel>
+                  <Textarea
+                    id="pr-body"
+                    aria-label={t('prBody')}
+                    placeholder={t('prBody')}
+                    value={body}
+                    disabled={busy}
+                    onChange={(e) => setBody(e.target.value)}
+                  />
+                </Field>
                 <Button disabled={busy || !preview || !title.trim()} onClick={create}>
                   {t('prCreate')}
                 </Button>

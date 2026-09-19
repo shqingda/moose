@@ -9,7 +9,7 @@ import { IconButton } from './common';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
-import { Field, FieldGroup, FieldLabel } from './ui/field';
+import { Field, FieldGroup, FieldLabel, FieldDescription } from './ui/field';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { SchedulePanel } from './schedule-panel';
@@ -51,6 +51,44 @@ export function BackgroundTools({
     onDockChange(open && placement !== 'dialog' ? placement : null);
   }, [open, placement, onDockChange]);
   useEffect(() => () => onDockChange(null), [onDockChange]);
+  useEffect(
+    () =>
+      window.moose.subscribe((event) => {
+        if (event.type !== 'command') return;
+        if (event.command === 'composer') {
+          setOpen(false);
+          requestAnimationFrame(() => document.getElementById('composer')?.focus());
+          return;
+        }
+        if (event.command === 'commands' || event.command === 'schedules') {
+          setTab(event.command);
+          setOpen(true);
+          return;
+        }
+        if (event.command !== 'terminal' && event.command !== 'new-terminal') return;
+        if (event.command === 'terminal' && open && tab === 'terminal') {
+          setOpen(false);
+          return;
+        }
+        setTab('terminal');
+        setOpen(true);
+        void (async () => {
+          const sessions = await window.moose.request('terminalList', scope);
+          const existing = sessions.find((row) => row.id === terminalId) || sessions[0];
+          const terminal =
+            event.command !== 'new-terminal' && existing
+              ? existing
+              : await window.moose.request('terminalStart', {
+                  ...scope,
+                  requestId: crypto.randomUUID(),
+                  cols: 100,
+                  rows: 24,
+                });
+          setTerminalId(terminal.id);
+        })().catch((e) => setError(String(e)));
+      }),
+    [open, tab, terminalId, scope.projectId, scope.sessionId],
+  );
   const read = () =>
     Promise.all([
       window.moose.request('commandList', scope),
@@ -154,8 +192,10 @@ export function BackgroundTools({
           <FieldGroup>
             <Field>
               <FieldLabel htmlFor="bg-command">{t('bgCommand')}</FieldLabel>
+              <FieldDescription id="bg-command-hint">{t('bgCommandHint')}</FieldDescription>
               <Textarea
                 id="bg-command"
+                aria-describedby="bg-command-hint"
                 disabled={busy}
                 value={command}
                 onChange={(e) => {

@@ -73,6 +73,19 @@ async function createWindow() {
       spellcheck: true,
     },
   });
+  // Handle the physical backquote key before xterm or the native menu consumes it.
+  window.webContents.on('before-input-event', (event, input) => {
+    if (
+      input.control &&
+      !input.meta &&
+      !input.alt &&
+      (input.code === 'Backquote' || input.key === '`' || input.key === '~')
+    ) {
+      event.preventDefault();
+      if (input.type === 'keyDown' && !input.isAutoRepeat)
+        emit({ type: 'command', command: input.shift ? 'new-terminal' : 'terminal' });
+    }
+  });
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   window.webContents.on('will-navigate', (event, url) => {
     if (url !== window?.webContents.getURL()) event.preventDefault();
@@ -142,7 +155,7 @@ function menu(language: Settings['language'] = 'system') {
       },
       { role: 'editMenu' },
       {
-        label: 'View',
+        label: zh ? '视图' : 'View',
         submenu: [
           {
             label: zh ? '切换侧边栏' : 'Toggle Sidebar',
@@ -159,6 +172,19 @@ function menu(language: Settings['language'] = 'system') {
             accelerator: 'CmdOrCtrl+U',
             click: () => emit({ type: 'command', command: 'usage' }),
           },
+          ...(
+            [
+              ['terminal', 'Control+`', '切换终端', 'Toggle Terminal'],
+              ['new-terminal', 'Control+Shift+`', '新建终端', 'New Terminal'],
+              ['commands', 'CmdOrCtrl+Shift+J', 'Shell 命令', 'Shell Commands'],
+              ['schedules', 'CmdOrCtrl+Shift+S', '定时任务', 'Schedules'],
+              ['composer', 'CmdOrCtrl+L', '聚焦输入框', 'Focus Composer'],
+            ] as const
+          ).map(([command, accelerator, cn, en]) => ({
+            label: zh ? cn : en,
+            accelerator,
+            click: () => emit({ type: 'command', command }),
+          })),
           { role: 'resetZoom' },
           { role: 'zoomIn' },
           { role: 'zoomOut' },

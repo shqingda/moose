@@ -1,11 +1,13 @@
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 import { useEffect, useState } from 'react';
 import type { BackgroundScope } from '../../shared/background';
 import type { TerminalSession } from '../../shared/terminal';
 import { useI18n } from '../lib/i18n';
 import { Alert, AlertDescription } from './ui/alert';
 import { TerminalView } from './terminal-view';
-import { Picker, IconButton } from './common';
-import { Plus, Square } from 'lucide-react';
+import { Button } from './ui/button';
+import { IconButton } from './common';
+import { Plus, X, Terminal } from 'lucide-react';
 export function TerminalPanel({
   scope,
   selected,
@@ -30,7 +32,7 @@ export function TerminalPanel({
         const rows = await window.moose.request('terminalList', scope);
         if (live) {
           setSessions(rows);
-          if (!selected && rows[0]) setSelected(rows[0].id);
+          if (!rows.some((row) => row.id === selected)) setSelected(rows[0]?.id || '');
         }
       } catch (e) {
         if (live) setError(String(e));
@@ -58,21 +60,43 @@ export function TerminalPanel({
     }
   }
   return (
-    <div className="terminal-panel">
+    <Tabs
+      value={selected}
+      onValueChange={(value) => setSelected(String(value))}
+      className="terminal-panel"
+    >
       <div className="terminal-toolbar">
-        {!!sessions.length && (
-          <Picker
-            label={t('ptySession')}
-            value={selected}
-            onChange={setSelected}
-            options={sessions.map((row) => ({
-              value: row.id,
-              label: `${new Date(row.createdAt).toLocaleTimeString()} · ${t(row.status === 'running' ? 'ptyRunning' : 'ptyEnded')}`,
-            }))}
-          />
-        )}
-        <IconButton
-          label={t('ptyNew')}
+        <div className="terminal-session-tabs">
+          <TabsList variant="line" aria-label={t('ptySession')}>
+            {sessions.map((row) => (
+              <div className="terminal-session-tab" key={row.id}>
+                <TabsTrigger value={row.id} title={row.cwd}>
+                  <Terminal />
+                  <span>{row.title || t('ptyTitle')}</span>
+                </TabsTrigger>
+                <IconButton
+                  label={t('ptyStop')}
+                  size="icon-xs"
+                  disabled={busy}
+                  onClick={() =>
+                    void act(async () => {
+                      await window.moose.request('terminalStop', { id: row.id });
+                      if (selected === row.id) setSelected('');
+                    })
+                  }
+                >
+                  <X />
+                </IconButton>
+              </div>
+            ))}
+          </TabsList>
+        </div>
+        <Button
+          aria-label={t('ptyNew')}
+          title={t('ptyNew')}
+          variant="ghost"
+          size={sessions.length ? 'icon' : 'default'}
+          className="terminal-new-button"
           disabled={busy}
           onClick={() =>
             void act(async () => {
@@ -87,26 +111,8 @@ export function TerminalPanel({
           }
         >
           <Plus />
-        </IconButton>
-        {session?.status === 'running' && (
-          <IconButton
-            label={t('ptyStop')}
-            disabled={busy}
-            onClick={() =>
-              void act(async () => {
-                await window.moose.request('terminalStop', { id: session.id });
-              })
-            }
-          >
-            <Square />
-          </IconButton>
-        )}
-        {session && (
-          <span className="terminal-context" title={session.cwd}>
-            {session.cwd.split('/').pop()}
-            {session.status !== 'running' && ` · ${t('ptyEnded')} (${session.exitCode ?? '—'})`}
-          </span>
-        )}
+          {!sessions.length && t('ptyNew')}
+        </Button>
       </div>
       {error && (
         <Alert variant="destructive">
@@ -114,12 +120,12 @@ export function TerminalPanel({
         </Alert>
       )}
       {session ? (
-        <>
+        <TabsContent value={session.id} className="terminal-session-content">
           <TerminalView key={session.id} session={session} onError={setError} />
-        </>
+        </TabsContent>
       ) : (
         <p className="extension-note">{t('ptyEmpty')}</p>
       )}
-    </div>
+    </Tabs>
   );
 }

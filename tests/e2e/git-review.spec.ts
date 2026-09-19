@@ -68,6 +68,17 @@ test('stages exact files, retains a failed commit message, and keeps native revi
   const { page, root, session } = await launch();
   await writeFile(join(root, 'first.txt'), 'review this\n');
   await writeFile(join(root, 'leave.txt'), 'leave unstaged\n');
+  const snapshot = await page.evaluate(() => window.moose.request('snapshot', {}));
+  await page.evaluate(
+    (projectId) =>
+      window.moose.request('terminalStart', {
+        projectId,
+        requestId: crypto.randomUUID(),
+        cols: 80,
+        rows: 24,
+      }),
+    snapshot.projects[0].id,
+  );
   await page.getByRole('button', { name: 'Review changes', exact: true }).click();
   const panel = page.locator('.review-panel');
   await panel
@@ -76,31 +87,38 @@ test('stages exact files, retains a failed commit message, and keeps native revi
     .getByRole('button', { name: 'Stage file', exact: true })
     .click();
   await expect(panel.getByRole('button', { name: 'Unstage file', exact: true })).toBeVisible();
-  await panel.getByRole('button', { name: 'Preview commit', exact: true }).click();
+  await panel.getByRole('button', { name: 'Commit', exact: true }).click();
   const dialog = page.getByRole('dialog');
+  await expect(dialog.getByText('View changes', { exact: true })).toBeVisible();
+  await page.screenshot({ path: 'test-results/git-commit-simple.png', animations: 'disabled' });
+  await dialog.getByText('View changes', { exact: true }).click();
   await expect(dialog).toContainText('+review this');
   await expect(dialog).not.toContainText('leave unstaged');
   await dialog.getByRole('textbox', { name: 'Commit message' }).fill('Keep this message');
   await writeFile(join(root, '.git/hooks/pre-commit'), '#!/bin/sh\nexit 1\n', { mode: 0o755 });
-  await dialog.getByRole('button', { name: 'Commit reviewed changes' }).click();
+  await dialog.getByRole('button', { name: 'Commit', exact: true }).click();
   await expect(dialog.getByRole('alert')).toContainText('Command failed');
-  await expect(dialog.getByRole('button', { name: 'Commit reviewed changes' })).toBeDisabled();
+  await expect(dialog.getByRole('button', { name: 'Commit', exact: true })).toBeDisabled();
   await expect(dialog.getByRole('textbox', { name: 'Commit message' })).toHaveValue(
     'Keep this message',
   );
   await rm(join(root, '.git/hooks/pre-commit'));
   await dialog.getByRole('button', { name: 'Refresh', exact: true }).click();
-  await dialog.getByRole('button', { name: 'Commit reviewed changes' }).click();
+  await dialog.getByRole('button', { name: 'Commit', exact: true }).click();
   await expect(dialog.getByRole('status')).toContainText('Committed');
   expect(git(root, 'show', 'HEAD:first.txt')).toBe('review this');
   expect(git(root, 'status', '--porcelain')).toContain('leave.txt');
   await dialog.getByRole('button', { name: 'Close', exact: true }).click();
+  await page.evaluate(async (projectId) => {
+    for (const terminal of await window.moose.request('terminalList', { projectId }))
+      await window.moose.request('terminalStop', { id: terminal.id });
+  }, snapshot.projects[0].id);
   await panel.getByRole('button', { name: 'Native code review' }).click();
   await dialog.getByRole('button', { name: 'Start native review' }).click();
   await expect(dialog).toContainText('Review completed');
   await expect(dialog).toContainText('src/example.ts:12');
-  const snapshot = await page.evaluate(() => window.moose.request('snapshot', {}));
-  expect(snapshot.sessions.find((s) => s.id === session.id)?.nativeId).toBe('original-execution');
+  const after = await page.evaluate(() => window.moose.request('snapshot', {}));
+  expect(after.sessions.find((s) => s.id === session.id)?.nativeId).toBe('original-execution');
   await expect(dialog.getByRole('heading', { name: 'Native code review' })).toBeVisible();
   await page.screenshot({ path: 'test-results/git-native-review.png' });
 });
@@ -112,19 +130,46 @@ test('previews explicit PR targets and creates a draft through the GitHub fixtur
   git(root, 'config', `url.${remote}.insteadOf`, url);
   git(root, 'remote', 'add', 'origin', url);
   git(root, 'push', '-q', 'origin', 'main');
-  git(root, 'checkout', '-qb', 'feature');
-  await writeFile(join(root, 'feature.txt'), 'change\n');
-  git(root, 'add', 'feature.txt');
-  git(root, 'commit', '-qm', 'feature');
-  git(root, 'push', '-q', 'origin', 'feature');
   await page.getByRole('button', { name: 'Review changes', exact: true }).click();
   await page
     .locator('.review-panel')
     .getByRole('button', { name: 'Pull requests', exact: true })
     .click();
+  const sameBranchDialog = page.getByRole('dialog');
+  await expect(sameBranchDialog).toContainText(
+    'The current branch and target branch are the same.',
+  );
+  await expect(
+    sameBranchDialog.getByRole('textbox', { name: 'Base branch', exact: true }),
+  ).toBeVisible();
+  await expect(sameBranchDialog.getByRole('alert')).toHaveCount(0);
+  await expect(sameBranchDialog.getByRole('button', { name: 'Create draft PR' })).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  git(root, 'checkout', '-qb', 'feature');
+  await writeFile(join(root, 'feature.txt'), 'change\n');
+  git(root, 'add', 'feature.txt');
+  git(root, 'commit', '-qm', 'feature');
+  git(root, 'push', '-q', 'origin', 'feature');
+  const snapshot = await page.evaluate(() => window.moose.request('snapshot', {}));
+  await page.evaluate(
+    (projectId) =>
+      window.moose.request('terminalStart', {
+        projectId,
+        requestId: crypto.randomUUID(),
+        cols: 80,
+        rows: 24,
+      }),
+    snapshot.projects[0].id,
+  );
+  await page
+    .locator('.review-panel')
+    .getByRole('button', { name: 'Pull requests', exact: true })
+    .click();
   const dialog = page.getByRole('dialog');
-  await dialog.getByRole('button', { name: 'Preview / refresh PR status' }).click();
   await expect(dialog).toContainText('feature → main');
+  await expect(dialog.getByRole('textbox', { name: 'PR title' })).toHaveValue('feature');
+  await page.screenshot({ path: 'test-results/git-pr-simple.png' });
+  await dialog.getByText('View changes', { exact: true }).click();
   await expect(dialog).toContainText('+change');
   await dialog.getByRole('textbox', { name: 'PR title' }).fill('Feature review');
   await dialog.getByRole('textbox', { name: 'PR description' }).fill('Exact\nbody');

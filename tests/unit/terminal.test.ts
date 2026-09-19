@@ -29,8 +29,9 @@ it('recovers terminal metadata without restarting processes and reports missing 
     throw new Error('Must not start a recovered terminal');
   });
   try {
-    expect(sessions.list(project.id)[0].status).toBe('unknown');
+    expect(sessions.list(project.id)).toEqual([]);
     expect(sessions.read({ id: 'test', offset: 0 })).toMatchObject({
+      session: { status: 'unknown' },
       data: 'retained',
       offset: 100,
       reset: true,
@@ -45,7 +46,7 @@ it('recovers terminal metadata without restarting processes and reports missing 
     expect(() => sessions.input({ id: 'test', text: 'should not replay' })).toThrow(
       'no longer running',
     );
-    expect(sessions.list(project.id)[0]).not.toHaveProperty('output');
+    expect(sessions.read({ id: 'test', offset: 100 }).session).not.toHaveProperty('output');
   } finally {
     await sessions.close();
     store.close();

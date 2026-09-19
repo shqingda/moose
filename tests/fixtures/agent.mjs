@@ -137,6 +137,15 @@ createInterface({ input: process.stdin }).on('line', (line) => {
     case 'model/list':
       result(m.id, {
         data: [
+          ...(process.env.MOOSE_TEST_MANY_MODELS
+            ? Array.from({ length: 24 }, (_, i) => ({
+                id: `extra-${i}`,
+                model: `extra-${i}`,
+                displayName: `Test model ${i}`,
+                hidden: false,
+                supportedReasoningEfforts: [],
+              }))
+            : []),
           {
             id: 'fixture',
             model: 'fixture',

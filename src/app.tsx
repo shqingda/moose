@@ -242,6 +242,7 @@ function Workspace({
     () =>
       window.moose.subscribe((event) => {
         if (event.type !== 'command') return;
+        if (event.command === 'composer') document.getElementById('composer')?.focus();
         if (event.command === 'sidebar') toggleSidebar();
         if (event.command === 'settings') setSettingsOpen(true);
         if (event.command === 'search') setSearchOpen(true);
@@ -457,15 +458,6 @@ function Workspace({
               </div>
               <div className="header-actions">
                 {project && (
-                  <BackgroundTools
-                    reviewOpen={review}
-                    dockHost={dockHost}
-                    onDockChange={onDockChange}
-                    key={`${project.id}:${session?.id}`}
-                    scope={{ projectId: project.id, sessionId: session?.id }}
-                  />
-                )}
-                {project && (
                   <WorkspaceTools
                     trigger={toolsTrigger}
                     key={`${project.id}:${session?.id}:${currentProvider}`}
@@ -489,6 +481,15 @@ function Workspace({
                       if (session) void archiveSession(session);
                     }}
                     onEditor={() => void openProject('editor')}
+                  />
+                )}
+                {project && (
+                  <BackgroundTools
+                    reviewOpen={review}
+                    dockHost={dockHost}
+                    onDockChange={onDockChange}
+                    key={`${project.id}:${session?.id}`}
+                    scope={{ projectId: project.id, sessionId: session?.id }}
                   />
                 )}
                 <span className="header-action-divider" />
@@ -528,10 +529,6 @@ function Workspace({
                 projectName={project?.name}
                 onAdd={() => {
                   void addProject();
-                }}
-                onPrompt={(text) => {
-                  onDraft(text);
-                  document.getElementById('composer')?.focus();
                 }}
               />
             )}

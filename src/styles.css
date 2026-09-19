@@ -358,6 +358,7 @@
   gap: 0;
 }
 .background-bar {
+  font-size: var(--text-sm);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -384,17 +385,50 @@
   overflow: auto;
   padding: 1.25rem;
 }
-.terminal-toolbar > [data-slot='select-trigger'] {
-  width: auto;
-  max-width: 55%;
+.terminal-toolbar {
+  --terminal-tab-height: 36px;
 }
-.terminal-context {
-  margin-left: auto;
+.terminal-new-button,
+.terminal-session-tab {
+  height: var(--terminal-tab-height);
+}
+.terminal-session-tabs {
+  min-width: 0;
+  overflow-x: auto;
+}
+.terminal-session-tabs [data-slot='tabs-list'] {
+  height: var(--terminal-tab-height);
+  padding: 0;
+  gap: 4px;
+}
+.terminal-session-tab {
+  display: flex;
+  align-items: center;
+  border-radius: 10px;
+  padding-right: 4px;
+}
+.terminal-session-tab:has([data-active]) {
+  background: var(--muted);
+}
+.terminal-session-tab [data-slot='tabs-trigger'] {
+  max-width: 220px;
+  padding: 6px 8px;
+  font-weight: 400;
+}
+.terminal-session-tab [data-slot='tabs-trigger'] span {
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.75rem;
+}
+.terminal-session-tab [data-slot='tabs-trigger']::after {
+  display: none;
+}
+.terminal-session-tab > button:last-child {
   color: var(--muted-foreground);
+}
+.terminal-session-content {
+  display: flex;
+  min-height: 0;
+  min-width: 0;
 }
 .background-terminal .terminal-panel > .extension-note {
   padding: 1rem;
@@ -407,12 +441,6 @@
   .workspace-stage[data-dock='right'] > .workspace-dock {
     width: 48%;
   }
-  .background-docked .background-bar {
-    flex-wrap: wrap;
-  }
-  .background-docked .background-bar > [data-slot='tabs-list'] {
-    width: 100%;
-  }
 }
 .workspace-dock {
   background: var(--background);
@@ -421,7 +449,7 @@
 .background-docked {
   container-type: inline-size;
 }
-@container (max-width:390px) {
+@container (max-width:340px) {
   .background-bar {
     flex-wrap: wrap;
   }
@@ -448,4 +476,19 @@
 .review-file-row .change-file {
   flex: 1;
   min-width: 0;
+}
+
+/* The tab is one surface; nested controls only change their foreground. */
+.terminal-session-tab:hover {
+  background: var(--accent);
+}
+.terminal-session-tab > button:not(:disabled),
+.terminal-session-tabs .terminal-session-tab > button[data-slot]:not(:disabled):hover,
+.terminal-session-tabs .terminal-session-tab > button[data-slot]:not(:disabled):active {
+  background: transparent;
+  box-shadow: none;
+}
+.terminal-session-tab > button:last-child:hover,
+.terminal-session-tab > button:last-child:active {
+  color: var(--foreground);
 }

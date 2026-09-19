@@ -90,20 +90,26 @@ export function Sidebar({
       </div>
       <div className="section-caption">
         <span>{archived ? t('archived') : t('projects')}</span>
-        <IconButton
-          label={t('addProject')}
-          className="project-add-button"
-          size="icon-xs"
-          onClick={onAdd}
-        >
-          <Plus />
-        </IconButton>
+        {!archived && (
+          <IconButton
+            label={t('addProject')}
+            className="project-add-button"
+            size="icon-xs"
+            onClick={onAdd}
+          >
+            <Plus />
+          </IconButton>
+        )}
       </div>
       <nav className="project-list">
+        {archived && !sessions.some((s) => s.archived) && (
+          <p className="sidebar-empty">{t('noArchived')}</p>
+        )}
         {projects.map((project) => {
           const items = sessions.filter(
-            (s) => s.projectId === project.id && s.archived === archived && !!s.title,
+            (s) => s.projectId === project.id && s.archived === archived && (archived || !!s.title),
           );
+          if (archived && !items.length) return null;
           return (
             <section className="project-group" key={project.id}>
               <div className="project-heading-row">
@@ -116,39 +122,41 @@ export function Sidebar({
                   <Folder size={15} />
                   <span>{project.name}</span>
                 </button>
-                <div className="project-row-actions">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      render={
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          className="sidebar-row-action"
-                          aria-label={`${t('projectActions')} ${project.name}`}
-                        />
-                      }
-                    >
-                      <MoreHorizontal />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem
-                        variant="destructive"
-                        onClick={() => onDeleteProject(project.id)}
+                {!archived && (
+                  <div className="project-row-actions">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        render={
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            className="sidebar-row-action"
+                            aria-label={`${t('projectActions')} ${project.name}`}
+                          />
+                        }
                       >
-                        <Trash2 />
-                        {t('deleteProject')}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  <IconButton
-                    className="sidebar-row-action"
-                    size="icon-sm"
-                    label={`${t('newSession')} · ${project.name}`}
-                    onClick={() => onNew(project.id)}
-                  >
-                    <SquarePen />
-                  </IconButton>
-                </div>
+                        <MoreHorizontal />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => onDeleteProject(project.id)}
+                        >
+                          <Trash2 />
+                          {t('deleteProject')}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <IconButton
+                      className="sidebar-row-action"
+                      size="icon-sm"
+                      label={`${t('newSession')} · ${project.name}`}
+                      onClick={() => onNew(project.id)}
+                    >
+                      <SquarePen />
+                    </IconButton>
+                  </div>
+                )}
               </div>
               <div className="session-list" hidden={collapsed.has(project.id)}>
                 {items.map((session) => (

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { TerminalSession } from '../../shared/terminal';
+import { terminalThemes } from '../lib/terminal-theme';
 import { useI18n } from '../lib/i18n';
 import '@xterm/xterm/css/xterm.css';
 export function TerminalView({
@@ -64,9 +65,12 @@ export function TerminalView({
       });
       const theme = () => {
         const dark = document.documentElement.classList.contains('dark');
-        term.options.theme = dark
-          ? { background: '#20262e', foreground: '#e5e9ee', cursor: '#a0c8ca' }
-          : { background: '#ffffff', foreground: '#20262e', cursor: '#376f75' };
+        const palette = dark ? terminalThemes.mocha : terminalThemes.githubLight;
+        const background = dark
+          ? getComputedStyle(document.documentElement).getPropertyValue('--background').trim()
+          : palette.background;
+        term.options.theme = { ...palette, background };
+        host.current?.style.setProperty('background-color', background);
         term.options.fontSize =
           (13 * parseFloat(getComputedStyle(document.documentElement).fontSize)) / 16;
       };

@@ -145,6 +145,11 @@ export function SettingsDialog({
                   ['toggleSidebar', '⌘ B'],
                   ['review', '⇧ ⌘ B'],
                   ['usage', '⌘ U'],
+                  ['ptyTitle', '⌃ `'],
+                  ['ptyNew', '⌃ ⇧ `'],
+                  ['bgCommand', '⇧ ⌘ J'],
+                  ['bgSchedules', '⇧ ⌘ S'],
+                  ['focusComposer', '⌘ L'],
                   ['settings', '⌘ ,'],
                 ] as const
               ).map(([label, keys]) => (

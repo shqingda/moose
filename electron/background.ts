@@ -1,3 +1,4 @@
+import { BackgroundLocks } from './background-locks';
 import { TerminalSessions } from './terminal-sessions';
 import type { Store } from './db/store';
 import { BackgroundStore } from './background-store';
@@ -25,6 +26,7 @@ export const isBackgroundMethod = (method: string): method is Method =>
     'scheduleSet',
   ].includes(method);
 export class Background {
+  readonly acquireDirectory: (cwd: string) => () => void;
   readonly commands: CommandJobs;
   readonly terminals: TerminalSessions;
   readonly schedules: Schedules;
@@ -33,8 +35,10 @@ export class Background {
     hooks: ScheduleHooks & { lock(cwd: string): () => void },
   ) {
     const records = new BackgroundStore(store);
-    this.terminals = new TerminalSessions(store, hooks.lock);
-    this.commands = new CommandJobs(records, hooks.lock);
+    const locks = new BackgroundLocks(hooks.lock);
+    this.acquireDirectory = locks.acquire;
+    this.terminals = new TerminalSessions(store, locks.acquire);
+    this.commands = new CommandJobs(records, locks.acquire);
     this.schedules = new Schedules(records, this.commands, hooks);
   }
   async handle(method: Method, args: unknown) {

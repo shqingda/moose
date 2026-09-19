@@ -1,5 +1,15 @@
 import { providerDefinitions } from '../../shared/providers';
-import { ArrowUp, Square, ChevronUp, Trash2, Pencil, Play, Paperclip, X } from 'lucide-react';
+import {
+  ArrowUp,
+  Square,
+  ChevronUp,
+  Trash2,
+  Pencil,
+  Play,
+  Plus,
+  ShieldCheck,
+  X,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type {
   Attachment,
@@ -337,7 +347,7 @@ export function Composer({
                   .catch((error) => onError(String(error)));
               }}
             >
-              <Paperclip />
+              <Plus />
             </IconButton>
             <Picker
               title={t(
@@ -348,6 +358,7 @@ export function Composer({
                     : 'askDescription',
               )}
               label={t('permissionsLabel')}
+              icon={<ShieldCheck />}
               placeholder={t('permissionsLabel')}
               value={
                 info?.modes.length && !info.modes.some((m) => m.id === (options.mode || 'ask'))
@@ -362,6 +373,8 @@ export function Composer({
               }))}
               className={`compact-picker permission-picker ${options.mode === 'full' ? 'permission-full' : ''}`}
             />
+          </div>
+          <div className="composer-models">
             <ModelPicker
               value={options.model}
               provider={provider}
@@ -397,7 +410,7 @@ export function Composer({
               />
             )}
           </div>
-          <div className="flex shrink-0 items-center gap-1">
+          <div className="composer-send-actions">
             <UsagePanel provider={provider} sessionId={session?.id} />
             {busy && (
               <IconButton label={t('stop')} onClick={onStop}>
@@ -445,7 +458,9 @@ export function Composer({
       </InputGroup>
       <div className="composer-foot">
         {unsupportedImages && <span>{t('imageUnavailable')}</span>}
-        <span>{session?.archived ? t('archivedHint') : busy ? t('queueHint') : t('sendHint')}</span>
+        {(session?.archived || busy) && (
+          <span>{t(session?.archived ? 'archivedHint' : 'queueHint')}</span>
+        )}
       </div>
     </div>
   );

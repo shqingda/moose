@@ -1,3 +1,4 @@
+import { Field, FieldLabel } from './ui/field';
 import { useState } from 'react';
 import type { CommitPreview, WorkspaceScope } from '../../shared/git-actions';
 import { useI18n } from '../lib/i18n';
@@ -54,12 +55,12 @@ export function GitCommit({ scope, changed }: { scope: WorkspaceScope; changed()
         {t('gitCommitPreview')}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="native-dialog">
+        <DialogContent className="git-action-dialog">
           <DialogHeader>
             <DialogTitle>{t('gitCommitPreview')}</DialogTitle>
             <DialogDescription>{t('gitCommitHint')}</DialogDescription>
           </DialogHeader>
-          <div className="native-dialog-body space-y-3">
+          <div className="git-action-body">
             {failure && (
               <p role="alert" className="text-destructive break-words">
                 {failure}
@@ -72,29 +73,39 @@ export function GitCommit({ scope, changed }: { scope: WorkspaceScope; changed()
             )}
             {preview && (
               <>
-                <p>
-                  {preview.branch} · {preview.head?.slice(0, 12) || 'HEAD'}
+                <p className="git-action-summary">
+                  {preview.branch} · {preview.files.length} {t('gitStagedFiles')}
                 </p>
-                <pre className="whitespace-pre-wrap break-all text-xs">
-                  {preview.files.join('\n')}
-                </pre>
-                <pre className="whitespace-pre-wrap break-all text-xs">{preview.diff}</pre>
-                {preview.truncated && <p>{t('truncated')}</p>}
+                {!preview.files.length && <p>{t('gitStageFirst')}</p>}
+                {!!preview.files.length && (
+                  <details className="git-action-details">
+                    <summary>{t('gitViewChanges')}</summary>
+                    <pre>{preview.files.join('\n')}</pre>
+                    <pre>{preview.diff}</pre>
+                    {preview.truncated && <p>{t('truncated')}</p>}
+                  </details>
+                )}
               </>
             )}
             {!result && (
               <>
-                <Textarea
-                  aria-label={t('gitMessage')}
-                  placeholder={t('gitMessage')}
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  disabled={busy}
-                />
-                <div className="flex gap-2">
-                  <Button variant="outline" disabled={busy} onClick={load}>
-                    {t('refresh')}
-                  </Button>
+                <Field>
+                  <FieldLabel htmlFor="commit-message">{t('gitMessage')}</FieldLabel>
+                  <Textarea
+                    id="commit-message"
+                    aria-label={t('gitMessage')}
+                    placeholder={t('gitMessage')}
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    disabled={busy}
+                  />
+                </Field>
+                <div className="git-action-footer">
+                  {!preview && (
+                    <Button variant="outline" disabled={busy} onClick={load}>
+                      {t('refresh')}
+                    </Button>
+                  )}
                   <Button
                     disabled={busy || !preview?.files.length || !message.trim()}
                     onClick={commit}

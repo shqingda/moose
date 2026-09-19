@@ -39,11 +39,13 @@ interface Receipt {
 }
 interface Hooks {
   lock(path: string): () => void;
+  gitLock?(path: string): () => void;
   changed(): void;
   adapter(provider: Provider): Promise<AgentAdapter>;
 }
 /** 工作目录写入共享锁；提交/PR 意图落库，审查单独保存，重启绝不重放。 */
 export class ReviewWorkbench {
+  private writing = new Set<string>();
   private pending = new Set<Promise<unknown>>();
   private reviews = new Map<string, { adapter: AgentAdapter; review: CodeReview }>();
   private stopped = false;
@@ -145,21 +147,28 @@ export class ReviewWorkbench {
         .map((row) => JSON.parse(row.value) as CodeReview)
         .filter((r) => r.projectId === args.projectId && r.cwd === cwd)
         .sort((a, b) => b.createdAt - a.createdAt);
-    const unlock = this.hooks.lock(cwd);
+    // Read-only previews must not require closing an idle shell.
+    if (command.method === 'gitCommitPreview') return commitPreview(cwd);
+    if (command.method === 'prPreview') return pullRequestPreview(cwd, command.args.base);
+    if (this.writing.has(cwd)) throw new Error('Wait for the current Git operation to finish');
+    const release = (
+      command.method === 'reviewStart' ? this.hooks.lock : this.hooks.gitLock || this.hooks.lock
+    )(cwd);
+    this.writing.add(cwd);
+    const unlock = () => {
+      this.writing.delete(cwd);
+      release();
+    };
     let transferred = false;
     try {
       switch (command.method) {
         case 'gitStage':
           await stageFile(cwd, command.args.path, command.args.staged);
           return null;
-        case 'gitCommitPreview':
-          return await commitPreview(cwd);
         case 'gitCommit':
           return await this.receipt(command.args.requestId, args.projectId, command, () =>
             commitReviewed(cwd, command.args.preview, command.args.message),
           );
-        case 'prPreview':
-          return await pullRequestPreview(cwd, command.args.base);
         case 'prCreate':
           return await this.receipt(command.args.requestId, args.projectId, command, () =>
             createPullRequest(cwd, command.args.preview, command.args.title, command.args.body),

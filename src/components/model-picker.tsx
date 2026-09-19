@@ -45,7 +45,7 @@ export function ModelPicker({
         render={
           <Button
             variant="ghost"
-            className="model-list-trigger"
+            className="compact-picker model-list-trigger"
             disabled={disabled}
             aria-label={t('model')}
           />

@@ -2,6 +2,7 @@ import type { BackgroundScope, JobStatus } from './background';
 export interface TerminalSession extends BackgroundScope {
   id: string;
   cwd: string;
+  title?: string;
   status: JobStatus;
   createdAt: number;
   exitCode: number | null;

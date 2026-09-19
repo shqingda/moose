@@ -338,7 +338,19 @@ export type AppEvent =
   | { type: 'message'; message: Message }
   | {
       type: 'command';
-      command: 'new' | 'search' | 'settings' | 'sidebar' | 'open' | 'review' | 'usage';
+      command:
+        | 'new'
+        | 'search'
+        | 'settings'
+        | 'sidebar'
+        | 'open'
+        | 'review'
+        | 'usage'
+        | 'terminal'
+        | 'new-terminal'
+        | 'commands'
+        | 'schedules'
+        | 'composer';
     }
   | { type: 'appearance' }
   | { type: 'runtime-error'; error: string };

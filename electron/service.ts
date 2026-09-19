@@ -82,6 +82,7 @@ export class MooseService {
     });
     this.workbench = new ReviewWorkbench(store, {
       lock: (path) => this.lockDirectory(path),
+      gitLock: (path) => this.background.acquireDirectory(path),
       changed: () => this.changed(),
       adapter: (provider) => this.enabledAdapter(provider),
     });

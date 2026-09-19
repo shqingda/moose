@@ -1,5 +1,5 @@
 import { test, expect, _electron as electron, type ElectronApplication } from '@playwright/test';
-import { mkdtemp, mkdir, realpath, rm, readFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, realpath, rm, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { Store } from '../../electron/db/store';
@@ -24,6 +24,7 @@ async function launch() {
   const store = new Store(join(dir, 'moose.sqlite'));
   store.setSettings({
     language: 'en',
+    theme: 'light',
     codexPath: resolve('tests/fixtures/agent.mjs'),
     grokEnabled: false,
     piEnabled: false,
@@ -191,7 +192,18 @@ test('runs a real PTY, resizes it, edits with vim and survives closing the panel
   const { page, root, scope } = await launch();
   await page.getByRole('button', { name: 'Background commands & schedules', exact: true }).click();
   const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('button', { name: 'New terminal', exact: true })).toHaveText(
+    'New terminal',
+  );
+  const emptyButtonHeight = await dialog
+    .getByRole('button', { name: 'New terminal', exact: true })
+    .evaluate((el) => getComputedStyle(el).height);
   await dialog.getByRole('button', { name: 'New terminal', exact: true }).click();
+  await expect(dialog.locator('.terminal-session-tab')).toBeVisible();
+  expect(
+    await dialog.locator('.terminal-session-tab').evaluate((el) => getComputedStyle(el).height),
+  ).toBe(emptyButtonHeight);
+  await expect(dialog.getByRole('button', { name: 'New terminal', exact: true })).toHaveText('');
   await expect(dialog.locator('.xterm-screen')).toBeVisible();
   let id = '';
   await expect
@@ -420,12 +432,32 @@ test('moves the same terminal between window, bottom and right without stopping 
     await page.getByRole('option', { name, exact: true }).click();
     await expect(page.locator('.xterm-screen')).toBeVisible();
   };
+  const headerMetrics = () =>
+    page.locator('.background-bar').evaluate((bar) => {
+      const tab = bar.querySelector('[role="tab"]')!;
+      const picker = bar.querySelector('[role="combobox"]')!;
+      return {
+        font: getComputedStyle(tab).fontSize,
+        pickerFont: getComputedStyle(picker).fontSize,
+        pickerHeight: picker.getBoundingClientRect().height,
+      };
+    });
+  const dialogMetrics = await headerMetrics();
   await change('Bottom');
+  expect(await headerMetrics()).toEqual(dialogMetrics);
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.locator('.workspace-stage')).toHaveAttribute('data-dock', 'bottom');
   await page.locator('#composer').fill('Draft beside terminal');
   await page.screenshot({ path: 'test-results/terminal-bottom.png', animations: 'disabled' });
   await change('Right');
+  expect(await headerMetrics()).toEqual(dialogMetrics);
+  await expect(page.getByRole('combobox', { name: 'Panel position', exact: true })).toContainText(
+    'Right',
+  );
+  expect(
+    (await page.getByRole('combobox', { name: 'Panel position', exact: true }).boundingBox())!
+      .width,
+  ).toBeGreaterThan(45);
   await expect(page.locator('#composer')).toHaveValue('Draft beside terminal');
   await page.evaluate(
     (id) =>
@@ -469,4 +501,202 @@ test('moves the same terminal between window, bottom and right without stopping 
   expect(screen!.height / dialog!.height).toBeGreaterThan(0.7);
   await page.screenshot({ path: 'test-results/terminal-window.png', animations: 'disabled' });
   await page.getByRole('button', { name: 'Close terminal', exact: true }).click();
+});
+
+test('opens concurrent terminal tabs and releases the directory only after the last closes', async () => {
+  const { page, scope } = await launch();
+  await page.getByRole('button', { name: 'Background commands & schedules', exact: true }).click();
+  const panel = page.locator('.terminal-panel');
+  const newTerminal = page.getByRole('button', { name: 'New terminal', exact: true });
+  await newTerminal.click();
+  await expect(panel.getByRole('tab')).toHaveCount(1);
+  await newTerminal.click();
+  await expect(panel.getByRole('tab')).toHaveCount(2);
+  const sessions = await page.evaluate(
+    (scope) => window.moose.request('terminalList', scope),
+    scope,
+  );
+  expect(sessions).toHaveLength(2);
+  for (const session of sessions) {
+    expect(session.title).toMatch(/.+@.+/);
+    await page.evaluate(({ id, text }) => window.moose.request('terminalInput', { id, text }), {
+      id: session.id,
+      text: `printf 'TAB_${session.id}\\n'\r`,
+    });
+    await expect
+      .poll(
+        async () =>
+          (
+            await page.evaluate(
+              (id) => window.moose.request('terminalRead', { id, offset: 0 }),
+              session.id,
+            )
+          ).data,
+      )
+      .toContain(`TAB_${session.id}\r\n`);
+  }
+  await panel.getByRole('tab').first().click();
+  await expect(panel.getByRole('tab').first()).toHaveAttribute('aria-selected', 'true');
+  await panel.getByRole('tab').first().press('ArrowRight');
+  await expect(panel.getByRole('tab').last()).toBeFocused();
+  await page.screenshot({ path: 'test-results/terminal-tabs.png' });
+  await panel.getByRole('button', { name: 'Close terminal', exact: true }).first().click();
+  await expect(panel.getByRole('tab')).toHaveCount(1);
+  await expect(panel.locator('.xterm-screen')).toBeVisible();
+  const parallel = await page.evaluate(
+    (scope) =>
+      window.moose.request('commandStart', {
+        ...scope,
+        requestId: crypto.randomUUID(),
+        command: 'printf alongside-terminal',
+      }),
+    scope,
+  );
+  await expect
+    .poll(
+      async () =>
+        (await page.evaluate((id) => window.moose.request('commandRead', { id }), parallel.id))
+          .status,
+    )
+    .toBe('completed');
+  expect(
+    (await page.evaluate((id) => window.moose.request('commandRead', { id }), parallel.id)).output,
+  ).toBe('alongside-terminal');
+  await panel.getByRole('button', { name: 'Close terminal', exact: true }).click();
+  await expect(panel.getByRole('tab')).toHaveCount(0);
+  expect(
+    await page.evaluate((scope) => window.moose.request('terminalList', scope), scope),
+  ).toEqual([]);
+  const command = await page.evaluate(
+    (scope) =>
+      window.moose.request('commandStart', {
+        ...scope,
+        requestId: crypto.randomUUID(),
+        command: 'printf released',
+      }),
+    scope,
+  );
+  await expect
+    .poll(
+      async () =>
+        (await page.evaluate((id) => window.moose.request('commandRead', { id }), command.id))
+          .status,
+    )
+    .toBe('completed');
+  await app.close();
+  app = await electron.launch({ args: ['.'], env: env() });
+  const after = await app.firstWindow();
+  await after.waitForSelector('.app-shell');
+  expect(
+    await after.evaluate((scope) => window.moose.request('terminalList', scope), scope),
+  ).toEqual([]);
+});
+
+test('runs pnpm test alongside a terminal and preserves directory protection until both finish', async () => {
+  const { page, root, scope } = await launch();
+  await writeFile(
+    join(root, 'package.json'),
+    JSON.stringify({ scripts: { test: 'node -e "console.log(\'TEST_COMMAND_OK\')"' } }),
+  );
+  await page.getByRole('button', { name: 'Background commands & schedules', exact: true }).click();
+  await page.getByRole('button', { name: 'New terminal', exact: true }).click();
+  await expect(page.locator('.terminal-screen')).toHaveCSS(
+    'background-color',
+    'rgb(255, 255, 255)',
+  );
+  await page.evaluate(() => window.moose.request('settings', { theme: 'dark' }));
+  await expect(page.locator('.terminal-screen')).toHaveCSS('background-color', 'rgb(24, 29, 36)');
+  await page.screenshot({ path: 'test-results/terminal-catppuccin.png', animations: 'disabled' });
+  await page.getByRole('tab', { name: 'Commands', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Shell command', exact: true }).fill('pnpm test');
+  await page.getByRole('button', { name: 'Run command', exact: true }).click();
+  await expect(page.getByTestId('command-output')).toContainText('TEST_COMMAND_OK');
+  await expect(page.getByRole('region', { name: 'Command output' })).toContainText('completed');
+  await expect(
+    page.evaluate(
+      (scope) => window.moose.request('deleteProject', { projectId: scope.projectId }),
+      scope,
+    ),
+  ).rejects.toThrow('Stop the project tasks');
+  const command = await page.evaluate(
+    (scope) =>
+      window.moose.request('commandStart', {
+        ...scope,
+        requestId: crypto.randomUUID(),
+        command: 'read line; printf done',
+      }),
+    scope,
+  );
+  await page.getByRole('tab', { name: 'Terminal', exact: true }).click();
+  await page.getByRole('button', { name: 'Close terminal', exact: true }).click();
+  await expect(
+    page.evaluate(
+      (scope) => window.moose.request('deleteProject', { projectId: scope.projectId }),
+      scope,
+    ),
+  ).rejects.toThrow('Stop the project tasks');
+  await page.getByRole('button', { name: 'New terminal', exact: true }).click();
+  await expect(page.locator('.terminal-screen')).toBeVisible();
+  await page.getByRole('button', { name: 'Close terminal', exact: true }).click();
+  await expect(page.locator('.terminal-session-tab')).toHaveCount(0);
+  await page.evaluate((id) => window.moose.request('commandStop', { id }), command.id);
+  await page.evaluate(
+    (scope) => window.moose.request('deleteProject', { projectId: scope.projectId }),
+    scope,
+  );
+});
+
+test('native shortcuts toggle and create terminals, switch tools and keep each tab one hover surface', async () => {
+  const { page, scope } = await launch();
+  async function shortcut(accelerator: string) {
+    await app.evaluate(({ Menu }, accelerator) => {
+      const item = Menu.getApplicationMenu()!
+        .items.flatMap((item) => item.submenu?.items || [])
+        .find((item) => item.accelerator === accelerator);
+      if (!item) throw new Error(`Missing shortcut ${accelerator}`);
+      item.click();
+    }, accelerator);
+  }
+  await app.evaluate(({ BrowserWindow }) => {
+    const contents = BrowserWindow.getAllWindows()[0].webContents;
+    contents.sendInputEvent({ type: 'keyDown', keyCode: '`', modifiers: ['control'] });
+    contents.sendInputEvent({ type: 'keyUp', keyCode: '`', modifiers: ['control'] });
+  });
+  await expect(page.locator('.terminal-screen')).toBeVisible();
+  await expect(page.locator('.terminal-screen')).toHaveCSS(
+    'background-color',
+    'rgb(255, 255, 255)',
+  );
+  const first = (
+    await page.evaluate((scope) => window.moose.request('terminalList', scope), scope)
+  )[0].id;
+  await shortcut('Control+`');
+  await expect(page.locator('.terminal-screen')).toHaveCount(0);
+  await shortcut('Control+`');
+  await expect(page.locator('.terminal-session-tab')).toHaveCount(1);
+  expect(
+    (await page.evaluate((scope) => window.moose.request('terminalList', scope), scope))[0].id,
+  ).toBe(first);
+  await shortcut('Control+Shift+`');
+  await expect(page.locator('.terminal-session-tab')).toHaveCount(2);
+  const tab = page.locator('.terminal-session-tab').last();
+  await tab.getByRole('tab').hover();
+  await expect(tab.getByRole('tab')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+  const background = await tab.evaluate((el) => getComputedStyle(el).backgroundColor);
+  await tab.getByRole('button', { name: 'Close terminal' }).hover();
+  await expect(tab.getByRole('button', { name: 'Close terminal' })).toHaveCSS(
+    'background-color',
+    'rgba(0, 0, 0, 0)',
+  );
+  await expect(tab).toHaveCSS('background-color', background);
+  await page.screenshot({
+    path: 'test-results/terminal-unified-hover.png',
+    animations: 'disabled',
+  });
+  await shortcut('CmdOrCtrl+Shift+J');
+  await expect(page.getByRole('textbox', { name: 'Shell command' })).toBeVisible();
+  await shortcut('CmdOrCtrl+Shift+S');
+  await expect(page.getByRole('button', { name: 'New schedule' })).toBeVisible();
+  await shortcut('CmdOrCtrl+L');
+  await expect(page.locator('#composer')).toBeFocused();
 });

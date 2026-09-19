@@ -14,7 +14,7 @@ test.afterEach(async () => {
   if (dir) await rm(dir, { recursive: true, force: true });
 });
 // 创建临时数据与可选种子记录，再启动使用测试代理的 Electron 应用。
-async function launch(seed?: (store: Store) => void) {
+async function launch(seed?: (store: Store) => void, extraEnv: Record<string, string> = {}) {
   dir = await mkdtemp(join(tmpdir(), 'moose-e2e-'));
   const fixture = resolve('tests/fixtures/agent.mjs');
   await chmod(fixture, 0o755);
@@ -29,7 +29,7 @@ async function launch(seed?: (store: Store) => void) {
   seed?.(store);
   store.close();
   const env: Record<string, string> = Object.fromEntries(
-    Object.entries({ ...process.env, MOOSE_DATA_DIR: dir }).filter(
+    Object.entries({ ...process.env, ...extraEnv, MOOSE_DATA_DIR: dir }).filter(
       (entry): entry is [string, string] => typeof entry[1] === 'string',
     ),
   );
@@ -300,6 +300,10 @@ test('archives before deletion, opens an unsaved conversation and keeps project 
   await page.getByRole('menuitem', { name: 'Delete conversation', exact: true }).click();
   await page.getByRole('button', { name: 'Confirm', exact: true }).click();
   await expect(page.locator('.session-row')).toHaveCount(0);
+  await expect(page.locator('.project-group')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /Project actions/ })).toHaveCount(0);
+  await expect(page.getByText('No archived conversations', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Archived sessions', exact: true }).click();
   await page.getByRole('button', { name: /Project actions/ }).click();
   await expect(page.getByRole('menuitem', { name: 'Archive project conversations' })).toHaveCount(
     0,
@@ -897,4 +901,84 @@ test('keeps workspace tools keyboard accessible and restores focus after dialogs
   await localized.click();
   await expect(page.getByRole('menuitem', { name: '原生会话', exact: true })).toBeVisible();
   await page.screenshot({ path: 'test-results/workspace-tools-dark.png', animations: 'disabled' });
+});
+
+test('keeps empty archives conversation-only and presents quiet workspace controls', async () => {
+  const page = await launch((store) => {
+    store.addProject(dir);
+  });
+  await page
+    .locator('.sidebar-actions')
+    .getByRole('button', { name: /New session/ })
+    .click();
+  await expect(page.locator('#composer')).toBeEnabled();
+  await expect(page.locator('.suggestions')).toHaveCount(0);
+  await expect(page.locator('.welcome-description')).toHaveCount(0);
+  const tools = page.getByRole('button', { name: 'Workspace tools', exact: true });
+  expect(await tools.innerText()).toBe('');
+  const toolsBox = await tools.boundingBox();
+  const terminalBox = await page
+    .getByRole('button', { name: 'Background commands & schedules', exact: true })
+    .boundingBox();
+  expect(toolsBox!.x).toBeLessThan(terminalBox!.x);
+  await page.getByRole('button', { name: 'Archived sessions', exact: true }).click();
+  await expect(page.getByText('No archived conversations', { exact: true })).toBeVisible();
+  await expect(page.locator('.project-group')).toHaveCount(0);
+  await expect(
+    page.locator('.sidebar').getByRole('button', { name: 'Open project', exact: true }),
+  ).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /Project actions/ })).toHaveCount(0);
+  await page.screenshot({ path: 'test-results/quiet-empty-archive.png', animations: 'disabled' });
+  await page.getByRole('button', { name: 'Archived sessions', exact: true }).click();
+  await page.locator('#composer').fill('A focused workspace');
+  await page.screenshot({ path: 'test-results/quiet-composer-light.png', animations: 'disabled' });
+  await page.evaluate(async () => {
+    await window.moose.request('settings', { language: 'zh-CN', theme: 'dark' });
+  });
+  await app.evaluate(({ BrowserWindow }) => {
+    BrowserWindow.getAllWindows()[0].setSize(860, 700);
+  });
+  await expect(page.locator('html')).toHaveClass(/dark/);
+  await expect(page.locator('#composer')).toHaveCSS('color', 'rgb(230, 234, 240)');
+  const composer = page.locator('.composer-input');
+  expect(await composer.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
+  await expect(page.locator('.send-button')).toBeInViewport();
+  await page.screenshot({
+    path: 'test-results/quiet-composer-dark-narrow.png',
+    animations: 'disabled',
+  });
+});
+
+test('keeps model picker height stable across providers and empty searches with a scrolling list', async () => {
+  const page = await launch(
+    (store) => {
+      store.addProject(dir);
+    },
+    { MOOSE_TEST_MANY_MODELS: '1' },
+  );
+  await page
+    .locator('.sidebar-actions')
+    .getByRole('button', { name: /New session/ })
+    .click();
+  await page.getByRole('button', { name: 'Model', exact: true }).click();
+  const popup = page.locator('.combined-model-popup');
+  await expect(popup.locator('.model-option')).toHaveCount(25);
+  const height = await popup.evaluate((el) => el.getBoundingClientRect().height);
+  expect(
+    await popup.locator('.model-options').evaluate((el) => el.scrollHeight > el.clientHeight),
+  ).toBe(true);
+  await popup.locator('.model-option').last().scrollIntoViewIfNeeded();
+  await expect(popup.locator('.model-option').last()).toBeInViewport();
+  for (const provider of ['Grok Build', 'Pi', 'Codex']) {
+    await popup
+      .locator('.model-providers')
+      .getByRole('button', { name: provider, exact: true })
+      .click();
+    expect(await popup.evaluate((el) => el.getBoundingClientRect().height)).toBeCloseTo(height, 0);
+  }
+  await popup.getByRole('textbox').fill('no such model');
+  await expect(popup.locator('.model-option')).toHaveCount(0);
+  expect(await popup.evaluate((el) => el.getBoundingClientRect().height)).toBeCloseTo(height, 0);
+  await popup.getByRole('textbox').fill('');
+  await page.screenshot({ path: 'test-results/model-picker-fixed.png', animations: 'disabled' });
 });

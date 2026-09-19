@@ -2,7 +2,7 @@ import { useState, type RefObject } from 'react';
 import {
   Archive,
   ArrowUpRight,
-  ChevronDown,
+  MoreHorizontal,
   GitBranch,
   History,
   Pencil,
@@ -57,11 +57,16 @@ export function WorkspaceTools({
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
-            <Button ref={trigger} variant="ghost" size="sm" aria-label={t('workspaceTools')} />
+            <Button
+              ref={trigger}
+              variant="ghost"
+              size="icon"
+              aria-label={t('workspaceTools')}
+              title={t('workspaceTools')}
+            />
           }
         >
-          {t('workspaceToolsShort')}
-          <ChevronDown data-icon="inline-end" />
+          <MoreHorizontal />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-56">
           <DropdownMenuGroup>

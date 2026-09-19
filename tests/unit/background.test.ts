@@ -1,5 +1,6 @@
+import { execFileSync } from 'node:child_process';
 import { afterEach, expect, it, vi } from 'vitest';
-import { mkdtempSync, rmSync, realpathSync, mkdirSync, readFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, realpathSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -422,7 +423,7 @@ it('retains persisted queued occurrences on restart, blocks edits, and never enq
     recovered.close();
   }
 });
-it('service directory locks block agent starts and Git writes until command exits', async () => {
+it('service permits manual Git alongside a command while continuing to block agent starts', async () => {
   const cwd = realpathSync(mkdtempSync(join(tmpdir(), 'moose-background-service-'))),
     store = new Store(join(cwd, 'data.sqlite')),
     service = new MooseService(store, () => {});
@@ -430,6 +431,8 @@ it('service directory locks block agent starts and Git writes until command exit
     await service.close();
     rmSync(cwd, { recursive: true, force: true });
   });
+  execFileSync('/usr/bin/git', ['init', '-q', cwd]);
+  writeFileSync(join(cwd, 'result.txt'), 'initial');
   const project = store.addProject(cwd),
     session = store.createSession(project.id, 'codex'),
     scope = { projectId: project.id, sessionId: session.id };
@@ -440,7 +443,7 @@ it('service directory locks block agent starts and Git writes until command exit
   })) as CommandJob;
   await expect(
     service.handle('gitStage', { ...scope, path: 'result.txt', staged: true }),
-  ).rejects.toThrow('Wait');
+  ).resolves.toBeNull();
   await expect(service.handle('send', { sessionId: session.id, text: 'blocked' })).rejects.toThrow(
     'wait',
   );
