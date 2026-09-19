@@ -57,6 +57,8 @@ Moose 对 Codex 显式传入 `summary: auto`，接收 `item/reasoning/summaryTex
 | 中 | Git 操作与原生代码审查 | 已接逐文件暂存／取消、提交预览与指纹校验、GitHub 草稿 PR／状态、Codex 独立只读审查（0.10.0）；见[第四阶段验收](phase-four-testing.md) |
 | 中 | MCP、插件、hooks、代理配置管理 | 0.11.0 已接 Codex 配置来源、用户级设置／开关、插件 CLI 安装卸载、新增 HTTP／STDIO MCP、MCP OAuth、hooks 只读诊断；Grok／Pi 未适配，限制见[第五阶段验收](phase-five-testing.md) |
 | 中 | 原生会话导入、分叉、上下文压缩管理 | Codex 历史分页导入、显式分叉和手动压缩；Grok 历史回放导入；Pi 未接入 |
-| 中 | 后台终端与定时任务 | 0.11.0 已接 Moose 管理的后台文本命令、单次／固定间隔命令及代理消息调度；支持窗口关闭后执行、目录互斥、暂停后编辑与保存预览、版本冲突保护、失败暂停及重启核对命令／队列。完整 PTY／日历 cron 未实现；见[第六阶段验收](phase-six-testing.md) |
+| 中 | 后台终端与定时任务 | 0.11.0 已接 Moose 管理的后台文本命令、单次／固定间隔命令及代理消息调度；支持窗口关闭后执行、目录互斥、暂停后编辑与保存预览、版本冲突保护、失败暂停及重启核对命令／队列。当前开发增量已补 PTY 和每天／每周指定时区的日历调度，纳入 0.12.0；任意 cron 与应用退出后的执行未实现；见[第六阶段验收](phase-six-testing.md) |
 
 这些是客户端接入差距，不是底座模型能力评判。可对照 [Codex app-server 接口](https://learn.chatgpt.com/docs/app-server)、[Codex 子代理](https://learn.chatgpt.com/docs/agent-configuration/subagents)、[Grok 子代理](https://docs.x.ai/build/features/subagents)与 [Grok 扩展能力](https://docs.x.ai/build/features/skills-plugins-marketplaces)。
+
+2026-09-19 开发增量（0.12.0）：已补用户 MCP 连接编辑、移除及环境变量 HTTP 请求头；扩展与后台任务界面分区，确认流程与冗余文案同步整理。边界和验收见[第五阶段增量](phase-five-testing.md)。

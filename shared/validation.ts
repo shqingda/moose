@@ -24,6 +24,18 @@ const gitRef = z
   .refine((v) => !v.startsWith('-') && !v.includes('\0'));
 const backgroundScope = { projectId: id, sessionId: id.optional() };
 const scheduleDefinition = {
+  calendar: z
+    .strictObject({
+      weekdays: z
+        .array(z.number().int().min(1).max(7))
+        .min(1)
+        .max(7)
+        .refine((days) => new Set(days).size === days.length),
+      hour: z.number().int().min(0).max(23),
+      minute: z.number().int().min(0).max(59),
+    })
+    .nullable()
+    .optional(),
   name: z.string().trim().min(1).max(100),
   task: z.strictObject({
     kind: z.enum(['command', 'agent']),
@@ -43,7 +55,20 @@ const scheduleDefinition = {
   startAt: z.number().int().min(0).max(8640000000000000),
   intervalMs: z.number().int().min(60000).max(31536000000).nullable(),
 };
+const terminalSize = {
+  cols: z.number().int().min(2).max(500),
+  rows: z.number().int().min(1).max(200),
+};
 export const schemas = {
+  terminalList: z.strictObject(backgroundScope),
+  terminalStart: z.strictObject({ ...backgroundScope, requestId: id, ...terminalSize }),
+  terminalRead: z.strictObject({
+    id,
+    offset: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
+  }),
+  terminalInput: z.strictObject({ id, text: z.string().max(16000) }),
+  terminalResize: z.strictObject({ id, ...terminalSize }),
+  terminalStop: z.strictObject({ id }),
   commandList: z.strictObject(backgroundScope),
   commandRead: z.strictObject({ id }),
   commandStart: z.strictObject({
@@ -221,7 +246,7 @@ export const schemas = {
     requestId: id,
     change: z.discriminatedUnion('type', [
       z.strictObject({
-        type: z.literal('mcpAdd'),
+        type: z.enum(['mcpAdd', 'mcpEdit']),
         sourceId: z.string().length(64),
         version: z.string().min(1).max(500),
         name: z
@@ -229,6 +254,16 @@ export const schemas = {
           .max(100)
           .regex(/^[A-Za-z0-9_-]+$/),
         server: mcpRegistration,
+      }),
+      z.strictObject({
+        type: z.literal('mcpRemove'),
+        sourceId: z.string().length(64),
+        version: z.string().min(1).max(500),
+        name: z
+          .string()
+          .min(1)
+          .max(100)
+          .regex(/^[A-Za-z0-9_-]+$/),
       }),
       z.strictObject({
         type: z.literal('config'),

@@ -23,6 +23,7 @@ export function SchedulePanel({
 }) {
   const t = useI18n(),
     [editing, setEditing] = useState<Schedule>(),
+    [creating, setCreating] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState('');
   async function toggle(schedule: Schedule) {
@@ -43,13 +44,24 @@ export function SchedulePanel({
   }
   return (
     <>
-      <h3>{t('bgSchedules')}</h3>
+      <Button variant="outline" disabled={!!editing} onClick={() => setCreating(!creating)}>
+        {t(creating ? 'cancel' : 'bgNewSchedule')}
+      </Button>
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-      {!editing && <ScheduleForm scope={scope} cwd={cwd} onSaved={onChanged} />}
+      {!editing && creating && (
+        <ScheduleForm
+          scope={scope}
+          cwd={cwd}
+          onSaved={async () => {
+            setCreating(false);
+            await onChanged();
+          }}
+        />
+      )}
       {schedules.map((schedule) => (
         <section
           key={schedule.id}
@@ -73,6 +85,16 @@ export function SchedulePanel({
                 }).format(schedule.nextAt)}{' '}
             ({schedule.timezone})
           </p>
+          {schedule.calendar && (
+            <p className="text-sm text-muted-foreground">
+              {schedule.calendar.weekdays.length === 7
+                ? t('bgFrequency_daily')
+                : schedule.calendar.weekdays.map((day) => t(`bgDay${day}` as 'bgDay1')).join(' · ')}
+              {' · '}
+              {String(schedule.calendar.hour).padStart(2, '0')}:
+              {String(schedule.calendar.minute).padStart(2, '0')}
+            </p>
+          )}
           {schedule.last && (
             <p>
               {t('bgLast')}: {schedule.last.status} {schedule.last.error}
@@ -95,7 +117,10 @@ export function SchedulePanel({
                 schedulePending(schedule) ||
                 scheduleFinished(schedule)
               }
-              onClick={() => setEditing(schedule)}
+              onClick={() => {
+                setCreating(false);
+                setEditing(schedule);
+              }}
             >
               {t('bgEdit')}
             </Button>
@@ -115,7 +140,12 @@ export function SchedulePanel({
           )}
         </section>
       ))}
-      <p>{t('bgEditAvailability')}</p>
+      {!!schedules.length && (
+        <details className="extension-details">
+          <summary>{t('bgEdit')}</summary>
+          <p className="extension-note">{t('bgEditAvailability')}</p>
+        </details>
+      )}
     </>
   );
 }

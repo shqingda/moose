@@ -1,3 +1,4 @@
+import { nextCalendar } from '../shared/calendar';
 import { createHash, randomUUID } from 'node:crypto';
 import { BackgroundStore, type StoredSchedule } from './background-store';
 import { CommandJobs } from './command-jobs';
@@ -21,6 +22,9 @@ function creationFingerprint(value: Omit<BackgroundRequests['scheduleCreate'], '
         value.timezone,
         value.startAt,
         value.intervalMs,
+        ...(value.calendar
+          ? [[...value.calendar.weekdays].sort(), value.calendar.hour, value.calendar.minute]
+          : []),
       ]),
     )
     .digest('hex');
@@ -30,7 +34,7 @@ export interface ScheduleHooks {
   enqueue(schedule: Schedule): string;
   wake(): void;
 }
-/** UTC instants and fixed elapsed intervals; claim before side effects, never replay unknown runs. */
+/** Calendar rules and elapsed intervals; claim before side effects, never replay unknown runs. */
 export class Schedules {
   private timer: ReturnType<typeof setInterval>;
   private closed = false;
@@ -74,6 +78,8 @@ export class Schedules {
         throw new Error('Request ID already used');
       return prior;
     }
+    if (args.calendar && args.intervalMs !== null)
+      throw new Error('Choose calendar or interval scheduling');
     const cwd = this.records.store.directory(args.projectId, args.sessionId);
     if (args.task.kind === 'agent' && !args.sessionId)
       throw new Error('Choose a conversation for the scheduled agent task');
@@ -86,7 +92,10 @@ export class Schedules {
       cwd,
       task: args.task,
       timezone: args.timezone,
-      nextAt: args.startAt,
+      nextAt: args.calendar
+        ? nextCalendar(args.calendar, args.timezone, args.startAt - 1)
+        : args.startAt,
+      calendar: args.calendar ?? null,
       intervalMs: args.intervalMs,
       enabled: true,
       version: 1,
@@ -113,11 +122,16 @@ export class Schedules {
     if (definition.task.kind === 'agent' && !schedule.sessionId)
       throw new Error('Choose a conversation for the scheduled agent task');
     if (definition.startAt <= this.now()) throw new Error('Choose a future start time');
+    if (definition.calendar && definition.intervalMs !== null)
+      throw new Error('Choose calendar or interval scheduling');
     const updated = {
       ...schedule,
       creationFingerprint: schedule.creationFingerprint ?? creationFingerprint(schedule),
       ...definition,
-      nextAt: definition.startAt,
+      calendar: definition.calendar ?? null,
+      nextAt: definition.calendar
+        ? nextCalendar(definition.calendar, definition.timezone, definition.startAt - 1)
+        : definition.startAt,
       version: schedule.version + 1,
     };
     this.records.save('schedule', updated);
@@ -128,7 +142,13 @@ export class Schedules {
     if (enabled) {
       this.records.store.directory(schedule.projectId, schedule.sessionId);
       if (scheduleFinished(schedule)) throw new Error('Create a new one-time schedule');
-      schedule.nextAt = Math.max(this.now() + 1000, schedule.nextAt);
+      schedule.nextAt = schedule.calendar
+        ? nextCalendar(
+            schedule.calendar,
+            schedule.timezone,
+            Math.max(this.now(), schedule.startAt - 1),
+          )
+        : Math.max(this.now() + 1000, schedule.nextAt);
     }
     schedule.enabled = enabled;
     schedule.version++;
@@ -175,7 +195,9 @@ export class Schedules {
             dueAt,
             status: schedule.task.kind === 'agent' ? 'queued' : 'running',
           };
-          if (schedule.intervalMs)
+          if (schedule.calendar)
+            schedule.nextAt = nextCalendar(schedule.calendar, schedule.timezone, this.now());
+          else if (schedule.intervalMs)
             schedule.nextAt +=
               (Math.floor((this.now() - schedule.nextAt) / schedule.intervalMs) + 1) *
               schedule.intervalMs;

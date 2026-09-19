@@ -204,6 +204,8 @@ export class Extensions {
     }
   }
   private effective(snapshot: ExtensionSnapshot, change: ExtensionChange) {
+    if (change.type === 'mcpRemove') return !snapshot.mcp.some((s) => s.name === change.name);
+    if (change.type === 'mcpEdit') return snapshot.mcp.some((s) => s.name === change.name);
     if (change.type === 'mcpAdd')
       return snapshot.mcp.some((s) => s.name === change.name && !s.enabled);
     if (change.type === 'config')

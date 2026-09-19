@@ -20,7 +20,15 @@ export interface ExtensionSnapshot {
   cwd: string;
   sources: ConfigSource[];
   settings: { key: string; value: string; source: string }[];
-  mcp: { name: string; enabled: boolean; auth: string; tools: number; failed: boolean }[];
+  mcp: {
+    name: string;
+    enabled: boolean;
+    auth: string;
+    tools: number;
+    failed: boolean;
+    sourceId?: string;
+    transport?: 'http' | 'stdio';
+  }[];
   plugins: {
     id: string;
     name: string;
@@ -34,6 +42,8 @@ export interface ExtensionSnapshot {
   diagnostics: { area: string; path?: string; message: string }[];
 }
 export type ExtensionChange =
+  | { type: 'mcpEdit'; sourceId: string; version: string; name: string; server: McpRegistration }
+  | { type: 'mcpRemove'; sourceId: string; version: string; name: string }
   | { type: 'mcpAdd'; sourceId: string; version: string; name: string; server: McpRegistration }
   | {
       type: 'config';

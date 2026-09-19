@@ -65,6 +65,36 @@ try {
       return { status: result.status, output: result.output, exitCode: result.exitCode };
     })
     .toEqual({ status: 'completed', output: 'package:ready', exitCode: 0 });
+  const terminal = await page.evaluate(
+    (projectId) =>
+      window.moose.request('terminalStart', {
+        projectId,
+        requestId: crypto.randomUUID(),
+        cols: 90,
+        rows: 25,
+      }),
+    project.id,
+  );
+  await page.evaluate(
+    (id) =>
+      window.moose.request('terminalInput', {
+        id,
+        text: "test -t 0 && printf 'PACKAGED_PTY_OK\\n'\r",
+      }),
+    terminal.id,
+  );
+  await expect
+    .poll(
+      async () =>
+        (
+          await page.evaluate(
+            (id) => window.moose.request('terminalRead', { id, offset: 0 }),
+            terminal.id,
+          )
+        ).data,
+    )
+    .toContain('PACKAGED_PTY_OK\r\n');
+  await page.evaluate((id) => window.moose.request('terminalStop', { id }), terminal.id);
   const schedule = await page.evaluate(async (projectId) => {
     const original = await window.moose.request('scheduleCreate', {
       projectId,
@@ -88,9 +118,15 @@ try {
       timezone: paused.timezone,
       startAt: paused.nextAt,
       intervalMs: paused.intervalMs,
+      calendar: { weekdays: [1, 2, 3, 4, 5], hour: 9, minute: 0 },
     });
   }, project.id);
-  if (schedule.enabled || schedule.task.text !== 'printf edited')
+  if (
+    schedule.enabled ||
+    schedule.task.text !== 'printf edited' ||
+    schedule.calendar?.hour !== 9 ||
+    new Date(schedule.nextAt).getUTCHours() !== 9
+  )
     throw new Error('Packaged schedule edit failed');
   await page.screenshot({ path: `test-results/package-${version}.png` });
   console.log(
@@ -98,6 +134,7 @@ try {
       ...details,
       sqlite: 'ready',
       command: 'completed',
+      terminal: 'verified',
       schedule: 'edited-paused',
     }),
   );

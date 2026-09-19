@@ -369,3 +369,116 @@ it('validates MCP transport, secrets references and arguments before crossing IP
     }),
   ).toThrow();
 });
+it('edits a connection preserving opaque credentials and removes only the selected user entry', async () => {
+  const f = fixture();
+  f.set({
+    mcp: {
+      owned: {
+        url: 'https://old.invalid/mcp',
+        enabled: true,
+        http_headers: { Authorization: 'SECRET_CANARY' },
+        startup_timeout_sec: 60,
+      },
+      other: { command: 'keep-me', env: { TOKEN: 'SECRET_CANARY' } },
+    },
+  });
+  let s = await f.snapshot();
+  expect(s.mcp.find((x) => x.name === 'owned')).toMatchObject({
+    sourceId: s.sources[0].id,
+    transport: 'http',
+  });
+  const args = {
+    ...f.scope,
+    requestId: randomUUID(),
+    change: {
+      type: 'mcpEdit',
+      sourceId: s.sources[0].id,
+      version: s.sources[0].version,
+      name: 'owned',
+      server: { transport: 'http', url: 'https://new.invalid/mcp' },
+    },
+  };
+  await f.extensions.handle('extensionsChange', args);
+  expect(f.read().mcp.owned).toEqual({
+    url: 'https://new.invalid/mcp',
+    enabled: true,
+    http_headers: { Authorization: 'SECRET_CANARY' },
+    startup_timeout_sec: 60,
+  });
+  await f.extensions.handle('extensionsChange', args);
+  expect(f.read().writes).toBe(1);
+  s = await f.snapshot();
+  expect(JSON.stringify(s)).not.toContain('SECRET_CANARY');
+  await f.extensions.handle('extensionsChange', {
+    ...f.scope,
+    requestId: randomUUID(),
+    change: {
+      type: 'mcpRemove',
+      sourceId: s.sources[0].id,
+      version: s.sources[0].version,
+      name: 'owned',
+    },
+  });
+  expect(f.read().mcp.owned).toBeUndefined();
+  expect(f.read().mcp.other).toEqual({ command: 'keep-me', env: { TOKEN: 'SECRET_CANARY' } });
+  expect(f.read().model).toBe('fixture-model');
+});
+it('rejects stale MCP edits, inherited removals and transport changes', async () => {
+  const f = fixture();
+  f.set({ mcp: { owned: { command: 'node', enabled: false } } });
+  const s = await f.snapshot();
+  for (const change of [
+    { type: 'mcpRemove', name: 'fixture', version: '1' },
+    { type: 'mcpRemove', name: 'owned', version: 'old' },
+    {
+      type: 'mcpEdit',
+      name: 'owned',
+      version: '1',
+      server: { transport: 'http', url: 'https://example.invalid/mcp' },
+    },
+  ])
+    await expect(
+      f.extensions.handle('extensionsChange', {
+        ...f.scope,
+        requestId: randomUUID(),
+        change: { sourceId: s.sources[0].id, ...change },
+      }),
+    ).rejects.toThrow('not fully verified');
+  expect(f.read().writes).toBe(0);
+});
+it('validates header references and preserves unrelated headers during edits', async () => {
+  const { mcpRegistration } = await import('../../shared/mcp-registration');
+  for (const envHeaders of [
+    { 'bad\r\nheader': 'TOKEN' },
+    { 'X-Key': 'secret-value' },
+    { 'X-Key': 'A', 'x-key': 'B' },
+  ])
+    expect(() =>
+      mcpRegistration.parse({ transport: 'http', url: 'https://example.invalid/mcp', envHeaders }),
+    ).toThrow();
+  const f = fixture();
+  f.set({
+    mcp: {
+      owned: {
+        url: 'https://old.invalid/mcp',
+        enabled: false,
+        env_http_headers: { 'X-Existing': 'EXISTING', 'x-key': 'OLD' },
+        http_headers: { Authorization: 'SECRET_CANARY' },
+      },
+    },
+  });
+  const s = await f.snapshot();
+  await f.extensions.handle('extensionsChange', {
+    ...f.scope,
+    requestId: randomUUID(),
+    change: {
+      type: 'mcpEdit',
+      sourceId: s.sources[0].id,
+      version: s.sources[0].version,
+      name: 'owned',
+      server: { transport: 'http', url: 'https://new.invalid/mcp', envHeaders: { 'X-Key': 'NEW' } },
+    },
+  });
+  expect(f.read().mcp.owned.env_http_headers).toEqual({ 'X-Existing': 'EXISTING', 'X-Key': 'NEW' });
+  expect(f.read().mcp.owned.http_headers.Authorization).toBe('SECRET_CANARY');
+});

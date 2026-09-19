@@ -83,7 +83,8 @@ for await (const line of createInterface({ input: process.stdin })) {
         send({ id, error: { code: -1, message: secret } });
         break;
       }
-      if (p.keyPath === 'model') s.model = p.value;
+      if (p.keyPath === 'mcp_servers') s.mcp = p.value;
+      else if (p.keyPath === 'model') s.model = p.value;
       else if (p.keyPath === 'mcp_servers."fixture".enabled') s.enabled = p.value;
       else if (/^mcp_servers\."[A-Za-z0-9_-]+"$/.test(p.keyPath)) {
         const name = JSON.parse(p.keyPath.slice('mcp_servers.'.length));

@@ -1,5 +1,12 @@
-import { useId, useState } from 'react';
-import type { BackgroundScope, Schedule, ScheduledTask } from '../../shared/background';
+import { calendarPreview } from '../../shared/calendar';
+import { ScheduleTiming, type TimingDraft } from './schedule-timing';
+import { useEffect, useId, useRef, useState } from 'react';
+import type {
+  BackgroundScope,
+  Schedule,
+  ScheduledTask,
+  ScheduleDefinition,
+} from '../../shared/background';
 import { useI18n } from '../lib/i18n';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -40,24 +47,65 @@ export function ScheduleForm({
     [text, setText] = useState(initial?.task.text ?? ''),
     [start, setStart] = useState(() => localStart(initial?.nextAt)),
     [interval, setInterval] = useState(String((initial?.intervalMs ?? 0) / 60000)),
-    [preview, setPreview] = useState(false),
+    [timing, setTiming] = useState<TimingDraft>({
+      frequency: initial?.calendar
+        ? initial.calendar.weekdays.length === 7
+          ? 'daily'
+          : 'weekly'
+        : initial?.intervalMs
+          ? 'interval'
+          : 'once',
+      time: initial?.calendar
+        ? `${String(initial.calendar.hour).padStart(2, '0')}:${String(initial.calendar.minute).padStart(2, '0')}`
+        : '09:00',
+      weekdays: initial?.calendar?.weekdays || [1, 2, 3, 4, 5],
+      timezone: initial?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+    }),
+    [preview, setPreview] = useState<ScheduleDefinition>(),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(''),
     [requestId, setRequestId] = useState(crypto.randomUUID());
+  const previewRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (preview) {
+      previewRef.current?.focus({ preventScroll: true });
+      previewRef.current?.scrollIntoView({ block: 'nearest' });
+    }
+  }, [preview]);
   const localTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const definition = {
+  const isCalendar = timing.frequency === 'daily' || timing.frequency === 'weekly';
+  const [hour, minute] = timing.time.split(':').map(Number);
+  const calendar = isCalendar
+    ? {
+        weekdays: timing.frequency === 'daily' ? [1, 2, 3, 4, 5, 6, 7] : timing.weekdays,
+        hour,
+        minute,
+      }
+    : null;
+  let times: number[] = [];
+  try {
+    if (calendar) times = calendarPreview(calendar, timing.timezone, Date.now() + 1000);
+  } catch {
+    /* Invalid input is shown below. */
+  }
+  const definition: ScheduleDefinition = {
     name,
     task: { kind, text },
-    timezone: initial?.timezone ?? localTimezone,
-    startAt:
-      initial && start === localStart(initial.nextAt) ? initial.nextAt : new Date(start).getTime(),
-    intervalMs: Number(interval) === 0 ? null : Number(interval) * 60000,
+    timezone: isCalendar ? timing.timezone : (initial?.timezone ?? localTimezone),
+    calendar,
+    startAt: isCalendar
+      ? (times[0] ?? NaN)
+      : initial && start === localStart(initial.nextAt)
+        ? initial.nextAt
+        : new Date(start).getTime(),
+    intervalMs: timing.frequency === 'interval' ? Number(interval) * 60000 : null,
   };
   function changed() {
-    setPreview(false);
+    setPreview(undefined);
     setRequestId(crypto.randomUUID());
   }
   async function save() {
+    if (!preview) return;
     setBusy(true);
     setError('');
     try {
@@ -65,10 +113,10 @@ export function ScheduleForm({
         await window.moose.request('scheduleUpdate', {
           id: initial.id,
           version: initial.version,
-          ...definition,
+          ...preview,
         });
-      else await window.moose.request('scheduleCreate', { ...scope, requestId, ...definition });
-      setPreview(false);
+      else await window.moose.request('scheduleCreate', { ...scope, requestId, ...preview });
+      setPreview(undefined);
       setName('');
       setText('');
       setRequestId(crypto.randomUUID());
@@ -137,39 +185,53 @@ export function ScheduleForm({
           }}
         />
       </Field>
-      <div className="flex gap-3">
-        <Field>
-          <FieldLabel htmlFor={prefix + '-start'}>
-            {t(initial ? 'bgNext' : 'bgStart')} ({localTimezone})
-          </FieldLabel>
-          <Input
-            id={prefix + '-start'}
-            type="datetime-local"
-            step="1"
-            disabled={busy}
-            value={start}
-            onChange={(e) => {
-              setStart(e.target.value);
-              changed();
-            }}
-          />
-        </Field>
-        <Field>
-          <FieldLabel htmlFor={prefix + '-interval'}>{t('bgInterval')}</FieldLabel>
-          <Input
-            id={prefix + '-interval'}
-            type="number"
-            min="0"
-            max="525600"
-            disabled={busy}
-            value={interval}
-            onChange={(e) => {
-              setInterval(e.target.value);
-              changed();
-            }}
-          />
-        </Field>
-      </div>
+      <ScheduleTiming
+        value={timing}
+        disabled={busy}
+        onChange={(value) => {
+          setTiming(value);
+          if (value.frequency === 'interval' && !Number(interval)) setInterval('60');
+          changed();
+        }}
+      />
+      {isCalendar && !times.length && <p role="alert">{t('bgInvalidCalendar')}</p>}
+      {!isCalendar && (
+        <div className="schedule-time-row">
+          <Field>
+            <FieldLabel htmlFor={prefix + '-start'}>
+              {t(initial ? 'bgNext' : 'bgStart')} ({localTimezone})
+            </FieldLabel>
+            <Input
+              id={prefix + '-start'}
+              type="datetime-local"
+              step="1"
+              disabled={busy}
+              value={start}
+              onChange={(e) => {
+                setStart(e.target.value);
+                changed();
+              }}
+            />
+          </Field>
+          {timing.frequency === 'interval' && (
+            <Field>
+              <FieldLabel htmlFor={prefix + '-interval'}>{t('bgInterval')}</FieldLabel>
+              <Input
+                id={prefix + '-interval'}
+                type="number"
+                min="1"
+                max="525600"
+                disabled={busy}
+                value={interval}
+                onChange={(e) => {
+                  setInterval(e.target.value);
+                  changed();
+                }}
+              />
+            </Field>
+          )}
+        </div>
+      )}
       <Button
         variant="outline"
         disabled={
@@ -177,10 +239,12 @@ export function ScheduleForm({
           !name.trim() ||
           !text.trim() ||
           !Number.isFinite(definition.startAt) ||
-          !Number.isFinite(Number(interval)) ||
-          Number(interval) < 0
+          (timing.frequency === 'interval' &&
+            (!Number.isInteger(Number(interval)) ||
+              Number(interval) < 1 ||
+              Number(interval) > 525600))
         }
-        onClick={() => setPreview(true)}
+        onClick={() => setPreview(definition)}
       >
         {t('bgPreview')}
       </Button>
@@ -190,19 +254,38 @@ export function ScheduleForm({
         </Button>
       )}
       {preview && (
-        <Alert>
+        <Alert ref={previewRef} tabIndex={-1}>
           <AlertDescription>
             {initial && <p>{t('bgEditHint')}</p>}
             <p className="break-all">{cwd}</p>
             <p>
               {name} · {t(kind === 'agent' ? 'bgAgent' : 'bgCommand')} ·{' '}
-              {new Intl.DateTimeFormat(undefined, {
-                dateStyle: 'short',
-                timeStyle: 'medium',
-                timeZone: definition.timezone,
-              }).format(definition.startAt)}{' '}
-              ({definition.timezone}) · {interval} min
+              {!preview.calendar &&
+                new Intl.DateTimeFormat(undefined, {
+                  dateStyle: 'short',
+                  timeStyle: 'medium',
+                  timeZone: preview.timezone,
+                }).format(preview.startAt)}{' '}
+              ({preview.timezone}){preview.intervalMs ? ` · ${preview.intervalMs / 60000} min` : ''}
             </p>
+            {preview.calendar && (
+              <>
+                <p>{t('bgUpcoming')}</p>
+                <ol className="schedule-occurrences">
+                  {calendarPreview(preview.calendar, preview.timezone, preview.startAt).map(
+                    (time) => (
+                      <li key={time}>
+                        {new Intl.DateTimeFormat(undefined, {
+                          dateStyle: 'full',
+                          timeStyle: 'short',
+                          timeZone: preview.timezone,
+                        }).format(time)}
+                      </li>
+                    ),
+                  )}
+                </ol>
+              </>
+            )}
             <p className="whitespace-pre-wrap break-all">{text}</p>
             <Button disabled={busy} onClick={save}>
               {t(initial ? 'bgSave' : 'bgCreate')}

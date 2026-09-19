@@ -18,24 +18,31 @@ export function McpRegistrationForm({
   source,
   disabled,
   onPreview,
+  editing,
+  onCancel,
 }: {
+  editing?: { name: string; transport: 'http' | 'stdio' };
+  onCancel?: () => void;
   source?: ConfigSource;
   disabled: boolean;
   onPreview: (change: ExtensionChange) => void;
 }) {
   const t = useI18n(),
-    [open, setOpen] = useState(false),
-    [transport, setTransport] = useState<'http' | 'stdio'>('http'),
-    [name, setName] = useState(''),
+    [open, setOpen] = useState(!!editing),
+    [transport, setTransport] = useState<'http' | 'stdio'>(editing?.transport || 'http'),
+    [name, setName] = useState(editing?.name || ''),
     [endpoint, setEndpoint] = useState(''),
     [command, setCommand] = useState(''),
     [args, setArgs] = useState('[]'),
     [variables, setVariables] = useState(''),
-    [error, setError] = useState('');
+    [error, setError] = useState(''),
+    [headers, setHeaders] = useState<{ name: string; variable: string }[]>([]);
   async function preview() {
     if (!source) return;
     try {
       if (!/^[A-Za-z0-9_-]{1,100}$/.test(name)) throw new Error();
+      if (new Set(headers.map((h) => h.name.trim().toLowerCase())).size !== headers.length)
+        throw new Error();
       const { mcpRegistration } = await import('../../shared/mcp-registration');
       const server = mcpRegistration.parse(
         transport === 'http'
@@ -43,6 +50,13 @@ export function McpRegistrationForm({
               transport,
               url: endpoint,
               ...(variables.trim() ? { bearerTokenEnvVar: variables.trim() } : {}),
+              ...(headers.length
+                ? {
+                    envHeaders: Object.fromEntries(
+                      headers.map((h) => [h.name.trim(), h.variable.trim()]),
+                    ),
+                  }
+                : {}),
             }
           : {
               transport,
@@ -51,7 +65,13 @@ export function McpRegistrationForm({
               envVars: variables.split(/[\s,]+/).filter(Boolean),
             },
       );
-      onPreview({ type: 'mcpAdd', sourceId: source.id, version: source.version, name, server });
+      onPreview({
+        type: editing ? 'mcpEdit' : 'mcpAdd',
+        sourceId: source.id,
+        version: source.version,
+        name,
+        server,
+      });
       setError('');
     } catch {
       setError(t('mcpInvalid'));
@@ -59,12 +79,16 @@ export function McpRegistrationForm({
   }
   return (
     <>
-      <Button variant="outline" disabled={disabled || !source} onClick={() => setOpen(!open)}>
-        {t('mcpAdd')}
+      <Button
+        variant="outline"
+        disabled={disabled || !source}
+        onClick={() => (editing ? onCancel?.() : setOpen(!open))}
+      >
+        {t(editing ? 'cancel' : 'mcpAdd')}
       </Button>
       {open && (
         <FieldGroup>
-          <p>{t('mcpAddHint')}</p>
+          <p className="extension-note">{t(editing ? 'mcpEditHint' : 'mcpAddHint')}</p>
           {error && (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
@@ -76,14 +100,14 @@ export function McpRegistrationForm({
               id="mcp-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              disabled={disabled}
+              disabled={disabled || !!editing}
             />
           </Field>
           <Field>
             <FieldLabel>{t('mcpTransport')}</FieldLabel>
             <Select
               value={transport}
-              disabled={disabled}
+              disabled={disabled || !!editing}
               onValueChange={(v) => {
                 if (v === 'http' || v === 'stdio') {
                   setTransport(v);
@@ -146,8 +170,64 @@ export function McpRegistrationForm({
               onChange={(e) => setVariables(e.target.value)}
             />
           </Field>
+          {transport === 'http' && (
+            <details className="extension-details">
+              <summary>{t('mcpHeaders')}</summary>
+              <p className="extension-note">{t('mcpHeadersHint')}</p>
+              <FieldGroup className="mt-4">
+                {headers.map((header, i) => (
+                  <div key={i} className="flex items-end gap-2">
+                    <Field>
+                      <FieldLabel htmlFor={`header-name-${i}`}>{t('mcpHeaderName')}</FieldLabel>
+                      <Input
+                        id={`header-name-${i}`}
+                        value={header.name}
+                        disabled={disabled}
+                        onChange={(e) =>
+                          setHeaders(
+                            headers.map((h, n) => (n === i ? { ...h, name: e.target.value } : h)),
+                          )
+                        }
+                      />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor={`header-variable-${i}`}>
+                        {t('mcpHeaderVariable')}
+                      </FieldLabel>
+                      <Input
+                        id={`header-variable-${i}`}
+                        value={header.variable}
+                        disabled={disabled}
+                        onChange={(e) =>
+                          setHeaders(
+                            headers.map((h, n) =>
+                              n === i ? { ...h, variable: e.target.value } : h,
+                            ),
+                          )
+                        }
+                      />
+                    </Field>
+                    <Button
+                      variant="ghost"
+                      disabled={disabled}
+                      onClick={() => setHeaders(headers.filter((_, n) => n !== i))}
+                    >
+                      {t('mcpHeaderRemove')}
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  variant="outline"
+                  disabled={disabled || headers.length >= 30}
+                  onClick={() => setHeaders([...headers, { name: '', variable: '' }])}
+                >
+                  {t('mcpHeaderAdd')}
+                </Button>
+              </FieldGroup>
+            </details>
+          )}
           <Button disabled={disabled || !source} onClick={preview}>
-            {t('mcpPreview')}
+            {t(editing ? 'extPrepare' : 'mcpPreview')}
           </Button>
         </FieldGroup>
       )}

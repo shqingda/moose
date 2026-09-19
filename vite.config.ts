@@ -10,7 +10,7 @@ export default defineConfig(({ command }) => {
   const ready = new Set<string>();
   let started = false;
   let transition = Promise.resolve();
-  const targets = ['main', 'preload', 'runtime'] as const;
+  const targets = ['main', 'preload', 'runtime', 'pty-host'] as const;
   return {
     base: './',
     resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
@@ -42,7 +42,7 @@ export default defineConfig(({ command }) => {
                 fileName: () => (target === 'preload' ? 'preload.cjs' : `${target}.js`),
               },
               rolldownOptions: {
-                external: ['electron', 'better-sqlite3'],
+                external: ['electron', 'better-sqlite3', 'node-pty'],
                 output: { codeSplitting: false },
               },
             },

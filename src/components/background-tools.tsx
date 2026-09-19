@@ -1,3 +1,4 @@
+import { TerminalPanel } from './terminal-panel';
 import { useEffect, useState } from 'react';
 import { Terminal } from 'lucide-react';
 import type { BackgroundScope, CommandJob, Schedule } from '../../shared/background';
@@ -8,6 +9,7 @@ import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Field, FieldGroup, FieldLabel } from './ui/field';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { SchedulePanel } from './schedule-panel';
 import { Alert, AlertDescription } from './ui/alert';
 export function BackgroundTools({ scope }: { scope: BackgroundScope }) {
@@ -89,7 +91,7 @@ export function BackgroundTools({ scope }: { scope: BackgroundScope }) {
         <Terminal />
       </IconButton>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="native-dialog">
+        <DialogContent className="native-dialog background-dialog">
           <DialogHeader>
             <DialogTitle>{t('bgTitle')}</DialogTitle>
             <DialogDescription>{t('bgHint')}</DialogDescription>
@@ -100,109 +102,123 @@ export function BackgroundTools({ scope }: { scope: BackgroundScope }) {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            <p className="text-xs break-all">{cwd}</p>
-            <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor="bg-command">{t('bgCommand')}</FieldLabel>
-                <Textarea
-                  id="bg-command"
-                  disabled={busy}
-                  value={command}
-                  onChange={(e) => {
-                    setCommand(e.target.value);
-                    setRequestId(crypto.randomUUID());
-                  }}
-                  placeholder="pnpm test"
-                />
-              </Field>
-              <Button disabled={busy || !command.trim()} onClick={start}>
-                {t('bgRun')}
-              </Button>
-            </FieldGroup>
-            <h3>{t('bgJobs')}</h3>
-            {jobs.length === 0 && <p>{t('bgEmpty')}</p>}
-            {jobs.map((row) => (
-              <Button
-                key={row.id}
-                variant="outline"
-                className="h-auto justify-start whitespace-normal text-left"
-                onClick={() => {
-                  setSelected(row.id);
-                  setJob(undefined);
-                  setInput('');
-                }}
-              >
-                {row.command.slice(0, 100)} · {row.status}
-              </Button>
-            ))}
-            {job && (
-              <section className="flex flex-col gap-2" aria-label={t('bgOutput')}>
-                <p className="break-all">Moose · {job.cwd}</p>
-                <p>
-                  {job.status} · {t('bgExit')}: {job.exitCode ?? '—'} {job.signal}
-                </p>
-                {job.truncated && <p>{t('bgTruncated')}</p>}
-                <pre
-                  className="max-h-64 overflow-auto whitespace-pre-wrap break-all rounded-md border p-3"
-                  data-testid="command-output"
-                >
-                  {job.output}
-                </pre>
-                {job.status === 'running' && (
-                  <>
-                    <Field>
-                      <FieldLabel htmlFor="bg-input">{t('bgInput')}</FieldLabel>
-                      <Input
-                        id="bg-input"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                      />
-                    </Field>
-                    <div className="flex gap-2">
-                      <Button
-                        disabled={busy}
-                        onClick={() =>
-                          void act(async () => {
-                            await window.moose.request('commandInput', {
-                              id: job.id,
-                              text: input + '\n',
-                            });
-                            setInput('');
-                          })
-                        }
-                      >
-                        {t('bgSend')}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        disabled={busy}
-                        onClick={() =>
-                          void act(() =>
-                            window.moose.request('commandInput', {
-                              id: job.id,
-                              text: '',
-                              eof: true,
-                            }),
-                          )
-                        }
-                      >
-                        {t('bgEof')}
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        disabled={busy}
-                        onClick={() =>
-                          void act(() => window.moose.request('commandStop', { id: job.id }))
-                        }
-                      >
-                        {t('bgStop')}
-                      </Button>
-                    </div>
-                  </>
+            <Tabs defaultValue="terminal" className="extension-tabs">
+              <TabsList variant="line" aria-label={t('bgTitle')}>
+                <TabsTrigger value="terminal">{t('ptyTitle')}</TabsTrigger>
+                <TabsTrigger value="commands">{t('bgJobs')}</TabsTrigger>
+                <TabsTrigger value="schedules">{t('bgSchedules')}</TabsTrigger>
+              </TabsList>
+              <TabsContent value="terminal" className="extension-section">
+                <TerminalPanel scope={scope} />
+              </TabsContent>
+              <TabsContent value="commands" className="extension-section">
+                <p className="extension-note break-all">{cwd}</p>
+                <FieldGroup>
+                  <Field>
+                    <FieldLabel htmlFor="bg-command">{t('bgCommand')}</FieldLabel>
+                    <Textarea
+                      id="bg-command"
+                      disabled={busy}
+                      value={command}
+                      onChange={(e) => {
+                        setCommand(e.target.value);
+                        setRequestId(crypto.randomUUID());
+                      }}
+                      placeholder="pnpm test"
+                    />
+                  </Field>
+                  <Button disabled={busy || !command.trim()} onClick={start}>
+                    {t('bgRun')}
+                  </Button>
+                </FieldGroup>
+                <h3>{t('bgJobs')}</h3>
+                {jobs.length === 0 && <p>{t('bgEmpty')}</p>}
+                {jobs.map((row) => (
+                  <Button
+                    key={row.id}
+                    variant="outline"
+                    className="h-auto justify-start whitespace-normal text-left"
+                    onClick={() => {
+                      setSelected(row.id);
+                      setJob(undefined);
+                      setInput('');
+                    }}
+                  >
+                    {row.command.slice(0, 100)} · {row.status}
+                  </Button>
+                ))}
+                {job && (
+                  <section className="flex flex-col gap-2" aria-label={t('bgOutput')}>
+                    <p className="break-all">Moose · {job.cwd}</p>
+                    <p>
+                      {job.status} · {t('bgExit')}: {job.exitCode ?? '—'} {job.signal}
+                    </p>
+                    {job.truncated && <p>{t('bgTruncated')}</p>}
+                    <pre
+                      className="max-h-64 overflow-auto whitespace-pre-wrap break-all rounded-md border p-3"
+                      data-testid="command-output"
+                    >
+                      {job.output}
+                    </pre>
+                    {job.status === 'running' && (
+                      <>
+                        <Field>
+                          <FieldLabel htmlFor="bg-input">{t('bgInput')}</FieldLabel>
+                          <Input
+                            id="bg-input"
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                          />
+                        </Field>
+                        <div className="flex gap-2">
+                          <Button
+                            disabled={busy}
+                            onClick={() =>
+                              void act(async () => {
+                                await window.moose.request('commandInput', {
+                                  id: job.id,
+                                  text: input + '\n',
+                                });
+                                setInput('');
+                              })
+                            }
+                          >
+                            {t('bgSend')}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            disabled={busy}
+                            onClick={() =>
+                              void act(() =>
+                                window.moose.request('commandInput', {
+                                  id: job.id,
+                                  text: '',
+                                  eof: true,
+                                }),
+                              )
+                            }
+                          >
+                            {t('bgEof')}
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            disabled={busy}
+                            onClick={() =>
+                              void act(() => window.moose.request('commandStop', { id: job.id }))
+                            }
+                          >
+                            {t('bgStop')}
+                          </Button>
+                        </div>
+                      </>
+                    )}
+                  </section>
                 )}
-              </section>
-            )}
-            <SchedulePanel scope={scope} cwd={cwd} schedules={schedules} onChanged={refresh} />
+              </TabsContent>
+              <TabsContent value="schedules" className="extension-section">
+                <SchedulePanel scope={scope} cwd={cwd} schedules={schedules} onChanged={refresh} />
+              </TabsContent>
+            </Tabs>
           </div>
         </DialogContent>
       </Dialog>

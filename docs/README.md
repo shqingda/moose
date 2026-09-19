@@ -14,7 +14,8 @@
 | 配置、MCP、插件与认证的低成本验收 | [第五阶段验收](providers/phase-five-testing.md) |
 | 后台命令、定时任务与编辑恢复验收 | [第六阶段验收](providers/phase-six-testing.md) |
 | 原生产品能力的实施顺序与验收标准 | [能力实施计划](providers/native-capabilities-plan.md) |
-| 简历项目经历及逐点讲解 | [项目经历](interview/project-experience.md) |
+| 当前项目怎么介绍、技术难点怎么讲、如何回答追问 | [完整面试指南（0.11.0）](interview/project-interview-guide.md) |
+| 早期项目经历及历史实现讲解 | [原项目经历材料](interview/project-experience.md) |
 | 面试复习题与对应答案 | [题目](interview/questions.md) · [答案](interview/answers.md) |
 | Moose 从启动到一轮会话完成，怎么按源码讲 | [流程面试题](interview/start-to-session-end.md) |
 

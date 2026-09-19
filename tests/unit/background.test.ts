@@ -483,3 +483,62 @@ it('kills owned commands when the runtime process disappears abruptly', async ()
     controller.kill('SIGKILL');
   }
 });
+it('coalesces missed calendar dates, preserves recurrence after completion and skips paused dates', () => {
+  const f = fixture();
+  f.clock(Date.parse('2026-09-01T00:00Z'));
+  const s = f.create({
+    task: { kind: 'agent', text: 'daily' },
+    intervalMs: null,
+    calendar: { weekdays: [1, 2, 3, 4, 5, 6, 7], hour: 9, minute: 0 },
+  });
+  expect(s.nextAt).toBe(Date.parse('2026-09-01T01:00Z'));
+  f.clock(Date.parse('2026-09-04T02:00Z'));
+  f.schedules.tick();
+  let current = f.records.get('schedule', s.id)!;
+  expect(current.nextAt).toBe(Date.parse('2026-09-05T01:00Z'));
+  expect(current.last?.dueAt).toBe(s.nextAt);
+  f.schedules.tick();
+  expect(f.hooks.enqueue).toHaveBeenCalledTimes(1);
+  f.schedules.started(current.last!.queueId!, 'calendar-run');
+  f.schedules.finished('calendar-run', 'completed');
+  current = f.records.get('schedule', s.id)!;
+  expect(current.enabled).toBe(true);
+  current = f.schedules.set({ id: s.id, version: current.version, enabled: false });
+  f.clock(Date.parse('2026-09-10T02:00Z'));
+  current = f.schedules.set({ id: s.id, version: current.version, enabled: true });
+  expect(current.nextAt).toBe(Date.parse('2026-09-11T01:00Z'));
+  f.schedules.tick();
+  expect(f.hooks.enqueue).toHaveBeenCalledTimes(1);
+});
+it('edits calendar definitions, clears recurrence and deduplicates the original request', () => {
+  const f = fixture();
+  const s = f.create({ intervalMs: null, calendar: { weekdays: [1, 3], hour: 9, minute: 0 } });
+  const args = {
+    ...f.scope,
+    requestId: s.id,
+    name: s.name,
+    task: s.task,
+    timezone: s.timezone,
+    startAt: s.startAt,
+    intervalMs: null,
+    calendar: s.calendar,
+  };
+  expect(f.schedules.create(args).id).toBe(s.id);
+  expect(() =>
+    f.schedules.create({ ...args, calendar: { weekdays: [2], hour: 9, minute: 0 } }),
+  ).toThrow('already used');
+  expect(() => f.create({ calendar: s.calendar })).toThrow('calendar or interval');
+  const paused = f.schedules.set({ id: s.id, version: s.version, enabled: false });
+  const edited = f.schedules.update({
+    id: s.id,
+    version: paused.version,
+    name: s.name,
+    task: s.task,
+    timezone: 'UTC',
+    startAt: 200000,
+    intervalMs: 60000,
+  });
+  expect(edited.calendar).toBeNull();
+  expect(edited.nextAt).toBe(200000);
+  expect(f.schedules.create(args)).toEqual(edited);
+});

@@ -113,6 +113,21 @@ export class CodexExtensions {
         auth: 'unknown',
         tools: 0,
         failed: false,
+        sourceId: snapshot.sources.find(
+          (source) =>
+            source.writable &&
+            (config.value.layers || []).some(
+              (layer) =>
+                sourceId(layer) === source.id &&
+                Object.hasOwn(record(record(layer.config).mcp_servers), name),
+            ),
+        )?.id,
+        transport:
+          typeof record(value).url === 'string'
+            ? 'http'
+            : typeof record(value).command === 'string'
+              ? 'stdio'
+              : undefined,
       }));
       for (const layer of snapshot.sources)
         if (layer.disabled)
@@ -194,6 +209,69 @@ export class CodexExtensions {
     const source = sources(config).find((s) => s.id === change.sourceId && s.writable);
     if (!source || source.version !== change.version)
       throw new RpcRejected('Configuration changed or is read-only. Refresh before saving.');
+    if (change.type === 'mcpEdit' || change.type === 'mcpRemove') {
+      const layer = config.layers?.find((entry) => sourceId(entry) === source.id);
+      const servers = { ...record(record(layer?.config).mcp_servers) };
+      if (!Object.hasOwn(servers, change.name))
+        throw new RpcRejected('This MCP server is not owned by the selected configuration');
+      if (change.type === 'mcpRemove') {
+        delete servers[change.name];
+        // Replace only this layer's table: no null semantics or inherited entries copied in.
+        await rpc.request('config/value/write', {
+          keyPath: 'mcp_servers',
+          value: servers,
+          mergeStrategy: 'replace',
+          filePath: source.path,
+          expectedVersion: source.version,
+        });
+      } else {
+        const previous = record(servers[change.name]);
+        const transport =
+          typeof previous.url === 'string'
+            ? 'http'
+            : typeof previous.command === 'string'
+              ? 'stdio'
+              : undefined;
+        if (transport !== change.server.transport)
+          throw new RpcRejected('Remove and add the server to change transport');
+        const next: Record<string, unknown> = {
+          ...previous,
+          ...mcpConfig(change.server),
+          enabled: previous.enabled !== false,
+        };
+        if (
+          change.server.transport === 'stdio' &&
+          !change.server.envVars.length &&
+          previous.env_vars
+        )
+          next.env_vars = previous.env_vars;
+        if (change.server.transport === 'http' && change.server.envHeaders) {
+          const headers = { ...record(previous.env_http_headers) };
+          for (const [name, variable] of Object.entries(change.server.envHeaders)) {
+            if (
+              Object.keys(record(previous.http_headers)).some(
+                (key) => key.toLowerCase() === name.toLowerCase(),
+              )
+            )
+              throw new RpcRejected(
+                'This header has a saved literal value. Update it using the provider CLI.',
+              );
+            for (const key of Object.keys(headers))
+              if (key.toLowerCase() === name.toLowerCase()) delete headers[key];
+            headers[name] = variable;
+          }
+          next.env_http_headers = headers;
+        }
+        await rpc.request('config/value/write', {
+          keyPath: `mcp_servers.${JSON.stringify(change.name)}`,
+          value: next,
+          mergeStrategy: 'replace',
+          filePath: source.path,
+          expectedVersion: source.version,
+        });
+      }
+      return;
+    }
     if (change.type === 'mcpAdd') {
       if (
         Object.hasOwn(record(config.config.mcp_servers), change.name) ||

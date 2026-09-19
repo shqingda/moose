@@ -1,3 +1,5 @@
+import type { CalendarRule } from './calendar';
+import type { TerminalRequests, TerminalResponses } from './terminal';
 export interface BackgroundScope {
   projectId: string;
   sessionId?: string;
@@ -29,6 +31,7 @@ export interface ScheduleDefinition {
   timezone: string;
   startAt: number;
   intervalMs: number | null;
+  calendar?: CalendarRule | null;
 }
 export interface Schedule extends BackgroundScope, ScheduleDefinition {
   id: string;
@@ -49,8 +52,11 @@ export interface Schedule extends BackgroundScope, ScheduleDefinition {
 export const schedulePending = (schedule: Schedule) =>
   schedule.last?.status === 'queued' || schedule.last?.status === 'running';
 export const scheduleFinished = (schedule: Schedule) =>
-  schedule.intervalMs === null && !!schedule.last && schedule.last.dueAt >= schedule.startAt;
-export interface BackgroundRequests {
+  !schedule.calendar &&
+  schedule.intervalMs === null &&
+  !!schedule.last &&
+  schedule.last.dueAt >= schedule.startAt;
+export interface BackgroundRequests extends TerminalRequests {
   commandList: BackgroundScope;
   commandRead: { id: string };
   commandStart: BackgroundScope & { requestId: string; command: string };
@@ -61,7 +67,7 @@ export interface BackgroundRequests {
   scheduleUpdate: ScheduleDefinition & { id: string; version: number };
   scheduleSet: { id: string; version: number; enabled: boolean };
 }
-export interface BackgroundResponses {
+export interface BackgroundResponses extends TerminalResponses {
   commandList: Omit<CommandJob, 'output'>[];
   commandRead: CommandJob;
   commandStart: CommandJob;

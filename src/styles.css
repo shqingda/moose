@@ -149,3 +149,158 @@
   flex-direction: column;
   gap: 12px;
 }
+
+/* Extension workspace: stable navigation, quiet rows, details on demand. */
+.extensions-dialog {
+  height: min(620px, 85vh);
+  padding: 1.75rem;
+  gap: 1.25rem;
+}
+.extension-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.extension-tabs {
+  gap: 1.5rem;
+}
+.extension-tabs > [data-slot='tabs-list'] {
+  flex-shrink: 0;
+  width: 100%;
+  justify-content: flex-start;
+  gap: 0.5rem;
+}
+.extension-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+.extension-row {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.extension-row-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.extension-row > .flex {
+  flex-wrap: wrap;
+}
+.extension-note {
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+}
+.extension-details {
+  border-radius: 0.75rem;
+  background: var(--muted);
+  padding: 1rem;
+}
+.extension-details summary {
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.extensions-dialog [data-slot='button']:active:not(:disabled) {
+  transform: scale(0.98);
+}
+@media (prefers-reduced-motion: reduce) {
+  .extensions-dialog [data-slot='button']:active:not(:disabled) {
+    transform: none;
+  }
+}
+@media (max-width: 600px) {
+  .extensions-dialog {
+    padding: 1rem;
+    width: calc(100vw - 24px);
+  }
+  .extension-tabs > [data-slot='tabs-list'] {
+    gap: 0;
+  }
+}
+
+.extension-review {
+  gap: 1.5rem;
+}
+.extension-review-values {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 0.5rem 0 1.5rem;
+}
+.extension-review-values dt {
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+}
+.extension-review-values dd {
+  margin-top: 0.375rem;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.background-dialog {
+  height: min(660px, 85vh);
+  padding: 1.75rem;
+  gap: 1.25rem;
+}
+
+.extension-section > [data-slot='button'] {
+  align-self: flex-start;
+}
+
+.terminal-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+.terminal-toolbar {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.terminal-screen {
+  height: clamp(220px, 42vh, 420px);
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 0.625rem;
+  background: var(--background);
+  padding: 0.75rem;
+}
+.terminal-screen .xterm {
+  height: 100%;
+}
+
+.schedule-time-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.schedule-time-row > * {
+  flex: 1 1 180px;
+}
+.schedule-weekdays {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.schedule-weekdays > [data-slot='field'] {
+  width: auto;
+}
+.schedule-weekdays input {
+  accent-color: var(--primary);
+  width: 1rem;
+  height: 1rem;
+}
+.schedule-occurrences {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
