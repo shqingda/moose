@@ -10,12 +10,15 @@
 | 测试怎么运行，哪些能力实际验过 | [测试与验证](testing.md) |
 | Pi 如何接入、哪些能力不支持 | [Pi 接入](providers/pi.md) |
 | 子代理、Goal／Plan、思考摘要和主流功能差距 | [原生能力与当前缺口](providers/native-capabilities.md) |
+| 如何低成本验收原生 Plan 与插话 | [第一阶段验收](providers/phase-one-testing.md) |
 | 原生产品能力的实施顺序与验收标准 | [能力实施计划](providers/native-capabilities-plan.md) |
 | 简历项目经历及逐点讲解 | [项目经历](interview/project-experience.md) |
 | 面试复习题与对应答案 | [题目](interview/questions.md) · [答案](interview/answers.md) |
 | Moose 从启动到一轮会话完成，怎么按源码讲 | [流程面试题](interview/start-to-session-end.md) |
 
 ## 发布记录
+
+- [0.8.1：由底座自主决定子代理委派](releases/0.8.1.md)
 
 - [0.8.0：原生计划与运行中插话](releases/0.8.0.md)
 

@@ -6,6 +6,7 @@ export interface PromptContext {
   references: string[];
   skills: string[];
   goalBudget?: number;
+  /** @deprecated 仅兼容旧草稿；底座自行决定委派，Moose 不再使用此字段。 */
   subagents?: boolean;
 }
 export const emptyContext: PromptContext = {

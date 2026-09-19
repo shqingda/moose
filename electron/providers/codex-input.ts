@@ -1,11 +1,11 @@
-import { attachmentText, taskText } from './prompt';
+import { attachmentText } from './prompt';
 import type { RunContext } from './types';
 import type { UserInput } from './generated/codex/v2/UserInput';
 
 /** 正常发送和插话使用完全相同的原生输入转换。 */
 export function codexInput(context: RunContext): UserInput[] {
   return [
-    { type: 'text', text: taskText(context), text_elements: [] },
+    { type: 'text', text: context.text, text_elements: [] },
     ...(context.selection?.references || []).map((a) => ({
       type: 'mention' as const,
       name: a.name,

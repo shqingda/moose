@@ -1,15 +1,5 @@
 import { providerDefinitions } from '../../shared/providers';
-import {
-  ArrowUp,
-  Square,
-  ChevronUp,
-  Trash2,
-  Pencil,
-  Play,
-  Paperclip,
-  X,
-  Users,
-} from 'lucide-react';
+import { ArrowUp, Square, ChevronUp, Trash2, Pencil, Play, Paperclip, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type {
   Attachment,
@@ -332,20 +322,6 @@ export function Composer({
         />
         <InputGroupAddon align="block-end" className="composer-controls">
           <div className="composer-pickers">
-            {providerDefinitions[provider].subagents && (
-              <Button
-                size="xs"
-                variant={context.subagents ? 'secondary' : 'ghost'}
-                aria-label={t('subagents')}
-                aria-pressed={!!context.subagents}
-                title={t('subagentsDescription')}
-                disabled={session?.archived}
-                onClick={() => updateContext({ ...context, subagents: !context.subagents })}
-              >
-                <Users data-icon="inline-start" />
-                {t('subagents')}
-              </Button>
-            )}
             <IconButton
               label={t('attach')}
               disabled={session?.archived}
@@ -400,7 +376,6 @@ export function Composer({
                     )
                       ? context.mode
                       : 'build',
-                    subagents: providerDefinitions[next].subagents && context.subagents,
                   });
                 }
                 onOptions({ model, effort: '' });

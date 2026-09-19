@@ -13,8 +13,6 @@ export const en = {
   steerUnknown: 'Delivery unknown · check the agent response before sending again',
 
   subagents: 'Subagents',
-  subagentsDescription:
-    'Ask the agent to delegate independent work and collect the results. Uses additional model capacity.',
   agentSpawn: 'Delegate',
   agentMessage: 'Send task',
   agentResume: 'Resume',
@@ -224,7 +222,6 @@ export const zh: Record<TranslationKey, string> = {
   steerUnknown: '投递结果未知 · 再次发送前请核对代理回复',
 
   subagents: '子代理',
-  subagentsDescription: '请求主代理分派独立任务并汇总结果，会使用额外模型额度。',
   agentSpawn: '分派任务',
   agentMessage: '发送任务',
   agentResume: '恢复',

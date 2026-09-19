@@ -38,14 +38,11 @@ export class Plans {
       const plan = this.review(args);
       if (this.store.queued(args.sessionId).length)
         throw new Error('Remove or finish queued messages before approving this plan');
-      const origin = this.store
-        .allMessages(args.sessionId)
-        .find((m) => m.runId === plan.runId && m.kind === 'user' && !m.delivery);
       const item = this.store.enqueue(
         args.sessionId,
         `Implement the following user-approved plan (version ${plan.plan!.version}). This is the approved scope; do not substitute an earlier plan.\n\n${plan.text}`,
         [],
-        { mode: 'build', references: [], skills: [], subagents: origin?.context?.subagents },
+        { mode: 'build', references: [], skills: [] },
       );
       this.store.saveMessage({
         ...plan,

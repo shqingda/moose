@@ -696,7 +696,7 @@ test('provider path saves on blur without a save button or duplicate model count
 });
 
 for (const provider of ['codex', 'grok'] as const) {
-  test(`${provider} delegates from the composer and persists native results`, async () => {
+  test(`${provider} displays automatic native delegation without a composer toggle`, async () => {
     let sessionId = '';
     const page = await launch((store) => {
       const session = store.createSession(store.addProject(dir).id, provider);
@@ -704,10 +704,7 @@ for (const provider of ['codex', 'grok'] as const) {
       store.updateSession(session.id, { title: 'Subagent test' });
     });
     await page.locator('.session-row').first().click();
-    const toggle = page.getByRole('button', { name: 'Subagents', exact: true });
-    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
-    await toggle.click();
-    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('button', { name: 'Subagents', exact: true })).toHaveCount(0);
     await page.locator('#composer').fill('delegate-fixture');
     await page.locator('#composer').press('Enter');
     if (provider === 'codex') {
@@ -719,8 +716,8 @@ for (const provider of ['codex', 'grok'] as const) {
       (sessionId) => window.moose.request('messages', { sessionId }),
       sessionId,
     );
-    expect(history.messages.find((message) => message.kind === 'user')?.context?.subagents).toBe(
-      true,
+    expect(history.messages.find((message) => message.kind === 'user')?.text).toBe(
+      'delegate-fixture',
     );
     if (provider === 'codex') {
       expect(

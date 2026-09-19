@@ -232,10 +232,6 @@ createInterface({ input: process.stdin }).on('line', (line) => {
         break;
       }
       if (pendingPrompt.startsWith('delegate-fixture')) {
-        if (!pendingPrompt.includes('Use native subagents')) {
-          complete('Missing delegation request.', false);
-          break;
-        }
         if (acp) {
           update({
             sessionUpdate: 'tool_call',

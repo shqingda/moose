@@ -4,7 +4,7 @@ import { normalizeCodex } from '../../electron/providers/codex';
 import { grokModels, normalizeGrok } from '../../electron/providers/grok';
 import { validate } from '../../shared/validation';
 import { providerError } from '../../electron/providers/types';
-import { taskText } from '../../electron/providers/prompt';
+import { promptText } from '../../electron/providers/prompt';
 import type { RunContext } from '../../electron/providers/types';
 it('surfaces actionable Grok billing errors hidden inside generic JSON-RPC errors', () => {
   expect(
@@ -169,7 +169,7 @@ it('retains ACP raw tool results when no content blocks are sent', () => {
   ).toMatchObject({ key: 'delegate', state: 'done', text: '{\n  "summary": "Child result"\n}' });
 });
 
-it('requests native delegation only when opted in and rejects unsupported providers', () => {
+it('leaves delegation decisions to providers even with legacy saved toggles', () => {
   const context: RunContext = {
     text: 'Review tests',
     cwd: '/tmp',
@@ -192,11 +192,11 @@ it('requests native delegation only when opted in and rejects unsupported provid
     },
     promptContext: { mode: 'build', references: [], skills: [], subagents: false },
   };
-  expect(taskText(context)).toBe('Review tests');
-  context.promptContext!.subagents = true;
-  expect(taskText(context)).toContain('Use native subagents');
-  context.session.provider = 'grok';
-  expect(taskText(context)).toContain('wait for the delegated work');
-  context.session.provider = 'pi';
-  expect(() => taskText(context)).toThrow('does not support native subagent');
+  for (const provider of ['codex', 'grok', 'pi'] as const) {
+    context.session.provider = provider;
+    for (const value of [undefined, false, true]) {
+      context.promptContext!.subagents = value;
+      expect(promptText(context)).toBe('Review tests');
+    }
+  }
 });
