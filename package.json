@@ -1,6 +1,6 @@
 {
   "name": "moose",
-  "version": "0.15.0",
+  "version": "0.15.1",
   "private": true,
   "description": "A quiet workspace for your coding agents",
   "license": "UNLICENSED",
@@ -31,7 +31,8 @@
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
     "lint": "oxlint .",
-    "lint:fix": "oxlint --fix ."
+    "lint:fix": "oxlint --fix .",
+    "perf:measure": "tsx scripts/measure-performance.ts"
   },
   "dependencies": {
     "better-sqlite3": "13.0.3",
@@ -90,7 +91,13 @@
     "files": [
       "dist/**",
       "dist-electron/**",
-      "package.json"
+      "package.json",
+      "!**/*.map",
+      "!node_modules/better-sqlite3/{deps,src,build,test,tests,benchmark}/**",
+      "!node_modules/better-sqlite3/prebuilds/!(darwin-${arch}).node",
+      "!node_modules/node-pty/{deps,src,scripts,test,tests}/**",
+      "!node_modules/node-pty/node_modules/node-addon-api/**",
+      "!node_modules/node-pty/prebuilds/!(darwin-${arch})/**"
     ],
     "asarUnpack": [
       "**/*.node",

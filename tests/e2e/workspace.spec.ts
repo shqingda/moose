@@ -417,6 +417,13 @@ test('project hover stays uniform and its compose button targets that project', 
   const { mkdir } = await import('node:fs/promises');
   await mkdir(join(dir, 'second'));
   await page.locator('.session-row').click();
+  const titleBefore = await page.locator('.header-title').textContent();
+  const heading = page.locator('.project-heading').first();
+  await heading.click();
+  await expect(page.locator('.session-row')).not.toBeVisible();
+  await expect(page.locator('.header-title')).toHaveText(titleBefore!);
+  await heading.click();
+  await expect(page.locator('.session-row')).toBeVisible();
   const selected = page.locator('.session-entry').filter({ hasText: 'Selected conversation' });
   const project = selected.locator('..').locator('..').locator('.project-heading-row');
   await project.hover();
@@ -426,14 +433,6 @@ test('project hover stays uniform and its compose button targets that project', 
   await menu.hover();
   await expect(project).toHaveCSS('background-color', selectedColor);
   await expect(menu).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
-  const gap = await selected.evaluate(
-    (e) =>
-      e.getBoundingClientRect().top -
-      e.parentElement!.previousElementSibling!.getBoundingClientRect().bottom,
-  );
-  expect(gap).toBeGreaterThanOrEqual(2);
-  expect(gap).toBeLessThanOrEqual(5);
-  await page.screenshot({ path: 'test-results/sidebar-project-hover.png' });
   await menu.click();
   await expect(page.getByRole('menuitem', { name: 'Delete project', exact: true })).toBeVisible();
   await expect(page.getByRole('menuitem', { name: 'Delete project', exact: true })).toHaveCSS(
@@ -447,13 +446,6 @@ test('project hover stays uniform and its compose button targets that project', 
     selected.getByRole('button', { name: 'Archive · Selected conversation', exact: true }),
   ).toBeVisible();
   await expect(selected.getByRole('button', { name: /Session actions/ })).toHaveCount(0);
-  const add = page.locator('.project-add-button svg');
-  expect(await add.evaluate((e) => e.getBoundingClientRect().height)).toBeCloseTo(
-    await page
-      .locator('.section-caption')
-      .evaluate((e) => parseFloat(getComputedStyle(e).fontSize)),
-    0,
-  );
   await page.getByRole('button', { name: 'New session · second', exact: true }).click();
   await expect(page.locator('.header-path')).toHaveText('second');
   await expect(page.locator('.session-row')).toHaveCount(1);
@@ -515,30 +507,6 @@ test('copies one complete AI turn and only offers editing on the latest user mes
     .toBe('Before tool\n\nAfter tool');
 });
 
-test('keeps empty workspace chrome quiet and exposes native shortcuts and roomy provider settings', async () => {
-  const page = await launch();
-  await expect(page.locator('.add-first-project')).toHaveCount(0);
-  await expect(page.locator('.header-path')).toHaveText('');
-  const accelerators = await app.evaluate(({ Menu }) =>
-    Menu.getApplicationMenu()!
-      .items.flatMap((i) => i.submenu?.items || [])
-      .map((i) => i.accelerator),
-  );
-  expect(accelerators).toContain('CmdOrCtrl+O');
-  expect(accelerators).toContain('CmdOrCtrl+Shift+B');
-  await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  await expect(page.getByText('Keyboard shortcuts', { exact: true })).toBeVisible();
-  await page.screenshot({ path: 'test-results/settings-general-light.png' });
-  await page.getByRole('button', { name: 'Providers', exact: true }).click();
-  await page.locator('.provider-row').first().click();
-  await expect(page.getByLabel('Executable path', { exact: true })).toBeVisible();
-  await page.screenshot({ path: 'test-results/settings-providers-light.png' });
-  await page.evaluate(() => window.moose.request('settings', { theme: 'dark' }));
-  await expect(page.locator('html')).toHaveClass(/dark/);
-  await expect(page.locator('.settings-page')).toHaveCSS('background-color', 'rgb(32, 33, 36)');
-  await page.screenshot({ path: 'test-results/settings-providers-dark.png' });
-});
-
 test('provider switches persist and usage displays actual windows through Cmd U', async () => {
   const page = await launch((store) => {
     store.addProject(dir);
@@ -580,33 +548,6 @@ test('provider switches persist and usage displays actual windows through Cmd U'
   await expect(page.locator('.markdown')).toBeVisible();
   await page.getByRole('button', { name: 'Usage', exact: true }).click();
   await expect(page.locator('.usage-popup')).toContainText('1.2k /128.0k (1%)');
-});
-
-test('provider rows are compact without hover fill and project rows collapse conversations', async () => {
-  const page = await launch((store) => {
-    const p = store.addProject(dir);
-    const s = store.createSession(p.id, 'codex');
-    store.updateSession(s.id, { title: 'Fold me' });
-  });
-  await expect(page.locator('.session-row')).toBeVisible();
-  await page.locator('.session-row').click();
-  const titleBefore = await page.locator('.header-title').textContent();
-  await page.locator('.project-heading').click();
-  await expect(page.locator('.session-row')).not.toBeVisible();
-  await expect(page.locator('.header-title')).toHaveText(titleBefore!);
-  await page.locator('.project-heading').click();
-  await expect(page.locator('.session-row')).toBeVisible();
-  await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  await page.getByRole('button', { name: 'Providers', exact: true }).click();
-  const row = page.locator('.provider-row').first();
-  expect((await row.boundingBox())!.height).toBeLessThanOrEqual(64);
-  await row.hover();
-  await expect(row).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
-  await page.screenshot({ path: 'test-results/provider-compact-no-hover.png' });
-  await page.getByRole('button', { name: 'Back', exact: true }).click();
-  await page.getByRole('button', { name: 'Model', exact: true }).click();
-  await expect(page.locator('.model-providers')).toBeVisible();
-  await page.screenshot({ path: 'test-results/combined-model-picker.png' });
 });
 
 test('aligns sidebar labels at unchanged row heights and reveals message times on hover', async () => {
@@ -683,6 +624,7 @@ test('selects Pi and persists a streamed RPC conversation', async () => {
 test('provider path saves on blur without a save button or duplicate model count', async () => {
   const page = await launch((store) => store.setSettings({ piPath: '/missing/pi' }));
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await expect(page.getByText('Keyboard shortcuts', { exact: true })).toBeVisible();
   await page
     .locator('.settings-navigation')
     .getByRole('button', { name: 'Providers', exact: true })

@@ -15,6 +15,7 @@ pnpm lint:fix
 pnpm typecheck
 pnpm build
 pnpm dist
+pnpm perf:measure # 测量已打包应用，使用隔离数据
 ```
 
 Oxfmt 负责格式，Oxlint 负责基础正确性检查，不依赖 ESLint。统一 2 空格、单引号、分号及 100 列换行；生成代码、锁文件和文档由格式配置排除。没有启用完整 React Hooks / React Compiler 规则。测试命令及实际结果见 [测试与验证](testing.md)。
@@ -26,6 +27,8 @@ Oxfmt 负责格式，Oxlint 负责基础正确性检查，不依赖 ESLint。统
 better-sqlite3 是运行时依赖；安装与打包会准备原生模块，打包按 Electron arm64 ABI 重建，并将 `.node` 从 ASAR 解包。手动修复使用 `pnpm native:rebuild`。数据库与代理处理在 utility process，renderer 无 Node 权限。
 
 `MOOSE_DATA_DIR` 可指定隔离数据目录，测试不应使用正式用户数据库。Codex 协议类型基于 0.155.0（包含 `--experimental` 字段），`pnpm protocol:generate` 用当前系统 CLI 重新生成，更新后需检查兼容性。
+
+发行包仅保留当前 macOS 架构所需的原生依赖；排除其他平台预编译文件、依赖源码与生产 source map。开发构建保留 source map。调整排除规则后必须运行安装包验收，尤其检查 SQLite 和 PTY，不以构建成功代替运行验证。
 
 ## 发布流程
 

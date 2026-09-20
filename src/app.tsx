@@ -1,6 +1,6 @@
 import { BackgroundTools, type BackgroundPlacement } from './components/background-tools';
 import { WorkspaceTools } from './components/workspace-tools';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { MotionConfig, useReducedMotion } from 'motion/react';
 import { ChevronDown, Folder, PanelRight, Search, X, CircleAlert, PanelLeft } from 'lucide-react';
 import type {
@@ -20,9 +20,13 @@ import { ConfirmDialog, type Confirmation } from './components/confirm-dialog';
 import { Sidebar } from './components/sidebar';
 import { Welcome } from './components/welcome';
 import { Composer } from './components/composer';
-import { Transcript } from './components/transcript';
+const Transcript = lazy(() =>
+  import('./components/transcript').then((m) => ({ default: m.Transcript })),
+);
 import { ReviewPanel } from './components/review-panel';
-import { SettingsDialog } from './components/settings-dialog';
+const SettingsDialog = lazy(() =>
+  import('./components/settings-dialog').then((m) => ({ default: m.SettingsDialog })),
+);
 import { IconButton, MooseMark } from './components/common';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
@@ -102,7 +106,8 @@ function Workspace({
   });
   const [providers, setProviders] = useState<ProviderInfo[]>([]),
     [checking, setChecking] = useState(true);
-  const [settingsOpen, setSettingsOpen] = useState(false),
+  // Undefined defers the first load; false keeps dialog state and exit motion after closing.
+  const [settingsOpen, setSettingsOpen] = useState<boolean>(),
     [searchOpen, setSearchOpen] = useState(false),
     [search, setSearch] = useState(''),
     [review, setReview] = useState(false),
@@ -520,12 +525,14 @@ function Workspace({
               </Alert>
             )}
             {session?.title ? (
-              <Transcript
-                key={`transcript:${session.id}`}
-                session={session}
-                onError={setError}
-                onEdit={editMessage}
-              />
+              <Suspense fallback={<div className="transcript" aria-busy="true" />}>
+                <Transcript
+                  key={`transcript:${session.id}`}
+                  session={session}
+                  onError={setError}
+                  onEdit={editMessage}
+                />
+              </Suspense>
             ) : (
               <Welcome
                 projectName={project?.name}
@@ -585,16 +592,20 @@ function Workspace({
         onClose={() => setConfirmation(undefined)}
         onError={setError}
       />
-      <SettingsDialog
-        open={settingsOpen}
-        onOpenChange={setSettingsOpen}
-        settings={snapshot.settings}
-        providers={providers}
-        checking={checking}
-        onSave={saveSettings}
-        onReconnect={connect}
-        onError={setError}
-      />
+      <Suspense fallback={null}>
+        {settingsOpen !== undefined && (
+          <SettingsDialog
+            open={!!settingsOpen}
+            onOpenChange={setSettingsOpen}
+            settings={snapshot.settings}
+            providers={providers}
+            checking={checking}
+            onSave={saveSettings}
+            onReconnect={connect}
+            onError={setError}
+          />
+        )}
+      </Suspense>
       <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
         <DialogContent className="search-dialog">
           <DialogHeader>

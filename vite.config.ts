@@ -35,7 +35,7 @@ export default defineConfig(({ command }) => {
             ],
             build: {
               outDir: `dist-electron/${target}`,
-              sourcemap: true,
+              sourcemap: command === 'serve',
               lib: {
                 entry: `electron/${target}.ts`,
                 formats: [target === 'preload' ? 'cjs' : 'es'],

@@ -4,7 +4,17 @@ import { createRoot } from 'react-dom/client';
 import './styles.css';
 import './app.css';
 import App from './app';
-import { WebHost } from './components/web-host';
+const WebHost = React.lazy(() =>
+  import('./components/web-host').then((m) => ({ default: m.WebHost })),
+);
 createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>{window.moose ? <App /> : <WebHost />}</React.StrictMode>,
+  <React.StrictMode>
+    {window.moose ? (
+      <App />
+    ) : (
+      <React.Suspense fallback={null}>
+        <WebHost />
+      </React.Suspense>
+    )}
+  </React.StrictMode>,
 );
