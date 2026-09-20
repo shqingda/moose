@@ -1,6 +1,6 @@
 # Moose 技术架构
 
-> 基于 0.14.0 与当前 Web／OpenCode 开发增量核对。桌面和 Web 当前复用业务代码，运行实例及数据目录仍独立。
+> 默认启动与传输说明按 0.16.0 更新。安装版桌面与浏览器共用本机后台及原桌面数据目录；源码独立 Web 工作区不自动合并。
 
 ## 1. 项目定位
 
@@ -17,8 +17,8 @@ flowchart TB
   UI[Renderer：React 界面]
   Bridge[Preload：window.moose]
   Main[Main：窗口、原生菜单、IPC 网关]
-  Host[RuntimeHost：请求关联与进程生命周期]
-  Service[Utility Process：MooseService]
+  Host[SharedRuntime：本机服务连接]
+  Service[独立本机服务：MooseService]
   DB[(SQLite 与附件目录)]
   Git[Git / 文件与技能目录查询]
   Codex[CodexAdapter]
@@ -30,7 +30,8 @@ flowchart TB
   UI <-->|类型化请求与事件| Bridge
   Bridge <-->|Electron IPC| Main
   Main <--> Host
-  Host <-->|postMessage| Service
+  Host <-->|HTTP / SSE| Service
+  Web[浏览器] <-->|HTTP / SSE| Service
   Service <--> DB
   Service --> Git
   Service <--> Codex
@@ -46,7 +47,7 @@ flowchart TB
 | Renderer | 页面状态、输入、时间线、设置、审阅 | [src/app.tsx](../src/app.tsx) |
 | Preload | 暴露受限的请求与订阅接口 | [electron/preload.ts](../electron/preload.ts) |
 | Main | 原生窗口、菜单、文件选择、剪贴板、系统入口、安全校验 | [electron/main.ts](../electron/main.ts) |
-| RuntimeHost | 启动 utility process，关联请求响应，处理超时与退出 | [electron/runtime-host.ts](../electron/runtime-host.ts) |
+| Runtime | 安装版按需启动并连接本机共享服务；开发／独立模式保留 utility process | [electron/desktop-runtime.ts](../electron/desktop-runtime.ts)、[electron/shared-runtime.ts](../electron/shared-runtime.ts)、[electron/runtime-host.ts](../electron/runtime-host.ts) |
 | Runtime / Service | 请求分发、执行调度、代理生命周期、事件落库 | [electron/runtime.ts](../electron/runtime.ts)、[electron/service.ts](../electron/service.ts) |
 | Provider | 抹平代理协议差异 | [electron/providers/types.ts](../electron/providers/types.ts) |
 | Store | SQLite 读写、事务、迁移与重启恢复 | [electron/db/store.ts](../electron/db/store.ts) |
@@ -212,7 +213,7 @@ erDiagram
 
 数据库在 `userData/moose.sqlite`，启用 WAL 与外键。附件实体与元数据文件在相邻 `attachments/` 目录；UI 折叠状态等少量展示偏好使用 localStorage。
 
-Drizzle 定义见 [schema.ts](../electron/db/schema.ts)；**实际启动迁移由手写 [migrations.ts](../electron/db/migrations.ts) 执行**，通过 `PRAGMA user_version` 管理，目前为 3。迁移、开始执行和替换最新轮次等操作使用事务。
+Drizzle 定义见 [schema.ts](../electron/db/schema.ts)；**实际启动迁移由手写 [migrations.ts](../electron/db/migrations.ts) 执行**，通过 `PRAGMA user_version` 管理，目前为 5。迁移、开始执行和替换最新轮次等操作使用事务。
 
 会话必须先归档才能单独删除；项目可直接删除并清理其会话、消息和队列。项目删除不会删除工作目录文件。当前删除逻辑没有同步回收附件实体或对应 usage 设置，后续可补充孤立数据清理。
 
@@ -265,7 +266,7 @@ Renderer 开启 sandbox、contextIsolation，关闭 nodeIntegration，只能通�
 
 ## Web 宿主与新增协议适配
 
-`electron/web-server.ts` 在无窗口进程中启动 `MooseService`。浏览器的 `src/lib/web-api.ts` 实现同一份 MooseAPI，通过 HTTP 调用、SSE 接收变更通知；`web-host.tsx` 处理登录和服务端目录选择。客户端刷新或断开不会关闭 Service。桌面仍使用 utility process，两者不能指向同一份数据库。
+`electron/web-server.ts` 在无窗口进程中启动 `MooseService`。浏览器的 `src/lib/web-api.ts` 实现同一份 MooseAPI，通过 HTTP 调用、SSE 接收变更通知；`web-host.tsx` 处理登录和服务端目录选择。客户端刷新或断开不会关闭 Service。安装版桌面通过同一服务访问数据库；独立模式的 utility process 不可同时打开服务占用的数据库。
 
 OpenCode v2 适配器见 `electron/providers/opencode.ts`，通过 ACP stdio 连接私有 CLI 服务。与 Grok 共用 `acp-events.ts` 的文本／工具转换，底座专有命令分开处理。元数据与构造器分别登记在 `shared/providers.ts` 和 `electron/providers/registry.ts`。
 
@@ -273,4 +274,4 @@ OpenCode v2 适配器见 `electron/providers/opencode.ts`，通过 ACP stdio 连
 
 ### 显式共享后台
 
-设置 `MOOSE_SHARED_RUNTIME_FILE` 后，Electron 主进程用 `SharedRuntime` 替代自有 `RuntimeHost`，读取 Web 服务的私有连接文件，通过已认证 HTTP 请求和 SSE 使用同一个 MooseService。桌面原生文件选择保留在主进程，选定项目转为服务请求，附件通过已有上传接口传入。退出桌面只关闭连接，独立 Web 服务继续拥有数据库、任务和终端。不设置该变量时仍使用原来的 utility process；没有自动数据迁移。
+设置 `MOOSE_SHARED_RUNTIME_FILE` 后，Electron 主进程用 `SharedRuntime` 替代自有 `RuntimeHost`，读取 Web 服务的私有连接文件，通过已认证 HTTP 请求和 SSE 使用同一个 MooseService。桌面原生文件选择保留在主进程，选定项目转为服务请求，附件通过已有上传接口传入。退出桌面只关闭连接，独立 Web 服务继续拥有数据库、任务和终端。不设置该变量时，安装版自动在原桌面数据目录启动服务，开发与隔离测试仍保留 utility process。数据不搬迁、不合并；无需引入另一套迁移管线。安装版自动后台只监听回环地址，版本不匹配时拒绝业务请求，允许用户从菜单停止旧服务。

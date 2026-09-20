@@ -1,6 +1,6 @@
 // utility process 入口：创建数据库和业务服务，处理主进程请求并回传结果或事件。
 import { join } from 'node:path';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, existsSync } from 'node:fs';
 import { Store } from './db/store';
 import { MooseService } from './service';
 const port = process.parentPort;
@@ -8,6 +8,8 @@ if (!port) throw new Error('Moose runtime must be launched as a utility process'
 const data = process.argv[2];
 if (!data) throw new Error('Missing runtime data directory');
 mkdirSync(data, { recursive: true });
+if (existsSync(join(data, 'server.lock')))
+  throw new Error('Stop the shared background service before opening this data in local mode');
 const store = new Store(join(data, 'moose.sqlite'));
 const service = new MooseService(store, (event) => port.postMessage({ event }));
 // 接收父进程消息；下划线方法仅供主进程内部调用，其余交给 Service 白名单校验。

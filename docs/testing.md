@@ -46,3 +46,5 @@ MOOSE_TEST_BACKGROUND=0 pnpm exec tsx scripts/package-smoke.ts
 性能脚本使用临时数据、禁用代理发现，以同一个空工作区连续启动三次。它测量温缓存下欢迎界面可见的耗时、进程工作集之和与 renderer JS 堆，不是冷启动或长会话压力测试。解释与本轮结果见[面试指南](interview/project-interview-guide.md)。
 
 历史发布的验证证据保留在各版[发布记录](releases/0.15.0.md)，本页只维护当前方法。Web 启动与限制见 [Web 使用说明](web.md)，底座支持范围见[原生能力](providers/native-capabilities.md)。
+
+安装版验收现在使用自动共享模式：在隔离的原数据目录启动后台，测试结束后显式停止。桌面回归保留一个完整流程，验证旧会话可读、退出后终端存活、再次打开复用同一 PID，以及菜单停止服务；不为每个菜单重复铺设独立用例。

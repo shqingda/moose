@@ -9,12 +9,15 @@ export class SharedRuntime {
   private origin = '';
   private cookie = '';
   private token = '';
+  private version?: string;
   private connection?: Promise<void>;
   private controller = new AbortController();
   private stream?: Promise<void>;
   constructor(
     private file: string,
     private emit: (event: AppEvent) => void,
+    private prepare?: () => Promise<void>,
+    private expectedVersion?: string,
   ) {}
 
   private connect() {
@@ -26,6 +29,7 @@ export class SharedRuntime {
     return this.connection;
   }
   private async authenticate() {
+    await this.prepare?.();
     const info = await stat(this.file);
     if (info.mode & 0o077 || (process.getuid && info.uid !== process.getuid()))
       throw new Error('Shared runtime connection file must be private (0600)');
@@ -44,6 +48,7 @@ export class SharedRuntime {
       throw new Error('Invalid local runtime connection');
     if (this.cookie && this.origin === url.origin && this.token === config.token) return;
     this.origin = url.origin;
+    this.version = config.version;
     const response = await fetch(this.origin + '/api/login', {
       method: 'POST',
       redirect: 'error',
@@ -115,6 +120,14 @@ export class SharedRuntime {
   }
   async request(method: string, params: unknown): Promise<unknown> {
     await this.connect();
+    if (
+      this.expectedVersion &&
+      this.version !== this.expectedVersion &&
+      !['webStopService', 'webDisconnect'].includes(method)
+    )
+      throw new Error(
+        'Background service version changed. Choose Moose → Quit and Stop Background Service, then reopen Moose.',
+      );
     if (method === '_addProject') method = 'webAddProject';
     else if (method === '_importAttachments') {
       const paths = (params as { paths: string[] }).paths;
@@ -143,8 +156,27 @@ export class SharedRuntime {
     if (!response.ok) throw new Error(body.error || 'Shared runtime request failed');
     return body.result;
   }
+  async browserURL() {
+    await this.connect();
+    return this.origin + '/#token=' + this.token;
+  }
+  async stop() {
+    await this.request('webStopService', {});
+    await this.close();
+  }
   async close() {
+    if (this.controller.signal.aborted) return;
     this.controller.abort();
     await this.stream;
+    if (this.cookie) {
+      // Repeated desktop launches must not consume the server's browser-session limit.
+      await fetch(this.origin + '/api/request', {
+        method: 'POST',
+        redirect: 'error',
+        headers: { Origin: this.origin, Cookie: this.cookie, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ method: 'webDisconnect', params: {} }),
+        signal: AbortSignal.timeout(2000),
+      }).catch(() => {});
+    }
   }
 }

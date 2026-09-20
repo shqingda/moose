@@ -23,7 +23,7 @@ pnpm dev
 - **读源码**：[架构与调用链](docs/architecture.md) → [开发与打包](docs/development.md)
 - **了解 Pi**：[接入方式与能力边界](docs/providers/pi.md)
 - **核对质量**：[测试与验证范围](docs/testing.md) → [发布记录](docs/README.md#发布记录)
-- **浏览器入口**：[Web 启动与 OpenCode v2 接入](docs/web.md)（0.15.0 实验入口，需从源码启动）
+- **浏览器入口**：[Web 启动与 OpenCode v2 接入](docs/web.md)（安装版可从 Moose 菜单直接打开）
 - **准备面试**：[完整项目面试指南](docs/interview/project-interview-guide.md) → [题目](docs/interview/questions.md) / [答案](docs/interview/answers.md)
 
 安装包使用 ad-hoc 签名并验证完整性，尚未进行 Apple 公证。首次下载可能需要在“系统设置 → 隐私与安全性”中允许打开，详见使用指南。

@@ -120,6 +120,16 @@ test('browser login, project selection, OpenCode approval and terminal survive p
   const page = await app.firstWindow();
   await page.goto(url);
   await expect(page.locator('.app-shell')).toBeVisible();
+  const loginCookie = (await page.context().cookies()).find(
+    (item) => item.name === 'moose_session',
+  )!.value;
+  await page.goto('about:blank');
+  await page.goto(url); // A fresh page from the native browser link reuses this browser's login.
+  await expect(page.locator('.app-shell')).toBeVisible();
+  expect(
+    (await page.context().cookies()).find((item) => item.name === 'moose_session')!.value,
+  ).toBe(loginCookie);
+
   expect(page.url()).not.toContain('token=');
   expect(await page.evaluate(() => window.moose.host)).toBe('web');
   const sidebar = page.locator('.sidebar');

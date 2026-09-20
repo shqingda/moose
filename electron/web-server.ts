@@ -19,6 +19,7 @@ import { Store } from './db/store';
 import { nativeDirectoryAvailable, pickWebDirectory } from './web-directory-dialog';
 import { MooseService } from './service';
 import type { AppEvent } from '../shared/types';
+import { version } from '../package.json';
 
 const root = resolve(fileURLToPath(new URL(/* @vite-ignore */ '.', import.meta.url)), '../../dist');
 const data = resolve(process.env.MOOSE_WEB_DATA_DIR || join(homedir(), '.moose/web'));
@@ -84,6 +85,11 @@ const server = createServer(async (req, res) => {
       'Content-Security-Policy',
       "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; object-src 'none'",
     );
+    const cookie = req.headers.cookie
+      ?.split(';')
+      .map((v) => v.trim())
+      .find((v) => v.startsWith('moose_session='))
+      ?.slice(14);
     if (url.pathname === '/api/login' && req.method === 'POST') {
       if (req.headers.origin !== requestOrigin) {
         json(res, 403, { error: 'Untrusted origin' });
@@ -92,6 +98,10 @@ const server = createServer(async (req, res) => {
       const input = await body(req);
       if (typeof input.token !== 'string' || !equal(input.token, secret)) {
         json(res, 401, { error: 'Invalid access token' });
+        return;
+      }
+      if (cookie && sessions.has(cookie)) {
+        json(res, 200, { ok: true });
         return;
       }
       if (sessions.size >= 32) {
@@ -110,11 +120,6 @@ const server = createServer(async (req, res) => {
       return;
     }
     if (url.pathname.startsWith('/api/')) {
-      const cookie = req.headers.cookie
-        ?.split(';')
-        .map((v) => v.trim())
-        .find((v) => v.startsWith('moose_session='))
-        ?.slice(14);
       if (!cookie || !sessions.has(cookie)) {
         json(res, 401, { error: 'Open the access link printed by the Moose web service.' });
         return;
@@ -273,7 +278,7 @@ try {
   if (!address || typeof address === 'string') throw new Error('Web service did not bind');
   origin = `http://127.0.0.1:${address.port}`;
   const connectionTemp = connectionFile + '.' + process.pid;
-  await writeFile(connectionTemp, JSON.stringify({ origin, token: secret }), {
+  await writeFile(connectionTemp, JSON.stringify({ origin, token: secret, version }), {
     mode: 0o600,
     flag: 'wx',
   });

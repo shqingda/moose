@@ -50,3 +50,40 @@ it('does not repeat a write after the response connection is lost', async () => 
   await runtime.close();
   expect(server.listening).toBe(true);
 });
+
+it('blocks business writes to an older service but permits shutdown and releases its login', async () => {
+  const methods: string[] = [];
+  server = createServer((request, response) => {
+    if (request.url === '/api/login') {
+      response.setHeader('Set-Cookie', 'moose_session=test; HttpOnly');
+      response.end('{}');
+    } else if (request.url === '/api/events') {
+      response.writeHead(200, { 'Content-Type': 'text/event-stream' });
+      response.write('data: {"type":"changed"}\n\n');
+    } else {
+      let body = '';
+      request.on('data', (chunk) => {
+        body += chunk;
+      });
+      request.on('end', () => {
+        methods.push(JSON.parse(body).method);
+        response.setHeader('Content-Type', 'application/json');
+        response.end('{"result":null}');
+      });
+    }
+  });
+  await new Promise<void>((resolve) => server!.listen(0, '127.0.0.1', resolve));
+  const address = server.address() as { port: number };
+  runtime = new SharedRuntime(
+    await config('http://127.0.0.1:' + address.port),
+    () => {},
+    undefined,
+    'new-version',
+  );
+  await expect(runtime.request('gitCommit', {})).rejects.toThrow('version changed');
+  expect(methods).toEqual([]);
+  await runtime.stop();
+  expect(methods).toEqual(['webStopService', 'webDisconnect']);
+  await runtime.close();
+  expect(methods).toHaveLength(2);
+});

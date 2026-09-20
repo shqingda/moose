@@ -15,6 +15,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { join, resolve, relative, isAbsolute } from 'node:path';
 import { RuntimeHost } from './runtime-host';
 import { SharedRuntime } from './shared-runtime';
+import { desktopRuntime } from './desktop-runtime';
 import { openEditor } from './editor';
 import { validate } from '../shared/validation';
 import type { AppEvent, Method, Requests, Snapshot, Settings } from '../shared/types';
@@ -37,7 +38,10 @@ const emit = (event: AppEvent) => {
 };
 const runtime = process.env.MOOSE_SHARED_RUNTIME_FILE
   ? new SharedRuntime(process.env.MOOSE_SHARED_RUNTIME_FILE, emit)
-  : new RuntimeHost(join(directory, '../runtime/runtime.js'), app.getPath('userData'), emit);
+  : process.env.MOOSE_RUNTIME_MODE === 'shared' ||
+      (app.isPackaged && !process.env.MOOSE_DATA_DIR && process.env.MOOSE_RUNTIME_MODE !== 'local')
+    ? desktopRuntime(join(directory, '../web-server/web-server.js'), app.getPath('userData'), emit)
+    : new RuntimeHost(join(directory, '../runtime/runtime.js'), app.getPath('userData'), emit);
 process.on('SIGTERM', () => app.quit());
 process.on('SIGINT', () => app.quit());
 const appearance = () => ({
@@ -131,7 +135,37 @@ function menu(language: Settings['language'] = 'system') {
           { role: 'hideOthers' },
           { role: 'unhide' },
           { type: 'separator' },
-          { role: 'quit' },
+          {
+            label: zh ? '在浏览器中打开' : 'Open in Browser',
+            visible: runtime instanceof SharedRuntime,
+            click: () => {
+              if (runtime instanceof SharedRuntime)
+                void runtime
+                  .browserURL()
+                  .then((url) => shell.openExternal(url))
+                  .catch((error) => emit({ type: 'runtime-error', error: String(error) }));
+            },
+          },
+          {
+            label: zh ? '退出并停止后台' : 'Quit and Stop Background Service',
+            visible: runtime instanceof SharedRuntime,
+            click: () => {
+              if (runtime instanceof SharedRuntime)
+                void runtime
+                  .stop()
+                  .then(() => app.quit())
+                  .catch((error) => emit({ type: 'runtime-error', error: String(error) }));
+            },
+          },
+          {
+            role: 'quit',
+            label:
+              runtime instanceof SharedRuntime
+                ? zh
+                  ? '退出 Moose（后台继续运行）'
+                  : 'Quit Moose (Keep Background Running)'
+                : undefined,
+          },
         ],
       },
       {
@@ -291,9 +325,9 @@ else {
     void createWindow();
   });
   app.on('window-all-closed', () => {
-    /* macOS keeps active tasks running until Cmd+Q. */
+    /* Closing the window leaves tasks running. */
   });
-  // 退出前等待后台取消任务并落库；第二次 app.quit 才真正结束应用。
+  // Local mode stops its service; shared mode only disconnects this client.
   app.on('before-quit', (event) => {
     if (quitting) return;
     event.preventDefault();

@@ -4,6 +4,7 @@ import { _electron as electron, expect } from '@playwright/test';
 import { mkdtemp, mkdir, rm, readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
+import { SharedRuntime } from '../electron/shared-runtime';
 execFileSync('/usr/bin/codesign', [
   '--verify',
   '--deep',
@@ -25,6 +26,7 @@ const app = await electron.launch({
   env: {
     ...env,
     MOOSE_DATA_DIR: dir,
+    MOOSE_RUNTIME_MODE: 'shared',
     MOOSE_TEST_BACKGROUND: process.env.MOOSE_TEST_BACKGROUND || '1',
   },
 });
@@ -161,5 +163,21 @@ try {
   );
 } finally {
   await app.close();
+  const runtime = new SharedRuntime(join(dir, 'connection.json'), () => {});
+  try {
+    await runtime.stop();
+    await expect
+      .poll(async () => {
+        try {
+          await readFile(join(dir, 'server.lock'));
+          return true;
+        } catch {
+          return false;
+        }
+      })
+      .toBe(false);
+  } finally {
+    await runtime.close();
+  }
   await rm(dir, { recursive: true, force: true });
 }
