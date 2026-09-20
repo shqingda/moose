@@ -1,5 +1,4 @@
 import { useContext, useEffect, useState } from 'react';
-import { CircleGauge } from 'lucide-react';
 import type { Provider, UsageInfo } from '../../shared/types';
 import { Popover, PopoverTrigger, PopoverContent } from './ui/popover';
 import { Button } from './ui/button';
@@ -73,11 +72,43 @@ export function UsagePanel({ provider, sessionId }: { provider: Provider; sessio
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
-        render={<Button variant="ghost" size="icon" aria-label={t('usage')} title="⌘ U" />}
+        openOnHover
+        delay={120}
+        closeDelay={180}
+        render={
+          <Button
+            variant="ghost"
+            size="icon"
+            className="usage-trigger"
+            aria-label={t('usage')}
+            title="⌘ U"
+          />
+        }
       >
-        <CircleGauge size={18} />
+        <svg className="usage-indicator" viewBox="0 0 20 20" aria-hidden="true">
+          <circle
+            cx="10"
+            cy="10"
+            r="7"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            opacity="0.2"
+          />
+          <circle
+            cx="10"
+            cy="10"
+            r="7"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            pathLength="100"
+            strokeDasharray={`${percent ?? 0} 100`}
+            transform="rotate(-90 10 10)"
+          />
+        </svg>
       </PopoverTrigger>
-      <PopoverContent className="usage-popup" side="top" align="end">
+      <PopoverContent className="usage-popup" side="top" align="start" initialFocus={false}>
         <div className="usage-heading">
           <strong>{t('contextWindow')}</strong>
           <span>
@@ -116,9 +147,13 @@ export function UsagePanel({ provider, sessionId }: { provider: Provider; sessio
                   <div className="usage-heading">
                     <span>
                       {w.minutes === 10080
-                        ? 'Weekly limit'
+                        ? locale === 'zh-CN'
+                          ? '每周额度'
+                          : 'Weekly limit'
                         : w.minutes === 43200
-                          ? 'Monthly limit'
+                          ? locale === 'zh-CN'
+                            ? '每月额度'
+                            : 'Monthly limit'
                           : w.minutes
                             ? `${w.minutes / 60}h limit`
                             : t('planLimits')}

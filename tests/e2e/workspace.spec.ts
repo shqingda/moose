@@ -546,8 +546,45 @@ test('provider switches persist and usage displays actual windows through Cmd U'
   await page.locator('#composer').fill('inspect-input');
   await page.locator('#composer').press('Enter');
   await expect(page.locator('.markdown')).toBeVisible();
-  await page.getByRole('button', { name: 'Usage', exact: true }).click();
+  await page.getByRole('button', { name: 'Usage', exact: true }).hover();
   await expect(page.locator('.usage-popup')).toContainText('1.2k /128.0k (1%)');
+  await page.locator('.usage-popup').hover();
+  await expect(page.locator('.usage-popup')).toBeVisible();
+  await page.locator('.workspace-header').hover();
+  await expect(page.locator('.usage-popup')).not.toBeVisible();
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.getByRole('button', { name: 'Review changes', exact: true }).click();
+  await expect
+    .poll(() =>
+      page
+        .locator('.review-frame')
+        .evaluate((el) =>
+          Math.abs(
+            el.getBoundingClientRect().width -
+              el.querySelector('.review-panel')!.getBoundingClientRect().width,
+          ),
+        ),
+    )
+    .toBeLessThan(1);
+  const controls = page.locator('.composer-controls');
+  await expect
+    .poll(async () =>
+      controls.evaluate((el) => {
+        const items = ['.usage-trigger', '.model-list-trigger', '.send-button'].map((s) =>
+          el.querySelector(s)!.getBoundingClientRect(),
+        );
+        return (
+          Math.max(...items.map((r) => r.y + r.height / 2)) -
+          Math.min(...items.map((r) => r.y + r.height / 2))
+        );
+      }),
+    )
+    .toBeLessThan(2);
+  expect(await controls.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
+  await page.screenshot({ path: 'test-results/composer-review-alignment.png' });
+  await page.getByRole('button', { name: 'Usage', exact: true }).hover();
+  await expect(page.locator('.usage-popup')).toBeVisible();
+  await page.screenshot({ path: 'test-results/usage-hover-compact.png' });
 });
 
 test('aligns sidebar labels at unchanged row heights and reveals message times on hover', async () => {

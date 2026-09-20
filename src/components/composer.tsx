@@ -375,6 +375,7 @@ export function Composer({
             />
           </div>
           <div className="composer-models">
+            <UsagePanel provider={provider} sessionId={session?.id} />
             <ModelPicker
               value={options.model}
               provider={provider}
@@ -411,7 +412,6 @@ export function Composer({
             )}
           </div>
           <div className="composer-send-actions">
-            <UsagePanel provider={provider} sessionId={session?.id} />
             {busy && (
               <IconButton label={t('stop')} onClick={onStop}>
                 <Square fill="currentColor" />

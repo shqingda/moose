@@ -48,6 +48,7 @@ export function ModelPicker({
             className="compact-picker model-list-trigger"
             disabled={disabled}
             aria-label={t('model')}
+            title={selected}
           />
         }
       >
