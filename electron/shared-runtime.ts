@@ -1,9 +1,11 @@
 import { readFile, stat } from 'node:fs/promises';
 import { basename } from 'node:path';
+import { randomUUID } from 'node:crypto';
 import type { AppEvent } from '../shared/types';
 
 /** Desktop client of the single loopback execution service; closing this client never stops it. */
 export class SharedRuntime {
+  private clientId = randomUUID();
   private origin = '';
   private cookie = '';
   private token = '';
@@ -134,7 +136,7 @@ export class SharedRuntime {
       method: 'POST',
       redirect: 'error',
       headers: { Origin: this.origin, Cookie: this.cookie, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ method, params }),
+      body: JSON.stringify({ method, params, clientId: this.clientId }),
       signal: AbortSignal.any([this.controller.signal, AbortSignal.timeout(240000)]),
     });
     const body = await response.json();

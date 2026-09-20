@@ -231,10 +231,10 @@ export class MooseService {
     }
   }
   /** 后台业务入口：校验 IPC 参数后分发项目、消息、审批、用量和 Git 操作。 */
-  async handle(method: string, input: unknown): Promise<unknown> {
+  async handle(method: string, input: unknown, clientId = 'local'): Promise<unknown> {
     if (this.stopping) throw new Error('Moose is shutting down');
     const args = validate(method as keyof Requests, input);
-    if (isBackgroundMethod(method)) return this.background.handle(method, args);
+    if (isBackgroundMethod(method)) return this.background.handle(method, args, clientId);
     if (isExtensionMethod(method)) return this.extensions.handle(method, args);
     if (isReviewMethod(method)) return this.workbench.handle(method, args);
     if (isWorktreeMethod(method)) return this.worktrees.handle(method, args);

@@ -143,6 +143,16 @@ const server = createServer(async (req, res) => {
         const input = await body(req);
         if (typeof input.method !== 'string' || input.method.startsWith('_'))
           throw new Error('Unknown operation');
+        const clientId =
+          typeof input.clientId === 'string' &&
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input.clientId)
+            ? input.clientId
+            : undefined;
+        if (
+          ['terminalControl', 'terminalInput', 'terminalResize'].includes(input.method) &&
+          !clientId
+        )
+          throw new Error('Missing terminal client identity');
         let result: unknown;
         if (input.method === 'webRuntimeStatus')
           result = { data: await realpath(data), pid: process.pid };
@@ -188,7 +198,7 @@ const server = createServer(async (req, res) => {
           )
             throw new Error('Choose an absolute directory on the server');
           result = await service.addProject(input.params.path);
-        } else result = await service.handle(input.method, input.params);
+        } else result = await service.handle(input.method, input.params, clientId ?? 'legacy-web');
         json(res, 200, { result });
         return;
       }

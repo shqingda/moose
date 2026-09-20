@@ -337,6 +337,7 @@ export type Method = keyof Requests;
 export type AppEvent =
   | { type: 'terminal-output'; output: import('./terminal').TerminalOutput }
   | { type: 'terminal-sync' }
+  | { type: 'terminal-control'; id: string }
   | { type: 'transcript-reset'; sessionId: string }
   | { type: 'changed' }
   | { type: 'message'; message: Message }

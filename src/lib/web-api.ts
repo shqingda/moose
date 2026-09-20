@@ -1,11 +1,14 @@
 import type { AppEvent, MooseAPI, Snapshot, Attachment, Method } from '../../shared/types';
 
+const clientId = crypto.randomUUID();
+
 export async function webRequest(method: string, params: unknown): Promise<unknown> {
   // Writes are deliberately never retried: a lost response may already have committed.
   const response = await fetch('/api/request', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ method, params }),
+    body: JSON.stringify({ method, params, clientId }),
+    signal: method === 'terminalControl' ? AbortSignal.timeout(10000) : undefined,
   });
   const body = await response.json();
   if (!response.ok) throw new Error(body.error || 'Request failed');

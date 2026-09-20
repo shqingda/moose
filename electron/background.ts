@@ -10,6 +10,7 @@ type Method = keyof BackgroundRequests;
 type Command = { [K in Method]: { method: K; args: BackgroundRequests[K] } }[Method];
 export const isBackgroundMethod = (method: string): method is Method =>
   [
+    'terminalControl',
     'terminalList',
     'terminalStart',
     'terminalRead',
@@ -38,17 +39,22 @@ export class Background {
     const records = new BackgroundStore(store);
     const locks = new BackgroundLocks(hooks.lock);
     this.acquireDirectory = locks.acquire;
-    this.terminals = new TerminalSessions(store, locks.acquire, (output) =>
-      hooks.emit({ type: 'terminal-output', output }),
+    this.terminals = new TerminalSessions(
+      store,
+      locks.acquire,
+      (output) => hooks.emit({ type: 'terminal-output', output }),
+      (id) => hooks.emit({ type: 'terminal-control', id }),
     );
     this.commands = new CommandJobs(records, locks.acquire);
     this.schedules = new Schedules(records, this.commands, hooks);
   }
-  async handle(method: Method, args: unknown) {
-    return this.dispatch({ method, args } as Command);
+  async handle(method: Method, args: unknown, clientId = 'local') {
+    return this.dispatch({ method, args } as Command, clientId);
   }
-  private async dispatch(command: Command) {
+  private async dispatch(command: Command, clientId: string) {
     switch (command.method) {
+      case 'terminalControl':
+        return this.terminals.control(command.args, clientId);
       case 'terminalList':
         return this.terminals.list(command.args.projectId);
       case 'terminalStart':
@@ -56,10 +62,10 @@ export class Background {
       case 'terminalRead':
         return this.terminals.read(command.args);
       case 'terminalInput':
-        this.terminals.input(command.args);
+        this.terminals.input(command.args, clientId);
         return null;
       case 'terminalResize':
-        this.terminals.resize(command.args);
+        this.terminals.resize(command.args, clientId);
         return null;
       case 'terminalStop':
         await this.terminals.stop(command.args.id);

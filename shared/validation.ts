@@ -66,9 +66,14 @@ export const schemas = {
     id,
     offset: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
   }),
-  terminalInput: z.strictObject({ id, text: z.string().max(16000) }),
-  terminalResize: z.strictObject({ id, ...terminalSize }),
+  terminalInput: z.strictObject({ id, text: z.string().max(16000), lease: id.optional() }),
+  terminalResize: z.strictObject({ id, ...terminalSize, lease: id.optional() }),
   terminalStop: z.strictObject({ id }),
+  terminalControl: z.strictObject({
+    id,
+    action: z.enum(['acquire', 'takeover', 'renew', 'release']),
+    lease: id.optional(),
+  }),
   commandList: z.strictObject(backgroundScope),
   commandRead: z.strictObject({ id }),
   commandStart: z.strictObject({

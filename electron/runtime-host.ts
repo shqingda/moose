@@ -2,6 +2,7 @@ import { utilityProcess, type UtilityProcess } from 'electron';
 import { randomUUID } from 'node:crypto';
 import type { AppEvent } from '../shared/types';
 export class RuntimeHost {
+  private clientId = randomUUID();
   private child?: UtilityProcess;
   private pending = new Map<
     string,
@@ -102,7 +103,7 @@ export class RuntimeHost {
         )[method] || 20000,
       );
       this.pending.set(id, { resolve, reject, timer });
-      this.child!.postMessage({ id, method, params });
+      this.child!.postMessage({ id, method, params, clientId: this.clientId });
     });
   }
   /** 先请求后台有序停止和落库，最后确保 utility process 退出。 */

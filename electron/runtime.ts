@@ -12,7 +12,7 @@ const store = new Store(join(data, 'moose.sqlite'));
 const service = new MooseService(store, (event) => port.postMessage({ event }));
 // 接收父进程消息；下划线方法仅供主进程内部调用，其余交给 Service 白名单校验。
 port.on('message', async ({ data: request }) => {
-  const { id, method, params } = request;
+  const { id, method, params, clientId } = request;
   try {
     let result: unknown;
     if (method === '_shutdown') {
@@ -24,7 +24,7 @@ port.on('message', async ({ data: request }) => {
       result = await Promise.all(
         (params.paths as string[]).map((path) => service.attachments.importPath(path)),
       );
-    else result = await service.handle(method, params);
+    else result = await service.handle(method, params, clientId);
     port.postMessage({ id, result });
   } catch (error) {
     port.postMessage({ id, error: error instanceof Error ? error.message : String(error) });

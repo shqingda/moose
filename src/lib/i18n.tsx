@@ -41,6 +41,8 @@ export const en = {
   ptyEnded: 'Ended',
   ptyRunning: 'Open',
   ptyTruncated: 'Older terminal output was trimmed.',
+  ptyReadOnly: 'Viewing only',
+  ptyTakeControl: 'Take control',
   ptyEmpty: 'Open a shell in this workspace. Supports interactive programs and keyboard shortcuts.',
   ptyHint:
     'The terminal reserves this directory until closed. Closing the panel keeps it running; quitting Moose stops it.',
@@ -475,6 +477,8 @@ export const zh: Record<TranslationKey, string> = {
   ptyEnded: '已结束',
   ptyRunning: '已打开',
   ptyTruncated: '较早的终端输出已截断。',
+  ptyReadOnly: '仅查看',
+  ptyTakeControl: '接管终端',
   ptyEmpty: '在当前工作目录打开 Shell，支持交互程序和键盘快捷键。',
   ptyHint: '终端关闭前独占此目录。收起面板会继续运行，退出 Moose 时停止。',
   bgTabCommands: '命令',

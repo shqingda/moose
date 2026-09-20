@@ -1,4 +1,5 @@
 import { hostname, userInfo } from 'node:os';
+import { TerminalControls } from './terminal-control';
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
@@ -22,13 +23,16 @@ const limit = 1024 * 1024;
 export class TerminalSessions {
   private active = new Map<string, Active>();
   private closed = false;
+  private controls: TerminalControls;
   private timer: ReturnType<typeof setInterval>;
   private streamTimer: ReturnType<typeof setInterval>;
   constructor(
     private store: Store,
     private lock: (cwd: string) => () => void,
     private emit: (output: TerminalOutput) => void = () => {},
+    controlChanged: (id: string) => void = () => {},
   ) {
+    this.controls = new TerminalControls(controlChanged);
     for (const record of this.records())
       if (record.status === 'running') {
         record.status = 'unknown';
@@ -200,6 +204,7 @@ export class TerminalSessions {
         .run(record.projectId, record.projectId);
       this.publish(active);
       this.active.delete(record.id);
+      this.controls.remove(record.id);
       unlock();
       finish();
       failed(new Error('Terminal exited before startup completed'));
@@ -219,18 +224,26 @@ export class TerminalSessions {
     if (active.child.stdin.writableLength > 128 * 1024) throw new Error('Terminal input is busy');
     active.child.stdin.write(JSON.stringify(value) + '\n');
   }
-  input({ id, text }: TerminalRequests['terminalInput']) {
+  control(args: TerminalRequests['terminalControl'], client: string) {
+    const active = this.active.get(args.id);
+    if (!active || active.stopping) throw new Error('Terminal is no longer running');
+    return this.controls.update(args, client);
+  }
+  input({ id, text, lease }: TerminalRequests['terminalInput'], client = 'local') {
     const active = this.active.get(id);
     if (!active || active.stopping) throw new Error('Terminal is no longer running');
+    this.controls.assert(id, client, lease);
     this.send(active, { type: 'input', text });
   }
-  resize({ id, cols, rows }: TerminalRequests['terminalResize']) {
+  resize({ id, cols, rows, lease }: TerminalRequests['terminalResize'], client = 'local') {
     const active = this.active.get(id);
     if (!active || active.stopping) return;
+    this.controls.assert(id, client, lease);
     this.send(active, { type: 'resize', cols, rows });
     active.record.cols = cols;
     active.record.rows = rows;
     active.dirty = true;
+    this.publish(active);
   }
   async stop(id: string, status: 'cancelled' | 'interrupted' = 'cancelled') {
     const active = this.active.get(id);

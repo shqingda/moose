@@ -310,6 +310,63 @@ test('browser login, project selection, OpenCode approval and terminal survive p
     project!.id,
   );
   expect(desktopTerminals[0].id).toBe(terminal.id);
+  await desktopPage.evaluate(
+    (id) => window.moose.request('terminalControl', { id, action: 'acquire' }),
+    terminal.id,
+  );
+  const deniedInput = await page.evaluate(async (id) => {
+    const errors: string[] = [];
+    for (const operation of [
+      () => window.moose.request('terminalInput', { id, text: 'must not execute' }),
+      () => window.moose.request('terminalResize', { id, cols: 10, rows: 2 }),
+    ]) {
+      try {
+        await operation();
+      } catch (error) {
+        errors.push(String(error));
+      }
+    }
+    return errors;
+  }, terminal.id);
+  expect(deniedInput).toHaveLength(2);
+  expect(deniedInput.every((error) => error.includes('another window'))).toBe(true);
+  await page.getByRole('button', { name: 'Background commands & schedules', exact: true }).click();
+  await expect(page.getByText('Viewing only', { exact: true })).toBeVisible();
+  await expect
+    .poll(async () => (await page.locator('.xterm-rows').innerText()).trim().length)
+    .toBeGreaterThan(0);
+  const hintBox = await page.getByText('Viewing only', { exact: true }).boundingBox();
+  const screenBox = await page.locator('.terminal-screen').boundingBox();
+  expect(hintBox!.y + hintBox!.height).toBeLessThanOrEqual(screenBox!.y);
+  await page.screenshot({ path: 'test-results/terminal-viewer.png', animations: 'disabled' });
+  await page.getByRole('button', { name: 'Take control', exact: true }).click();
+  await expect(page.getByText('Viewing only', { exact: true })).toHaveCount(0);
+  const displaced = await desktopPage.evaluate(async (id) => {
+    try {
+      await window.moose.request('terminalInput', { id, text: 'must not execute' });
+      return '';
+    } catch (error) {
+      return String(error);
+    }
+  }, terminal.id);
+  expect(displaced).toContain('another window');
+  await page.keyboard.press('Control+Backquote');
+  await expect(page.locator('.xterm-screen')).toHaveCount(0);
+  await expect
+    .poll(() =>
+      desktopPage
+        .evaluate(
+          (id) => window.moose.request('terminalControl', { id, action: 'acquire' }),
+          terminal.id,
+        )
+        .then((control) => control.owned),
+    )
+    .toBe(true);
+  await desktopPage.evaluate(async (id) => {
+    const control = await window.moose.request('terminalControl', { id, action: 'acquire' });
+    await window.moose.request('terminalControl', { id, action: 'release', lease: control.lease! });
+  }, terminal.id);
+
   await desktop.close();
   desktop = undefined;
   await page.goto('about:blank');
