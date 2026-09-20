@@ -20,7 +20,7 @@ Moose 不安装或捆绑 Pi，也不复制其凭据。实现依据 Pi 0.85.1 的
 
 ## 调用脉络
 
-模型选择 → 受校验的 IPC → MooseService 排队 → createAdapter → PiAdapter → `pi --mode rpc`。
+模型选择 → 受校验的宿主请求（桌面 IPC／Web HTTP）→ MooseService 排队 → createAdapter → PiAdapter → `pi --mode rpc`。
 
 Pi 返回 JSONL 命令响应和事件。`piCodec` 只转换消息信封，共用原有传输层的请求关联、超时、缓冲限制和进程退出清理。`normalizePi` 将文本、思考和工具事件转成统一 AgentEvent；renderer 无需增加 Pi 专用时间线。
 

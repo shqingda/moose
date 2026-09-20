@@ -1,64 +1,77 @@
-# 原生能力、Moose 接入与当前缺口
+# 底座能力与接入边界
 
-核查日期：2026-09-18 至 2026-09-19。下表以 0.11.0 为发布基线；安装包验收见对应发布记录。
+以 Moose **0.17.0** 为基线，核对日期为 2026-09-20。下表描述 Moose 已经接入的能力，不评价各 CLI 的全部功能。入口同时受本机版本、握手结果和会话状态约束；底座名称相同，不代表所有安装环境都可用。
 
-## 子代理
+## 支持范围
 
-0.8.1 已移除输入框的子代理开关及额外委派提示。Codex、Grok 根据任务、原生工具和自身配置决定是否使用子代理，Moose 默认接收和展示相应活动，并转接受支持的审批；不另建调度器，也不强制每轮创建子任务。底座明确禁用的功能仍由底座配置决定。旧草稿中的 subagents 字段仅为兼容保留，不再影响请求。0.8.0 及更早安装包仍包含原开关。
+| 能力 | Codex | Grok Build | Pi | OpenCode v2 |
+| --- | --- | --- | --- | --- |
+| 对话、模型选择、原生会话延续 | 支持 | 支持 | 支持 | 支持 |
+| 权限档位 | 请求批准、原生自动审核、完全访问 | 请求批准、完全访问 | 仅完全访问 | 请求审批，遵循 CLI 配置 |
+| 原生 Plan 审阅后执行 | 支持 | 未接入 | 未接入 | 未接入 |
+| Goal | `thread/goal/*` | ACP 转交 `/goal` | 未接入 | 未接入 |
+| 当前回合插话 | `turn/steer` | `_x.ai/interject` | 普通队列 | 普通队列 |
+| 原生子代理 | 活动、历史面板及受限控制 | 工具活动与结果 | 未接入专门管理 | 未接入专门管理 |
+| 浏览与导入 CLI 历史 | 支持 | 回放导入 | 未接入 | 未接入 |
+| 显式分叉、手动压缩、原生代码审查 | 支持 | 未接入 | 未接入 | 未接入 |
+| 配置、MCP、插件管理 | 用户级首批能力；Hooks 只读 | 使用 CLI | 使用 CLI | 使用 CLI |
+| 套餐额度查询 | 原生额度接口 | 原生 billing 扩展 | 未接入 | 未接入 |
 
-Codex 的 `collabAgentToolCall`、`subAgentActivity` 转成可展开的活动记录，展示任务、底座提供的模型、代理 ID、状态与结果。工具调用已返回与子任务已完成分开表示。已识别子线程的审批转交现有审批界面；子线程完成通知不会结束主任务。
+会话延续与历史导入是两件事：前者在后续消息中复用当前原生会话，后者浏览并引入用户此前在 CLI 中创建的会话。图片输入按实际模型或握手能力开放。Pi 的扩展提问不是工具审批沙箱。
 
-Grok 使用原生 ACP 运行委派，活动按 CLI 的工具标题展示，结果支持 `content` 和 `rawOutput`。当前未假设 Grok 提供 Codex 同款结构化子线程列表，因此没有伪造统一代理树。
+底座注册与构造入口为 [providers.ts](../../shared/providers.ts) 和 [registry.ts](../../electron/providers/registry.ts)，统一接口见 [AgentAdapter](../../electron/providers/types.ts)。协议差异与完成信号见[技术架构](../architecture.md#6-代理接入统一接口保留能力差异)。
 
-第二阶段新增 Codex 子代理独立面板，展示父线程、原生状态、模型和历史。父任务仍活动且底座允许直接输入时可发送；可单独中断子线程的活动回合。底座接收控制请求不等于子任务完成。恢复关闭的子任务仍需主代理执行；`thread/resume` 只加载会话，不能冒充恢复任务。没有单独选择子代理模型的入口，Grok 未提供结构化子线程面板。
+## Plan、Goal 与插话
 
-本次分别使用真实 Codex 与 Grok CLI，要求各创建一个子代理计算 `2 + 2` 并等待结果，两者均返回 `4`。Codex 收到原生 spawn／wait／completed 状态，Grok 收到 `spawn_subagent` 工具活动与子代理结果。该验证只覆盖最小委派链路，不代表多代理并行写代码、所有模型或不同 CLI 版本均已验收。
+Codex Plan 使用原生 `collaborationMode: plan`，先核对底座的模式能力。Moose 保存计划版本，提供审阅和修改；批准后将确定版本送入同一原生会话，切回 `default` 执行。规划保留只读约束，执行恢复会话权限；Plan 结束会暂停队列，不自动批准或执行。Grok CLI 自身的 `/plan` 不等于 Moose 已接通相同的 ACP 审阅流程。
 
-## `/goal` 与 `/plan` 的实际实现
+Codex Goal 由原生目标接口保存和推进，支持预算与暂停；Grok 将命令交给原生 CLI。界面中的模式菜单由 Moose 提供，不是 Moose 自行模拟底座的推理循环。
 
-| 能力 | Codex | Grok | Pi |
-| --- | --- | --- | --- |
-| Goal | 原生 `thread/goal/set`、`get`，底座继续执行；支持 token budget 与暂停 | 通过 ACP 发送原生 `/goal ...` 命令 | 未接入 |
-| Plan | 原生 `collaborationMode: plan`；计划审阅、修改版本、批准后切回 `default` 执行 | Moose 暂未接入，尽管 Grok 自己支持 `/plan` | 未接入 |
-| Subagent | 原生委派工具 + 结构化活动和审批 | 原生委派工具 + ACP 工具活动 | 未接入 |
+运行中普通发送进入 Moose 的持久化队列，当前任务结束后再开始下一轮；“立即发送”调用受支持底座的原生插话接口。它不改变本轮模型、权限或模式，也不用“取消后重启”冒充 steering。投递记录区分已接收、明确拒绝和结果未知；拒绝保留输入，超时或断连不自动重发。相关实现见 [plans.ts](../../electron/plans.ts) 和 [steering.ts](../../electron/steering.ts)。
 
-任务模式的选择菜单由 Moose 实现，不意味着三个底座有相同命令语义。Codex 先检查 `collaborationMode/list`，用原生 Plan 生成计划；Moose 持久化计划版本，提供审阅和修改，再将批准的正文发送到同一原生会话执行。审批界面与版本约束由 Moose 管理。规划仍保留只读 sandbox、禁止提权；执行恢复该会话选择的权限档位。计划结束后暂停后续队列，不自动执行。[Codex app-server 文档](https://learn.chatgpt.com/docs/app-server)描述了原生协作模式；当前已启用协议生成的实验字段，并核对了本机 CLI 的接口与真实事件。[Grok Plan 文档](https://docs.x.ai/build/features/plan-mode)描述的是 Grok 自己的功能，不代表 Moose 已支持。
+## 子代理与原生历史
 
-## 原生 Plan 与插话验证
+Codex、Grok 根据任务和原生配置自行决定是否委派；Moose 默认接收活动，没有委派开关，也不强制每轮创建子任务。工具返回与子任务完成分别展示，子线程结束不能结束主任务。
 
-本机 Codex 0.155.0、`gpt-5.6-luna`／low 实测：收到原生 plan item；规划阶段目录内容不变；同一会话切到执行模式后按修改后的内容写入隔离测试文件；插话返回同一 turn ID，最终回复包含插话要求的标记。复现脚本 `scripts/check-native-workflows.ts` 会使用真实模型额度。
+Codex 面板展示底座提供的父线程、模型、状态和历史。发送、停止等控制受原生活动连接约束；`thread/resume` 只是加载会话，不能冒充恢复已关闭的子任务。Grok 展示 ACP 工具活动及结果，没有伪造统一子代理树。Moose 不提供独立选择子代理模型的入口。
 
-插话记录先保存再投递，区分接收、拒绝与结果未知；明确拒绝保留输入，超时／断连不自动重发。同一 request ID 不会再次调用底座。运行已结束、取消中或任务模式不同则拒绝插话；它不会改变当前回合的权限或模型。插话消息暂不支持原地编辑。
+导入历史保留来源并识别重复导入，不持续同步外部 CLI。原生分叉分开对话上下文，不隔离文件；代码隔离由 Git worktree 完成。压缩、分叉和审查也需要分别跟踪其完成事件，不能仅凭请求返回认定操作结束。
 
-Grok 1.0.34 的真实 ACP `session/new` 握手只报告 model 和 reasoning_effort 配置，未报告 modes。本轮没有把 Grok 的终端 `/plan` 能力当成可用的 ACP 审批流程；Grok Plan 接入仍待验证。
+## OpenCode v2
 
-## 原生会话与子代理面板验证
+安装与登录按 [OpenCode v2 文档](https://opencode.ai/v2/docs)：
 
-2026-09-19 真实 Codex 0.155.1 与 Grok 1.0.34 历史读取通过；导入幂等、分叉来源、压缩完成通知和子代理独立控制通过模拟协议与 Electron 验收。本轮不发送真实模型请求，未重新验证真实压缩或新增委派。入口、最低成本命令和限制见[第二阶段验收](phase-two-testing.md)。原生分叉本身不隔离代码目录；第三阶段另外提供 Worktree 创建及生命周期管理，见[验收说明](phase-three-testing.md)。
+```sh
+brew install anomalyco/tap/opencode-v2
+opencode auth login
+opencode --version
+```
 
-## 思考过程
+Moose 搜索 PATH 和 `~/.opencode/bin`，也支持在设置中指定绝对路径。要求 CLI v2，不以旧版 SDK 中名为 `v2` 的导出路径判断版本。
 
-Moose 对 Codex 显式传入 `summary: auto`，接收 `item/reasoning/summaryTextDelta`、`textDelta` 和最终 reasoning item。已收到的文本显示在可展开的“思考”记录；没有文本时隐藏空记录。Grok 对应 ACP `agent_thought_chunk`，两个通道的提供策略不一定相同。
+[适配器](../../electron/providers/opencode.ts) 使用 [`opencode acp`](https://opencode.ai/v2/docs/cli/acp)，由 CLI 启动私有服务；与 Grok 共用基础 ACP 事件转换，专有能力分别处理。权限请求遵循 CLI 配置，Moose 不额外提供执行沙箱。独立历史、Plan／Goal、插件管理和用量查询尚未接入。
 
-2026-09-18 使用本机 Codex、`gpt-5.6-luna`、medium 做了一次独立最小探测：回答成功，reasoning 事件 0 条、摘要 0 字符。这个结果说明该次调用没有上游摘要，不能外推为所有模型、账号或 CLI 版本都不支持。复现脚本为 `scripts/check-reasoning.ts`，会使用真实模型额度。
+## 思考内容的边界
 
-[OpenAI 官方说明](https://developers.openai.com/api/docs/guides/reasoning#reasoning-summaries)区分不公开的原始推理 token 和可请求的思考摘要。不能把“没显示摘要”直接解释为应用隐藏了全部思考，也不能通过界面强制取回底座未提供的原始推理。
+Codex 请求 `summary: auto`，Moose 展示实际收到的 reasoning 文本；没有文本时隐藏空记录。Grok 对应 ACP `agent_thought_chunk`。不同底座提供这些内容的策略不同，界面无法取回上游未提供的文本。
 
-## 优先补齐的产品能力
+[OpenAI 的推理说明](https://developers.openai.com/api/docs/guides/reasoning#reasoning-summaries)区分原始推理与可返回的摘要，不能将未显示摘要简单归因为客户端隐藏了内容。2026-09-18 的一次 Codex／`gpt-5.6-luna`／medium 探测回答成功，但摘要为零；这只证明该次调用没有返回摘要，不代表所有模型、账号或版本。
 
-分阶段接入方案与验收标准见[实施计划](native-capabilities-plan.md)。该计划不代表功能已经实现。
+## 哪些能力属于 Moose
 
-| 优先级 | 能力 | 当前 Moose 状态 |
+持久化队列、目录互斥、worktree 生命周期、Git 提交和 PR 界面、用户手动 Shell、定时任务、桌面与浏览器共享后台由 Moose 管理。代理内部如何调用工具、委派子代理和延续原生目标则由底座负责。
+
+安装版普通退出保留共享后台，任务可以继续；显式停止后台、电脑重启或后台崩溃不能靠历史记录恢复活进程。终端已支持 PTY，调度已支持单次、固定间隔、每天与每周规则；没有开机自启、任意 cron 或云端托管。
+
+## 已验证到哪里
+
+| 验证 | 已有证据 | 不能据此推断 |
 | --- | --- | --- |
-| 高 | 原生 Plan → 审阅／修改计划 → 批准执行 | Codex 已接原生 Plan、版本化修改与批准执行；Grok／Pi 未接入 |
-| 高 | 运行中插话、调整任务方向 | Codex 已接 `turn/steer`；“立即发送”插话，普通发送保持排队；Grok 已接 `_x.ai/interject`（0.15.0），Pi 保持队列 |
-| 高 | 子代理独立面板与控制 | Codex 独立历史面板、受能力约束的发送／停止；恢复关闭子任务需主代理，Grok 保持工具活动展示 |
-| 高 | Worktree 隔离、多任务并行与合并 | 已接受管 worktree 创建、同项目多目录并行、保留／安全清理、合并预览／冲突／继续／中止；同目录仍串行 |
-| 中 | Git 操作与原生代码审查 | 已接逐文件暂存／取消、提交预览与指纹校验、GitHub 草稿 PR／状态、Codex 独立只读审查（0.10.0）；见[第四阶段验收](phase-four-testing.md) |
-| 中 | MCP、插件、hooks、代理配置管理 | 0.11.0 已接 Codex 配置来源、用户级设置／开关、插件 CLI 安装卸载、新增 HTTP／STDIO MCP、MCP OAuth、hooks 只读诊断；Grok／Pi 未适配，限制见[第五阶段验收](phase-five-testing.md) |
-| 中 | 原生会话导入、分叉、上下文压缩管理 | Codex 历史分页导入、显式分叉和手动压缩；Grok 历史回放导入；Pi 未接入 |
-| 中 | 后台终端与定时任务 | 0.11.0 已接 Moose 管理的后台文本命令、单次／固定间隔命令及代理消息调度；支持窗口关闭后执行、目录互斥、暂停后编辑与保存预览、版本冲突保护、失败暂停及重启核对命令／队列。当前开发增量已补 PTY 和每天／每周指定时区的日历调度，纳入 0.12.0；任意 cron 与应用退出后的执行未实现；见[第六阶段验收](phase-six-testing.md) |
+| Codex Plan／插话 | 0.155.0、`gpt-5.6-luna`／low 真实最小流程：规划未写文件、批准执行、同一 turn 接收插话 | 所有模型与后续 CLI 版本均兼容 |
+| 原生委派 | Codex、Grok 各创建一个子代理计算 `2 + 2`，返回 `4` 与对应活动 | 多代理并行修改代码已全面验收 |
+| 原生历史 | 2026-09-19 读取 Codex 0.155.1、Grok 1.0.34 历史通过 | 真实分叉、压缩均在该次重新执行 |
+| Pi | 0.85.1 握手与能力探测；执行路径由测试 CLI 覆盖 | 已完成真实模型任务验收 |
+| OpenCode | 2.0.10 握手与模型列表；执行、权限、取消和恢复回放由测试 CLI 覆盖 | 已完成真实模型任务验收 |
+| 当前客户端回归 | 0.17.0 单元、桌面／Web、打包验收通过 | 等价于对每个真实 CLI 的全能力认证 |
 
-这些是客户端接入差距，不是底座模型能力评判。可对照 [Codex app-server 接口](https://learn.chatgpt.com/docs/app-server)、[Codex 子代理](https://learn.chatgpt.com/docs/agent-configuration/subagents)、[Grok 子代理](https://docs.x.ai/build/features/subagents)与 [Grok 扩展能力](https://docs.x.ai/build/features/skills-plugins-marketplaces)。
-
-2026-09-19 开发增量（0.12.0）：已补用户 MCP 连接编辑、移除及环境变量 HTTP 请求头；扩展与后台任务界面分区，确认流程与冗余文案同步整理。边界和验收见[第五阶段增量](phase-five-testing.md)。
+最低成本检查见[测试指南](../testing.md)，旧版本的详细证据见[阶段验收归档](../releases/feature-validation-history.md)。真实模型脚本会消耗额度，应与只读探测分开执行。后续范围统一维护在[开发计划](native-capabilities-plan.md)。

@@ -930,7 +930,10 @@ test('keeps empty archives conversation-only and presents quiet workspace contro
     BrowserWindow.getAllWindows()[0].setSize(860, 700);
   });
   await expect(page.locator('html')).toHaveClass(/dark/);
-  await expect(page.locator('#composer')).toHaveCSS('color', 'rgb(230, 234, 240)');
+  await expect(page.locator('#composer')).toHaveCSS(
+    'color',
+    await page.locator('body').evaluate((el) => getComputedStyle(el).color),
+  );
   const composer = page.locator('.composer-input');
   expect(await composer.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
   await expect(page.locator('.send-button')).toBeInViewport();

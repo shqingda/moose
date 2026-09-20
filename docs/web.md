@@ -42,11 +42,9 @@ pnpm web:build
 - 安装版桌面自动共享原桌面工作区；下面的源码命令使用独立 Web 数据目录，需要时可显式连接。
 - 连接断开会提示重连。写请求不自动重发；如果提交或发送时断开，先检查结果再决定是否重试。
 
-访问令牌只在当前服务进程存活期间有效；登录后放入 HttpOnly cookie，令牌从地址栏清除。默认只绑定本机回环地址；可通过下述 HTTPS 隧道临时远程预览。系统服务安装和完整业务事件恢复尚未完成；终端输出补偿与单控制端交接已实现。
+访问令牌只在当前服务进程存活期间有效；登录后放入 HttpOnly cookie，令牌从地址栏清除。默认只绑定本机回环地址；可通过下述 HTTPS 隧道临时远程预览。没有开机自启或完整业务事件游标；界面重连通过快照恢复状态，终端另有输出补读。
 
 Web 侧边栏单独适配浏览器：顶部放品牌和折叠按钮，与内容区工具栏对齐；搜索放在项目区添加按钮左侧，新建会话使用桌面端的左对齐无描边样式；折叠和展开共用同一按钮，只沿水平方向移动；收起时整块侧边栏向左滑出，内容区同步扩展，避免裁切静止文字；收起后可从内容区左上角展开。系统开启减少动态效果时直接切换。
-
-系统弹窗由本机服务调用 `/usr/bin/osascript` 的 `choose folder` 实现，参考 [DeepSeek Harness 官方实现](https://github.com/deepseek-ai/deepseek-harness/blob/ddefc45fbc7f8e46dd73185e68295696d1297887/packages/host/directory-picker-native/src/native-picker.ts)。浏览器通过已认证的同源请求调用服务，返回的是宿主机绝对路径。它与浏览器 `showDirectoryPicker()` 的目录句柄不同；选择器显示在运行服务的 Mac 上。系统选择失败时在页面显示错误，不自动追加另一个选择弹窗；连续点击也不会重复打开。一个服务同时只打开一个系统选择器；页面断开或服务停止时终止等待。
 
 ## 桌面与浏览器共用一个后台
 
@@ -65,43 +63,21 @@ MOOSE_SHARED_RUNTIME_FILE="$HOME/.moose/web/connection.json" pnpm dev
 
 连接文件含访问凭据，权限为 0600，只供同一用户的桌面主进程读取，不送入渲染页面。桌面客户端只接受 `http://127.0.0.1` 地址。服务停止后删除连接文件，下次启动生成新凭据。源码独立工作区不会自动导入桌面历史，也不安装后台守护服务。安装版直接复用原桌面数据目录，无需复制数据库。
 
-## OpenCode v2
-
-先按 [OpenCode v2 官方文档](https://opencode.ai/v2/docs)安装并在终端登录：
-
-```sh
-brew install anomalyco/tap/opencode-v2
-opencode auth login
-opencode --version
-```
-
-Moose 会搜索 PATH 和 `~/.opencode/bin`，也可在设置中填入可执行文件绝对路径。要求 v2，当前实测握手版本为 2.0.10；不是根据旧版 SDK 的 `v2` 导出路径判断 CLI 版本。
-
-接入使用官方 [`opencode acp`](https://opencode.ai/v2/docs/cli/acp)，由 CLI 启动私有服务。当前支持模型发现与选择、文本／思考／工具更新、CLI 权限请求、取消、同一原生会话恢复，以及握手声明支持时的图片输入。只开放请求审批档位；具体工具是否请求权限仍遵循 OpenCode 配置，Moose 不声称提供额外沙箱。
-
-OpenCode 原生 Plan／Goal、独立历史管理、配置插件管理、用量查询和子代理专门面板尚未接入；这些入口不因底座名称存在就自动开启。
-
-真实 v2.0.10 的握手与模型列表已验证，测试没有调用真实模型。完整执行、批准／拒绝、取消和历史回放抑制用确定性测试 CLI 验证。
-
-## 后续顺序
-
-1. 安装版默认共享后台及原桌面数据复用已完成；系统后台服务继续后置，不引入额外安装流程。
-2. 终端输出已改为事件推送和游标补读，多客户端输入与尺寸控制权已接入。继续验证共享后台的长期运行边界。
-3. 增加本机文件预览、笔记和通知；移动端适配与云端部署暂缓。
-
-设计依据见 [调研与后续方案](research/web-ui-and-roost.md)。
+代理安装与支持范围统一见[底座能力](providers/native-capabilities.md)，包括 [OpenCode v2](providers/native-capabilities.md#opencode-v2)。后续工作统一见[开发计划](providers/native-capabilities-plan.md)。
 
 ## 网页为什么能打开系统弹窗、发现 CLI
 
 浏览器只负责显示界面和发送 HTTP 请求。`pnpm web` 启动的是你电脑上的本机服务，运行时使用 Electron 自带的 Node，但不会打开桌面窗口。这个服务以启动它的用户身份访问文件、启动进程；浏览器本身没有获得这些权限。
 
-打开项目的调用链：浏览器发送 `POST /api/request`，方法为 `webPickDirectory`；服务验证登录 cookie 和来源后，执行 `/usr/bin/osascript`。AppleScript 的 `choose folder` 显示 macOS 系统目录选择器，`POSIX path of selectedFolder` 将路径写到标准输出。服务读取路径、通过 HTTP 返回给网页；网页再调用 `webAddProject` 注册项目。取消则返回空值，不创建项目。
+打开项目的调用链：浏览器发送 `POST /api/request`，方法为 `webPickDirectory`；服务验证登录 cookie 和来源后，执行 `/usr/bin/osascript`。AppleScript 的 `choose folder` 显示 macOS 系统目录选择器，`POSIX path of selectedFolder` 将路径写到标准输出。服务读取路径、通过 HTTP 返回给网页；网页再调用 `webAddProject` 注册项目。取消不创建项目，系统选择失败显示错误，不自动追加另一层选择弹窗。它返回宿主机的绝对路径，与浏览器 `showDirectoryPicker()` 返回目录句柄不同；弹窗显示在运行服务的 Mac 上。实现参考 [DeepSeek Harness 的原生选择器](https://github.com/deepseek-ai/deepseek-harness/blob/ddefc45fbc7f8e46dd73185e68295696d1297887/packages/host/directory-picker-native/src/native-picker.ts)。
 
 发现 CLI 的调用链：网页请求 `providers` → MooseService → `discover()`。服务按设置中的显式路径，或当前进程 PATH、登录 shell PATH 及常见安装目录寻找可执行文件，运行 `--version`，再由相应适配器探测协议和模型列表。找到文件、可启动、协议握手成功是不同状态，不等同于所有模型均已登录或可以调用。执行任务时，也是服务启动 CLI 子进程，浏览器接收结果。
 
 桌面版使用 Electron IPC 连接界面和本机业务服务，Web 版使用 HTTP 请求与 SSE 事件流；发现 CLI 和执行任务共用业务代码。若未来将服务部署到另一台机器，发现的将是那台机器上的 CLI，系统弹窗也属于那台机器。当前版本默认只监听本机回环地址。
 
-## 可选临时远程预览（暂缓推进）
+<details>
+<summary>临时远程预览（实验性，暂缓推进）</summary>
+
 
 使用 HTTPS 反向隧道，服务仍只监听 127.0.0.1。先运行 `ssh -R 80:127.0.0.1:4320 nokey@localhost.run` 获取临时 HTTPS 地址，然后在另一个终端启动独立预览后台：
 
@@ -115,16 +91,7 @@ pnpm runtime:start
 
 停止预览：`MOOSE_WEB_DATA_DIR="$HOME/.moose/mobile-preview" pnpm runtime:stop`，再停止 SSH 隧道。电脑睡眠、断网或隧道失效后地址不可用；这是临时开发入口，不是托管部署。
 
-[Portless](https://github.com/vercel-labs/portless) 也支持通过 ngrok 或 Tailscale Funnel 分享，但需先配置对应服务。[Cloudflare Quick Tunnels](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/do-more-with-tunnels/trycloudflare/) 不支持 SSE，因此不能直接用于当前事件流。
-
-## 终端输出传输（开发增量）
-
-桌面通过 IPC、Web 与共享桌面通过现有 SSE 事件通道接收终端输出，服务端每 33 ms 合并一次新增内容。输入仍走请求接口，不因重连自动重发；本轮没有额外引入 WebSocket。
-
-首次打开及事件连接恢复时，界面按绝对游标读取保留的输出。游标按 JavaScript 字符串长度计数，两端使用同一口径；与实时推送重叠的部分会去重。渲染繁忙时只记录需要补读，不在客户端排队保存每个输出块。服务端仍保留有上限的回放缓冲，超过保留范围会明确重置并提示截断，不能无限恢复历史输出。
-
-SSE 对积压超过阈值的慢连接断开，重连后按游标补读。终端内容不再每 100 ms 轮询；会话列表与其他工具状态仍有低频刷新。输入与尺寸由一个客户端控制，其他客户端可同时查看。
-
+</details>
 
 ## 多窗口终端控制
 
@@ -133,3 +100,5 @@ SSE 对积压超过阈值的慢连接断开，重连后按游标补读。终端�
 控制窗口每 5 秒续租，15 秒未续租则失效。关闭面板主动释放；窗口异常退出或网络中断时由租约过期兜底。其他窗口可以立即手动接管，不必等待到期。恢复连接只恢复查看和输出补偿，不会强行夺回已经转交的控制权。浏览器后台节流或电脑休眠也可能使租约失效，此时点击接管即可继续。
 
 控制权只协调当前用户的多个客户端，不是多人权限系统。客户端标识由桌面连接或浏览器页面生成，输入与调整尺寸均由服务端检查；续租和释放还校验本次租约，防止旧面板的清理请求释放新控制权。租约不写入数据库，不影响 Shell 进程存活。程序化客户端在终端无人控制时可以通过首次输入取得控制权；有其他控制端时请求会被拒绝，输入仍不自动重试。
+
+终端输出补偿和慢连接处理见[技术架构](architecture.md#终端输出传输)。

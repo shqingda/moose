@@ -606,7 +606,11 @@ test('runs pnpm test alongside a terminal and preserves directory protection unt
     'rgb(255, 255, 255)',
   );
   await page.evaluate(() => window.moose.request('settings', { theme: 'dark' }));
-  await expect(page.locator('.terminal-screen')).toHaveCSS('background-color', 'rgb(24, 29, 36)');
+  await expect(page.locator('html')).toHaveClass(/dark/);
+  await expect(page.locator('.terminal-screen')).toHaveCSS(
+    'background-color',
+    await page.locator('.workspace').evaluate((el) => getComputedStyle(el).backgroundColor),
+  );
   await page.screenshot({ path: 'test-results/terminal-catppuccin.png', animations: 'disabled' });
   await page.getByRole('tab', { name: 'Commands', exact: true }).click();
   await page.getByRole('textbox', { name: 'Shell command', exact: true }).fill('pnpm test');

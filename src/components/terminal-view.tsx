@@ -74,10 +74,15 @@ export function TerminalView({
       const theme = () => {
         const dark = document.documentElement.classList.contains('dark');
         const palette = dark ? terminalThemes.mocha : terminalThemes.githubLight;
-        const background = dark
-          ? getComputedStyle(document.documentElement).getPropertyValue('--background').trim()
-          : palette.background;
-        term.options.theme = { ...palette, background };
+        const style = getComputedStyle(document.documentElement);
+        const background = style.getPropertyValue('--background').trim();
+        term.options.theme = {
+          ...palette,
+          background,
+          foreground: style.getPropertyValue('--foreground').trim(),
+          cursor: style.getPropertyValue('--primary').trim(),
+          cursorAccent: background,
+        };
         host.current?.style.setProperty('background-color', background);
         host.current?.style.setProperty('--terminal-background', background);
         term.options.fontSize =

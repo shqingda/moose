@@ -1,8 +1,8 @@
 # Moose Web UI 可行性与 Roost 借鉴方向
 
-调研日期：2026-09-20。Moose 基线为 0.14.0（8e37e14）。
+历史调研：2026-09-20，基于 Moose 0.14.0（8e37e14）。本文保留当时的判断与初始方案，不作为当前功能清单。
 
-参考源码：Roost `e25b9816bd86dfe24309b79c29238852b5214c51`，DeepSeek Harness `ddefc45fbc7f8e46dd73185e68295696d1297887`。本次阅读文档与关键实现，没有运行这两个项目，未实测其网络性能或逐个验证 CLI 兼容性。下述阶段是初始建议；第一阶段的 Web 入口与 OpenCode 接入已有开发实现，当前状态见 [Web 使用说明](../web.md)，其余阶段不应理解为已完成。
+参考源码：Roost `e25b9816bd86dfe24309b79c29238852b5214c51`，DeepSeek Harness `ddefc45fbc7f8e46dd73185e68295696d1297887`。本次阅读文档与关键实现，没有运行这两个项目，未实测其网络性能或逐个验证 CLI 兼容性。下述阶段是当时的建议；当前已交付范围见[开发计划](../providers/native-capabilities-plan.md)，使用方式见 [Web 使用说明](../web.md)。
 
 ## 结论
 
@@ -32,7 +32,7 @@ DeepSeek Harness 自己拥有 agent 运行时，Web UI 提供工作区、会话�
 
 ## Moose 已经具备哪些基础
 
-以当前源码为准，旧版 architecture.md 中“没有内置终端／worktree”等描述已过时。
+以下按调研时的 0.14.0 源码描述。
 
 - `src/` 已经是 React Web 界面，终端也是 xterm.js，不需要重写整个 UI。
 - `electron/preload.ts` 只暴露 `request / subscribe`，适合增加浏览器传输实现。
@@ -41,9 +41,9 @@ DeepSeek Harness 自己拥有 agent 运行时，Web UI 提供工作区、会话�
 - Provider adapter 已把底座输出转成结构化消息、问题、审批与委派事件，不需要靠终端静默时间推断 agent 状态。
 - SQLite 已保存消息，前端按消息 ID、seq 和 position 合并；这能复用，但不是完整的网络事件续传协议。
 
-当前必须改的地方：
+当时识别出的改造点：
 
-| 当前实现 | Web 需要补什么 |
+| 0.14.0 实现 | 当时提出的改造方向 |
 | --- | --- |
 | `runtime.ts` 要求 Electron `process.parentPort` | 独立 Node 服务入口；复用业务服务与生命周期管理 |
 | `main.ts` 校验 IPC 来源 frame | HTTP / WebSocket 的认证、来源校验、会话失效与请求限额；复用业务参数校验，但不能复用 frame 信任 |
@@ -54,7 +54,7 @@ DeepSeek Harness 自己拥有 agent 运行时，Web UI 提供工作区、会话�
 | 消息 seq 是单条消息版本 | 增加事件流游标／快照版本；断线后补齐消息和当前待审批状态 |
 | 多数写操作为本地可靠 IPC 设计 | 发送、审批、提交、PR 等逐项审计幂等性；断线后查结果，不盲目重发 |
 
-Node 独立运行还需处理 better-sqlite3 / node-pty 的 Node 与 Electron ABI、PTY 启动路径和环境变量。当前 Shell 明确使用 `/bin/zsh`，不能把“有 Web UI”直接等同于已经支持 Linux / Windows 部署。
+Node 独立运行还需处理 better-sqlite3 / node-pty 的 Node 与 Electron ABI、PTY 启动路径和环境变量。该版本 Shell 明确使用 `/bin/zsh`，不能把“有 Web UI”直接等同于已经支持 Linux / Windows 部署。
 
 ## 建议架构
 
@@ -64,7 +64,7 @@ flowchart LR
   Browser[Moose Web UI] --> Gateway[HTTP / WebSocket 网关]
   Gateway --> Core
   Core --> DB[(SQLite / 附件)]
-  Core --> Agents[Codex / Grok / Pi]
+  Core --> Agents[编程代理 CLI]
   Core --> PTY[终端进程]
 ```
 
@@ -116,6 +116,8 @@ flowchart LR
 - [Web 宿主与 Electron 分层](https://github.com/deepseek-ai/deepseek-harness/blob/ddefc45fbc7f8e46dd73185e68295696d1297887/packages/host/webserver/README.zh.md)
 - [调用、事件流与重连](https://github.com/deepseek-ai/deepseek-harness/blob/ddefc45fbc7f8e46dd73185e68295696d1297887/packages/api/gateway/README.zh.md)
 
-## 后续落实：显式共享实例
+## 后续落实与方案变化
 
-已增加桌面连接独立 Web 后台的入口，两端使用同一会话和终端，退出桌面不会停止后台任务。这是第二阶段的第一步；显式共享启动命令已支持自动连接／启动后台、状态查询和停止；默认入口切换、数据迁移、流式终端及控制权仍待实现。移动端和云端部署暂缓。见 [使用步骤](../web.md)。
+截至 0.16.2，本机 Web 入口、OpenCode v2、终端事件推送与补读、单控制端租约、安装版默认共享后台均已交付。桌面沿用原数据目录，没有另建数据迁移或同步管线。
+
+实际传输采用 HTTP 请求和 SSE 事件，终端复用同一事件通道，没有采用上文提出的额外 WebSocket。网关与业务服务仍在同一后台进程，不承诺网关进程重启时保留活任务。文件预览、笔记和通知保留为候选，移动端和云端暂缓；当前安排以[开发计划](../providers/native-capabilities-plan.md)为准。
