@@ -965,6 +965,26 @@ test('keeps model picker height stable across providers and empty searches with 
   expect(await popup.evaluate((el) => el.getBoundingClientRect().height)).toBeCloseTo(height, 0);
   await popup.getByRole('textbox').fill('');
   await page.screenshot({ path: 'test-results/model-picker-fixed.png', animations: 'disabled' });
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Toggle sidebar', exact: true }).click();
+  await expect(page.locator('.header-path button')).toHaveCount(0);
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const selectors = [
+          '.global-sidebar-toggle button',
+          '.header-project',
+          '.header-actions button',
+        ];
+        const centers = selectors.map((selector) => {
+          const rect = document.querySelector(selector)!.getBoundingClientRect();
+          return rect.y + rect.height / 2;
+        });
+        return Math.max(...centers) - Math.min(...centers);
+      }),
+    )
+    .toBeLessThan(1);
+  await page.screenshot({ path: 'test-results/header-alignment.png', animations: 'disabled' });
 });
 
 test('steers Grok natively while ordinary messages stay in the Moose queue', async () => {

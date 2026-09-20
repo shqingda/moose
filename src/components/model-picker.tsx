@@ -97,10 +97,7 @@ export function ModelPicker({
                   setOpen(false);
                 }}
               >
-                <span>
-                  {o.label}
-                  <small>{t(category)}</small>
-                </span>
+                <span>{o.label}</span>
                 {category === provider && o.value === value && <Check size={16} />}
               </Button>
             ))}

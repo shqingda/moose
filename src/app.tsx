@@ -445,13 +445,9 @@ function Workspace({
                 {project && (
                   <>
                     <Folder size={14} />
-                    {window.moose.host === 'web' ? (
-                      <span title={project.path}>{project.name}</span>
-                    ) : (
-                      <button title={project.path} onClick={() => openProject('finder')}>
-                        {project.name}
-                      </button>
-                    )}
+                    <span className="header-project" title={project.path}>
+                      {project.name}
+                    </span>
                   </>
                 )}
                 {session && (

@@ -353,7 +353,7 @@ kbd {
 .header-path svg {
   flex-shrink: 0;
 }
-.header-path button {
+.header-project {
   max-width: min(12rem, 35vw);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1250,7 +1250,7 @@ kbd {
 }
 .header-title,
 .header-path,
-.header-path button {
+.header-project {
   max-width: min(12rem, 35vw);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1597,7 +1597,10 @@ kbd {
 .global-sidebar-toggle {
   position: absolute;
   left: 105px;
-  top: 12px;
+  top: 0;
+  height: 57px;
+  display: flex;
+  align-items: center;
   z-index: 3;
   -webkit-app-region: no-drag;
 }
@@ -2286,12 +2289,12 @@ summary:focus-visible {
   padding: 4px 4px 12px 46px;
 }
 .combined-model-popup {
-  height: min(400px, calc(100vh - 120px), var(--available-height, 400px));
+  height: min(320px, calc(100vh - 120px), var(--available-height, 320px));
   overflow: hidden;
   display: flex;
   flex-direction: row;
   gap: 0;
-  width: min(510px, calc(100vw - 40px));
+  width: min(440px, calc(100vw - 40px));
   padding: 0;
 }
 .model-providers {
@@ -2318,15 +2321,8 @@ summary:focus-visible {
   flex: 1;
   padding: 10px;
 }
-.model-option small {
-  display: block;
-  font-size: 0.78rem;
-  color: var(--muted-foreground);
-  margin-top: 3px;
-  font-weight: normal;
-}
 .model-option {
-  min-height: 56px;
+  min-height: 36px;
 }
 .usage-popup {
   max-height: min(620px, 80vh);
@@ -2556,7 +2552,8 @@ summary:focus-visible {
 }
 .app-shell[data-host='web'] .global-sidebar-toggle {
   left: 16px;
-  top: calc((var(--workspace-toolbar-height) - 32px) / 2);
+  top: 0;
+  height: var(--workspace-toolbar-height);
   transform: translateX(200px);
   transition: transform var(--sidebar-motion);
 }
@@ -2593,7 +2590,9 @@ summary:focus-visible {
   height: 32px;
 }
 .composer-models .model-list-trigger {
-  padding-inline: 0;
+  padding-inline: 10px;
+  line-height: 20px;
+  gap: 6px;
 }
 .composer-models .usage-indicator {
   width: 1em;
@@ -2606,4 +2605,23 @@ summary:focus-visible {
   display: block;
   font-size: 0.75rem;
   line-height: 1.4;
+}
+
+.global-sidebar-toggle button {
+  width: 32px;
+  height: 32px;
+}
+.header-path {
+  line-height: 20px;
+}
+.header-path svg {
+  width: 17px;
+  height: 17px;
+}
+.model-list-trigger svg {
+  flex-shrink: 0;
+}
+.model-providers button {
+  min-height: 32px;
+  height: 32px;
 }
