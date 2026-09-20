@@ -28,7 +28,7 @@ MOOSE_TEST_BACKGROUND=0 pnpm test:e2e --grep '用例名称'
 MOOSE_TEST_BACKGROUND=0 pnpm exec tsx scripts/package-smoke.ts
 ```
 
-隐藏测试不能替代真实前台验收。`pnpm perf:measure` 仍测量正常可见窗口，不把隐藏窗口的数据与已有启动基准混用。实现依据见 [Electron BrowserWindow 文档](https://www.electronjs.org/docs/latest/api/browser-window)。
+隐藏测试不能替代真实前台验收。`pnpm perf:measure` 现在也隐藏窗口，并明确标记测量场景；不把新数据与旧版可见窗口、独立后台的启动基准混用。实现依据见 [Electron BrowserWindow 文档](https://www.electronjs.org/docs/latest/api/browser-window)。
 
 ## 保留什么，删除什么
 
@@ -43,8 +43,10 @@ MOOSE_TEST_BACKGROUND=0 pnpm exec tsx scripts/package-smoke.ts
 
 自动化主要使用隔离数据库、测试 CLI 和真实本地 Shell，不调用真实模型。协议夹具通过不等于模型能力已实测；真实 CLI 探测与真实模型验收分别记录，不混写。
 
-性能脚本使用临时数据、禁用代理发现，以同一个空工作区连续启动三次。它测量温缓存下欢迎界面可见的耗时、进程工作集之和与 renderer JS 堆，不是冷启动或长会话压力测试。解释与本轮结果见[面试指南](interview/project-interview-guide.md)。
+性能脚本使用临时数据、禁用代理发现，以同一个空工作区连续启动三次，每次停止再启动共享服务。它测量温缓存下隐藏窗口欢迎界面就绪的耗时，1.5 秒后统计桌面进程树和独立服务进程树的 RSS，以及 renderer JS 堆。它不是冷启动、独占物理内存或长会话压力测试。解释与本轮结果见[面试指南](interview/project-interview-guide.md)。
 
 历史发布的验证证据保留在各版[发布记录](releases/0.15.0.md)，本页只维护当前方法。Web 启动与限制见 [Web 使用说明](web.md)，底座支持范围见[原生能力](providers/native-capabilities.md)。
 
 安装版验收现在使用自动共享模式：在隔离的原数据目录启动后台，测试结束后显式停止。桌面回归保留一个完整流程，验证旧会话可读、退出后终端存活、再次打开复用同一 PID，以及菜单停止服务；不为每个菜单重复铺设独立用例。
+
+本轮重新核对 159 项单元测试和 47 项 E2E，没有发现可安全整项删除的重复用例。终端的正常关闭、进程崩溃、输出截断和目录锁分别覆盖不同失效路径；调度的时间计算与界面编辑也不能互相替代。不把它们合成长流程来追求更少的测试数，以免增加状态耦合、降低失败定位能力。此次扩展已有终端恢复用例，确认只更新运行状态，不改写已完成记录。

@@ -33,11 +33,11 @@ export class TerminalSessions {
     controlChanged: (id: string) => void = () => {},
   ) {
     this.controls = new TerminalControls(controlChanged);
-    for (const record of this.records())
-      if (record.status === 'running') {
-        record.status = 'unknown';
-        this.save(record);
-      }
+    // Recover metadata in SQLite without materializing every retained output in JS.
+    this.store.sqlite
+      .prepare(`UPDATE settings SET value=json_set(value,'$.status','unknown')
+      WHERE key LIKE 'terminal:%' AND json_extract(value,'$.status')='running'`)
+      .run();
     this.timer = setInterval(() => {
       for (const item of this.active.values())
         if (item.dirty) {
@@ -56,13 +56,6 @@ export class TerminalSessions {
     const update = this.read({ id: item.record.id, offset: item.publishedOffset });
     item.publishedOffset = update.offset;
     this.emit(update);
-  }
-  private records(): Record[] {
-    return (
-      this.store.sqlite.prepare("SELECT value FROM settings WHERE key LIKE 'terminal:%'").all() as {
-        value: string;
-      }[]
-    ).map((row) => JSON.parse(row.value));
   }
   private save(record: Record) {
     this.store.sqlite

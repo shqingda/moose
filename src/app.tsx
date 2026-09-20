@@ -23,7 +23,9 @@ import { Composer } from './components/composer';
 const Transcript = lazy(() =>
   import('./components/transcript').then((m) => ({ default: m.Transcript })),
 );
-import { ReviewPanel } from './components/review-panel';
+const ReviewPanel = lazy(() =>
+  import('./components/review-panel').then((m) => ({ default: m.ReviewPanel })),
+);
 const SettingsDialog = lazy(() =>
   import('./components/settings-dialog').then((m) => ({ default: m.SettingsDialog })),
 );
@@ -570,15 +572,17 @@ function Workspace({
             )}
           </main>
           {project && (
-            <ReviewPanel
-              open={review}
-              key={`${project.id}:${session?.id}`}
-              project={project}
-              sessionId={session?.id}
-              onClose={() => setReview(false)}
-              onError={setError}
-              reduceMotion={!!reduceMotion || snapshot.reduceMotion}
-            />
+            <Suspense fallback={null}>
+              <ReviewPanel
+                open={review}
+                key={`${project.id}:${session?.id}`}
+                project={project}
+                sessionId={session?.id}
+                onClose={() => setReview(false)}
+                onError={setError}
+                reduceMotion={!!reduceMotion || snapshot.reduceMotion}
+              />
+            </Suspense>
           )}
         </div>
         <div className="workspace-dock" ref={setDockHost} />

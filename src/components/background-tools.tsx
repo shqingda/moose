@@ -1,7 +1,7 @@
 import { createPortal } from 'react-dom';
 import { Picker } from './common';
 import { TerminalPanel } from './terminal-panel';
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Terminal, X } from 'lucide-react';
 import type { BackgroundScope, CommandJob, Schedule } from '../../shared/background';
 import { useI18n } from '../lib/i18n';
@@ -12,7 +12,9 @@ import { Textarea } from './ui/textarea';
 import { Field, FieldGroup, FieldLabel, FieldDescription } from './ui/field';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { SchedulePanel } from './schedule-panel';
+const SchedulePanel = lazy(() =>
+  import('./schedule-panel').then((m) => ({ default: m.SchedulePanel })),
+);
 import { Alert, AlertDescription } from './ui/alert';
 export type BackgroundPlacement = 'dialog' | 'bottom' | 'right';
 export function BackgroundTools({
@@ -290,7 +292,9 @@ export function BackgroundTools({
           )}
         </TabsContent>
         <TabsContent value="schedules" className="extension-section background-scroll">
-          <SchedulePanel scope={scope} cwd={cwd} schedules={schedules} onChanged={refresh} />
+          <Suspense fallback={<p role="status">{t('loading')}</p>}>
+            <SchedulePanel scope={scope} cwd={cwd} schedules={schedules} onChanged={refresh} />
+          </Suspense>
         </TabsContent>
       </Tabs>
     </div>

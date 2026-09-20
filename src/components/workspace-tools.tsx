@@ -1,4 +1,4 @@
-import { useState, type RefObject } from 'react';
+import { lazy, Suspense, useState, type RefObject } from 'react';
 import {
   Archive,
   ArrowUpRight,
@@ -21,8 +21,11 @@ import {
   DropdownMenuSeparator,
 } from './ui/dropdown-menu';
 import { ExtensionTools } from './extension-tools';
-import { NativeTools } from './native-tools';
-import { WorktreeTools } from './worktree-tools';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
+const NativeTools = lazy(() => import('./native-tools').then((m) => ({ default: m.NativeTools })));
+const WorktreeTools = lazy(() =>
+  import('./worktree-tools').then((m) => ({ default: m.WorktreeTools })),
+);
 
 /** Keep dialogs outside the menu so closing the menu never unmounts their work. */
 export function WorkspaceTools({
@@ -48,8 +51,10 @@ export function WorkspaceTools({
 }) {
   const t = useI18n();
   const [active, setActive] = useState<'history' | 'worktrees' | 'extensions'>();
-  const close = (open: boolean) => {
-    if (!open) setActive(undefined);
+  const [open, setOpen] = useState(false);
+  const show = (kind: typeof active) => {
+    setActive(kind);
+    setOpen(true);
   };
   return (
     <>
@@ -70,15 +75,15 @@ export function WorkspaceTools({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-56">
           <DropdownMenuGroup>
-            <DropdownMenuItem onClick={() => setActive('history')}>
+            <DropdownMenuItem onClick={() => show('history')}>
               <History />
               {t('nativeTools')}
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setActive('worktrees')}>
+            <DropdownMenuItem onClick={() => show('worktrees')}>
               <GitBranch />
               {t('wtTools')}
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setActive('extensions')}>
+            <DropdownMenuItem onClick={() => show('extensions')}>
               <Puzzle />
               {t('extTitle')}
             </DropdownMenuItem>
@@ -106,28 +111,50 @@ export function WorkspaceTools({
           )}
         </DropdownMenuContent>
       </DropdownMenu>
-      <NativeTools
-        project={project}
-        provider={provider}
-        session={session}
-        onSelect={onSelect}
-        open={active === 'history'}
-        onOpenChange={close}
-        returnFocus={trigger}
-      />
-      <WorktreeTools
-        project={project}
-        provider={provider}
-        session={session}
-        onSelect={onSelect}
-        open={active === 'worktrees'}
-        onOpenChange={close}
-        returnFocus={trigger}
-      />
+      <Dialog
+        open={open && (active === 'history' || active === 'worktrees')}
+        onOpenChange={setOpen}
+      >
+        <DialogContent className="native-dialog" finalFocus={trigger}>
+          <DialogHeader>
+            <DialogTitle>{t(active === 'worktrees' ? 'wtTools' : 'nativeTools')}</DialogTitle>
+            <DialogDescription>
+              {project.name}
+              {active === 'history' ? ` · ${t(provider)}` : ''}
+            </DialogDescription>
+          </DialogHeader>
+          <Suspense fallback={<p role="status">{t('loading')}</p>}>
+            {open && active === 'history' && (
+              <NativeTools
+                key={`${project.id}:${provider}:${session?.id}`}
+                project={project}
+                provider={provider}
+                session={session}
+                onSelect={(s) => {
+                  onSelect(s);
+                  setOpen(false);
+                }}
+              />
+            )}
+            {open && active === 'worktrees' && (
+              <WorktreeTools
+                key={project.id}
+                project={project}
+                provider={provider}
+                selectedId={session?.worktreeId || undefined}
+                onSelect={(s) => {
+                  onSelect(s);
+                  setOpen(false);
+                }}
+              />
+            )}
+          </Suspense>
+        </DialogContent>
+      </Dialog>
       <ExtensionTools
         scope={{ projectId: project.id, sessionId: session?.id, provider }}
-        open={active === 'extensions'}
-        onOpenChange={close}
+        open={open && active === 'extensions'}
+        onOpenChange={setOpen}
         returnFocus={trigger}
       />
     </>

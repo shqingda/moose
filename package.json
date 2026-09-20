@@ -1,6 +1,6 @@
 {
   "name": "moose",
-  "version": "0.16.0",
+  "version": "0.16.1",
   "private": true,
   "description": "A quiet workspace for your coding agents",
   "license": "UNLICENSED",
@@ -85,6 +85,20 @@
   "build": {
     "appId": "dev.moose.desktop",
     "productName": "Moose",
+    "electronLanguages": [
+      "en",
+      "en_FEMININE",
+      "en_MASCULINE",
+      "en_NEUTER",
+      "en_GB",
+      "en_GB_FEMININE",
+      "en_GB_MASCULINE",
+      "en_GB_NEUTER",
+      "zh_CN",
+      "zh_CN_FEMININE",
+      "zh_CN_MASCULINE",
+      "zh_CN_NEUTER"
+    ],
     "directories": {
       "output": "release"
     },

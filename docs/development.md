@@ -24,11 +24,11 @@ Oxfmt 负责格式，Oxlint 负责基础正确性检查，不依赖 ESLint。统
 
 `vite-plugin-electron` Flat API 管理 main、preload、runtime 三入口。三个入口首次构建后启动 Electron；main/runtime 修改重启进程，preload 修改重载窗口，React 使用 HMR。main/runtime 是 ESM，沙箱 preload 输出单文件 CJS。
 
-better-sqlite3 是运行时依赖；安装与打包会准备原生模块，打包按 Electron arm64 ABI 重建，并将 `.node` 从 ASAR 解包。手动修复使用 `pnpm native:rebuild`。数据库与代理处理在 utility process，renderer 无 Node 权限。
+better-sqlite3 是运行时依赖；安装与打包会准备原生模块，打包按 Electron arm64 ABI 重建，并将 `.node` 从 ASAR 解包。手动修复使用 `pnpm native:rebuild`。数据库与代理处理在独立后台：安装版使用共享本机服务，开发默认使用 utility process；renderer 无 Node 权限。
 
 `MOOSE_DATA_DIR` 可指定隔离数据目录，测试不应使用正式用户数据库。Codex 协议类型基于 0.155.0（包含 `--experimental` 字段），`pnpm protocol:generate` 用当前系统 CLI 重新生成，更新后需检查兼容性。
 
-发行包仅保留当前 macOS 架构所需的原生依赖；排除其他平台预编译文件、依赖源码与生产 source map。开发构建保留 source map。调整排除规则后必须运行安装包验收，尤其检查 SQLite 和 PTY，不以构建成功代替运行验证。
+发行包仅保留当前 macOS 架构所需的原生依赖；排除其他平台预编译文件、依赖源码与生产 source map。开发构建保留 source map。Electron 系统界面资源仅保留英语、简体中文及对应变体，与当前产品语言范围一致；其他系统语言回退英语。Unicode 数据与字体支持不裁剪。调整排除规则后必须运行安装包验收，尤其检查 SQLite 和 PTY，不以构建成功代替运行验证。
 
 ## 发布流程
 

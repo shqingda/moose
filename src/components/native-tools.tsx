@@ -4,55 +4,9 @@ import type { NativeCapabilities, NativeEntry, NativeThread } from '../../shared
 import { useI18n } from '../lib/i18n';
 import { useTranscript } from '../lib/workspace';
 import { Button } from './ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { NativePreview } from './native-preview';
 
 export function NativeTools({
-  project,
-  provider,
-  session,
-  onSelect,
-  open,
-  onOpenChange: setOpen,
-  returnFocus,
-}: {
-  open: boolean;
-  onOpenChange(open: boolean): void;
-  returnFocus: React.RefObject<HTMLButtonElement | null>;
-  project: Project;
-  provider: Provider;
-  session?: Session;
-  onSelect(session: Session): void;
-}) {
-  const t = useI18n();
-  return (
-    <>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="native-dialog" finalFocus={returnFocus}>
-          <DialogHeader>
-            <DialogTitle>{t('nativeTools')}</DialogTitle>
-            <DialogDescription>
-              {project.name} · {t(provider)}
-            </DialogDescription>
-          </DialogHeader>
-          {open && (
-            <NativeToolsContent
-              key={`${project.id}:${provider}:${session?.id}`}
-              project={project}
-              provider={provider}
-              session={session}
-              onSelect={(s) => {
-                onSelect(s);
-                setOpen(false);
-              }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
-  );
-}
-function NativeToolsContent({
   project,
   provider,
   session,

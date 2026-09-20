@@ -25,11 +25,23 @@ it('recovers terminal metadata without restarting processes and reports missing 
       offset: 100,
     }),
   );
+  const completed = JSON.stringify({
+    id: 'completed',
+    status: 'completed',
+    output: 'preserved',
+    offset: 9,
+  });
+  store.sqlite
+    .prepare('INSERT INTO settings(key,value) VALUES (?,?)')
+    .run('terminal:completed', completed);
   const sessions = new TerminalSessions(store, () => {
     throw new Error('Must not start a recovered terminal');
   });
   try {
     expect(sessions.list(project.id)).toEqual([]);
+    expect(
+      store.sqlite.prepare('SELECT value FROM settings WHERE key=?').get('terminal:completed'),
+    ).toEqual({ value: completed });
     expect(sessions.read({ id: 'test', offset: 0 })).toMatchObject({
       session: { status: 'unknown' },
       data: 'retained',

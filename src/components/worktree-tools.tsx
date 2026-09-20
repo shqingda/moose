@@ -7,53 +7,9 @@ import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 import { Field, FieldGroup, FieldLabel, FieldDescription } from './ui/field';
 import { Alert, AlertDescription } from './ui/alert';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { ConfirmDialog, type Confirmation } from './confirm-dialog';
 
 export function WorktreeTools({
-  project,
-  provider,
-  session,
-  onSelect,
-  open,
-  onOpenChange: setOpen,
-  returnFocus,
-}: {
-  open: boolean;
-  onOpenChange(open: boolean): void;
-  returnFocus: React.RefObject<HTMLButtonElement | null>;
-  project: Project;
-  provider: Provider;
-  session?: Session;
-  onSelect(s: Session): void;
-}) {
-  const t = useI18n();
-  return (
-    <>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="native-dialog" finalFocus={returnFocus}>
-          <DialogHeader>
-            <DialogTitle>{t('wtTools')}</DialogTitle>
-            <DialogDescription>{project.name}</DialogDescription>
-          </DialogHeader>
-          {open && (
-            <WorktreeContent
-              key={project.id}
-              project={project}
-              provider={provider}
-              selectedId={session?.worktreeId || undefined}
-              onSelect={(s) => {
-                onSelect(s);
-                setOpen(false);
-              }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
-  );
-}
-function WorktreeContent({
   project,
   provider,
   selectedId,
