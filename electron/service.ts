@@ -108,6 +108,7 @@ export class MooseService {
     for (const item of store.queued()) this.paused.add(item.sessionId);
     this.flushTimer = setInterval(() => this.flush(), 80);
     this.background = new Background(store, {
+      emit,
       lock: (cwd) => this.lockDirectory(cwd),
       ready: (schedule) => {
         if (

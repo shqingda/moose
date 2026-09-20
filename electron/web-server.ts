@@ -126,7 +126,9 @@ const server = createServer(async (req, res) => {
           Connection: 'keep-alive',
         });
         clients.add(res);
-        res.write(`data: ${JSON.stringify({ type: 'changed' })}\n\n`);
+        res.write(
+          `data: ${JSON.stringify({ type: 'changed' })}\n\ndata: ${JSON.stringify({ type: 'terminal-sync' })}\n\n`,
+        );
         req.on('close', () => clients.delete(res));
         return;
       }

@@ -22,6 +22,8 @@ import type { AppEvent, Method, Requests, Snapshot, Settings } from '../shared/t
 const directory = fileURLToPath(new URL(/* @vite-ignore */ '.', import.meta.url));
 const rendererRoot = resolve(directory, '../../dist');
 const isDev = !!process.env.VITE_DEV_SERVER_URL;
+// Hidden windows are opt-in and require isolated data for automated acceptance.
+const backgroundTest = process.env.MOOSE_TEST_BACKGROUND === '1' && !!process.env.MOOSE_DATA_DIR;
 app.setName(isDev ? 'Moose Dev' : 'Moose');
 if (process.env.MOOSE_DATA_DIR) app.setPath('userData', process.env.MOOSE_DATA_DIR);
 else if (isDev) app.setPath('userData', join(app.getPath('appData'), 'Moose Dev'));
@@ -49,7 +51,7 @@ const appearance = () => ({
 /** 创建隔离的渲染窗口，限制导航和权限，并加载开发页或正式应用协议。 */
 async function createWindow() {
   if (window) {
-    window.show();
+    if (!backgroundTest) window.show();
     return;
   }
   window = new BrowserWindow({
@@ -70,6 +72,7 @@ async function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       spellcheck: true,
+      backgroundThrottling: !backgroundTest,
     },
   });
   // Handle the physical backquote key before xterm or the native menu consumes it.
@@ -101,7 +104,7 @@ async function createWindow() {
     const csp = `default-src 'self'; script-src 'self'${isDev ? " 'unsafe-inline'" : ''}; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'${isDev ? ' ws://127.0.0.1:5173 http://127.0.0.1:5173' : ''}; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'`;
     callback({ responseHeaders: { ...details.responseHeaders, 'Content-Security-Policy': [csp] } });
   });
-  window.once('ready-to-show', () => window?.show());
+  if (!backgroundTest) window.once('ready-to-show', () => window?.show());
   window.on('closed', () => {
     window = null;
   });
@@ -199,11 +202,12 @@ if (!app.requestSingleInstanceLock()) app.quit();
 else {
   app.on('second-instance', () => {
     void createWindow();
-    window?.focus();
+    if (!backgroundTest) window?.focus();
   });
   app
     .whenReady()
     .then(async () => {
+      if (backgroundTest) await app.dock?.hide();
       protocol.handle('moose', (request) => {
         const url = new URL(request.url),
           path = resolve(rendererRoot, `.${decodeURIComponent(url.pathname)}`),

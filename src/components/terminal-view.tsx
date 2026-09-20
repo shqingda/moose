@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { TerminalSession } from '../../shared/terminal';
 import { terminalThemes } from '../lib/terminal-theme';
+import { terminalStream } from '../lib/terminal-stream';
 import { useI18n } from '../lib/i18n';
 import '@xterm/xterm/css/xterm.css';
 export function TerminalView({
@@ -37,9 +38,7 @@ export function TerminalView({
       term.loadAddon(fit);
       term.open(host.current);
       // No link or clipboard addons: terminal output cannot open URLs or write the clipboard.
-      let offset = 0,
-        polling = false,
-        replay = true,
+      let replay = true,
         running = session.status === 'running';
       let input = Promise.resolve();
       const data = term.onData((text) => {
@@ -94,11 +93,9 @@ export function TerminalView({
       };
       const observer = new ResizeObserver(resize);
       observer.observe(host.current);
-      const poll = async () => {
-        if (polling || cancelled) return;
-        polling = true;
-        try {
-          const update = await window.moose.request('terminalRead', { id: session.id, offset });
+      const stream = terminalStream(
+        (offset) => window.moose.request('terminalRead', { id: session.id, offset }),
+        async (update) => {
           if (cancelled) return;
           running = update.session.status === 'running';
           if (update.reset) {
@@ -107,20 +104,27 @@ export function TerminalView({
             replay = true;
           }
           await new Promise<void>((resolve) => term.write(update.data, resolve));
-          offset = update.offset;
           replay = false;
           term.options.disableStdin = !running;
-        } catch (e) {
+        },
+        (e) => {
           if (!cancelled) error.current(String(e));
-        } finally {
-          polling = false;
+        },
+      );
+      const unsubscribe = window.moose.subscribe((event) => {
+        if (event.type === 'terminal-output' && event.output.session.id === session.id)
+          stream.push(event.output);
+        else if (event.type === 'terminal-sync') stream.sync();
+        else if (event.type === 'runtime-error') {
+          replay = true;
+          term.options.disableStdin = true;
         }
-      };
-      void poll();
-      const timer = setInterval(() => void poll(), 100);
+      });
+      stream.sync();
       term.focus();
       dispose = () => {
-        clearInterval(timer);
+        unsubscribe();
+        stream.close();
         observer.disconnect();
         themeObserver.disconnect();
         data.dispose();

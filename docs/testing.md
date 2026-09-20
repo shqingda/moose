@@ -15,6 +15,21 @@ pnpm perf:measure          # 已打包应用的空工作区热启动测量
 
 定向 E2E 可在 `pnpm build` 后运行 `pnpm exec playwright test --grep '用例名称'`。涉及原生模块时，遵循[开发与打包](development.md)的重建流程。
 
+## 后台运行，避免打断桌面
+
+`pnpm test:e2e` 默认隐藏 Electron 窗口和测试应用的 Dock 图标；浏览器测试宿主也采用相同方式。测试仍驱动真实 renderer、IPC 与后台服务，并保留失败 trace 和截图，不是用模拟 DOM 替代界面。
+
+仅测试模式关闭后台渲染节流，避免隐藏窗口导致动画和定时器停顿。正式应用的显示、焦点和节流行为不变。安装包验收脚本也默认隐藏窗口；应用只有同时收到 `MOOSE_TEST_BACKGROUND=1` 和隔离的 `MOOSE_DATA_DIR` 才会进入该模式。
+
+需要检查系统前台焦点、原生窗口外观或可见性行为时，显式使用：
+
+```sh
+MOOSE_TEST_BACKGROUND=0 pnpm test:e2e --grep '用例名称'
+MOOSE_TEST_BACKGROUND=0 pnpm exec tsx scripts/package-smoke.ts
+```
+
+隐藏测试不能替代真实前台验收。`pnpm perf:measure` 仍测量正常可见窗口，不把隐藏窗口的数据与已有启动基准混用。实现依据见 [Electron BrowserWindow 文档](https://www.electronjs.org/docs/latest/api/browser-window)。
+
 ## 保留什么，删除什么
 
 - 单元测试保留协议完成信号、取消、审批、插话投递状态、目录互斥、重启恢复和网络来源校验。这些失败路径不能靠一个界面成功用例替代。

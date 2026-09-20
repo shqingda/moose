@@ -1,3 +1,4 @@
+import type { AppEvent } from '../shared/types';
 import { BackgroundLocks } from './background-locks';
 import { TerminalSessions } from './terminal-sessions';
 import type { Store } from './db/store';
@@ -32,12 +33,14 @@ export class Background {
   readonly schedules: Schedules;
   constructor(
     private store: Store,
-    hooks: ScheduleHooks & { lock(cwd: string): () => void },
+    hooks: ScheduleHooks & { lock(cwd: string): () => void; emit(event: AppEvent): void },
   ) {
     const records = new BackgroundStore(store);
     const locks = new BackgroundLocks(hooks.lock);
     this.acquireDirectory = locks.acquire;
-    this.terminals = new TerminalSessions(store, locks.acquire);
+    this.terminals = new TerminalSessions(store, locks.acquire, (output) =>
+      hooks.emit({ type: 'terminal-output', output }),
+    );
     this.commands = new CommandJobs(records, locks.acquire);
     this.schedules = new Schedules(records, this.commands, hooks);
   }

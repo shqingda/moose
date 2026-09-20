@@ -335,6 +335,8 @@ export interface Responses extends GitResponses, ExtensionResponses, BackgroundR
 }
 export type Method = keyof Requests;
 export type AppEvent =
+  | { type: 'terminal-output'; output: import('./terminal').TerminalOutput }
+  | { type: 'terminal-sync' }
   | { type: 'transcript-reset'; sessionId: string }
   | { type: 'changed' }
   | { type: 'message'; message: Message }

@@ -72,7 +72,7 @@ OpenCode 原生 Plan／Goal、独立历史管理、配置插件管理、用量�
 ## 后续顺序
 
 1. 显式共享后台已打通；下一步完善默认启动与数据迁移，再考虑安装系统后台服务。
-2. 用流式终端传输替代轮询，补输出游标、慢客户端限制、输入与尺寸控制权。
+2. 终端输出已改为事件推送和游标补读；下一步补多客户端输入与尺寸控制权。
 3. 增加本机文件预览、笔记和通知；移动端适配与云端部署暂缓。
 
 设计依据见 [调研与后续方案](research/web-ui-and-roost.md)。
@@ -102,3 +102,11 @@ pnpm runtime:start
 停止预览：`MOOSE_WEB_DATA_DIR="$HOME/.moose/mobile-preview" pnpm runtime:stop`，再停止 SSH 隧道。电脑睡眠、断网或隧道失效后地址不可用；这是临时开发入口，不是托管部署。
 
 [Portless](https://github.com/vercel-labs/portless) 也支持通过 ngrok 或 Tailscale Funnel 分享，但需先配置对应服务。[Cloudflare Quick Tunnels](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/do-more-with-tunnels/trycloudflare/) 不支持 SSE，因此不能直接用于当前事件流。
+
+## 终端输出传输（开发增量）
+
+桌面通过 IPC、Web 与共享桌面通过现有 SSE 事件通道接收终端输出，服务端每 33 ms 合并一次新增内容。输入仍走请求接口，不因重连自动重发；本轮没有额外引入 WebSocket。
+
+首次打开及事件连接恢复时，界面按绝对游标读取保留的输出。游标按 JavaScript 字符串长度计数，两端使用同一口径；与实时推送重叠的部分会去重。渲染繁忙时只记录需要补读，不在客户端排队保存每个输出块。服务端仍保留有上限的回放缓冲，超过保留范围会明确重置并提示截断，不能无限恢复历史输出。
+
+SSE 对积压超过阈值的慢连接断开，重连后按游标补读。终端内容不再每 100 ms 轮询；会话列表与其他工具状态仍有低频刷新。多客户端输入与尺寸控制权尚未实现，因此暂不把同时查看等同于协作控制。

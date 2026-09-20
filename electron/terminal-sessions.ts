@@ -15,16 +15,19 @@ interface Active {
   done: Promise<void>;
   stopping?: 'cancelled' | 'interrupted';
   dirty: boolean;
+  publishedOffset: number;
 }
 const limit = 1024 * 1024;
-/** PTY output uses absolute offsets so polling never duplicates or silently skips bytes. */
+/** PTY output uses absolute offsets so reconnects can replay retained output without guessing. */
 export class TerminalSessions {
   private active = new Map<string, Active>();
   private closed = false;
   private timer: ReturnType<typeof setInterval>;
+  private streamTimer: ReturnType<typeof setInterval>;
   constructor(
     private store: Store,
     private lock: (cwd: string) => () => void,
+    private emit: (output: TerminalOutput) => void = () => {},
   ) {
     for (const record of this.records())
       if (record.status === 'running') {
@@ -39,6 +42,16 @@ export class TerminalSessions {
         }
     }, 500);
     this.timer.unref();
+    this.streamTimer = setInterval(() => {
+      for (const item of this.active.values())
+        if (item.publishedOffset !== item.record.offset) this.publish(item);
+    }, 33);
+    this.streamTimer.unref();
+  }
+  private publish(item: Active) {
+    const update = this.read({ id: item.record.id, offset: item.publishedOffset });
+    item.publishedOffset = update.offset;
+    this.emit(update);
   }
   private records(): Record[] {
     return (
@@ -134,6 +147,7 @@ export class TerminalSessions {
       record,
       child,
       dirty: false,
+      publishedOffset: 0,
       done: new Promise((resolve) => {
         finish = resolve;
       }),
@@ -184,6 +198,7 @@ export class TerminalSessions {
         AND key NOT IN (SELECT key FROM settings WHERE key LIKE 'terminal:%' AND json_extract(value,'$.projectId')=?
         ORDER BY json_extract(value,'$.createdAt') DESC LIMIT 30)`)
         .run(record.projectId, record.projectId);
+      this.publish(active);
       this.active.delete(record.id);
       unlock();
       finish();
@@ -235,6 +250,7 @@ export class TerminalSessions {
   async close() {
     this.closed = true;
     clearInterval(this.timer);
+    clearInterval(this.streamTimer);
     await Promise.all([...this.active.keys()].map((id) => this.stop(id, 'interrupted')));
   }
 }

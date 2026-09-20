@@ -341,5 +341,27 @@ test('browser login, project selection, OpenCode approval and terminal survive p
   await expect(page.locator('.xterm-screen')).toHaveCount(0);
   await page.keyboard.press('Control+Backquote');
   await expect(page.locator('.xterm-screen')).toBeVisible();
+  await page.evaluate(
+    (id) =>
+      window.moose.request('terminalInput', {
+        id,
+        text: "sleep 1; printf '\\127\\105\\102\\137\\107\\101\\120\\n'\r",
+      }),
+    terminal.id,
+  );
+  await page.context().setOffline(true);
+  await page.waitForTimeout(1500); // Output arrives while the browser cannot receive the event stream.
+  await page.context().setOffline(false);
+  await expect(page.locator('.xterm-rows')).toContainText('WEB_GAP', { timeout: 15000 });
+  expect((await page.locator('.xterm-rows').innerText()).match(/WEB_GAP/g)).toHaveLength(1);
+  let idleReads = 0;
+  const countReads = (request: import('@playwright/test').Request) => {
+    if (request.method() === 'POST' && request.postDataJSON()?.method === 'terminalRead')
+      idleReads++;
+  };
+  page.on('request', countReads);
+  await page.waitForTimeout(500); // The removed 100 ms poll would issue several reads here.
+  page.off('request', countReads);
+  expect(idleReads).toBe(0);
   await page.screenshot({ path: 'test-results/web-workspace.png' });
 });

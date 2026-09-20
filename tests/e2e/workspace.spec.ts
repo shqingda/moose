@@ -42,6 +42,13 @@ async function launch(seed?: (store: Store) => void, extraEnv: Record<string, st
 }
 test('opens a project, approves a real IPC turn, reviews diff, persists draft and switches themes', async () => {
   const page = await launch();
+  if (process.env.MOOSE_TEST_BACKGROUND === '1') {
+    expect(
+      await app.evaluate(({ BrowserWindow }) =>
+        BrowserWindow.getAllWindows().every((win) => !win.isVisible() && !win.isFocused()),
+      ),
+    ).toBe(true);
+  }
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   const projectDir = join(dir, 'project');

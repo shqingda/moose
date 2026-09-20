@@ -22,19 +22,26 @@ const env = Object.fromEntries(
 );
 const app = await electron.launch({
   executablePath: resolve('release/mac-arm64/Moose.app/Contents/MacOS/Moose'),
-  env: { ...env, MOOSE_DATA_DIR: dir },
+  env: {
+    ...env,
+    MOOSE_DATA_DIR: dir,
+    MOOSE_TEST_BACKGROUND: process.env.MOOSE_TEST_BACKGROUND || '1',
+  },
 });
 try {
   const page = await app.firstWindow();
   await page.waitForSelector('.app-shell');
   const details = await app.evaluate(({ app, BrowserWindow }) => ({
     version: app.getVersion(),
+    visible: BrowserWindow.getAllWindows()[0].isVisible(),
     sandbox: (
       BrowserWindow.getAllWindows()[0].webContents as unknown as {
         getLastWebPreferences(): { sandbox: boolean };
       }
     ).getLastWebPreferences().sandbox,
   }));
+  if (process.env.MOOSE_TEST_BACKGROUND !== '0' && details.visible)
+    throw new Error('Packaged acceptance window must stay hidden');
   const snapshot = await page.evaluate(() => window.moose.request('snapshot', {}));
   if (details.version !== version || !details.sandbox || !Array.isArray(snapshot.projects))
     throw new Error('Packaged smoke failed');
