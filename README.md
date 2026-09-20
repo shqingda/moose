@@ -8,7 +8,7 @@ Moose 提供项目、会话、流式输出、工具记录、审批和 Git 审阅
 
 ## 本地开发
 
-环境：macOS Apple Silicon、Node.js 26.8.2、pnpm 12.4.1、Xcode Command Line Tools。
+环境：macOS Apple Silicon、Node.js 26.8.2、pnpm 12.5.1、Xcode Command Line Tools。
 
 ```sh
 pnpm install
