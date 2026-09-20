@@ -34,6 +34,7 @@ async function launch() {
   const store = new Store(join(dir, 'moose.sqlite'));
   store.setSettings({
     language: 'en',
+    opencodeEnabled: false,
     codexPath: resolve('tests/fixtures/agent.mjs'),
     grokPath: resolve('tests/fixtures/agent.mjs'),
     piPath: resolve('tests/fixtures/pi.mjs'),

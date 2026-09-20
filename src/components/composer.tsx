@@ -417,23 +417,25 @@ export function Composer({
                 <Square fill="currentColor" />
               </IconButton>
             )}
-            {provider === 'codex' && session && ['running', 'waiting'].includes(session.status) && (
-              <Button
-                size="sm"
-                variant="secondary"
-                disabled={
-                  disabled ||
-                  sending ||
-                  unsupportedImages ||
-                  info?.enabled === false ||
-                  session.archived ||
-                  (!draft.trim() && !attachments.length)
-                }
-                onClick={() => void send('steer')}
-              >
-                {t('steerNow')}
-              </Button>
-            )}
+            {['codex', 'grok'].includes(provider) &&
+              session &&
+              ['running', 'waiting'].includes(session.status) && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={
+                    disabled ||
+                    sending ||
+                    unsupportedImages ||
+                    info?.enabled === false ||
+                    session.archived ||
+                    (!draft.trim() && !attachments.length)
+                  }
+                  onClick={() => void send('steer')}
+                >
+                  {t('steerNow')}
+                </Button>
+              )}
             <Button
               size="icon"
               className="send-button"

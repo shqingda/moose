@@ -492,3 +492,30 @@
 .terminal-session-tab > button:last-child:active {
   color: var(--foreground);
 }
+
+.web-login {
+  max-width: 420px;
+  margin: 15vh auto;
+  padding: 24px;
+}
+.web-login form,
+.web-project-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.web-directory-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.web-directory-list {
+  height: 280px;
+  overflow-y: auto;
+}
+.web-directory-list p {
+  padding: 12px;
+  color: var(--muted-foreground);
+}

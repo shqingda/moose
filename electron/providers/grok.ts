@@ -1,24 +1,17 @@
+import { normalizeAcp } from './acp-events';
 import { GrokSessions } from './grok-sessions';
 import { attachmentText, promptText } from './prompt';
-import { JsonRpc } from './rpc';
+import { JsonRpc, RpcRejected } from './rpc';
 import {
   ClientSideConnection,
   ndJsonStream,
   PROTOCOL_VERSION,
-  type SessionNotification,
+  RequestError,
   type RequestPermissionResponse,
 } from '@agentclientprotocol/sdk';
 import { Readable, Writable } from 'node:stream';
 import { spawnAgent, terminate } from './process';
-import {
-  array,
-  readable,
-  record,
-  string,
-  type AgentAdapter,
-  type AgentEvent,
-  type RunContext,
-} from './types';
+import { array, readable, record, string, type AgentAdapter, type RunContext } from './types';
 import type { ProviderInfo } from '../../shared/types';
 
 /** 从 Grok 握手元数据提取可选模型。 */
@@ -35,52 +28,7 @@ export function grokModels(meta: unknown): ProviderInfo['models'] {
     };
   });
 }
-/** 把 ACP 文本、思考与工具更新转换为 Moose 消息事件。 */
-export function normalizeGrok(
-  notification: SessionNotification,
-  textKey: string,
-): AgentEvent | null {
-  const update = record(notification.update);
-  if (
-    update.sessionUpdate === 'agent_message_chunk' ||
-    update.sessionUpdate === 'agent_thought_chunk'
-  ) {
-    const content = record(update.content);
-    if (content.type !== 'text') return null;
-    return {
-      key: textKey,
-      kind: update.sessionUpdate === 'agent_thought_chunk' ? 'reasoning' : 'assistant',
-      delta: string(content.text),
-      state: 'running',
-    };
-  }
-  if (update.sessionUpdate === 'tool_call' || update.sessionUpdate === 'tool_call_update') {
-    return {
-      key: string(update.toolCallId),
-      kind: 'tool',
-      title: typeof update.title === 'string' ? update.title : undefined,
-      text: update.content
-        ? array(update.content)
-            .map((value) => {
-              const c = record(value);
-              return c.type === 'content'
-                ? readable(record(c.content).text)
-                : c.type === 'diff'
-                  ? `${string(c.path)}\n${string(c.newText)}`
-                  : readable(c);
-            })
-            .join('\n')
-        : update.rawOutput !== undefined
-          ? readable(update.rawOutput)
-          : update.rawInput
-            ? readable(update.rawInput)
-            : undefined,
-      state:
-        update.status === 'completed' ? 'done' : update.status === 'failed' ? 'error' : 'running',
-    };
-  }
-  return null;
-}
+export { normalizeAcp as normalizeGrok } from './acp-events';
 export class GrokAdapter implements AgentAdapter {
   private billingRpc?: JsonRpc;
   private child?: ReturnType<typeof spawnAgent>;
@@ -91,6 +39,7 @@ export class GrokAdapter implements AgentAdapter {
   private chunk = 0;
   private lastKind = '';
   private cancelled = false;
+  private prompting = false;
   private permissionSerial = 0;
   private permissions = new Map<
     string,
@@ -202,7 +151,7 @@ export class GrokAdapter implements AgentAdapter {
           const kind = params.update.sessionUpdate;
           if (kind !== this.lastKind) this.chunk++;
           this.lastKind = kind;
-          const event = normalizeGrok(params, `text:${this.chunk}`);
+          const event = normalizeAcp(params, `text:${this.chunk}`);
           if (event) this.context.emit(event);
         },
         requestPermission: (params) => {
@@ -316,30 +265,81 @@ export class GrokAdapter implements AgentAdapter {
       );
     this.context = context;
     if (this.cancelled) return;
-    const result = await conn.prompt({
-      sessionId: this.sessionId,
-      prompt: [
-        {
-          type: 'text',
-          text: `${context.promptContext?.mode === 'goal' ? '/goal ' : ''}${promptText(context)}`,
-        },
-        ...(context.attachments || []).map((a) =>
-          a.mime.startsWith('image/')
-            ? { type: 'image' as const, mimeType: a.mime, data: a.data! }
-            : {
-                type: 'text' as const,
-                text: attachmentText(a),
-              },
-        ),
-      ],
-    });
-    if (result.stopReason === 'refusal')
-      context.emit({
-        key: 'refusal',
-        kind: 'notice',
-        text: 'The agent declined this request.',
-        state: 'done',
+    this.prompting = true;
+    try {
+      const result = await conn.prompt({
+        sessionId: this.sessionId,
+        prompt: [
+          {
+            type: 'text',
+            text: `${context.promptContext?.mode === 'goal' ? '/goal ' : ''}${promptText(context)}`,
+          },
+          ...(context.attachments || []).map((a) =>
+            a.mime.startsWith('image/')
+              ? { type: 'image' as const, mimeType: a.mime, data: a.data! }
+              : {
+                  type: 'text' as const,
+                  text: attachmentText(a),
+                },
+          ),
+        ],
       });
+      if (result.stopReason === 'refusal')
+        context.emit({
+          key: 'refusal',
+          kind: 'notice',
+          text: 'The agent declined this request.',
+          state: 'done',
+        });
+    } finally {
+      this.prompting = false;
+    }
+  }
+  /** 原生插话只提交一次；queued 表示底座接收，不代表模型已处理。 */
+  async steer(context: RunContext): Promise<string> {
+    if (!this.connection || !this.prompting || this.cancelled)
+      throw new RpcRejected('The turn has ended. You can add this message to the queue.');
+    if ((context.promptContext?.mode || 'build') !== (this.context?.promptContext?.mode || 'build'))
+      throw new RpcRejected(
+        'Steering cannot change the active task mode. Add this message to the queue.',
+      );
+    if (
+      context.attachments?.some((a) => a.mime.startsWith('image/')) &&
+      !this.initialization?.agentCapabilities?.promptCapabilities?.image
+    )
+      throw new RpcRejected('This Grok CLI does not support image input.');
+    const text = promptText(context);
+    const content = [
+      { type: 'text', text },
+      ...(context.attachments || []).map((a) =>
+        a.mime.startsWith('image/')
+          ? { type: 'image', mimeType: a.mime, data: a.data! }
+          : { type: 'text', text: attachmentText(a) },
+      ),
+    ];
+    let result: Record<string, unknown>;
+    try {
+      result = await this.deadline(
+        this.connection.extMethod('_x.ai/interject', {
+          sessionId: this.sessionId,
+          text,
+          content,
+        }),
+      );
+    } catch (error) {
+      // Only explicit protocol rejection proves non-delivery. Transport failures remain unknown.
+      if (error instanceof RequestError && [-32601, -32602].includes(error.code))
+        throw new RpcRejected(
+          error.code === -32601
+            ? 'This Grok CLI does not support steering. Update it or add this message to the queue.'
+            : error.message,
+        );
+      throw error;
+    }
+    if (result.status !== 'queued')
+      throw new Error('Unexpected Grok steering response; delivery unknown.');
+    // ACP does not return a turn ID. Do not fabricate one from the session ID.
+    return '';
   }
   /** 将用户选择交还当前 ACP 权限请求，仅接受代理给出的有效选项。 */
   respond(key: string, choice?: string, answers?: Record<string, string>) {

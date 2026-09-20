@@ -227,11 +227,13 @@ export const schemas = {
     codexEnabled: z.boolean().optional(),
     grokEnabled: z.boolean().optional(),
     piEnabled: z.boolean().optional(),
+    opencodeEnabled: z.boolean().optional(),
     theme: z.enum(['system', 'light', 'dark']).optional(),
     language: z.enum(['system', 'en', 'zh-CN']).optional(),
     codexPath: z.string().max(4096).optional(),
     grokPath: z.string().max(4096).optional(),
     piPath: z.string().max(4096).optional(),
+    opencodePath: z.string().max(4096).optional(),
     fontScale: z.number().min(0.85).max(1.4).optional(),
   }),
   extensionsRead: z.strictObject({

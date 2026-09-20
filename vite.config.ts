@@ -10,7 +10,7 @@ export default defineConfig(({ command }) => {
   const ready = new Set<string>();
   let started = false;
   let transition = Promise.resolve();
-  const targets = ['main', 'preload', 'runtime', 'pty-host'] as const;
+  const targets = ['main', 'preload', 'runtime', 'pty-host', 'web-server'] as const;
   return {
     base: './',
     resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },

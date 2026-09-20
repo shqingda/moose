@@ -115,6 +115,7 @@ kbd {
   font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
 }
 .app-shell {
+  --sidebar-motion: 240ms cubic-bezier(0.22, 0.61, 0.36, 1);
   display: flex;
   height: 100%;
   width: 100%;
@@ -1561,15 +1562,37 @@ kbd {
   justify-content: flex-start;
 }
 
-/* Navigation keeps its geometry during an interruptible collapse. */
+/* Off-canvas navigation: move the complete panel, rather than crop stationary content. */
 .sidebar-frame {
-  overflow: hidden;
+  position: relative;
+  width: 264px;
+  overflow: clip;
   flex-shrink: 0;
-  display: flex;
+  transition: width var(--sidebar-motion);
 }
 .sidebar-frame .sidebar {
+  position: absolute;
+  inset: 0 auto 0 0;
   width: 264px;
   min-width: 264px;
+  transform: translateX(0);
+  transition: transform var(--sidebar-motion);
+}
+.sidebar-collapsed .sidebar-frame {
+  width: 0;
+}
+.sidebar-collapsed .sidebar-frame .sidebar {
+  transform: translateX(-100%);
+}
+.reduce-motion .sidebar-frame,
+.reduce-motion .sidebar-frame .sidebar {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-frame,
+  .sidebar-frame .sidebar {
+    transition: none;
+  }
 }
 .global-sidebar-toggle {
   position: absolute;
@@ -2485,4 +2508,76 @@ summary:focus-visible {
 }
 .combined-model-popup .model-providers {
   overflow-y: auto;
+}
+
+/* Browser branding and toolbar controls share the same top row. */
+.app-shell[data-host='web'] {
+  --workspace-toolbar-height: 57px;
+}
+.app-shell[data-host='web'] .workspace-header {
+  height: var(--workspace-toolbar-height);
+  flex-shrink: 0;
+}
+.app-shell[data-host='web'] .brand-row {
+  height: var(--workspace-toolbar-height);
+  flex-shrink: 0;
+  padding: 0 56px 0 20px;
+  gap: 8px;
+}
+.app-shell[data-host='web'] .sidebar-actions {
+  padding: 12px 12px 16px;
+}
+.app-shell[data-host='web'] .sidebar .section-caption {
+  padding-inline: 20px;
+}
+.app-shell[data-host='web'] .brand-mark {
+  width: 24px;
+  height: 24px;
+}
+.app-shell[data-host='web'] .project-list {
+  padding-inline: 12px;
+}
+.app-shell[data-host='web'] .sidebar .sidebar-actions button {
+  padding-inline: 7px;
+  gap: 8px;
+}
+.app-shell[data-host='web'] .sidebar .project-heading {
+  padding-inline: 8px;
+  gap: 8px;
+}
+.app-shell[data-host='web'] .sidebar-actions button svg,
+.app-shell[data-host='web'] .project-heading svg {
+  margin-inline: 3.5px;
+}
+.app-shell[data-host='web'] .sidebar .session-row,
+.app-shell[data-host='web'] .project-empty {
+  padding-left: 40px;
+}
+.app-shell[data-host='web'] .global-sidebar-toggle {
+  left: 16px;
+  top: calc((var(--workspace-toolbar-height) - 32px) / 2);
+  transform: translateX(200px);
+  transition: transform var(--sidebar-motion);
+}
+.app-shell[data-host='web'].sidebar-collapsed .global-sidebar-toggle {
+  transform: translateX(0);
+}
+.app-shell[data-host='web'] .global-sidebar-toggle button {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+.reduce-motion .app-shell[data-host='web'] .global-sidebar-toggle {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell[data-host='web'] .global-sidebar-toggle {
+    transition: none;
+  }
+}
+.app-shell[data-host='web'].sidebar-collapsed .workspace-header {
+  padding-left: 56px;
+}
+.app-shell[data-host='web'] .workspace-header::before {
+  display: none;
 }

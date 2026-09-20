@@ -10,7 +10,10 @@ export function useWorkspace() {
     const generation = ++requestGeneration.current;
     try {
       const data = await window.moose.request('snapshot', {});
-      if (generation === requestGeneration.current) setSnapshot(data);
+      if (generation === requestGeneration.current) {
+        setSnapshot(data);
+        setError('');
+      }
     } catch (error) {
       setError(String(error));
     }

@@ -102,6 +102,7 @@ export const agentEnvironment = () => ({
       '/bin',
       join(homedir(), '.local/bin'),
       join(homedir(), '.grok/bin'),
+      join(homedir(), '.opencode/bin'),
       join(homedir(), '.cargo/bin'),
     ]),
   ]

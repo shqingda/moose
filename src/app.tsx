@@ -1,7 +1,7 @@
 import { BackgroundTools, type BackgroundPlacement } from './components/background-tools';
 import { WorkspaceTools } from './components/workspace-tools';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { MotionConfig, motion, useReducedMotion } from 'motion/react';
+import { MotionConfig, useReducedMotion } from 'motion/react';
 import { ChevronDown, Folder, PanelRight, Search, X, CircleAlert, PanelLeft } from 'lucide-react';
 import type {
   Attachment,
@@ -395,24 +395,22 @@ function Workspace({
         .includes(search.toLowerCase()),
   );
   return (
-    <div className={`app-shell ${sidebarOpen ? '' : 'sidebar-collapsed'}`}>
+    <div
+      className={`app-shell ${sidebarOpen ? '' : 'sidebar-collapsed'}`}
+      data-host={window.moose.host || 'desktop'}
+    >
       <div className="global-sidebar-toggle">
-        <IconButton label={t('toggleSidebar')} onClick={toggleSidebar} aria-expanded={sidebarOpen}>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={t('toggleSidebar')}
+          onClick={toggleSidebar}
+          aria-expanded={sidebarOpen}
+        >
           <PanelLeft />
-        </IconButton>
+        </Button>
       </div>
-      <motion.div
-        className="sidebar-frame"
-        initial={false}
-        animate={{ width: sidebarOpen ? 264 : 0 }}
-        transition={
-          reduceMotion || snapshot.reduceMotion
-            ? { duration: 0 }
-            : { type: 'spring', stiffness: 380, damping: 39 }
-        }
-        inert={!sidebarOpen}
-        aria-hidden={!sidebarOpen}
-      >
+      <div className="sidebar-frame" inert={!sidebarOpen} aria-hidden={!sidebarOpen}>
         <Sidebar
           onDeleteSession={deleteSession}
           onDeleteProject={projectAction}
@@ -433,7 +431,7 @@ function Workspace({
           archived={archived}
           onArchived={() => setArchived((value) => !value)}
         />
-      </motion.div>
+      </div>
       <div className="workspace-stage" data-dock={dock || undefined}>
         <div className="workspace-main">
           <main className="workspace">
@@ -442,9 +440,13 @@ function Workspace({
                 {project && (
                   <>
                     <Folder size={14} />
-                    <button title={project.path} onClick={() => openProject('finder')}>
-                      {project.name}
-                    </button>
+                    {window.moose.host === 'web' ? (
+                      <span title={project.path}>{project.name}</span>
+                    ) : (
+                      <button title={project.path} onClick={() => openProject('finder')}>
+                        {project.name}
+                      </button>
+                    )}
                   </>
                 )}
                 {session && (

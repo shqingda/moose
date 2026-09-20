@@ -1,6 +1,6 @@
 {
   "name": "moose",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "private": true,
   "description": "A quiet workspace for your coding agents",
   "license": "UNLICENSED",
@@ -9,6 +9,12 @@
   "main": "dist-electron/main/main.js",
   "scripts": {
     "dev": "vite",
+    "runtime:start": "node scripts/runtime.mjs start",
+    "runtime:status": "node scripts/runtime.mjs status",
+    "runtime:stop": "node scripts/runtime.mjs stop",
+    "desktop:shared": "pnpm build && node scripts/runtime.mjs desktop",
+    "web": "node scripts/web.mjs",
+    "web:build": "pnpm build && pnpm web",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

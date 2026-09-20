@@ -235,20 +235,22 @@ function WorktreeContent({
                 {status.sourceCommit.slice(0, 12)} → {status.targetCommit.slice(0, 12)}
               </p>
               {pending && <Badge variant="outline">{w.merge?.state}</Badge>}
-              <Button
-                variant="outline"
-                disabled={busy}
-                onClick={() =>
-                  void act(async () => {
-                    await window.moose.request('openProject', {
-                      projectId: project.id,
-                      target: 'editor',
-                    });
-                  })
-                }
-              >
-                {t('wtOpenTarget')}
-              </Button>
+              {window.moose.host !== 'web' && (
+                <Button
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() =>
+                    void act(async () => {
+                      await window.moose.request('openProject', {
+                        projectId: project.id,
+                        target: 'editor',
+                      });
+                    })
+                  }
+                >
+                  {t('wtOpenTarget')}
+                </Button>
+              )}
               {status.merged && !pending && <p>{t('wtMerged')}</p>}
               <pre className="max-h-60 overflow-auto whitespace-pre-wrap text-xs">
                 {status.changes || t('wtNoChanges')}

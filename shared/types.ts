@@ -134,9 +134,11 @@ export interface Settings {
   codexEnabled: boolean;
   grokEnabled: boolean;
   piEnabled: boolean;
+  opencodeEnabled: boolean;
   codexPath: string;
   grokPath: string;
   piPath: string;
+  opencodePath: string;
   fontScale: number;
 }
 export interface ModelOption {
@@ -355,6 +357,7 @@ export type AppEvent =
   | { type: 'appearance' }
   | { type: 'runtime-error'; error: string };
 export interface MooseAPI {
+  host?: 'desktop' | 'web';
   request<M extends Method>(method: M, params: Requests[M]): Promise<Responses[M]>;
   subscribe(listener: (event: AppEvent) => void): () => void;
 }
@@ -367,6 +370,8 @@ export const defaultSettings: Settings = {
   codexPath: '',
   grokPath: '',
   piPath: '',
+  opencodePath: '',
+  opencodeEnabled: true,
   fontScale: 1,
 };
 

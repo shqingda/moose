@@ -14,6 +14,7 @@ import {
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { join, resolve, relative, isAbsolute } from 'node:path';
 import { RuntimeHost } from './runtime-host';
+import { SharedRuntime } from './shared-runtime';
 import { openEditor } from './editor';
 import { validate } from '../shared/validation';
 import type { AppEvent, Method, Requests, Snapshot, Settings } from '../shared/types';
@@ -32,11 +33,9 @@ let quitting = false;
 const emit = (event: AppEvent) => {
   if (window && !window.isDestroyed()) window.webContents.send('moose:event', event);
 };
-const runtime = new RuntimeHost(
-  join(directory, '../runtime/runtime.js'),
-  app.getPath('userData'),
-  emit,
-);
+const runtime = process.env.MOOSE_SHARED_RUNTIME_FILE
+  ? new SharedRuntime(process.env.MOOSE_SHARED_RUNTIME_FILE, emit)
+  : new RuntimeHost(join(directory, '../runtime/runtime.js'), app.getPath('userData'), emit);
 process.on('SIGTERM', () => app.quit());
 process.on('SIGINT', () => app.quit());
 const appearance = () => ({

@@ -4,8 +4,7 @@ import { createRoot } from 'react-dom/client';
 import './styles.css';
 import './app.css';
 import App from './app';
+import { WebHost } from './components/web-host';
 createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
+  <React.StrictMode>{window.moose ? <App /> : <WebHost />}</React.StrictMode>,
 );

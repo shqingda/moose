@@ -23,7 +23,12 @@ it.each([true, false])(
   async (enabled) => {
     const dir = mkdtempSync(join(tmpdir(), 'moose-providers-'));
     const store = new Store(join(dir, 'db.sqlite'));
-    store.setSettings({ codexPath: '/old/codex', grokEnabled: false, piEnabled: false });
+    store.setSettings({
+      codexPath: '/old/codex',
+      grokEnabled: false,
+      piEnabled: false,
+      opencodeEnabled: false,
+    });
     let release = () => {};
     let signalStarted = () => {};
     const gate = new Promise<void>((resolve) => {

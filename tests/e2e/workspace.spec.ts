@@ -21,6 +21,7 @@ async function launch(seed?: (store: Store) => void, extraEnv: Record<string, st
   const store = new Store(join(dir, 'moose.sqlite'));
   store.setSettings({
     language: 'en',
+    opencodeEnabled: false,
     theme: 'light',
     codexPath: fixture,
     grokPath: fixture,
@@ -803,7 +804,9 @@ test('steers the active Codex turn and persists delivery without enqueueing a ne
   await expect(page.locator('.message-assistant').last()).toContainText(
     'Use the revised direction',
   );
-  await expect(page.getByText('Added to the active turn', { exact: true })).toBeVisible();
+  await expect(
+    page.getByText('Accepted by the agent for the active turn', { exact: true }),
+  ).toBeVisible();
   const messages = await page.evaluate(
     (sessionId) => window.moose.request('messages', { sessionId }),
     sessionId,
@@ -817,7 +820,9 @@ test('steers the active Codex turn and persists delivery without enqueueing a ne
   ).toEqual([]);
   await page.reload();
   await page.getByRole('button', { name: 'Steering test', exact: true }).click();
-  await expect(page.getByText('Added to the active turn', { exact: true })).toBeVisible();
+  await expect(
+    page.getByText('Accepted by the agent for the active turn', { exact: true }),
+  ).toBeVisible();
   await page.screenshot({ path: 'test-results/native-steering.png' });
 });
 
@@ -981,4 +986,55 @@ test('keeps model picker height stable across providers and empty searches with 
   expect(await popup.evaluate((el) => el.getBoundingClientRect().height)).toBeCloseTo(height, 0);
   await popup.getByRole('textbox').fill('');
   await page.screenshot({ path: 'test-results/model-picker-fixed.png', animations: 'disabled' });
+});
+
+test('steers Grok natively while ordinary messages stay in the Moose queue', async () => {
+  let sessionId = '';
+  const page = await launch((store) => {
+    store.setSettings({ grokPath: resolve('tests/fixtures/grok-steering.mjs') });
+    const session = store.createSession(store.addProject(dir).id, 'grok');
+    sessionId = session.id;
+    store.updateSession(sessionId, { title: 'Grok steering test' });
+  });
+  await page.getByRole('button', { name: 'Grok steering test', exact: true }).click();
+  await page.locator('#composer').fill('start');
+  await page.locator('#composer').press('Enter');
+  await expect(page.locator('.markdown')).toContainText('Ready');
+  await page.locator('#composer').fill('unsupported');
+  await page.getByRole('button', { name: 'Send now', exact: true }).click();
+  await expect(page.locator('#composer')).toHaveValue('unsupported');
+  await expect(
+    page.getByText('Not sent · input retained; you can queue it', { exact: false }),
+  ).toBeVisible();
+  await page.locator('#composer').fill('new direction');
+  await page.getByRole('button', { name: 'Send now', exact: true }).click();
+  await expect(page.locator('.markdown')).toContainText('Steered: new direction');
+  await expect(
+    page.getByText('Accepted by the agent for the active turn', { exact: true }),
+  ).toBeVisible();
+  const messages = await page.evaluate(
+    (sessionId) => window.moose.request('messages', { sessionId }),
+    sessionId,
+  );
+  const users = messages.messages.filter((m) => m.kind === 'user');
+  expect(new Set(users.map((m) => m.runId)).size).toBe(1);
+  expect(
+    await page.evaluate((sessionId) => window.moose.request('queue', { sessionId }), sessionId),
+  ).toEqual([]);
+  await page.locator('#composer').fill('start another');
+  await page.locator('#composer').press('Enter');
+  await expect(page.getByRole('button', { name: 'Send now', exact: true })).toBeVisible();
+  await page.locator('#composer').fill('follow up');
+  await page.locator('#composer').press('Enter');
+  await expect
+    .poll(
+      async () =>
+        (
+          await page.evaluate(
+            (sessionId) => window.moose.request('queue', { sessionId }),
+            sessionId,
+          )
+        ).length,
+    )
+    .toBe(1);
 });

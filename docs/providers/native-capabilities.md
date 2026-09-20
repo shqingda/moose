@@ -51,7 +51,7 @@ Moose 对 Codex 显式传入 `summary: auto`，接收 `item/reasoning/summaryTex
 | 优先级 | 能力 | 当前 Moose 状态 |
 | --- | --- | --- |
 | 高 | 原生 Plan → 审阅／修改计划 → 批准执行 | Codex 已接原生 Plan、版本化修改与批准执行；Grok／Pi 未接入 |
-| 高 | 运行中插话、调整任务方向 | Codex 已接 `turn/steer`；“立即发送”插话，普通发送保持排队；Grok／Pi 保持队列 |
+| 高 | 运行中插话、调整任务方向 | Codex 已接 `turn/steer`；“立即发送”插话，普通发送保持排队；Grok 已接 `_x.ai/interject`（0.15.0），Pi 保持队列 |
 | 高 | 子代理独立面板与控制 | Codex 独立历史面板、受能力约束的发送／停止；恢复关闭子任务需主代理，Grok 保持工具活动展示 |
 | 高 | Worktree 隔离、多任务并行与合并 | 已接受管 worktree 创建、同项目多目录并行、保留／安全清理、合并预览／冲突／继续／中止；同目录仍串行 |
 | 中 | Git 操作与原生代码审查 | 已接逐文件暂存／取消、提交预览与指纹校验、GitHub 草稿 PR／状态、Codex 独立只读审查（0.10.0）；见[第四阶段验收](phase-four-testing.md) |

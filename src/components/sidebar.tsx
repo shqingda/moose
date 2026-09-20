@@ -55,6 +55,7 @@ export function Sidebar({
   onArchived(): void;
 }) {
   const t = useI18n();
+  const web = window.moose.host === 'web';
   const [collapsed, setCollapsed] = useState<Set<string>>(() => {
     try {
       return new Set(JSON.parse(localStorage.getItem('moose.collapsedProjects') || '[]'));
@@ -73,33 +74,42 @@ export function Sidebar({
     });
   return (
     <aside className="sidebar" aria-label={t('projects')}>
-      <div className="sidebar-drag" />
+      {!web && <div className="sidebar-drag" aria-hidden="true" />}
       <div className="brand-row">
         <MooseMark className="brand-mark" />
         <span>Moose</span>
-        <IconButton label={t('search')} onClick={onSearch}>
-          <Search />
-        </IconButton>
+        {!web && (
+          <IconButton label={t('search')} onClick={onSearch}>
+            <Search />
+          </IconButton>
+        )}
       </div>
       <div className="sidebar-actions">
         <Button variant="ghost" className="justify-start" onClick={() => onNew()}>
           <SquarePen data-icon="inline-start" />
           {t('newSession')}
-          <kbd>⌘ N</kbd>
+          {!web && <kbd>⌘ N</kbd>}
         </Button>
       </div>
       <div className="section-caption">
         <span>{archived ? t('archived') : t('projects')}</span>
-        {!archived && (
-          <IconButton
-            label={t('addProject')}
-            className="project-add-button"
-            size="icon-xs"
-            onClick={onAdd}
-          >
-            <Plus />
-          </IconButton>
-        )}
+        <div className="flex items-center gap-1">
+          {web && (
+            <IconButton label={t('search')} onClick={onSearch} size="icon-xs">
+              <Search />
+            </IconButton>
+          )}
+          {!archived && (
+            <IconButton
+              label={t('addProject')}
+              className="project-add-button"
+              size="icon-xs"
+              onClick={onAdd}
+            >
+              <Plus />
+            </IconButton>
+          )}
+        </div>
       </div>
       <nav className="project-list">
         {archived && !sessions.some((s) => s.archived) && (
@@ -225,7 +235,7 @@ export function Sidebar({
       <footer className="sidebar-footer">
         <div className="local-label">
           <Circle size={6} fill="currentColor" />
-          {t('local')}
+          {t(window.moose.host === 'web' ? 'webWorkspace' : 'local')}
         </div>
         <div className="flex items-center gap-1">
           <IconButton label={t('archived')} onClick={onArchived} aria-pressed={archived}>

@@ -1,0 +1,104 @@
+# Moose Web
+
+Web 入口复用桌面版的 React 界面和业务服务，在浏览器里管理 AI 编程代理、项目、审批与终端。纳入 0.15.0，作为从源码启动的实验入口；DMG 默认仍使用桌面独立后台。
+
+## 本机启动
+
+在项目根目录执行：
+
+```sh
+export PATH="/opt/homebrew/bin:$PATH"
+pnpm install
+pnpm web:build
+```
+
+完成构建后，终端会打印包含访问令牌的链接。打开这个链接进入工作区。以后代码未改动时直接执行 `pnpm web`。
+
+服务默认监听 `127.0.0.1:4318`，数据保存在 `~/.moose/web`。需要隔离测试时可指定 `MOOSE_WEB_DATA_DIR` 和 `MOOSE_WEB_PORT`。该目录不要设成桌面版数据目录。服务通过排他锁阻止多个 Web 调度器同时打开同一份数据库；异常退出留下锁时，先核对锁里的 PID 是否已退出，再清除过期锁。
+
+目前使用 Electron 自带的 Node 运行时启动无窗口服务，复用现有 better-sqlite3、node-pty 原生模块 ABI；并不要求 Electron 桌面窗口保持打开，也还不是单独发布的纯 Node 包。
+
+## 日常使用
+
+- macOS 本机点击“打开项目”会直接弹出系统文件夹选择器，确认后打开原目录，取消不创建项目。无需上传项目。
+- 通过 SSH 启动或非 macOS 时，使用网页目录浏览弹窗；支持逐层进入、返回上级、主目录和粘贴绝对路径。也可设置 `MOOSE_WEB_DIRECTORY_PICKER=browse` 强制使用网页选择。
+- CLI 安装、登录、模型与文件执行都发生在服务所在机器。附件选择后会上传到服务端。
+- 关闭浏览器页面，服务和任务继续运行。重新打开页面可读取历史、当前审批和终端输出。
+- `Ctrl+C` 停止服务，会结束它管理的任务和终端；机器重启也不会恢复原来的活进程。
+- 桌面默认使用自己的后台和数据；也可按下面的方法接入 Web 后台，共享同一份项目、会话、审批和终端。
+- 连接断开会提示重连。写请求不自动重发；如果提交或发送时断开，先检查结果再决定是否重试。
+
+访问令牌只在当前服务进程存活期间有效；登录后放入 HttpOnly cookie，令牌从地址栏清除。默认只绑定本机回环地址；可通过下述 HTTPS 隧道临时远程预览。系统服务安装、多设备控制权和完整输出流恢复尚未完成。
+
+Web 侧边栏单独适配浏览器：顶部放品牌和折叠按钮，与内容区工具栏对齐；搜索放在项目区添加按钮左侧，新建会话使用桌面端的左对齐无描边样式；折叠和展开共用同一按钮，只沿水平方向移动；收起时整块侧边栏向左滑出，内容区同步扩展，避免裁切静止文字；收起后可从内容区左上角展开。系统开启减少动态效果时直接切换。
+
+系统弹窗由本机服务调用 `/usr/bin/osascript` 的 `choose folder` 实现，参考 [DeepSeek Harness 官方实现](https://github.com/deepseek-ai/deepseek-harness/blob/ddefc45fbc7f8e46dd73185e68295696d1297887/packages/host/directory-picker-native/src/native-picker.ts)。浏览器通过已认证的同源请求调用服务，返回的是宿主机绝对路径。它与浏览器 `showDirectoryPicker()` 的目录句柄不同；选择器显示在运行服务的 Mac 上。系统选择失败时在页面显示错误，不自动追加另一个选择弹窗；连续点击也不会重复打开。一个服务同时只打开一个系统选择器；页面断开或服务停止时终止等待。
+
+## 桌面与浏览器共用一个后台
+
+推荐执行 `pnpm desktop:shared`：构建后连接已有后台；没有后台时自动启动独立后台，再打开桌面。以后可用 `pnpm runtime:status` 查看状态、`pnpm runtime:stop` 停止后台；只启动后台用 `pnpm build && pnpm runtime:start`。后台日志在数据目录的 `runtime.log`。该入口不会自动迁移桌面历史，也不安装开机启动服务。
+
+需要开发热更新时，先在一个终端运行 `pnpm web:build`，保持这个服务运行。它会打印桌面连接文件路径，默认是 `~/.moose/web/connection.json`。在另一个终端启动桌面开发版：
+
+```sh
+export PATH="/opt/homebrew/bin:$PATH"
+MOOSE_SHARED_RUNTIME_FILE="$HOME/.moose/web/connection.json" pnpm dev
+```
+
+指定了自定义 Web 数据目录时，使用服务打印的连接文件路径。先退出之前启动的 Moose Dev，避免单实例机制唤起旧进程。不要把 `MOOSE_DATA_DIR` 指向 Web 数据目录；两端通过服务请求共享状态，不各自打开同一数据库。
+
+共享模式下，桌面保留原生菜单、文件选择和剪贴板；业务请求转发给本机 Web 服务。退出桌面或关闭网页都不会停止任务；停止 Web 服务才会关闭它管理的进程。连接中断后会尝试重新认证并订阅事件，随后刷新状态；业务写请求不自动重发。
+
+连接文件含访问凭据，权限为 0600，只供同一用户的桌面主进程读取，不送入渲染页面。桌面客户端只接受 `http://127.0.0.1` 地址。服务停止后删除连接文件，下次启动生成新凭据。已有桌面历史不会自动迁移，也没有自动安装后台守护服务；目前需要显式启动和连接。
+
+## OpenCode v2
+
+先按 [OpenCode v2 官方文档](https://opencode.ai/v2/docs)安装并在终端登录：
+
+```sh
+brew install anomalyco/tap/opencode-v2
+opencode auth login
+opencode --version
+```
+
+Moose 会搜索 PATH 和 `~/.opencode/bin`，也可在设置中填入可执行文件绝对路径。要求 v2，当前实测握手版本为 2.0.10；不是根据旧版 SDK 的 `v2` 导出路径判断 CLI 版本。
+
+接入使用官方 [`opencode acp`](https://opencode.ai/v2/docs/cli/acp)，由 CLI 启动私有服务。当前支持模型发现与选择、文本／思考／工具更新、CLI 权限请求、取消、同一原生会话恢复，以及握手声明支持时的图片输入。只开放请求审批档位；具体工具是否请求权限仍遵循 OpenCode 配置，Moose 不声称提供额外沙箱。
+
+OpenCode 原生 Plan／Goal、独立历史管理、配置插件管理、用量查询和子代理专门面板尚未接入；这些入口不因底座名称存在就自动开启。
+
+真实 v2.0.10 的握手与模型列表已验证，测试没有调用真实模型。完整执行、批准／拒绝、取消和历史回放抑制用确定性测试 CLI 验证。
+
+## 后续顺序
+
+1. 显式共享后台已打通；下一步完善默认启动与数据迁移，再考虑安装系统后台服务。
+2. 用流式终端传输替代轮询，补输出游标、慢客户端限制、输入与尺寸控制权。
+3. 增加本机文件预览、笔记和通知；移动端适配与云端部署暂缓。
+
+设计依据见 [调研与后续方案](research/web-ui-and-roost.md)。
+
+## 网页为什么能打开系统弹窗、发现 CLI
+
+浏览器只负责显示界面和发送 HTTP 请求。`pnpm web` 启动的是你电脑上的本机服务，运行时使用 Electron 自带的 Node，但不会打开桌面窗口。这个服务以启动它的用户身份访问文件、启动进程；浏览器本身没有获得这些权限。
+
+打开项目的调用链：浏览器发送 `POST /api/request`，方法为 `webPickDirectory`；服务验证登录 cookie 和来源后，执行 `/usr/bin/osascript`。AppleScript 的 `choose folder` 显示 macOS 系统目录选择器，`POSIX path of selectedFolder` 将路径写到标准输出。服务读取路径、通过 HTTP 返回给网页；网页再调用 `webAddProject` 注册项目。取消则返回空值，不创建项目。
+
+发现 CLI 的调用链：网页请求 `providers` → MooseService → `discover()`。服务按设置中的显式路径，或当前进程 PATH、登录 shell PATH 及常见安装目录寻找可执行文件，运行 `--version`，再由相应适配器探测协议和模型列表。找到文件、可启动、协议握手成功是不同状态，不等同于所有模型均已登录或可以调用。执行任务时，也是服务启动 CLI 子进程，浏览器接收结果。
+
+桌面版使用 Electron IPC 连接界面和本机业务服务，Web 版使用 HTTP 请求与 SSE 事件流；发现 CLI 和执行任务共用业务代码。若未来将服务部署到另一台机器，发现的将是那台机器上的 CLI，系统弹窗也属于那台机器。当前版本默认只监听本机回环地址。
+
+## 可选临时远程预览（暂缓推进）
+
+使用 HTTPS 反向隧道，服务仍只监听 127.0.0.1。先运行 `ssh -R 80:127.0.0.1:4320 nokey@localhost.run` 获取临时 HTTPS 地址，然后在另一个终端启动独立预览后台：
+
+```sh
+MOOSE_WEB_DATA_DIR="$HOME/.moose/mobile-preview" MOOSE_WEB_PORT=4320 \
+MOOSE_WEB_PUBLIC_ORIGIN=https://实际分配的域名 \
+pnpm runtime:start
+```
+
+将启动输出中链接的 `http://127.0.0.1:4320` 换成该 HTTPS 地址，保留 `/#token=…`，在手机打开。令牌赋予操作该服务的权限，请勿公开分享。公共入口严格校验 Host 与 Origin，并设置 Secure 登录 cookie；手机打开项目使用服务端目录浏览，不在 Mac 弹系统选择器。
+
+停止预览：`MOOSE_WEB_DATA_DIR="$HOME/.moose/mobile-preview" pnpm runtime:stop`，再停止 SSH 隧道。电脑睡眠、断网或隧道失效后地址不可用；这是临时开发入口，不是托管部署。
+
+[Portless](https://github.com/vercel-labs/portless) 也支持通过 ngrok 或 Tailscale Funnel 分享，但需先配置对应服务。[Cloudflare Quick Tunnels](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/do-more-with-tunnels/trycloudflare/) 不支持 SSE，因此不能直接用于当前事件流。

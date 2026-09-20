@@ -24,6 +24,7 @@ async function launch() {
   const store = new Store(join(dir, 'moose.sqlite'));
   store.setSettings({
     language: 'en',
+    opencodeEnabled: false,
     theme: 'light',
     codexPath: resolve('tests/fixtures/agent.mjs'),
     grokEnabled: false,

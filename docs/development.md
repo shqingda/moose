@@ -7,6 +7,7 @@
 ```sh
 pnpm install
 pnpm dev
+pnpm web:build # 构建并启动本机浏览器入口
 pnpm format
 pnpm format:check
 pnpm lint

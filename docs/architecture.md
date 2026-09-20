@@ -1,14 +1,14 @@
 # Moose 技术架构
 
-> 基于 0.6.0 源码梳理。本文描述当前实现，方便理解调用链和定位代码；不把早期计划当作已实现能力。
+> 基于 0.14.0 与当前 Web／OpenCode 开发增量核对。桌面和 Web 当前复用业务代码，运行实例及数据目录仍独立。
 
 ## 1. 项目定位
 
-Moose 是面向 Apple Silicon Mac 的本地 Coding Agent 客户端。它提供项目、会话、消息输入、审批和 Git 改动审阅界面，通过本机 CLI 接入 Codex、Grok Build 与 Pi。
+Moose 是可扩展的 AI 编程代理工作台，提供项目、会话、消息输入、审批和 Git 改动审阅。各 CLI 通过适配器接入统一的执行与事件接口；桌面版面向 Apple Silicon Mac，Web 是当前新增入口。
 
 Moose 负责交互、调度与历史存储；模型推理、工具执行及账号认证由代理 CLI 和对应服务完成。会话数据保存在本机，但使用代理时仍会与代理服务通信，“本地客户端”不代表离线推理。
 
-当前没有云端业务后端，因此未引入 Hono、Cloudflare 或远程数据库；也没有内置终端、文件编辑器、worktree 管理、自动更新或遥测。
+当前有内置 PTY 终端、worktree 管理和独立本机 Web 服务；没有托管云端、多租户、内置文件编辑器、自动更新或遥测。Web 服务不是公网部署方案。
 
 ## 2. 总体架构：界面与执行分离
 
@@ -262,3 +262,15 @@ Renderer 开启 sandbox、contextIsolation，关闭 nodeIntegration，只能通�
 新增代理时实现 AgentAdapter，并接入 provider 类型、校验、发现逻辑及 UI 选项；可选能力应由探测结果驱动。新增 IPC 操作时同步修改 Requests/Responses、Zod 校验、处理端和调用端。修改数据结构时同时维护 Drizzle schema 与实际迁移。
 
 验证入口：`pnpm typecheck`、`pnpm test`、`pnpm test:e2e`；分发使用 `pnpm dist`，安装包启动检查见 [package-smoke.ts](../scripts/package-smoke.ts)。Mock 测试验证客户端流程，不能替代真实 CLI 的认证、协议兼容和额度验收。
+
+## Web 宿主与新增协议适配
+
+`electron/web-server.ts` 在无窗口进程中启动 `MooseService`。浏览器的 `src/lib/web-api.ts` 实现同一份 MooseAPI，通过 HTTP 调用、SSE 接收变更通知；`web-host.tsx` 处理登录和服务端目录选择。客户端刷新或断开不会关闭 Service。桌面仍使用 utility process，两者不能指向同一份数据库。
+
+OpenCode v2 适配器见 `electron/providers/opencode.ts`，通过 ACP stdio 连接私有 CLI 服务。与 Grok 共用 `acp-events.ts` 的文本／工具转换，底座专有命令分开处理。元数据与构造器分别登记在 `shared/providers.ts` 和 `electron/providers/registry.ts`。
+
+启动、限制与后续顺序见 [Web 使用说明](web.md)。
+
+### 显式共享后台
+
+设置 `MOOSE_SHARED_RUNTIME_FILE` 后，Electron 主进程用 `SharedRuntime` 替代自有 `RuntimeHost`，读取 Web 服务的私有连接文件，通过已认证 HTTP 请求和 SSE 使用同一个 MooseService。桌面原生文件选择保留在主进程，选定项目转为服务请求，附件通过已有上传接口传入。退出桌面只关闭连接，独立 Web 服务继续拥有数据库、任务和终端。不设置该变量时仍使用原来的 utility process；没有自动数据迁移。

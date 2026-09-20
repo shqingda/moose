@@ -82,10 +82,12 @@ export function WorkspaceTools({
               <Puzzle />
               {t('extTitle')}
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onEditor}>
-              <ArrowUpRight />
-              {t('editor')}
-            </DropdownMenuItem>
+            {window.moose.host !== 'web' && (
+              <DropdownMenuItem onClick={onEditor}>
+                <ArrowUpRight />
+                {t('editor')}
+              </DropdownMenuItem>
+            )}
           </DropdownMenuGroup>
           {session && (
             <>
