@@ -1,7 +1,7 @@
 // 从拟物图标母版导出各分辨率 macOS 图标，保留透明边缘。
 import AppKit
 
-let source = "src/assets/moose-icon-skeuomorphic-v2.png"
+let source = "src/assets/moose-icon-skeuomorphic.png"
 guard let image = NSImage(contentsOfFile: source) else {
     fatalError("Cannot load icon master: \(source)")
 }
