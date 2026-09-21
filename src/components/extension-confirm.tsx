@@ -32,8 +32,7 @@ export function ExtensionConfirm({
       if (server.envVars.length) rows.push([t('mcpEnv'), server.envVars.join(', ')]);
     }
     if (change.type === 'mcpAdd') rows.push([t('mcpStatus'), t('extDisabled')]);
-  } else if (change?.type === 'mcpRemove') rows.push([t('mcpRemove'), change.name]);
-  else if (change?.type === 'config') rows.push([change.key, change.value]);
+  } else if (change?.type === 'config') rows.push([change.key, change.value]);
   else if (change?.type === 'toggle')
     rows.push([change.name, t(change.enabled ? 'extEnable' : 'extDisable')]);
   else if (change?.type === 'plugin')
@@ -49,7 +48,11 @@ export function ExtensionConfirm({
         <DialogHeader>
           <DialogTitle>{t('extConfirm')}</DialogTitle>
           <DialogDescription>
-            {t(change?.type === 'mcpRemove' ? 'mcpRemoveHint' : 'extHint')}
+            {t(
+              change?.type === 'plugin' && change.action === 'install'
+                ? 'extInstallHint'
+                : 'extHint',
+            )}
           </DialogDescription>
         </DialogHeader>
         <div className="native-dialog-body">
@@ -72,11 +75,7 @@ export function ExtensionConfirm({
           <Button variant="ghost" disabled={busy} onClick={onCancel}>
             {t('cancel')}
           </Button>
-          <Button
-            variant={change?.type === 'mcpRemove' ? 'destructive' : 'default'}
-            disabled={busy}
-            onClick={onSave}
-          >
+          <Button variant="default" disabled={busy} onClick={onSave}>
             {t('extApply')}
           </Button>
         </div>

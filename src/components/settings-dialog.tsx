@@ -1,25 +1,25 @@
+import { ExtensionTools } from './extension-tools';
 import { providerDefinitions, providerIds } from '../../shared/providers';
 import { useState } from 'react';
 import {
   ArrowLeft,
-  BookOpen,
+  Puzzle,
   ChevronRight,
-  ExternalLink,
   Monitor,
   Terminal,
   Keyboard,
   Plug,
   RefreshCw,
 } from 'lucide-react';
-import type { ProviderInfo, Settings } from '../../shared/types';
+import type { Provider, ProviderInfo, Settings } from '../../shared/types';
 import { useI18n } from '../lib/i18n';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Field, FieldGroup, FieldLabel, FieldDescription } from './ui/field';
 import { Switch } from './ui/switch';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { Picker } from './common';
-/** 组织通用、服务商与配置指南页面，配置保存和重新连接由父组件处理。 */
+import { IconButton, Picker } from './common';
+/** 组织通用、服务商与扩展页面，配置保存和重新连接由父组件处理。 */
 export function SettingsDialog({
   open,
   onOpenChange,
@@ -40,8 +40,9 @@ export function SettingsDialog({
   onError(error: string): void;
 }) {
   const t = useI18n(),
-    [page, setPage] = useState<'general' | 'providers' | 'guide'>('general'),
-    [expanded, setExpanded] = useState('');
+    [page, setPage] = useState<'general' | 'providers' | 'extensions'>('general'),
+    [expanded, setExpanded] = useState(''),
+    [extensionProvider, setExtensionProvider] = useState<Provider>('codex');
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="settings-dialog settings-page" showCloseButton={false}>
@@ -55,7 +56,7 @@ export function SettingsDialog({
               [
                 { id: 'general', label: 'generalPage', Icon: Monitor },
                 { id: 'providers', label: 'providersPage', Icon: Plug },
-                { id: 'guide', label: 'documentation', Icon: BookOpen },
+                { id: 'extensions', label: 'extTitle', Icon: Puzzle },
               ] as const
             ).map(({ id, label, Icon }) => (
               <Button
@@ -78,7 +79,7 @@ export function SettingsDialog({
                   ? 'generalPage'
                   : page === 'providers'
                     ? 'providersPage'
-                    : 'documentation',
+                    : 'extTitle',
               )}
             </DialogTitle>
           </DialogHeader>
@@ -167,16 +168,13 @@ export function SettingsDialog({
                   <h3>{t('connections')}</h3>
                   <p className="provider-intro">{t('providerIntro')}</p>
                 </div>
-                <Button
-                  variant="outline"
+                <IconButton
+                  label={t('refresh')}
                   disabled={checking}
-                  onClick={() => {
-                    void onReconnect();
-                  }}
+                  onClick={() => void onReconnect()}
                 >
                   <RefreshCw />
-                  {t('refresh')}
-                </Button>
+                </IconButton>
               </div>
               {providerIds.map((provider) => {
                 const info = providers.find((p) => p.provider === provider),
@@ -259,29 +257,19 @@ export function SettingsDialog({
               })}
             </section>
           )}
-          {page === 'guide' && (
-            <section className="setup-guide">
-              <p>{t('guideIntro')}</p>
-              {providerIds.map((provider) => (
-                <section key={provider}>
-                  <h3>{t(provider)}</h3>
-                  <pre>{providerDefinitions[provider].guide}</pre>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      void window.moose
-                        .request('openExternal', {
-                          url: providerDefinitions[provider].url,
-                        })
-                        .catch((error) => onError(String(error)));
-                    }}
-                  >
-                    {t('documentation')}
-                    <ExternalLink />
-                  </Button>
-                </section>
-              ))}
-            </section>
+          {page === 'extensions' && (
+            <div className="settings-extension-page">
+              <div className="extension-provider-picker">
+                <Picker
+                  label={t('providersPage')}
+                  value={extensionProvider}
+                  options={providerIds.map((value) => ({ value, label: t(value) }))}
+                  onChange={(value) => setExtensionProvider(value as Provider)}
+                />
+                <p>{t('extHint')}</p>
+              </div>
+              <ExtensionTools key={extensionProvider} scope={{ provider: extensionProvider }} />
+            </div>
           )}
         </div>
       </DialogContent>

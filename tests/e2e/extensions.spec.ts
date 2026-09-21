@@ -1,5 +1,5 @@
 import { test, expect, _electron as electron, type ElectronApplication } from '@playwright/test';
-import { mkdtemp, realpath, rm, readFile } from 'node:fs/promises';
+import { mkdtemp, realpath, rm, readFile, writeFile, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { Store } from '../../electron/db/store';
@@ -18,28 +18,33 @@ async function launch() {
     grokEnabled: false,
     piEnabled: false,
   });
-  const project = store.addProject(dir),
-    session = store.createSession(project.id, 'codex');
-  store.updateSession(session.id, { title: 'Extension checks' });
   store.close();
   const env = Object.fromEntries(
-    Object.entries({ ...process.env, MOOSE_DATA_DIR: dir }).filter(
-      (e): e is [string, string] => typeof e[1] === 'string',
-    ),
+    Object.entries({
+      ...process.env,
+      MOOSE_DATA_DIR: dir,
+      PI_CODING_AGENT_DIR: join(dir, 'pi'),
+      XDG_CONFIG_HOME: join(dir, 'config'),
+    }).filter((e): e is [string, string] => typeof e[1] === 'string'),
   );
   delete env.ELECTRON_RUN_AS_NODE;
   app = await electron.launch({ args: ['.'], env });
   const page = await app.firstWindow();
   await page.waitForSelector('.app-shell');
-  await page.getByText('Extension checks', { exact: true }).first().click();
-  await page.getByRole('button', { name: 'Workspace tools', exact: true }).click();
-  await page.getByRole('menuitem', { name: 'Configuration & extensions', exact: true }).click();
+  expect((await page.evaluate(() => window.moose.request('snapshot', {}))).projects).toHaveLength(
+    0,
+  );
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await page
+    .locator('.settings-navigation')
+    .getByRole('button', { name: 'Configuration & extensions', exact: true })
+    .click();
   const dialog = page.getByRole('dialog', { name: 'Configuration & extensions', exact: true });
   await expect(dialog.getByRole('tab', { name: 'MCP', exact: true })).toBeVisible();
   return {
     page,
     dialog,
-    scope: { projectId: project.id, sessionId: session.id, provider: 'codex' as const },
+    scope: { provider: 'codex' as const },
   };
 }
 test('previews scoped configuration changes, installs plugins, and never renders credentials', async () => {
@@ -47,16 +52,16 @@ test('previews scoped configuration changes, installs plugins, and never renders
   await dialog.getByRole('tab', { name: 'Agent', exact: true }).click();
   await dialog.locator('summary').click();
   await expect(dialog).toContainText('Read only');
+  await page.screenshot({ path: 'test-results/extensions-sources.png' });
   await expect(dialog).not.toContainText('SECRET_CANARY');
   await dialog.getByRole('textbox', { name: 'Default model', exact: true }).fill('changed-model');
-  await dialog.getByRole('button', { name: 'Preview change', exact: true }).click();
-  await expect(page.getByRole('dialog', { name: 'Review configuration change' })).toBeVisible();
-  await page.getByRole('button', { name: 'Apply reviewed change', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Review configuration change' })).not.toBeVisible();
   await expect(dialog).toContainText('model: changed-model');
   await dialog.getByRole('tab', { name: 'Plugins', exact: true }).click();
   await dialog.getByRole('textbox', { name: 'Search plugins' }).fill('fixture');
   await dialog.getByRole('button', { name: 'Install', exact: true }).click();
-  await page.getByRole('button', { name: 'Apply reviewed change', exact: true }).click();
+  await page.getByRole('button', { name: 'Apply', exact: true }).click();
   await expect(dialog.getByRole('button', { name: 'Uninstall', exact: true })).toBeVisible();
   expect(JSON.parse(await readFile(join(dir, 'extensions-fixture.json'), 'utf8'))).toMatchObject({
     model: 'changed-model',
@@ -66,10 +71,15 @@ test('previews scoped configuration changes, installs plugins, and never renders
   await expect(
     dialog.getByRole('heading', { name: 'Configuration & extensions', exact: true }),
   ).toBeInViewport();
-  await expect(dialog.getByRole('button', { name: 'Close', exact: true })).toBeInViewport();
+  await expect(dialog.getByRole('button', { name: 'Back', exact: true })).toBeInViewport();
   await page.screenshot({ path: 'test-results/extensions-panel.png' });
+  await page
+    .locator('.settings-navigation')
+    .getByRole('button', { name: 'General', exact: true })
+    .click();
+  await page.screenshot({ path: 'test-results/settings-shortcuts.png' });
 });
-test('cancels native authentication and reports unsupported providers without starting a model', async () => {
+test('cancels native authentication and respects disabled providers without starting a model', async () => {
   const { page, scope } = await launch();
   // Intercept only the browser opener; the runtime authentication lifecycle stays real.
   await app.evaluate(({ shell }) => {
@@ -79,11 +89,12 @@ test('cancels native authentication and reports unsupported providers without st
   await expect(page.getByRole('status')).toContainText('pending');
   await page.getByRole('status').getByRole('button', { name: 'Cancel', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('cancelled');
-  const unsupported = await page.evaluate(
-    (scope) => window.moose.request('extensionsRead', { ...scope, provider: 'grok' }),
-    scope,
-  );
-  expect(unsupported.supported).toBe(false);
+  await expect(
+    page.evaluate(
+      (scope) => window.moose.request('extensionsRead', { ...scope, provider: 'grok' }),
+      scope,
+    ),
+  ).rejects.toThrow('Provider disabled');
 });
 test('previews MCP registration and saves a disabled server without revealing credentials', async () => {
   const { page, dialog } = await launch();
@@ -107,7 +118,7 @@ test('previews MCP registration and saves a disabled server without revealing cr
   await expect(page.getByRole('dialog', { name: 'Review configuration change' })).toContainText(
     'Disabled',
   );
-  await page.getByRole('button', { name: 'Apply reviewed change' }).click();
+  await page.getByRole('button', { name: 'Apply' }).click();
   await expect
     .poll(
       async () =>
@@ -116,8 +127,18 @@ test('previews MCP registration and saves a disabled server without revealing cr
     )
     .toBe(false);
   await expect(dialog.getByRole('button', { name: 'Enable', exact: true })).toBeVisible();
+  const serverOrder = await dialog.locator('.extension-row-heading strong').allTextContents();
+  const addButton = dialog.getByRole('button', { name: 'Add MCP server', exact: true });
+  const formNode = await addButton.elementHandle();
+  const beforeToggle = await dialog.getByRole('tablist').boundingBox();
   await dialog.getByRole('button', { name: 'Enable', exact: true }).click();
-  await page.getByRole('button', { name: 'Apply reviewed change' }).click();
+  const duringToggle = await dialog.getByRole('tablist').boundingBox();
+  expect(duringToggle!.y).toBe(beforeToggle!.y);
+  await expect(dialog.getByRole('button', { name: 'Refresh', exact: true })).toHaveCSS(
+    'opacity',
+    '1',
+  );
+
   await expect
     .poll(
       async () =>
@@ -125,6 +146,11 @@ test('previews MCP registration and saves a disabled server without revealing cr
           .enabled,
     )
     .toBe(true);
+  await expect(dialog.getByRole('button', { name: 'Refresh', exact: true })).toBeEnabled();
+  expect(await formNode!.evaluate((node) => node.isConnected)).toBe(true);
+  expect(await dialog.locator('.extension-row-heading strong').allTextContents()).toEqual(
+    serverOrder,
+  );
   expect(
     JSON.parse(await readFile(join(dir, 'extensions-fixture.json'), 'utf8')).mcp.new_server
       .env_http_headers,
@@ -137,7 +163,7 @@ test('previews MCP registration and saves a disabled server without revealing cr
   await page.screenshot({ path: 'test-results/mcp-registration.png' });
 });
 
-test('edits and removes an owned MCP server through focused review dialogs', async () => {
+test('edits MCP configuration and refreshes externally removed servers', async () => {
   const { page, dialog, scope } = await launch();
   const snapshot = await page.evaluate(
     (scope) => window.moose.request('extensionsRead', scope),
@@ -169,7 +195,7 @@ test('edits and removes an owned MCP server through focused review dialogs', asy
   await dialog.getByRole('button', { name: 'Preview change', exact: true }).click();
   const review = page.getByRole('dialog', { name: 'Review configuration change', exact: true });
   await expect(review).toContainText('https://new.invalid/mcp');
-  await review.getByRole('button', { name: 'Apply reviewed change', exact: true }).click();
+  await review.getByRole('button', { name: 'Apply', exact: true }).click();
   await expect(review).not.toBeVisible();
   const state = JSON.parse(await readFile(join(dir, 'extensions-fixture.json'), 'utf8'));
   expect(state.mcp.editable).toMatchObject({
@@ -177,13 +203,10 @@ test('edits and removes an owned MCP server through focused review dialogs', asy
     enabled: false,
     bearer_token_env_var: 'KEEP_TOKEN',
   });
-  await dialog.getByRole('button', { name: 'Remove server', exact: true }).click();
-  await expect(review).toContainText('Other projects');
-  await review.getByRole('button', { name: 'Cancel', exact: true }).click();
-  await expect(dialog.getByText('editable', { exact: true })).toBeVisible();
-  await dialog.getByRole('button', { name: 'Remove server', exact: true }).click();
-  await review.getByRole('button', { name: 'Apply reviewed change', exact: true }).click();
-  await expect(review).not.toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Remove server', exact: true })).toHaveCount(0);
+  delete state.mcp.editable;
+  await writeFile(join(dir, 'extensions-fixture.json'), JSON.stringify(state));
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
   await expect(dialog.getByText('editable', { exact: true })).not.toBeVisible();
   await expect(dialog.getByText('fixture', { exact: true })).toBeVisible();
   await page.screenshot({ path: 'test-results/extensions-mcp-clean.png' });
@@ -211,4 +234,48 @@ test('edits and removes an owned MCP server through focused review dialogs', asy
     path: 'test-results/extensions-chinese-large-text.png',
     animations: 'disabled',
   });
+});
+
+test('manages Pi and OpenCode user settings without showing unsupported controls', async () => {
+  const { page, dialog } = await launch();
+  await mkdir(join(dir, 'pi'), { recursive: true });
+  await writeFile(join(dir, 'pi/settings.json'), '{"defaultModel":"old"}');
+  await mkdir(join(dir, 'config/opencode'), { recursive: true });
+  await writeFile(
+    join(dir, 'config/opencode/opencode.jsonc'),
+    '{"mcp":{"servers":{"local":{"type":"remote","url":"https://example.com","disabled":true}}}}',
+  );
+  await page.evaluate(
+    (path) =>
+      window.moose.request('settings', {
+        piEnabled: true,
+        piPath: path,
+        opencodeEnabled: true,
+        opencodePath: path,
+      }),
+    resolve('tests/fixtures/extensions.mjs'),
+  );
+  await dialog.getByRole('combobox', { name: 'Providers', exact: true }).click();
+  await page.getByRole('option', { name: 'Pi', exact: true }).click();
+  await expect(dialog.getByRole('tab', { name: 'MCP', exact: true })).toHaveCount(0);
+  await dialog.getByRole('textbox', { name: 'Default model', exact: true }).fill('grok-4.6');
+  await dialog.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect
+    .poll(
+      async () => JSON.parse(await readFile(join(dir, 'pi/settings.json'), 'utf8')).defaultModel,
+    )
+    .toBe('grok-4.6');
+  await dialog.getByRole('combobox', { name: 'Providers', exact: true }).click();
+  await page.getByRole('option', { name: 'OpenCode', exact: true }).click();
+  await expect(dialog.getByRole('tab', { name: 'MCP', exact: true })).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Authenticate', exact: true })).toHaveCount(0);
+  await dialog.getByRole('button', { name: 'Enable', exact: true }).click();
+  await expect(dialog.getByRole('button', { name: 'Disable', exact: true })).toBeVisible();
+  await expect
+    .poll(
+      async () =>
+        JSON.parse(await readFile(join(dir, 'config/opencode/opencode.jsonc'), 'utf8')).mcp.servers
+          .local.disabled,
+    )
+    .toBe(false);
 });

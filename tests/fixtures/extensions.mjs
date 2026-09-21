@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 // Isolated protocol/CLI peer. Never touches real provider configuration.
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, appendFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
-const file = join(process.cwd(), 'extensions-fixture.json');
+const fixtureDirectory = process.env.MOOSE_DATA_DIR || process.cwd();
+const file = join(fixtureDirectory, 'extensions-fixture.json');
 const secret = 'SECRET_CANARY_NEVER_RENDER';
 const read = () => {
   try {
@@ -46,8 +47,9 @@ for await (const line of createInterface({ input: process.stdin })) {
   const { id, method, params: p } = JSON.parse(line),
     s = read();
   if (id === undefined) continue;
+  appendFileSync(join(fixtureDirectory, 'extension-methods.log'), method + '\n');
   const user = {
-    name: { type: 'user', file: join(process.cwd(), 'config.toml'), profile: null },
+    name: { type: 'user', file: join(fixtureDirectory, 'config.toml'), profile: null },
     version: String(s.version),
   };
   switch (method) {
@@ -71,7 +73,7 @@ for await (const line of createInterface({ input: process.stdin })) {
         layers: [
           { ...user, config: { secret, mcp_servers: s.mcp || {} } },
           {
-            name: { type: 'project', dotCodexFolder: join(process.cwd(), '.codex') },
+            name: { type: 'project', dotCodexFolder: join(fixtureDirectory, '.codex') },
             version: 'project',
             config: { secret, mcp_servers: s.hiddenMcp || {} },
           },
@@ -115,13 +117,13 @@ for await (const line of createInterface({ input: process.stdin })) {
               {
                 key: 'hook',
                 eventName: 'PreToolUse',
-                sourcePath: join(process.cwd(), 'hooks.json'),
+                sourcePath: join(fixtureDirectory, 'hooks.json'),
                 enabled: true,
                 handlerType: 'command',
                 command: secret,
               },
             ],
-            errors: [{ path: join(process.cwd(), 'invalid-hook.json'), message: secret }],
+            errors: [{ path: join(fixtureDirectory, 'invalid-hook.json'), message: secret }],
             warnings: [],
           },
         ],
@@ -132,6 +134,8 @@ for await (const line of createInterface({ input: process.stdin })) {
       else
         result(id, {
           data: [
+            { name: 'codex_app', authStatus: 'unsupported', tools: {} },
+            { name: 'codex_apps', authStatus: 'unsupported', tools: {} },
             { name: 'fixture', authStatus: 'notLoggedIn', tools: { test: {} }, toolsError: null },
           ],
           nextCursor: null,

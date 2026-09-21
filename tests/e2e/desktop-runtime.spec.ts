@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { Store } from '../../electron/db/store';
 import { SharedRuntime } from '../../electron/shared-runtime';
 
-test('desktop starts one shared service in its existing data directory and can stop it from the menu', async () => {
+test('desktop starts one shared service in its existing data directory and preserves the standard app menu', async () => {
   const data = await mkdtemp(join(tmpdir(), 'moose-desktop-runtime-'));
   const projectPath = join(data, 'repo');
   await mkdir(projectPath);
@@ -56,6 +56,21 @@ test('desktop starts one shared service in its existing data directory and can s
     const browserURL = new URL(await client.browserURL());
     expect(browserURL.hostname).toBe('127.0.0.1');
     expect(browserURL.hash).toMatch(/^#token=/);
+    // A new desktop version must reject writes to an older running service.
+    const incompatible = new SharedRuntime(
+      connection,
+      () => {},
+      undefined,
+      'incompatible-test-version',
+    );
+    try {
+      await expect(incompatible.request('webAddProject', { path: projectPath })).rejects.toThrow(
+        'Background service version changed',
+      );
+    } finally {
+      await incompatible.close();
+    }
+    expect(await readFile(join(data, 'server.lock'), 'utf8')).toBe(firstPid);
     const next = await launch();
     expect(await readFile(join(data, 'server.lock'), 'utf8')).toBe(firstPid);
     const terminals = await next.evaluate(
@@ -68,14 +83,12 @@ test('desktop starts one shared service in its existing data directory and can s
         .items[0].submenu!.items.filter((item) => item.visible)
         .map((item) => item.label),
     );
-    expect(menu).toContain('Open in Browser');
-    expect(menu).toContain('Quit Moose (Keep Background Running)');
-    await app!.evaluate(({ Menu }) => {
-      const item = Menu.getApplicationMenu()!.items[0].submenu!.items.find(
-        (item) => item.label === 'Quit and Stop Background Service',
-      )!;
-      item.click();
-    });
+    expect(menu).toContain('Check for Updates…');
+    expect(menu).not.toContain('Open in Browser');
+    expect(menu.some((label) => label.includes('Background'))).toBe(false);
+    await app!.close();
+    app = undefined;
+    await client.stop();
     await expect
       .poll(async () => {
         try {

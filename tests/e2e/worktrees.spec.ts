@@ -92,7 +92,7 @@ test('isolates agent writes and diff, merges reviewed changes, and safely cleans
   const dialog = page.getByRole('dialog');
   await expect(dialog).toContainText('+moose-approved');
   await dialog.getByRole('button', { name: 'Prepare merge into project', exact: true }).click();
-  await dialog.getByRole('button', { name: 'Commit reviewed merge', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Commit merge', exact: true }).click();
   await expect(dialog).toContainText('All worktree commits are in the project branch.');
   expect(await readFile(join(root, 'approved.txt'), 'utf8')).toBe('moose-approved\n');
   await expect(dialog.getByRole('heading', { name: 'Worktrees', exact: true })).toBeInViewport();

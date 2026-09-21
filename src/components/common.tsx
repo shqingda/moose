@@ -73,11 +73,21 @@ export function Picker({
   );
 }
 /** 从共享矢量数据绘制驼鹿标识，与 macOS 应用图标保持同一轮廓。 */
-export function MooseMark({ className = '' }: { className?: string }) {
+export function MooseMark({
+  className = '',
+  branded = false,
+}: {
+  className?: string;
+  branded?: boolean;
+}) {
   return (
     <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
-      <path d={mark.antler} fill="currentColor" />
-      <path d={`${mark.head} ${mark.eye}`} fill="currentColor" fillRule="evenodd" />
+      <path d={mark.antler} fill={branded ? '#c2a673' : 'currentColor'} />
+      <path
+        d={`${mark.head} ${mark.eye}`}
+        fill={branded ? '#f5f0de' : 'currentColor'}
+        fillRule="evenodd"
+      />
     </svg>
   );
 }

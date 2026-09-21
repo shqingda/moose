@@ -64,7 +64,7 @@ test('runs background commands, sends stdin and stops a command from the desktop
     .getByRole('textbox', { name: 'Task content' })
     .fill('Inspect without changing files');
   await dialog.getByRole('button', { name: 'Preview schedule' }).click();
-  await dialog.getByRole('button', { name: 'Create reviewed schedule' }).click();
+  await dialog.getByRole('button', { name: 'Create schedule' }).click();
   await expect(dialog.getByRole('button', { name: 'Pause future runs' })).toBeVisible();
   await dialog.getByRole('button', { name: 'Pause future runs' }).click();
   await expect(dialog.getByRole('button', { name: 'Resume schedule' })).toBeVisible();
@@ -149,9 +149,9 @@ test('edits paused schedules with review, preserves their timezone, and rejects 
   await expect(preview).toContainText('America/New_York');
   await expect(preview).toContainText('printf edited');
   await row.getByRole('spinbutton').fill('2');
-  await expect(row.getByRole('button', { name: 'Save reviewed changes' })).toHaveCount(0);
+  await expect(row.getByRole('button', { name: 'Save' })).toHaveCount(0);
   await row.getByRole('button', { name: 'Preview schedule' }).click();
-  await row.getByRole('button', { name: 'Save reviewed changes' }).click();
+  await row.getByRole('button', { name: 'Save' }).click();
   await expect(row.getByRole('button', { name: 'Resume schedule' })).toBeEnabled();
   const [edited] = await page.evaluate(
     (scope) => window.moose.request('scheduleList', scope),
@@ -173,7 +173,7 @@ test('edits paused schedules with review, preserves their timezone, and rejects 
     (s) => window.moose.request('scheduleSet', { id: s.id, version: s.version, enabled: true }),
     edited,
   );
-  await row.getByRole('button', { name: 'Save reviewed changes' }).click();
+  await row.getByRole('button', { name: 'Save' }).click();
   await expect(row.getByRole('alert').filter({ hasText: 'Schedule changed' })).toBeVisible();
   const [unchanged] = await page.evaluate(
     (scope) => window.moose.request('scheduleList', scope),
@@ -185,7 +185,7 @@ test('edits paused schedules with review, preserves their timezone, and rejects 
   await row.getByRole('button', { name: 'Pause future runs' }).click();
   await row.getByRole('button', { name: 'Edit schedule', exact: true }).click();
   await row.getByRole('button', { name: 'Preview schedule' }).click();
-  await row.getByRole('button', { name: 'Save reviewed changes' }).scrollIntoViewIfNeeded();
+  await row.getByRole('button', { name: 'Save' }).scrollIntoViewIfNeeded();
   await page.screenshot({ path: 'test-results/schedule-edit.png' });
 });
 
@@ -395,7 +395,7 @@ test('previews timezone calendar runs and preserves weekdays when editing', asyn
   await dialog.getByRole('button', { name: 'Preview schedule' }).click();
   await expect(dialog.locator('.schedule-occurrences li')).toHaveCount(3);
   await page.screenshot({ path: 'test-results/calendar-preview.png', animations: 'disabled' });
-  await dialog.getByRole('button', { name: 'Create reviewed schedule' }).click();
+  await dialog.getByRole('button', { name: 'Create schedule' }).click();
   const row = dialog.getByRole('region', { name: 'Weekday inspection' });
   await expect(row).toContainText('Mon · Wed · Thu · Fri');
   const stored = await page.evaluate((scope) => window.moose.request('scheduleList', scope), scope);
@@ -409,7 +409,7 @@ test('previews timezone calendar runs and preserves weekdays when editing', asyn
   await row.getByRole('combobox', { name: 'Repeat', exact: true }).click();
   await page.getByRole('option', { name: 'Every day', exact: true }).click();
   await row.getByRole('button', { name: 'Preview schedule' }).click();
-  await row.getByRole('button', { name: 'Save reviewed changes' }).click();
+  await row.getByRole('button', { name: 'Save' }).click();
   await expect(row).toContainText('Every day');
   const edited = await page.evaluate((scope) => window.moose.request('scheduleList', scope), scope);
   expect(edited[0].calendar?.weekdays).toEqual([1, 2, 3, 4, 5, 6, 7]);

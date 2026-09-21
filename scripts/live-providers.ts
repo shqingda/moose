@@ -4,14 +4,21 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { CodexAdapter } from '../electron/providers/codex';
-import { GrokAdapter } from '../electron/providers/grok';
+import { createAdapter } from '../electron/providers/registry';
+import { providerIds } from '../shared/providers';
+import { strict as assert } from 'node:assert';
 import { discover } from '../electron/providers/process';
 import type { Session } from '../shared/types';
 import { providerError, type AgentAdapter } from '../electron/providers/types';
 
 // Explicit live acceptance test. All edits are confined to fresh temporary Git repositories.
-for (const provider of ['codex', 'grok'] as const) {
+const requested = process.argv.slice(2);
+if (requested.some((id) => !providerIds.some((provider) => provider === id)))
+  throw new Error(`Expected provider names: ${providerIds.join(', ')}`);
+const selected = requested.length
+  ? providerIds.filter((id) => requested.includes(id))
+  : (['codex', 'grok'] as const);
+for (const provider of selected) {
   const cwd = await mkdtemp(join(tmpdir(), `moose-live-${provider}-`));
   execFileSync('/usr/bin/git', ['init', '-q', cwd]);
   const session: Session = {
@@ -21,9 +28,9 @@ for (const provider of ['codex', 'grok'] as const) {
     title: 'Acceptance test',
     archived: false,
     nativeId: null,
-    model: '',
+    model: process.env[`MOOSE_LIVE_${provider.toUpperCase()}_MODEL`] || '',
     effort: '',
-    mode: '',
+    mode: provider === 'pi' ? 'full' : '',
     draft: '',
     status: 'idle',
     createdAt: Date.now(),
@@ -36,8 +43,7 @@ for (const provider of ['codex', 'grok'] as const) {
     'This is an isolated acceptance-test repository. Create exactly one file named hello.txt containing moose-ready followed by a newline. Do not read any other directories or use network tools. Do not commit. Then reply with one short sentence.',
     'Continue the previous task: append a second line saying resumed-ok to the file you just created. Keep the first line unchanged. Do not touch other files or commit. Then reply with one short sentence.',
   ].entries()) {
-    const adapter: AgentAdapter =
-      provider === 'codex' ? new CodexAdapter(path) : new GrokAdapter(path);
+    const adapter: AgentAdapter = createAdapter(provider, path);
     let timeout: ReturnType<typeof setTimeout> | undefined;
     try {
       await Promise.race([
@@ -67,12 +73,15 @@ for (const provider of ['codex', 'grok'] as const) {
           }, 120000);
         }),
       ]);
+      const content = await readFile(join(cwd, 'hello.txt'), 'utf8');
+      assert.equal(content, turn === 0 ? 'moose-ready\n' : 'moose-ready\nresumed-ok\n');
+      assert.ok(session.nativeId, 'Provider must return a native session ID');
       console.log(
         JSON.stringify({
           provider,
           turn: turn + 1,
           resumed: turn > 0,
-          content: await readFile(join(cwd, 'hello.txt'), 'utf8'),
+          content,
         }),
       );
     } catch (error) {

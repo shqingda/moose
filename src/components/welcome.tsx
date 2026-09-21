@@ -9,7 +9,7 @@ export function Welcome({ projectName, onAdd }: { projectName?: string; onAdd():
   return (
     <div className="welcome">
       <div className="welcome-symbol">
-        <MooseMark />
+        <MooseMark branded />
       </div>
       <Empty className="welcome-copy">
         <EmptyHeader>

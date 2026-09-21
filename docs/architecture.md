@@ -230,7 +230,7 @@ Renderer 开启 sandbox、contextIsolation，关闭 nodeIntegration，只能通�
 
 这保护的是客户端渲染边界；代理文件与命令权限由 CLI 的执行策略控制，选择 full 意味着代理运行权限扩大。
 
-安装版关闭窗口或普通退出仅断开客户端，共享后台继续运行。“退出并停止后台”才会让 Service 停止接收操作、取消任务、落库并关闭数据库。默认独立开发模式由 RuntimeHost 管理 utility process，退出时发送 `_shutdown` 并清理进程。后台异常会通知 UI；恢复连接或重启后读取持久化状态，不自动重放中断任务。
+安装版关闭窗口或普通退出仅断开客户端，共享后台继续运行。停止共享后台才会让 Service 停止接收操作、取消任务、落库并关闭数据库。默认独立开发模式由 RuntimeHost 管理 utility process，退出时发送 `_shutdown` 并清理进程。后台异常会通知 UI；恢复连接或重启后读取持久化状态，不自动重放中断任务。
 
 开发使用独立的 Moose Dev 数据目录；测试通过 `MOOSE_DATA_DIR` 指向临时目录，避免污染日常会话。
 

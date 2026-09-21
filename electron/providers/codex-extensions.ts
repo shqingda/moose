@@ -1,3 +1,4 @@
+import { version as appVersion } from '../../package.json';
 import { mcpConfig } from '../../shared/mcp-registration';
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
@@ -63,7 +64,7 @@ export class CodexExtensions {
     rpc.onExit = () => this.completed?.(false);
     const init = record(
       await rpc.request('initialize', {
-        clientInfo: { name: 'moose', version: '0.10.0' },
+        clientInfo: { name: 'moose', version: appVersion },
         capabilities: { experimentalApi: true },
       }),
     );
@@ -74,10 +75,11 @@ export class CodexExtensions {
       throw new RpcRejected('Configuration management requires Codex 0.155+');
     return rpc;
   }
-  async read(cwd: string): Promise<ExtensionSnapshot> {
+  async read(cwd: string, configurationOnly = false): Promise<ExtensionSnapshot> {
     const rpc = await this.connect(cwd);
     const snapshot: ExtensionSnapshot = {
       supported: true,
+      configurationOnly,
       version: this.version,
       cwd,
       sources: [],
@@ -89,8 +91,10 @@ export class CodexExtensions {
     };
     const results = await Promise.allSettled([
       rpc.request<ConfigReadResponse>('config/read', { cwd, includeLayers: true }),
-      this.plugins.list(cwd),
-      rpc.request<HooksListResponse>('hooks/list', { cwds: [cwd] }),
+      configurationOnly ? Promise.resolve([]) : this.plugins.list(cwd),
+      configurationOnly
+        ? Promise.resolve({ data: [] } as HooksListResponse)
+        : rpc.request<HooksListResponse>('hooks/list', { cwds: [cwd] }),
     ]);
     const [config, plugins, hooks] = results;
     for (const [i, result] of results.entries())
@@ -162,6 +166,7 @@ export class CodexExtensions {
           })),
         );
       }
+    if (configurationOnly) return snapshot;
     try {
       let cursor: string | null = null;
       const seen = new Set<string>();
@@ -181,7 +186,7 @@ export class CodexExtensions {
             failed: !!server.toolsError,
           };
           if (row) Object.assign(row, status);
-          else snapshot.mcp.push(status);
+          // Runtime-injected servers have no editable mcp_servers configuration.
         }
         cursor = result.nextCursor;
         if (!cursor) break;
@@ -209,67 +214,51 @@ export class CodexExtensions {
     const source = sources(config).find((s) => s.id === change.sourceId && s.writable);
     if (!source || source.version !== change.version)
       throw new RpcRejected('Configuration changed or is read-only. Refresh before saving.');
-    if (change.type === 'mcpEdit' || change.type === 'mcpRemove') {
+    if (change.type === 'mcpEdit') {
       const layer = config.layers?.find((entry) => sourceId(entry) === source.id);
       const servers = { ...record(record(layer?.config).mcp_servers) };
       if (!Object.hasOwn(servers, change.name))
         throw new RpcRejected('This MCP server is not owned by the selected configuration');
-      if (change.type === 'mcpRemove') {
-        delete servers[change.name];
-        // Replace only this layer's table: no null semantics or inherited entries copied in.
-        await rpc.request('config/value/write', {
-          keyPath: 'mcp_servers',
-          value: servers,
-          mergeStrategy: 'replace',
-          filePath: source.path,
-          expectedVersion: source.version,
-        });
-      } else {
-        const previous = record(servers[change.name]);
-        const transport =
-          typeof previous.url === 'string'
-            ? 'http'
-            : typeof previous.command === 'string'
-              ? 'stdio'
-              : undefined;
-        if (transport !== change.server.transport)
-          throw new RpcRejected('Remove and add the server to change transport');
-        const next: Record<string, unknown> = {
-          ...previous,
-          ...mcpConfig(change.server),
-          enabled: previous.enabled !== false,
-        };
-        if (
-          change.server.transport === 'stdio' &&
-          !change.server.envVars.length &&
-          previous.env_vars
-        )
-          next.env_vars = previous.env_vars;
-        if (change.server.transport === 'http' && change.server.envHeaders) {
-          const headers = { ...record(previous.env_http_headers) };
-          for (const [name, variable] of Object.entries(change.server.envHeaders)) {
-            if (
-              Object.keys(record(previous.http_headers)).some(
-                (key) => key.toLowerCase() === name.toLowerCase(),
-              )
+      const previous = record(servers[change.name]);
+      const transport =
+        typeof previous.url === 'string'
+          ? 'http'
+          : typeof previous.command === 'string'
+            ? 'stdio'
+            : undefined;
+      if (transport !== change.server.transport)
+        throw new RpcRejected('Change the transport using the provider CLI');
+      const next: Record<string, unknown> = {
+        ...previous,
+        ...mcpConfig(change.server),
+        enabled: previous.enabled !== false,
+      };
+      if (change.server.transport === 'stdio' && !change.server.envVars.length && previous.env_vars)
+        next.env_vars = previous.env_vars;
+      if (change.server.transport === 'http' && change.server.envHeaders) {
+        const headers = { ...record(previous.env_http_headers) };
+        for (const [name, variable] of Object.entries(change.server.envHeaders)) {
+          if (
+            Object.keys(record(previous.http_headers)).some(
+              (key) => key.toLowerCase() === name.toLowerCase(),
             )
-              throw new RpcRejected(
-                'This header has a saved literal value. Update it using the provider CLI.',
-              );
-            for (const key of Object.keys(headers))
-              if (key.toLowerCase() === name.toLowerCase()) delete headers[key];
-            headers[name] = variable;
-          }
-          next.env_http_headers = headers;
+          )
+            throw new RpcRejected(
+              'This header has a saved literal value. Update it using the provider CLI.',
+            );
+          for (const key of Object.keys(headers))
+            if (key.toLowerCase() === name.toLowerCase()) delete headers[key];
+          headers[name] = variable;
         }
-        await rpc.request('config/value/write', {
-          keyPath: `mcp_servers.${JSON.stringify(change.name)}`,
-          value: next,
-          mergeStrategy: 'replace',
-          filePath: source.path,
-          expectedVersion: source.version,
-        });
+        next.env_http_headers = headers;
       }
+      await rpc.request('config/value/write', {
+        keyPath: `mcp_servers.${JSON.stringify(change.name)}`,
+        value: next,
+        mergeStrategy: 'replace',
+        filePath: source.path,
+        expectedVersion: source.version,
+      });
       return;
     }
     if (change.type === 'mcpAdd') {

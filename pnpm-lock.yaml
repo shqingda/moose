@@ -236,6 +236,9 @@ importers:
       highlight.js:
         specifier: 11.12.0
         version: 11.12.0
+      jsonc-parser:
+        specifier: ^3.3.1
+        version: 3.3.1
       lucide-react:
         specifier: 1.47.0
         version: 1.47.0(react@19.3.0)
@@ -269,6 +272,9 @@ importers:
       shadcn:
         specifier: 4.21.0
         version: 4.21.0(supports-color@7.2.0)(typescript@7.0.2)
+      smol-toml:
+        specifier: ^1.8.0
+        version: 1.8.0
       tailwind-merge:
         specifier: 3.7.0
         version: 3.7.0
@@ -2972,6 +2978,9 @@ packages:
     engines: {node: '>=6'}
     hasBin: true
 
+  jsonc-parser@3.3.1:
+    resolution: {integrity: sha512-HUgH65KyejrUFPvHFPbqOY0rsFip3Bo5wb4ngvdi1EpCYWUQDC5V+Y7mZws+DLkr4M//zQJoanu1SP+87Dv1oQ==}
+
   jsonfile@4.0.0:
     resolution: {integrity: sha512-m6F1R3z8jjlf2imQHS2Qez5sjKWQzbuuhuJ/FKYFRZvPE3PuHcSMVZzfsLhGVOkfd20obL5SWEBew5ShlquNxg==}
 
@@ -3985,6 +3994,10 @@ packages:
   smart-buffer@4.2.0:
     resolution: {integrity: sha512-94hK0Hh8rPqQl2xXc3HsaBoOXKV20MToPkcXvwbISWLEs+64sBq5kFgn2kJDHb1Pry9yrP0dxrCI9RRci7RXKg==}
     engines: {node: '>= 6.0.0', npm: '>= 3.0.0'}
+
+  smol-toml@1.8.0:
+    resolution: {integrity: sha512-kCZr2V3ch9i00x8zXRhjUNVcjG9ijES5dDudkXvUVCT5QlJNQWElSJdZqyPemffHoLNUYwOcou0Fy+ojN0uHSQ==}
+    engines: {node: '>= 18'}
 
   socks@2.8.10:
     resolution: {integrity: sha512-e0VyvkVTwVYViNovRkZ9aodhxVlyoMn7eJhVUPxZ+eK9P/7CBkxvvsBOHqFPEH416726W8tLXXXjKwqgTErrCQ==}
@@ -6780,6 +6793,8 @@ snapshots:
 
   json5@2.2.3: {}
 
+  jsonc-parser@3.3.1: {}
+
   jsonfile@4.0.0:
     optionalDependencies:
       graceful-fs: 4.2.11
@@ -8062,6 +8077,8 @@ snapshots:
   sisteransi@1.0.5: {}
 
   smart-buffer@4.2.0: {}
+
+  smol-toml@1.8.0: {}
 
   socks@2.8.10:
     dependencies:

@@ -24,7 +24,7 @@
 
 ## 历史记录
 
-- [0.18.0 发布说明](releases/0.18.0.md)；其他版本见 [releases 目录](releases/)。
+- [0.19.0 发布说明](releases/0.19.0.md)；其他版本见 [releases 目录](releases/)。
 - [阶段验收归档](releases/feature-validation-history.md)：原六份阶段验收的操作与证据，按当时版本解释。
 - [早期验证记录](releases/validation-history.md)。
 - [Roost / DeepSeek Harness 调研](research/web-ui-and-roost.md)：保留调研背景和原始方案，当前实现以使用指南、架构与开发计划为准。

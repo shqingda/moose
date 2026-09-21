@@ -13,6 +13,7 @@ import {
 } from 'electron';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { join, resolve, relative, isAbsolute } from 'node:path';
+import { checkForUpdates } from './updates';
 import { RuntimeHost } from './runtime-host';
 import { SharedRuntime } from './shared-runtime';
 import { desktopRuntime } from './desktop-runtime';
@@ -124,6 +125,10 @@ function menu(language: Settings['language'] = 'system') {
         label: 'Moose',
         submenu: [
           { role: 'about' },
+          {
+            label: zh ? '检查更新…' : 'Check for Updates…',
+            click: () => void checkForUpdates(zh),
+          },
           { type: 'separator' },
           {
             label: zh ? '设置…' : 'Settings…',
@@ -135,37 +140,7 @@ function menu(language: Settings['language'] = 'system') {
           { role: 'hideOthers' },
           { role: 'unhide' },
           { type: 'separator' },
-          {
-            label: zh ? '在浏览器中打开' : 'Open in Browser',
-            visible: runtime instanceof SharedRuntime,
-            click: () => {
-              if (runtime instanceof SharedRuntime)
-                void runtime
-                  .browserURL()
-                  .then((url) => shell.openExternal(url))
-                  .catch((error) => emit({ type: 'runtime-error', error: String(error) }));
-            },
-          },
-          {
-            label: zh ? '退出并停止后台' : 'Quit and Stop Background Service',
-            visible: runtime instanceof SharedRuntime,
-            click: () => {
-              if (runtime instanceof SharedRuntime)
-                void runtime
-                  .stop()
-                  .then(() => app.quit())
-                  .catch((error) => emit({ type: 'runtime-error', error: String(error) }));
-            },
-          },
-          {
-            role: 'quit',
-            label:
-              runtime instanceof SharedRuntime
-                ? zh
-                  ? '退出 Moose（后台继续运行）'
-                  : 'Quit Moose (Keep Background Running)'
-                : undefined,
-          },
+          { role: 'quit' },
         ],
       },
       {

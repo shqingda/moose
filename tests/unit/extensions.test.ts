@@ -73,7 +73,19 @@ it('writes a versioned user setting, verifies it and deduplicates retry without 
       value: 'new-model',
     },
   };
+  const methodsBefore = readFileSync(
+    join(f.store.directory(f.scope.projectId), 'extension-methods.log'),
+    'utf8',
+  ).split('\n');
   const next = (await f.extensions.handle('extensionsChange', args)) as ExtensionSnapshot;
+  const methodsAfter = readFileSync(
+    join(f.store.directory(f.scope.projectId), 'extension-methods.log'),
+    'utf8',
+  ).split('\n');
+  expect(methodsAfter.slice(methodsBefore.length - 1)).not.toContain('mcpServerStatus/list');
+  expect(
+    methodsAfter.slice(methodsBefore.length - 1).filter((method) => method === 'initialize'),
+  ).toHaveLength(1);
   expect(next.settings[0].value).toBe('new-model');
   expect(f.read().writes).toBe(1);
   await f.extensions.handle('extensionsChange', args);
@@ -178,7 +190,7 @@ it('reserves OAuth start before async discovery and rejects concurrent starts', 
   expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
   expect(results.filter((r) => r.status === 'rejected')).toHaveLength(1);
 });
-it('recovers uncertain writes without replay, and reports unsupported providers', async () => {
+it('recovers uncertain writes without replay', async () => {
   const f = fixture(),
     id = randomUUID();
   f.store.sqlite
@@ -196,14 +208,6 @@ it('recovers uncertain writes without replay, and reports unsupported providers'
         .get('extension-operation:' + id) as { value: string }
     ).value,
   ).toContain('unknown');
-  expect(
-    (
-      (await f.extensions.handle('extensionsRead', {
-        ...f.scope,
-        provider: 'grok',
-      })) as ExtensionSnapshot
-    ).supported,
-  ).toBe(false);
 });
 it('serializes concurrent writes and does not start commands after closing a client', async () => {
   const f = fixture(),
@@ -369,7 +373,7 @@ it('validates MCP transport, secrets references and arguments before crossing IP
     }),
   ).toThrow();
 });
-it('edits a connection preserving opaque credentials and removes only the selected user entry', async () => {
+it('edits a connection while preserving credentials and unrelated user entries', async () => {
   const f = fixture();
   f.set({
     mcp: {
@@ -409,27 +413,26 @@ it('edits a connection preserving opaque credentials and removes only the select
   expect(f.read().writes).toBe(1);
   s = await f.snapshot();
   expect(JSON.stringify(s)).not.toContain('SECRET_CANARY');
-  await f.extensions.handle('extensionsChange', {
-    ...f.scope,
-    requestId: randomUUID(),
-    change: {
-      type: 'mcpRemove',
-      sourceId: s.sources[0].id,
-      version: s.sources[0].version,
-      name: 'owned',
-    },
-  });
-  expect(f.read().mcp.owned).toBeUndefined();
   expect(f.read().mcp.other).toEqual({ command: 'keep-me', env: { TOKEN: 'SECRET_CANARY' } });
   expect(f.read().model).toBe('fixture-model');
 });
-it('rejects stale MCP edits, inherited removals and transport changes', async () => {
+it('rejects stale MCP edits, inherited edits and transport changes', async () => {
   const f = fixture();
   f.set({ mcp: { owned: { command: 'node', enabled: false } } });
   const s = await f.snapshot();
   for (const change of [
-    { type: 'mcpRemove', name: 'fixture', version: '1' },
-    { type: 'mcpRemove', name: 'owned', version: 'old' },
+    {
+      type: 'mcpEdit',
+      name: 'fixture',
+      version: '1',
+      server: { transport: 'http', url: 'https://example.invalid/mcp' },
+    },
+    {
+      type: 'mcpEdit',
+      name: 'owned',
+      version: 'old',
+      server: { transport: 'http', url: 'https://example.invalid/mcp' },
+    },
     {
       type: 'mcpEdit',
       name: 'owned',
@@ -481,4 +484,10 @@ it('validates header references and preserves unrelated headers during edits', a
   });
   expect(f.read().mcp.owned.env_http_headers).toEqual({ 'X-Existing': 'EXISTING', 'X-Key': 'NEW' });
   expect(f.read().mcp.owned.http_headers.Authorization).toBe('SECRET_CANARY');
+});
+
+it('omits runtime-only MCP servers that have no editable configuration', async () => {
+  const f = fixture();
+  const snapshot = await f.snapshot();
+  expect(snapshot.mcp.map((server) => server.name)).toEqual(['fixture']);
 });

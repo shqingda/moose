@@ -1,3 +1,5 @@
+import { UserExtensions } from './providers/user-extensions';
+import { homedir } from 'node:os';
 import { createHash } from 'node:crypto';
 import type { Store } from './db/store';
 import { CodexExtensions } from './providers/codex-extensions';
@@ -16,16 +18,16 @@ type Command = { [K in Method]: { method: K; args: Requests[K] } }[Method];
 interface Receipt {
   fingerprint: string;
   status: 'running' | 'done' | 'unknown';
-  projectId: string;
+  projectId?: string;
 }
 interface AuthRun {
   state: ExtensionAuth;
-  client: CodexExtensions;
+  client: CodexExtensions | UserExtensions;
   timer: ReturnType<typeof setTimeout>;
 }
 /** Configuration mutations are serialized across workspaces; OAuth URLs exist in memory only. */
 export class Extensions {
-  private clients = new Set<CodexExtensions>();
+  private clients = new Set<CodexExtensions | UserExtensions>();
   private pending = new Set<Promise<unknown>>();
   private auth = new Map<string, AuthRun>();
   private stopped = false;
@@ -57,7 +59,9 @@ export class Extensions {
     return task;
   }
   private async client(scope: ExtensionScope) {
-    const client = this.factory(await this.hooks.path(scope));
+    const path = await this.hooks.path(scope);
+    const client =
+      scope.provider === 'codex' ? this.factory(path) : new UserExtensions(path, scope.provider);
     if (this.stopped) {
       await client.close();
       throw new Error('Moose is shutting down');
@@ -65,7 +69,7 @@ export class Extensions {
     this.clients.add(client);
     return client;
   }
-  private async closeClient(client: CodexExtensions) {
+  private async closeClient(client: CodexExtensions | UserExtensions) {
     await client.close();
     this.clients.delete(client);
   }
@@ -97,24 +101,8 @@ export class Extensions {
       return run.state;
     }
     const scope = command.args,
-      cwd = this.store.directory(scope.projectId, scope.sessionId);
-    if (scope.provider !== 'codex') {
-      if (command.method !== 'extensionsRead')
-        throw new Error('This provider has no verified native configuration management API');
-      return {
-        supported: false,
-        reason:
-          'No verified configuration management API for this provider. Use its CLI to manage extensions.',
-        version: '',
-        cwd,
-        sources: [],
-        settings: [],
-        mcp: [],
-        plugins: [],
-        hooks: [],
-        diagnostics: [],
-      } satisfies ExtensionSnapshot;
-    }
+      cwd = scope.projectId ? this.store.directory(scope.projectId, scope.sessionId) : homedir();
+    if (!scope.projectId && scope.sessionId) throw new Error('A session requires a project');
     if (command.method === 'extensionsRead') return this.read(scope, cwd);
     if (command.method === 'extensionsLogin') {
       if (this.auth.size >= 100)
@@ -129,7 +117,7 @@ export class Extensions {
       )
         throw new Error('Finish or cancel the pending authentication first');
       this.startingAuth = true;
-      let client: CodexExtensions;
+      let client: CodexExtensions | UserExtensions;
       try {
         client = await this.client(scope);
       } finally {
@@ -178,14 +166,23 @@ export class Extensions {
       let confirmed = false;
       try {
         const client = await this.client(scope);
+        let result: ExtensionSnapshot;
         try {
           await client.change(cwd, command.args.change, command.args.requestId);
+          confirmed = true;
+          this.save(key, { ...receipt, status: 'done' });
+          const quick =
+            command.args.change.type === 'config' ||
+            (command.args.change.type === 'toggle' && command.args.change.category === 'mcp');
+          result =
+            client instanceof CodexExtensions
+              ? await client.read(cwd, quick)
+              : await client.read(cwd);
         } finally {
           await this.closeClient(client);
         }
-        confirmed = true;
-        this.save(key, { ...receipt, status: 'done' });
-        const result = await this.read(scope, cwd);
+        if (!this.effective(result, command.args.change) && scope.provider !== 'codex')
+          throw new Error('The native operation did not produce the requested configuration');
         if (!this.effective(result, command.args.change))
           result.diagnostics.push({
             area: 'write',
@@ -204,7 +201,6 @@ export class Extensions {
     }
   }
   private effective(snapshot: ExtensionSnapshot, change: ExtensionChange) {
-    if (change.type === 'mcpRemove') return !snapshot.mcp.some((s) => s.name === change.name);
     if (change.type === 'mcpEdit') return snapshot.mcp.some((s) => s.name === change.name);
     if (change.type === 'mcpAdd')
       return snapshot.mcp.some((s) => s.name === change.name && !s.enabled);
@@ -212,8 +208,12 @@ export class Extensions {
       return snapshot.settings.some((s) => s.key === change.key && s.value === change.value);
     if (change.type === 'plugin')
       return change.action === 'install'
-        ? snapshot.plugins.some((p) => p.id === change.id && p.installed)
-        : !snapshot.plugins.some((p) => p.id === change.id && p.installed);
+        ? snapshot.plugins.some(
+            (p) => (p.id === change.id || p.installedFrom === change.id) && p.installed,
+          )
+        : !snapshot.plugins.some(
+            (p) => (p.id === change.id || p.installedFrom === change.id) && p.installed,
+          );
     return change.category === 'mcp'
       ? snapshot.mcp.some((s) => s.name === change.name && s.enabled === change.enabled)
       : snapshot.plugins.some((p) => p.id === change.name && p.enabled === change.enabled);

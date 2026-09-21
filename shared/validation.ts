@@ -242,12 +242,12 @@ export const schemas = {
     fontScale: z.number().min(0.85).max(1.4).optional(),
   }),
   extensionsRead: z.strictObject({
-    projectId: id,
+    projectId: id.optional(),
     sessionId: id.optional(),
     provider: z.enum(providerIds),
   }),
   extensionsChange: z.strictObject({
-    projectId: id,
+    projectId: id.optional(),
     sessionId: id.optional(),
     provider: z.enum(providerIds),
     requestId: id,
@@ -261,16 +261,6 @@ export const schemas = {
           .max(100)
           .regex(/^[A-Za-z0-9_-]+$/),
         server: mcpRegistration,
-      }),
-      z.strictObject({
-        type: z.literal('mcpRemove'),
-        sourceId: z.string().length(64),
-        version: z.string().min(1).max(500),
-        name: z
-          .string()
-          .min(1)
-          .max(100)
-          .regex(/^[A-Za-z0-9_-]+$/),
       }),
       z.strictObject({
         type: z.literal('config'),
@@ -303,7 +293,7 @@ export const schemas = {
     ]),
   }),
   extensionsLogin: z.strictObject({
-    projectId: id,
+    projectId: id.optional(),
     sessionId: id.optional(),
     provider: z.enum(providerIds),
     name: z.string().min(1).max(300),

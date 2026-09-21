@@ -1,13 +1,5 @@
 import { lazy, Suspense, useState, type RefObject } from 'react';
-import {
-  Archive,
-  ArrowUpRight,
-  MoreHorizontal,
-  GitBranch,
-  History,
-  Pencil,
-  Puzzle,
-} from 'lucide-react';
+import { Archive, ArrowUpRight, MoreHorizontal, GitBranch, History, Pencil } from 'lucide-react';
 import type { Project, Provider, Session } from '../../shared/types';
 import { useI18n } from '../lib/i18n';
 import { Button } from './ui/button';
@@ -20,7 +12,6 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from './ui/dropdown-menu';
-import { ExtensionTools } from './extension-tools';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 const NativeTools = lazy(() => import('./native-tools').then((m) => ({ default: m.NativeTools })));
 const WorktreeTools = lazy(() =>
@@ -50,7 +41,7 @@ export function WorkspaceTools({
   onEditor(): void;
 }) {
   const t = useI18n();
-  const [active, setActive] = useState<'history' | 'worktrees' | 'extensions'>();
+  const [active, setActive] = useState<'history' | 'worktrees'>();
   const [open, setOpen] = useState(false);
   const show = (kind: typeof active) => {
     setActive(kind);
@@ -82,10 +73,6 @@ export function WorkspaceTools({
             <DropdownMenuItem onClick={() => show('worktrees')}>
               <GitBranch />
               {t('wtTools')}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => show('extensions')}>
-              <Puzzle />
-              {t('extTitle')}
             </DropdownMenuItem>
             {window.moose.host !== 'web' && (
               <DropdownMenuItem onClick={onEditor}>
@@ -151,12 +138,6 @@ export function WorkspaceTools({
           </Suspense>
         </DialogContent>
       </Dialog>
-      <ExtensionTools
-        scope={{ projectId: project.id, sessionId: session?.id, provider }}
-        open={open && active === 'extensions'}
-        onOpenChange={setOpen}
-        returnFocus={trigger}
-      />
     </>
   );
 }

@@ -1,7 +1,7 @@
 import type { McpRegistration } from './mcp-registration';
 import type { Provider } from './types';
 export interface ExtensionScope {
-  projectId: string;
+  projectId?: string;
   sessionId?: string;
   provider: Provider;
 }
@@ -15,6 +15,16 @@ export interface ConfigSource {
 }
 export interface ExtensionSnapshot {
   supported: boolean;
+  configurationOnly?: boolean;
+  capabilities?: {
+    model: boolean;
+    mcp: boolean;
+    mcpEdit: boolean;
+    auth: boolean;
+    pluginToggle: boolean;
+    pluginInstall: boolean;
+    diagnostics: boolean;
+  };
   reason?: string;
   version: string;
   cwd: string;
@@ -33,6 +43,7 @@ export interface ExtensionSnapshot {
     id: string;
     name: string;
     marketplace: string;
+    installedFrom?: string;
     installed: boolean;
     enabled: boolean;
     installable: boolean;
@@ -43,7 +54,6 @@ export interface ExtensionSnapshot {
 }
 export type ExtensionChange =
   | { type: 'mcpEdit'; sourceId: string; version: string; name: string; server: McpRegistration }
-  | { type: 'mcpRemove'; sourceId: string; version: string; name: string }
   | { type: 'mcpAdd'; sourceId: string; version: string; name: string; server: McpRegistration }
   | {
       type: 'config';
