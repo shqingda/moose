@@ -1,6 +1,6 @@
 # Moose application icon
 
-Generated with the built-in imagegen tool. The active raster master is the first revision, `moose-icon-skeuomorphic.png`; `pnpm icon:build` exports the macOS iconset and ICNS. The refined `moose-icon-skeuomorphic-v2.png` is retained as an alternative. The interface mark remains in `moose-mark.json`.
+Generated with the built-in imagegen tool. The active raster master is `moose-icon-skeuomorphic-v2.png`; `pnpm icon:build` exports the macOS iconset and ICNS. The original `moose-icon-skeuomorphic.png` is retained as the first revision. The interface mark remains in `moose-mark.json`.
 
 References: the previous Moose application icon (identity) and the user-provided skeuomorphic iOS icon grid (material style).
 
