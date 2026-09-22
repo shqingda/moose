@@ -14,6 +14,18 @@ Moose 负责交互、协议适配、任务调度和历史存储；模型推理�
 
 安装包采用 ad-hoc 签名，尚未进行 Apple 公证；首次打开方式见[安装说明](docs/usage.md#安装与连接)。
 
+## 命令行安装 Web 版
+
+macOS Apple Silicon 可以直接安装，无需预装 Node.js 或 pnpm：
+
+```sh
+curl -fsSL https://moose.shqingda.workers.dev/install.sh | sh
+```
+
+安装后打开新的终端，输入 `moose` 即可启动服务并打开浏览器。`moose status` 查看状态，
+`moose stop` 停止服务及任务。代理 CLI 仍需单独安装和登录。
+安装与发布细节见 [Web 分发说明](distribution/README.md)。
+
 ## 本地开发
 
 当前验证环境为 macOS Apple Silicon、Node.js 26 和 pnpm 12.5.1；构建原生依赖需要 Xcode Command Line Tools。精确依赖版本由 [package.json](package.json) 和锁文件管理。

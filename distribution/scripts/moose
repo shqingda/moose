@@ -1,0 +1,12 @@
+#!/bin/sh
+set -eu
+script=$0
+while [ -L "$script" ]; do
+  directory=$(CDPATH= cd -P "$(dirname "$script")" && pwd)
+  script=$(readlink "$script")
+  case "$script" in /*) ;; *) script="$directory/$script" ;; esac
+done
+root=$(CDPATH= cd -P "$(dirname "$script")/.." && pwd)
+if [ "$#" -eq 0 ]; then set -- web; fi
+export MOOSE_NODE_RUNTIME=1
+exec "$root/runtime/bin/node" "$root/scripts/runtime.mjs" "$@"

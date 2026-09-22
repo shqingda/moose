@@ -4,12 +4,26 @@ import { access, mkdir, open, readFile, realpath, stat } from 'node:fs/promises'
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import electron from 'electron';
+// Standalone installs use their bundled Node; desktop development keeps Electron's ABI.
+const runtimeExecutable =
+  process.env.MOOSE_NODE_RUNTIME === '1' ? process.execPath : (await import('electron')).default;
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const data = resolve(process.env.MOOSE_WEB_DATA_DIR || join(homedir(), '.moose/web'));
 const file = join(data, 'connection.json');
 const command = process.argv[2] || 'start';
+const { version } = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
+const checkVersion = ['web', 'start', 'desktop'].includes(command);
+if (command === '--version' || command === '-v') {
+  console.log(version);
+  process.exit(0);
+}
+if (command === '--help' || command === '-h') {
+  console.log(
+    'Usage: moose [web|start|status|stop]\n  web     Start and open the browser (default)\n  start   Start without opening a browser\n  status  Show runtime status\n  stop    Stop the service and its tasks',
+  );
+  process.exit(0);
+}
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function connect() {
@@ -29,6 +43,10 @@ async function connect() {
     typeof config.token !== 'string'
   )
     throw new Error('Invalid runtime connection file');
+  if (checkVersion && config.version !== version)
+    throw new Error(
+      `Moose ${version} cannot use background service ${config.version || 'unknown'}. Run moose stop, then moose to restart after your tasks finish.`,
+    );
   const headers = { Origin: url.origin, 'Content-Type': 'application/json' };
   const login = await fetch(url.origin + '/api/login', {
     method: 'POST',
@@ -79,7 +97,7 @@ async function launch() {
   const logPath = join(data, 'runtime.log');
   const log = await open(logPath, 'a', 0o600);
   await log.chmod(0o600);
-  const child = spawn(electron, [join(root, 'dist-electron/web-server/web-server.js')], {
+  const child = spawn(runtimeExecutable, [join(root, 'dist-electron/web-server/web-server.js')], {
     cwd: root,
     detached: true,
     stdio: ['ignore', log.fd, log.fd],
@@ -110,9 +128,11 @@ async function launch() {
 }
 
 try {
-  if (!['start', 'status', 'stop', 'desktop'].includes(command))
-    throw new Error('Usage: node scripts/runtime.mjs start|status|stop|desktop');
-  const connection = command === 'start' || command === 'desktop' ? await start() : await connect();
+  if (!['web', 'start', 'status', 'stop', 'desktop'].includes(command))
+    throw new Error('Usage: node scripts/runtime.mjs web|start|status|stop|desktop');
+  const connection = ['web', 'start', 'desktop'].includes(command)
+    ? await start()
+    : await connect();
   if (command === 'stop') {
     await connection.request('webStopService');
     for (let attempt = 0; attempt < 60; attempt++) {
@@ -131,12 +151,30 @@ try {
   } else {
     console.log('Moose runtime: ' + connection.origin);
     console.log('Data: ' + connection.status.data);
-    if (command === 'start' || command === 'desktop')
+    if (['web', 'start', 'desktop'].includes(command)) {
       console.log('Browser: ' + connection.origin + '/#token=' + connection.token);
+      const localhost = new URL(connection.origin);
+      localhost.hostname = 'localhost';
+      console.log('Browser (localhost): ' + localhost.origin + '/#token=' + connection.token);
+    }
     await connection.request('webDisconnect');
+    if (command === 'web' && process.env.MOOSE_NO_OPEN !== '1') {
+      const browserURL = new URL(connection.origin);
+      browserURL.hostname = 'localhost';
+      browserURL.hash = 'token=' + connection.token;
+      const opener = spawn(process.platform === 'darwin' ? 'open' : 'xdg-open', [browserURL.href], {
+        stdio: 'ignore',
+        detached: true,
+      });
+      opener.on('error', () =>
+        console.error('Could not open a browser. Use the Browser link above.'),
+      );
+      opener.unref();
+    }
     if (command === 'desktop') {
       const env = { ...process.env, MOOSE_SHARED_RUNTIME_FILE: file };
       delete env.ELECTRON_RUN_AS_NODE;
+      const electron = (await import('electron')).default;
       const desktop = spawn(electron, [root], { cwd: root, stdio: 'inherit', env });
       desktop.on('error', (error) => {
         console.error(error.message);

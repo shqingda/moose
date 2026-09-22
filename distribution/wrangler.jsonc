@@ -1,0 +1,12 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "moose",
+  "account_id": "26f6429ff51c80490d62cb63be9bf409",
+  "compatibility_date": "2026-09-22",
+  "workers_dev": true,
+  "assets": {
+    "directory": "./public",
+    "not_found_handling": "404-page",
+    "html_handling": "none",
+  },
+}

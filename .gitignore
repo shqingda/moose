@@ -8,3 +8,6 @@ playwright-report/
 *.tsbuildinfo
 .env*
 .moose-test/
+distribution/.build/
+distribution/public/
+distribution/.wrangler/

@@ -55,6 +55,7 @@ const sessions = new Set<string>();
 const equal = (value: string, expected: string) =>
   value.length === expected.length && timingSafeEqual(Buffer.from(value), Buffer.from(expected));
 let origin = '';
+let localhostOrigin = '';
 function json(res: ServerResponse, status: number, value: unknown) {
   res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
   res.end(JSON.stringify(value));
@@ -71,7 +72,7 @@ async function body(req: IncomingMessage) {
 }
 const server = createServer(async (req, res) => {
   try {
-    const requestOrigin = [origin, publicOrigin].find(
+    const requestOrigin = [origin, localhostOrigin, publicOrigin].find(
       (allowed) => allowed && new URL(allowed).host === req.headers.host,
     );
     if (!requestOrigin || (req.headers.origin && req.headers.origin !== requestOrigin)) {
@@ -277,6 +278,7 @@ try {
   const address = server.address();
   if (!address || typeof address === 'string') throw new Error('Web service did not bind');
   origin = `http://127.0.0.1:${address.port}`;
+  localhostOrigin = `http://localhost:${address.port}`;
   const connectionTemp = connectionFile + '.' + process.pid;
   await writeFile(connectionTemp, JSON.stringify({ origin, token: secret, version }), {
     mode: 0o600,
@@ -285,6 +287,7 @@ try {
   await rename(connectionTemp, connectionFile);
   console.log(`Desktop connection: ${connectionFile}`);
   console.log(`Moose Web: ${origin}/#token=${secret}`);
+  console.log(`Moose Web (localhost): ${localhostOrigin}/#token=${secret}`);
   console.log(
     `Data: ${data}\nClosing a browser does not stop tasks. Ctrl+C stops this service and its tasks.`,
   );

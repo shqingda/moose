@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import App from '../app';
 import { WebDirectoryPicker } from './web-directory-picker';
-import { createWebAPI, webRequest } from '../lib/web-api';
+import { createWebAPI, webRequest, WEB_AUTH_REQUIRED, WEB_AUTH_RESTORED } from '../lib/web-api';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Field, FieldLabel } from './ui/field';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 export function WebHost() {
   const [zh, setZh] = useState(navigator.language.startsWith('zh'));
+  const api = useRef<ReturnType<typeof createWebAPI> | null>(null);
+  const [authRequired, setAuthRequired] = useState(false);
   const [ready, setReady] = useState(false),
     [error, setError] = useState('');
   const [open, setOpen] = useState(false);
@@ -36,7 +38,7 @@ export function WebHost() {
               : 'Invalid access token. Use the link printed by the service.',
           );
       }
-      const api = createWebAPI(async () => {
+      api.current ??= createWebAPI(async () => {
         const result = (await webRequest('webPickDirectory', {})) as {
           supported: boolean;
           path?: string | null;
@@ -47,13 +49,16 @@ export function WebHost() {
           setOpen(true);
         });
       });
-      const snapshot = await api.request('snapshot', {});
+      const snapshot = await api.current.request('snapshot', {});
       setZh(
         snapshot.settings.language === 'system'
           ? navigator.language.startsWith('zh')
           : snapshot.settings.language === 'zh-CN',
       );
-      window.moose = api;
+      window.moose = api.current;
+      setToken('');
+      setAuthRequired(false);
+      window.dispatchEvent(new Event(WEB_AUTH_RESTORED));
       setReady(true);
     } catch (error) {
       setError(error instanceof Error ? error.message : String(error));
@@ -61,6 +66,15 @@ export function WebHost() {
       setBusy(false);
     }
   }
+  useEffect(() => {
+    const requireAuth = () => {
+      finish(null);
+      setAuthRequired(true);
+      setError('');
+    };
+    window.addEventListener(WEB_AUTH_REQUIRED, requireAuth);
+    return () => window.removeEventListener(WEB_AUTH_REQUIRED, requireAuth);
+  }, []);
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
@@ -102,6 +116,42 @@ export function WebHost() {
   return (
     <>
       <App />
+      <Dialog open={authRequired}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>{zh ? '重新连接工作区' : 'Reconnect to workspace'}</DialogTitle>
+            <DialogDescription>
+              {zh
+                ? '登录已失效。输入当前服务的访问令牌重新连接；页面中的草稿会保留。'
+                : 'Your login expired. Enter the current service token to reconnect. Drafts on this page are kept.'}
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void login(token);
+            }}
+          >
+            <Field>
+              <FieldLabel htmlFor="web-reconnect-token">
+                {zh ? '访问令牌' : 'Access token'}
+              </FieldLabel>
+              <Input
+                id="web-reconnect-token"
+                type="password"
+                autoComplete="off"
+                value={token}
+                onChange={(event) => setToken(event.target.value)}
+              />
+            </Field>
+            <Button type="submit" disabled={busy || !token}>
+              {zh ? '连接' : 'Connect'}
+            </Button>
+            {error && <p role="alert">{error}</p>}
+          </form>
+        </DialogContent>
+      </Dialog>
       <Dialog
         open={open}
         onOpenChange={(value) => {

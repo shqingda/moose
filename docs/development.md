@@ -44,10 +44,13 @@ better-sqlite3 和 node-pty 是运行时原生依赖；安装与打包会准备�
 
 ## 发布流程
 
-1. 更新 package.json 版本与 `docs/releases/<version>.md`。
-2. 完成格式、Lint、类型、单元和 Electron 测试。
-3. `pnpm dist` 构建 arm64 DMG；afterSign 钩子严格验证应用签名。
-4. `pnpm exec tsx scripts/package-smoke.ts` 启动打包后的应用，检查版本、沙箱、SQLite、Shell、PTY 和调度；默认后台运行，不抢占桌面。
-5. 提交、推送，创建与代码提交对应的 GitHub tag / Release，上传 DMG 和校验值。
+每次必须同时发布桌面与 Web，版本号统一从 `package.json` 读取。不得只更新一端或复用旧版本号替换安装包。
+
+1. 更新 `package.json` 版本与 `docs/releases/<version>.md`、文档索引，提交完整变更。
+2. `pnpm release:prepare`：格式、Lint、单元、类型／构建及全部 E2E；构建 arm64 DMG，验证严格签名与打包应用；构建独立 Web 包，验证干净安装、localhost、SQLite、PTY、重装、停止／启动与自动打开浏览器。
+3. `pnpm release:publish`：要求工作区干净，准备记录对应当前提交，桌面 App、DMG、Web 清单和校验值匹配同一版本。推送代码及 tag，把两端安装包上传至 GitHub 草稿 Release，再部署 Cloudflare。
+4. 脚本从正式 Web 地址重新安装并验证；通过后才将 GitHub Release 公开并设为最新。任何一步失败均不报告发布完成；保留草稿，排查后重试，不能绕过另一端验证。
+
+发布入口在 `scripts/release.mjs`。两处服务无法进行跨平台原子提交，因此按上述顺序进行一次联合发布；公网验证未通过时桌面保持草稿。已发布 Web 的历史分片需要保留，避免升级时打断正在进行的下载。详情见 [Web 分发说明](../distribution/README.md)。
 
 当前使用 ad-hoc 签名，没有 Apple 公证、自动更新或遥测。签名失败应中止发布；不要把去除下载隔离标记描述为签名或公证的替代品。应用图标源在仓库中，`pnpm icon:build` 可重新生成。

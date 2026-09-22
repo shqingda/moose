@@ -27,6 +27,7 @@ export function ExtensionTools({ scope }: { scope: ExtensionScope }) {
     [change, setChange] = useState<ExtensionChange>(),
     [model, setModel] = useState(''),
     [auth, setAuth] = useState<ExtensionAuth>(),
+    [authURL, setAuthURL] = useState(''),
     [search, setSearch] = useState(''),
     [editing, setEditing] = useState<{ name: string; transport: 'http' | 'stdio' }>();
   const operation = useRef(false);
@@ -161,9 +162,11 @@ export function ExtensionTools({ scope }: { scope: ExtensionScope }) {
         name,
         requestId: crypto.randomUUID(),
       });
+      setAuthURL(next.url);
       setAuth(next);
       try {
-        await window.moose.request('openExternal', { url: next.url });
+        if (window.moose.host !== 'web')
+          await window.moose.request('openExternal', { url: next.url });
       } catch (e) {
         setAuth(await window.moose.request('extensionsAuth', { id: next.id, cancel: true }));
         throw e;
@@ -360,6 +363,13 @@ export function ExtensionTools({ scope }: { scope: ExtensionScope }) {
                 {auth && (
                   <div role="status">
                     {auth.name}: {auth.status}
+                    {auth.status === 'pending' &&
+                      window.moose.host === 'web' &&
+                      /^https?:\/\//i.test(authURL) && (
+                        <a href={authURL} target="_blank" rel="noopener noreferrer">
+                          {t('extLogin')}
+                        </a>
+                      )}
                     {auth.status === 'pending' && (
                       <Button
                         variant="outline"

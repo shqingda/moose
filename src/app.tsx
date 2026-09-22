@@ -117,7 +117,9 @@ function Workspace({
   const [renaming, setRenaming] = useState(false),
     [title, setTitle] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(
-    () => localStorage.getItem('moose.sidebar') !== 'hidden',
+    () =>
+      localStorage.getItem('moose.sidebar') !== 'hidden' &&
+      !(window.moose.host === 'web' && matchMedia('(max-width: 760px)').matches),
   );
   const [confirmation, setConfirmation] = useState<Confirmation>();
   const [attachmentDrafts, setAttachmentDrafts] = useState<Record<string, Attachment[]>>({});
@@ -184,8 +186,15 @@ function Workspace({
       }
       drafts.clear();
     };
+    const hidden = () => {
+      if (document.visibilityState === 'hidden') flush();
+    };
+    window.addEventListener('pagehide', flush);
+    document.addEventListener('visibilitychange', hidden);
     window.addEventListener('beforeunload', flush);
     return () => {
+      window.removeEventListener('pagehide', flush);
+      document.removeEventListener('visibilitychange', hidden);
       window.removeEventListener('beforeunload', flush);
       flush();
     };
@@ -208,6 +217,8 @@ function Workspace({
   };
   /** 选择已有会话并切换所属项目，退出未保存的新会话视图。 */
   const select = (id: string) => {
+    if (window.moose.host === 'web' && matchMedia('(max-width: 760px)').matches)
+      setSidebarOpen(false);
     setSelected(id);
     const s = snapshot.sessions.find((s) => s.id === id);
     if (s) {
@@ -417,6 +428,13 @@ function Workspace({
           <PanelLeft />
         </Button>
       </div>
+      {window.moose.host === 'web' && sidebarOpen && (
+        <button
+          className="web-sidebar-backdrop"
+          aria-label={t('toggleSidebar')}
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
       <div className="sidebar-frame" inert={!sidebarOpen} aria-hidden={!sidebarOpen}>
         <Sidebar
           onDeleteSession={deleteSession}

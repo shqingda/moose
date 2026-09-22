@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { mkdtemp, readFile, rm, stat } from 'node:fs/promises';
+import { mkdtemp, readFile, writeFile, rm, stat } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 const exec = promisify(execFile);
@@ -18,6 +18,9 @@ test('managed runtime starts once, survives launcher exit, stops and restarts wi
     const pid = await readFile(join(data, 'server.lock'), 'utf8');
     await run('start');
     expect(await readFile(join(data, 'server.lock'), 'utf8')).toBe(pid);
+    expect((await run('status')).stdout).toContain(first.origin);
+    await writeFile(file, JSON.stringify({ ...first, version: '0.0.0' }));
+    await expect(run('start')).rejects.toThrow('moose stop');
     expect((await run('status')).stdout).toContain(first.origin);
     await run('stop');
     await expect(stat(file)).rejects.toMatchObject({ code: 'ENOENT' });

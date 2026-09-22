@@ -1,3 +1,4 @@
+import { webShortcuts } from '../lib/web-shortcuts';
 import { ExtensionTools } from './extension-tools';
 import { providerDefinitions, providerIds } from '../../shared/providers';
 import { useState } from 'react';
@@ -45,7 +46,11 @@ export function SettingsDialog({
     [extensionProvider, setExtensionProvider] = useState<Provider>('codex');
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="settings-dialog settings-page" showCloseButton={false}>
+      <DialogContent
+        className="settings-dialog settings-page"
+        data-host={window.moose.host || 'desktop'}
+        showCloseButton={false}
+      >
         <nav className="settings-nav" aria-label={t('settings')}>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             <ArrowLeft />
@@ -138,21 +143,26 @@ export function SettingsDialog({
                 <Keyboard size={18} />
                 {t('shortcuts')}
               </h3>
-              {(
-                [
-                  ['addProject', '⌘ O'],
-                  ['newSession', '⌘ N'],
-                  ['search', '⌘ K'],
-                  ['toggleSidebar', '⌘ B'],
-                  ['review', '⇧ ⌘ B'],
-                  ['usage', '⌘ U'],
-                  ['ptyTitle', '⌃ `'],
-                  ['ptyNew', '⌃ ⇧ `'],
-                  ['bgCommand', '⇧ ⌘ J'],
-                  ['bgSchedules', '⇧ ⌘ S'],
-                  ['focusComposer', '⌘ L'],
-                  ['settings', '⌘ ,'],
-                ] as const
+              {(window.moose.host === 'web'
+                ? [
+                    ...webShortcuts.map(({ label, key }) => [label, `Alt ⇧ ${key}`] as const),
+                    ['ptyTitle', 'Ctrl `'] as const,
+                    ['ptyNew', 'Ctrl ⇧ `'] as const,
+                  ]
+                : ([
+                    ['addProject', '⌘ O'],
+                    ['newSession', '⌘ N'],
+                    ['search', '⌘ K'],
+                    ['toggleSidebar', '⌘ B'],
+                    ['review', '⇧ ⌘ B'],
+                    ['usage', '⌘ U'],
+                    ['ptyTitle', '⌃ `'],
+                    ['ptyNew', '⌃ ⇧ `'],
+                    ['bgCommand', '⇧ ⌘ J'],
+                    ['bgSchedules', '⇧ ⌘ S'],
+                    ['focusComposer', '⌘ L'],
+                    ['settings', '⌘ ,'],
+                  ] as const)
               ).map(([label, keys]) => (
                 <div className="shortcut-row" key={label}>
                   <span>{t(label)}</span>
