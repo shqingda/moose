@@ -33,6 +33,8 @@ protocol.registerSchemesAsPrivileged([
   { scheme: 'moose', privileges: { standard: true, secure: true, supportFetchAPI: true } },
 ]);
 let window: BrowserWindow | null = null;
+let nativeFrameReady = false;
+let rendererReady = false;
 let quitting = false;
 const emit = (event: AppEvent) => {
   if (window && !window.isDestroyed()) window.webContents.send('moose:event', event);
@@ -53,12 +55,20 @@ const appearance = () => ({
   highContrast: nativeTheme.shouldUseHighContrastColors,
 });
 
+/** Both Chromium's first paint and the hydrated React tree must be ready before revealing it. */
+function revealWindow() {
+  if (!backgroundTest && nativeFrameReady && rendererReady && window && !window.isDestroyed())
+    window.show();
+}
+
 /** 创建隔离的渲染窗口，限制导航和权限，并加载开发页或正式应用协议。 */
 async function createWindow() {
   if (window) {
-    if (!backgroundTest) window.show();
+    revealWindow();
     return;
   }
+  nativeFrameReady = false;
+  rendererReady = false;
   window = new BrowserWindow({
     width: 1280,
     height: 860,
@@ -109,7 +119,10 @@ async function createWindow() {
     const csp = `default-src 'self'; script-src 'self'${isDev ? " 'unsafe-inline'" : ''}; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'${isDev ? ' ws://127.0.0.1:5173 http://127.0.0.1:5173' : ''}; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'`;
     callback({ responseHeaders: { ...details.responseHeaders, 'Content-Security-Policy': [csp] } });
   });
-  if (!backgroundTest) window.once('ready-to-show', () => window?.show());
+  window.once('ready-to-show', () => {
+    nativeFrameReady = true;
+    revealWindow();
+  });
   window.on('closed', () => {
     window = null;
   });
@@ -224,6 +237,21 @@ else {
         if (url.host !== 'app' || rel.startsWith('..') || isAbsolute(rel))
           return new Response('Not found', { status: 404 });
         return net.fetch(pathToFileURL(path).toString());
+      });
+      ipcMain.on('moose:ready', (event) => {
+        const frame = event.senderFrame;
+        if (
+          !window ||
+          frame !== window.webContents.mainFrame ||
+          !(
+            frame.url.startsWith('moose://app/') ||
+            (isDev &&
+              new URL(frame.url).origin === new URL(process.env.VITE_DEV_SERVER_URL!).origin)
+          )
+        )
+          return;
+        rendererReady = true;
+        revealWindow();
       });
       // 页面请求的安全网关：确认来源 frame 和参数，再处理原生能力或转发后台。
       ipcMain.handle('moose:request', async (event, method: Method, input: unknown) => {

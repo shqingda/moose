@@ -361,6 +361,7 @@ export type AppEvent =
   | { type: 'runtime-error'; error: string };
 export interface MooseAPI {
   host?: 'desktop' | 'web';
+  ready(): void;
   request<M extends Method>(method: M, params: Requests[M]): Promise<Responses[M]>;
   subscribe(listener: (event: AppEvent) => void): () => void;
 }

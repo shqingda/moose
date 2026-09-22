@@ -136,6 +136,7 @@ export function createWebAPI(chooseProject: () => Promise<string | null>): Moose
   };
   return {
     host: 'web',
+    ready() {},
     request: request as MooseAPI['request'],
     subscribe(listener) {
       listeners.add(listener);

@@ -1,7 +1,7 @@
 import { BackgroundTools, type BackgroundPlacement } from './components/background-tools';
 import { WorkspaceTools } from './components/workspace-tools';
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
-import { MotionConfig, useReducedMotion } from 'motion/react';
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { MotionConfig, motion, useReducedMotion } from 'motion/react';
 import { ChevronDown, Folder, PanelRight, Search, X, CircleAlert, PanelLeft } from 'lucide-react';
 import type {
   Attachment,
@@ -41,13 +41,14 @@ import { TooltipProvider } from './components/ui/tooltip';
 export default function App() {
   const workspace = useWorkspace(),
     { snapshot } = workspace;
+  const reportedReady = useRef(false);
   const locale =
     snapshot?.settings.language === 'system'
       ? snapshot.locale.startsWith('zh')
         ? 'zh-CN'
         : 'en'
       : snapshot?.settings.language || 'en';
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!snapshot) return;
     const root = document.documentElement;
     root.lang = locale;
@@ -60,6 +61,12 @@ export default function App() {
     root.classList.toggle('high-contrast', snapshot.highContrast);
     root.style.fontSize = `${15 * snapshot.settings.fontScale}px`;
   }, [snapshot, locale]);
+  useEffect(() => {
+    if (reportedReady.current || window.moose.host === 'web' || (!snapshot && !workspace.error))
+      return;
+    reportedReady.current = true;
+    window.moose.ready();
+  }, [snapshot, workspace.error]);
   return (
     <LocaleContext value={locale}>
       <TooltipProvider>
@@ -121,6 +128,10 @@ function Workspace({
       localStorage.getItem('moose.sidebar') !== 'hidden' &&
       !(window.moose.host === 'web' && matchMedia('(max-width: 760px)').matches),
   );
+  const [sidebarParked, setSidebarParked] = useState(() => !sidebarOpen);
+  useLayoutEffect(() => {
+    if (sidebarOpen) setSidebarParked(false);
+  }, [sidebarOpen]);
   const [confirmation, setConfirmation] = useState<Confirmation>();
   const [attachmentDrafts, setAttachmentDrafts] = useState<Record<string, Attachment[]>>({});
   const [drafts, setDrafts] = useState<Record<string, string>>({});
@@ -435,7 +446,22 @@ function Workspace({
           onClick={() => setSidebarOpen(false)}
         />
       )}
-      <div className="sidebar-frame" inert={!sidebarOpen} aria-hidden={!sidebarOpen}>
+      <motion.div
+        className="sidebar-frame"
+        initial={false}
+        animate={{ width: sidebarOpen ? 264 : 0 }}
+        transition={
+          reduceMotion || snapshot.reduceMotion
+            ? { duration: 0 }
+            : { type: 'spring', stiffness: 380, damping: 39 }
+        }
+        data-parked={sidebarParked || undefined}
+        onAnimationComplete={() => {
+          if (!sidebarOpen) setSidebarParked(true);
+        }}
+        inert={!sidebarOpen}
+        aria-hidden={!sidebarOpen}
+      >
         <Sidebar
           onDeleteSession={deleteSession}
           onDeleteProject={projectAction}
@@ -456,7 +482,7 @@ function Workspace({
           archived={archived}
           onArchived={() => setArchived((value) => !value)}
         />
-      </div>
+      </motion.div>
       <div className="workspace-stage" data-dock={dock || undefined}>
         <div className="workspace-main">
           <main className="workspace">

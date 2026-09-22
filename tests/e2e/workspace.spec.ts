@@ -78,7 +78,7 @@ test('opens a project, approves a real IPC turn, reviews diff, persists draft an
     keys: Object.keys(window.moose),
   }));
   expect(capability.node).toBe('undefined');
-  expect(capability.keys.sort()).toEqual(['request', 'subscribe']);
+  expect(capability.keys.sort()).toEqual(['ready', 'request', 'subscribe']);
   await expect(
     page.evaluate(() => window.moose.request('openExternal', { url: 'file:///etc/passwd' })),
   ).rejects.toThrow();

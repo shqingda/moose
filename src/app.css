@@ -1483,37 +1483,18 @@ kbd {
   justify-content: flex-start;
 }
 
-/* Off-canvas navigation: move the complete panel, rather than crop stationary content. */
+/* Keep layout and panel paint on one interruptible animation timeline. */
 .sidebar-frame {
-  position: relative;
-  width: 264px;
-  overflow: clip;
+  overflow: hidden;
   flex-shrink: 0;
-  transition: width var(--sidebar-motion);
+  display: flex;
 }
 .sidebar-frame .sidebar {
-  position: absolute;
-  inset: 0 auto 0 0;
   width: 264px;
   min-width: 264px;
-  transform: translateX(0);
-  transition: transform var(--sidebar-motion);
 }
-.sidebar-collapsed .sidebar-frame {
-  width: 0;
-}
-.sidebar-collapsed .sidebar-frame .sidebar {
+.sidebar-frame[data-parked='true'] .sidebar {
   transform: translateX(-100%);
-}
-.reduce-motion .sidebar-frame,
-.reduce-motion .sidebar-frame .sidebar {
-  transition: none;
-}
-@media (prefers-reduced-motion: reduce) {
-  .sidebar-frame,
-  .sidebar-frame .sidebar {
-    transition: none;
-  }
 }
 .global-sidebar-toggle {
   position: absolute;
