@@ -11,3 +11,4 @@ playwright-report/
 distribution/.build/
 distribution/public/
 distribution/.wrangler/
+merch-store/.wrangler/

@@ -1,0 +1,31 @@
+# Moose Supply
+
+Moose Supply is the physical merchandise store for Moose, a local workspace for coding agents.
+
+Canonical URL: https://moose-merch.shqingda.workers.dev/
+Contact: shqingda@gmail.com
+
+## What the store sells
+
+- Moose heavyweight cotton T-shirt: CNY 179
+- Moose ceramic mug: CNY 89
+- Moose desk mat: CNY 139
+- Moose enamel pin: CNY 59
+- Moose waterproof sticker pack: CNY 39
+
+## Fulfillment
+
+- Orders ship from China.
+- In-stock goods usually dispatch within 3 to 5 business days.
+- Shipping is available to mainland China and selected international destinations.
+- Shipping cost depends on the delivery address.
+
+## Returns and support
+
+- Return requests are accepted within 7 days of delivery for unused and unwashed goods in original packaging; custom goods are excluded.
+- Damaged, incorrect, or missing orders should be reported with photos within 48 hours of delivery.
+- Support email: shqingda@gmail.com
+
+## About Moose
+
+Project: https://github.com/shqingda/moose
