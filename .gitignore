@@ -12,3 +12,4 @@ distribution/.build/
 distribution/public/
 distribution/.wrangler/
 merch-store/.wrangler/
+.tanstack/

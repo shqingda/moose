@@ -72,8 +72,4 @@ await writeFile(
   join(output, '_headers'),
   '/install.sh\n  Content-Type: text/plain; charset=utf-8\n  Cache-Control: no-cache\n/latest-darwin-arm64.txt\n  Cache-Control: no-cache\n/releases/*\n  Cache-Control: public, max-age=31536000, immutable\n  Content-Type: application/octet-stream\n',
 );
-await writeFile(
-  join(output, 'index.html'),
-  '<!doctype html><meta charset="utf-8"><title>Moose</title><h1>Moose Web</h1><p>macOS Apple Silicon · Runs locally on your computer</p><pre>curl -fsSL https://moose.shqingda.workers.dev/install.sh | sh\nmoose</pre><p>Commands: moose web / start / status / stop</p>',
-);
 console.log(`Packaged ${release}: ${(bytes.length / 1024 / 1024).toFixed(1)} MiB, ${parts} parts`);

@@ -5,7 +5,77 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>没有找到这一页 · Moose Supply</title>
     <link rel="icon" href="/mark.svg" />
-    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      :root {
+        --forest: #123b2b;
+        --orange: #f26b38;
+        --sky: #cfe8f1;
+        --paper: #f7f4ec;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        color: var(--paper);
+        background: var(--forest);
+        font-family: Inter, 'Avenir Next', 'PingFang SC', sans-serif;
+        line-height: 1.6;
+      }
+      a {
+        color: inherit;
+      }
+      .not-found {
+        display: grid;
+        min-height: 100vh;
+        place-items: center;
+        padding: 24px;
+      }
+      main {
+        width: min(680px, 100%);
+      }
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 800;
+        text-decoration: none;
+      }
+      .brand img {
+        width: 38px;
+        height: 38px;
+      }
+      h1 {
+        margin: 72px 0 0;
+        font-family: 'Arial Narrow', 'Aptos Display', 'PingFang SC', sans-serif;
+        font-size: clamp(58px, 10vw, 110px);
+        font-weight: 900;
+        letter-spacing: -0.065em;
+        line-height: 0.95;
+      }
+      p {
+        margin: 24px 0 32px;
+      }
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 50px;
+        padding: 12px 22px;
+        border-radius: 4px;
+        font-weight: 800;
+        text-decoration: none;
+      }
+      .button-primary {
+        color: var(--forest);
+        background: var(--orange);
+        box-shadow: 5px 5px 0 var(--sky);
+      }
+      :focus-visible {
+        outline: 3px solid var(--orange);
+        outline-offset: 4px;
+      }
+    </style>
   </head>
   <body class="not-found">
     <main>

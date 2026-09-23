@@ -21,6 +21,8 @@ if (mode === 'prepare') {
   pnpm('lint');
   pnpm('test');
   pnpm('build');
+  pnpm('--filter', '@moose/site', 'typecheck');
+  pnpm('site:build');
   pnpm('exec', 'playwright', 'test');
   pnpm('exec', 'electron-builder', '--mac', 'dmg', '--arm64');
   pnpm('exec', 'tsx', 'scripts/package-smoke.ts');

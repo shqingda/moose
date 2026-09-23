@@ -4,12 +4,6 @@
   X-Frame-Options: DENY
   Permissions-Policy: camera=(), microphone=(), geolocation=()
 
-/styles.css
-  Cache-Control: public, max-age=3600
-
-/app.js
-  Cache-Control: public, max-age=3600
-
 /mark.svg
   Cache-Control: public, max-age=604800
 

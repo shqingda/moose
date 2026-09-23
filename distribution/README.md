@@ -2,6 +2,12 @@
 
 Public installer: `https://moose.shqingda.workers.dev/install.sh`.
 
+The landing page in `distribution/site` uses pnpm, Vite, TanStack Start, and
+Tailwind CSS. `pnpm site:build` prerenders it and copies the client assets into
+`distribution/public`, preserving the installer, manifest, and published release
+archives. Landing-page-only updates can be deployed from that asset directory;
+versioned Moose releases still use the joint pipeline below.
+
 The standalone installer supports **macOS Apple Silicon**. It includes official Node.js 24.21.0,
 the built Web UI and service, SQLite, and the PTY module. No Electron, system Node,
 pnpm, or compiler is required on the target computer. Agent CLIs are installed and

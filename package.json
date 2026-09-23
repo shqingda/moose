@@ -34,7 +34,9 @@
     "lint:fix": "oxlint --fix .",
     "perf:measure": "tsx scripts/measure-performance.ts",
     "release:prepare": "node scripts/release.mjs prepare",
-    "release:publish": "node scripts/release.mjs publish"
+    "release:publish": "node scripts/release.mjs publish",
+    "site:build": "pnpm --filter @moose/site build && node distribution/scripts/sync-site.mjs",
+    "merch:build": "pnpm --filter @moose/merch build"
   },
   "dependencies": {
     "better-sqlite3": "13.0.3",

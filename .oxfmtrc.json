@@ -7,6 +7,8 @@
   "trailingComma": "all",
   "ignorePatterns": [
     "electron/providers/generated/**",
+    "distribution/site/src/routeTree.gen.ts",
+    "merch-store/src/routeTree.gen.ts",
     "pnpm-lock.yaml",
     "architecture.md",
     "interview.md",
