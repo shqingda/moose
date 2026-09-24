@@ -63,7 +63,7 @@ MOOSE_TEST_BACKGROUND=0 pnpm exec tsx scripts/package-smoke.ts
 
 自动化主要使用隔离数据库、测试 CLI 和真实本地 Shell，不调用真实模型。协议夹具通过不等于模型能力已实测；真实 CLI 探测与真实模型验收分别记录，不混写。
 
-性能脚本使用临时数据、禁用代理发现，以同一个空工作区连续启动三次，每次停止再启动共享服务。它测量温缓存下隐藏窗口欢迎界面就绪的耗时，1.5 秒后统计桌面进程树和独立服务进程树的 RSS，以及 renderer JS 堆。它不是冷启动、独占物理内存或长会话压力测试。解释与本轮结果见[面试指南](interview/project-interview-guide.md)。
+性能脚本使用临时数据、禁用代理发现，以同一个空工作区连续启动三次，每次停止再启动共享服务。它测量温缓存下隐藏窗口欢迎界面就绪的耗时，1.5 秒后统计桌面进程树和独立服务进程树的 RSS，以及 renderer JS 堆。它不是冷启动、独占物理内存或长会话压力测试。解释与历史结果见[项目追问资料](interview/project-interview-reference.md#electron-启动慢包体积大内存高你怎么优化)。
 
 历史发布的验证证据保留在各版[发布记录](releases/)，本页只维护当前方法。Web 启动与限制见 [Web 使用说明](web.md)，底座支持范围见[原生能力](providers/native-capabilities.md)。
 
