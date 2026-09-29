@@ -37,9 +37,9 @@ async function launch() {
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   await page
     .locator('.settings-navigation')
-    .getByRole('button', { name: 'Configuration & extensions', exact: true })
+    .getByRole('button', { name: 'Extensions', exact: true })
     .click();
-  const dialog = page.getByRole('dialog', { name: 'Configuration & extensions', exact: true });
+  const dialog = page.getByRole('dialog', { name: 'Configuration & Extensions', exact: true });
   await expect(dialog.getByRole('tab', { name: 'MCP', exact: true })).toBeVisible();
   return {
     page,
@@ -69,7 +69,7 @@ test('previews scoped configuration changes, installs plugins, and never renders
     writes: 2,
   });
   await expect(
-    dialog.getByRole('heading', { name: 'Configuration & extensions', exact: true }),
+    dialog.getByRole('heading', { name: 'Configuration & Extensions', exact: true }),
   ).toBeInViewport();
   await expect(dialog.getByRole('button', { name: 'Back', exact: true })).toBeInViewport();
   await page.screenshot({ path: 'test-results/extensions-panel.png' });

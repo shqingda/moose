@@ -7,13 +7,26 @@ import { Input } from './ui/input';
 import { Switch } from './ui/switch';
 import { Field, FieldLabel } from './ui/field';
 const guides = {
-  codex: { url: 'https://developers.openai.com/codex/cli/', command: 'codex login' },
-  grok: { url: 'https://docs.x.ai/build', command: 'grok' },
+  codex: {
+    url: 'https://developers.openai.com/codex/cli/',
+    install: 'npm install -g @openai/codex',
+    command: 'codex login',
+  },
+  grok: {
+    url: 'https://docs.x.ai/build',
+    install: 'npm install -g @xai-official/grok',
+    command: 'grok login',
+  },
   pi: {
     url: 'https://github.com/earendil-works/pi/tree/main/packages/coding-agent',
+    install: 'npm install -g --ignore-scripts @earendil-works/pi-coding-agent',
     command: 'pi',
   },
-  opencode: { url: 'https://opencode.ai/v2/docs', command: 'opencode auth login' },
+  opencode: {
+    url: 'https://opencode.ai/v2/docs',
+    install: 'npm install -g @opencode/cli',
+    command: 'opencode auth login',
+  },
 };
 export function ProviderConnection({
   provider,
@@ -132,12 +145,14 @@ export function ProviderConnection({
               variant="ghost"
               onClick={() =>
                 void window.moose
-                  .request('copyText', { text: guides[provider].command })
+                  .request('copyText', {
+                    text: info?.available ? guides[provider].command : guides[provider].install,
+                  })
                   .then(() => setCopied(true))
                   .catch((error) => onError(error))
               }
             >
-              {t(copied ? 'copied' : 'setupCommand')}
+              {t(copied ? 'copied' : info?.available ? 'loginCommand' : 'installCommand')}
             </Button>
           </div>
           {info?.path && <code className="provider-resolved-path">{info.path}</code>}

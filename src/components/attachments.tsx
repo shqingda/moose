@@ -8,6 +8,7 @@ import { useI18n } from '../lib/i18n';
 /** 加载单个附件的图片预览，按需要提供移除入口。 */
 function AttachmentItem({ item, onRemove }: { item: Attachment; onRemove?(): void }) {
   const files = useFiles();
+  const isImage = item.mime.startsWith('image/');
   const [failed, setFailed] = useState(false),
     [attempt, setAttempt] = useState(0);
   const t = useI18n(),
@@ -30,7 +31,10 @@ function AttachmentItem({ item, onRemove }: { item: Attachment; onRemove?(): voi
     };
   }, [item.id, item.mime, attempt]);
   return (
-    <div className="attachment-chip" title={item.name}>
+    <div
+      className={`attachment-chip${isImage ? ' attachment-image' : ''}`}
+      data-hover-surface={isImage ? 'image' : ''}
+    >
       <button
         className="attachment-preview-button"
         aria-label={`${t('preview')} ${item.name}`}
@@ -48,18 +52,24 @@ function AttachmentItem({ item, onRemove }: { item: Attachment; onRemove?(): voi
         ) : (
           <File size={20} />
         )}
-        <span>
-          <strong>{item.name}</strong>
-          <small>{Math.max(1, Math.round(item.size / 1024))} KB</small>
-        </span>
+        {!isImage && (
+          <span>
+            <strong>{item.name}</strong>
+            <small>{Math.max(1, Math.round(item.size / 1024))} KB</small>
+          </span>
+        )}
       </button>
       {failed && (
-        <button onClick={() => setAttempt((v) => v + 1)}>
+        <button className="attachment-retry" onClick={() => setAttempt((v) => v + 1)}>
           {t('previewFailed')} · {t('tryAgain')}
         </button>
       )}
       {onRemove && (
-        <IconButton label={`${t('removeAttachment')} ${item.name}`} onClick={onRemove}>
+        <IconButton
+          className="attachment-remove"
+          label={`${t('removeAttachment')} ${item.name}`}
+          onClick={onRemove}
+        >
           <X />
         </IconButton>
       )}

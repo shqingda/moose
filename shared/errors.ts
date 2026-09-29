@@ -51,7 +51,7 @@ export function restoreError(error: unknown): MooseError {
 // Only known read operations can safely describe a transport failure as disconnected.
 export function transportError(method: string, error: unknown) {
   const read =
-    /^(snapshot|providers|messages|sessionActivity|searchMessages|locateMessage|fileInfo|filePreview|fileDownload|queue|usage|workspacePath|searchFiles|listSkills|gitStatus|gitDiff|terminalList|terminalRead|commandList|commandRead|scheduleList|nativeList|nativeRead|childThreads|childRead|extensionsRead|clientPresence|claimNotice)$/.test(
+    /^(snapshot|providers|messages|sessionActivity|searchMessages|locateMessage|fileInfo|filePreview|listDirectory|fileDownload|queue|usage|workspacePath|searchFiles|listSkills|gitStatus|gitDiff|terminalList|terminalRead|commandList|commandRead|scheduleList|nativeList|nativeRead|childThreads|childRead|extensionsRead|clientPresence|claimNotice)$/.test(
       method,
     );
   return new MooseError(read ? 'disconnected' : 'uncertain', fault(error).message);

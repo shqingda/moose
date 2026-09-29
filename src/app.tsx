@@ -1,4 +1,5 @@
 import { useNotifications } from './lib/notifications';
+import type { WorkspaceFileReference } from '../shared/experience';
 import { FilePreviewProvider } from './components/file-preview';
 import { SearchDialog } from './components/search-dialog';
 import { ArchiveUndo } from './components/archive-undo';
@@ -27,6 +28,9 @@ import { Welcome } from './components/welcome';
 import { Composer } from './components/composer';
 const Transcript = lazy(() =>
   import('./components/transcript').then((m) => ({ default: m.Transcript })),
+);
+const FilesPanel = lazy(() =>
+  import('./components/files-panel').then((m) => ({ default: m.FilesPanel })),
 );
 const ReviewPanel = lazy(() =>
   import('./components/review-panel').then((m) => ({ default: m.ReviewPanel })),
@@ -131,8 +135,14 @@ function Workspace({
   // Undefined defers the first load; false keeps dialog state and exit motion after closing.
   const [settingsOpen, setSettingsOpen] = useState<boolean>(),
     [searchOpen, setSearchOpen] = useState(false),
-    [review, setReview] = useState(false),
+    [sidePanel, setSidePanel] = useState<'review' | 'files' | null>(null),
     [archived, setArchived] = useState(false);
+  const review = sidePanel === 'review';
+  const [filesOpened, setFilesOpened] = useState(false);
+  const [fileRequest, setFileRequest] = useState<{
+    reference: WorkspaceFileReference;
+    nonce: number;
+  }>();
   const [renaming, setRenaming] = useState(false),
     [title, setTitle] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(
@@ -174,7 +184,7 @@ function Workspace({
   const [dock, setDock] = useState<BackgroundPlacement | null>(null);
   const onDockChange = useCallback((position: BackgroundPlacement | null) => {
     setDock(position);
-    if (position === 'right') setReview(false);
+    if (position === 'right') setSidePanel(null);
   }, []);
   const toolsTrigger = useRef<HTMLButtonElement>(null);
   const saveTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
@@ -329,7 +339,8 @@ function Workspace({
         if (event.command === 'settings') setSettingsOpen(true);
         if (event.command === 'search') setSearchOpen(true);
         if (event.command === 'open') void command.current.addProject();
-        if (event.command === 'review') setReview((value) => !value);
+        if (event.command === 'review')
+          setSidePanel((value) => (value === 'review' ? null : 'review'));
         if (event.command === 'new') void command.current.newSession();
       }),
     [],
@@ -481,6 +492,11 @@ function Workspace({
   };
   return (
     <FilePreviewProvider
+      onOpenFile={(reference) => {
+        setFileRequest({ reference, nonce: Date.now() });
+        setFilesOpened(true);
+        setSidePanel('files');
+      }}
       scope={project ? { projectId: project.id, sessionId: session?.id } : undefined}
     >
       <div
@@ -596,7 +612,7 @@ function Workspace({
                     <BackgroundTools
                       runtimeMode={snapshot.runtimeMode}
                       reveal={backgroundReveal}
-                      reviewOpen={review}
+                      reviewOpen={sidePanel !== null}
                       dockHost={dockHost}
                       onDockChange={onDockChange}
                       key={`${project.id}:${session?.id}`}
@@ -605,8 +621,19 @@ function Workspace({
                   )}
                   <span className="header-action-divider" />
                   <IconButton
+                    label={t('workspaceFiles')}
+                    disabled={!project}
+                    aria-pressed={sidePanel === 'files'}
+                    onClick={() => {
+                      setFilesOpened(true);
+                      setSidePanel((value) => (value === 'files' ? null : 'files'));
+                    }}
+                  >
+                    <Folder />
+                  </IconButton>
+                  <IconButton
                     label={t('review')}
-                    onClick={() => setReview((value) => !value)}
+                    onClick={() => setSidePanel((value) => (value === 'review' ? null : 'review'))}
                     disabled={!project}
                     aria-pressed={review}
                   >
@@ -711,12 +738,28 @@ function Workspace({
             </main>
             {project && (
               <Suspense fallback={null}>
+                {filesOpened && (
+                  <FilesPanel
+                    key={`files:${project.id}:${session?.id}:${session?.worktreeId}`}
+                    open={sidePanel === 'files'}
+                    project={project}
+                    sessionId={session?.id}
+                    request={
+                      fileRequest?.reference.projectId === project.id &&
+                      fileRequest.reference.sessionId === session?.id
+                        ? fileRequest
+                        : undefined
+                    }
+                    onClose={() => setSidePanel(null)}
+                    reduceMotion={!!reduceMotion || snapshot.reduceMotion}
+                  />
+                )}
                 <ReviewPanel
                   open={review}
                   key={`${project.id}:${session?.id}`}
                   project={project}
                   sessionId={session?.id}
-                  onClose={() => setReview(false)}
+                  onClose={() => setSidePanel(null)}
                   onError={setError}
                   reduceMotion={!!reduceMotion || snapshot.reduceMotion}
                 />

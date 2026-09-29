@@ -70,7 +70,7 @@ export function mergeMessages(previous: Message[], incoming: Message[]) {
 /** 管理会话分页与实时订阅；切换或重置会话时使旧异步请求失效。 */
 export function useTranscript(
   sessionId: string | undefined,
-  report: (error: string) => void,
+  report: (error: unknown) => void,
   targetMessage?: string,
 ) {
   const [page, setPage] = useState<TranscriptPage>({ messages: [], hasMore: false });
@@ -94,7 +94,7 @@ export function useTranscript(
             hasMore: initial ? data.hasMore : old.hasMore,
           }));
       } catch (error) {
-        if (current === generation.current) report(String(error));
+        if (current === generation.current) report(error);
       } finally {
         if (current === generation.current) setLoading(false);
       }
@@ -141,7 +141,7 @@ export function useTranscript(
           hasMore: data.hasMore,
         }));
     } catch (error) {
-      report(String(error));
+      report(error);
     } finally {
       if (current === generation.current) setLoading(false);
     }

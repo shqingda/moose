@@ -19,7 +19,6 @@ import { Alert, AlertDescription } from './ui/alert';
 export type BackgroundPlacement = 'dialog' | 'bottom' | 'right';
 export function BackgroundTools({
   scope,
-  runtimeMode,
   reveal,
   dockHost,
   onDockChange,
@@ -198,12 +197,7 @@ export function BackgroundTools({
           </IconButton>
         </div>
         <TabsContent value="terminal" className="background-terminal">
-          <TerminalPanel
-            runtimeMode={runtimeMode}
-            scope={scope}
-            selected={terminalId}
-            onSelect={setTerminalId}
-          />
+          <TerminalPanel scope={scope} selected={terminalId} onSelect={setTerminalId} />
         </TabsContent>
         <TabsContent value="commands" className="extension-section background-scroll">
           <p className="extension-note break-all">{cwd}</p>

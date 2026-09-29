@@ -16,13 +16,26 @@ export function NotificationSettings({
     [permission, setPermission] = useState('default'),
     [busy, setBusy] = useState(false);
   useEffect(() => {
-    void window.moose
-      .request('notificationPermission', {})
-      .then(setPermission)
-      .catch(() => setPermission('unsupported'));
-    return window.moose.subscribe((e) => {
-      if (e.type === 'notification-unavailable') setPermission('denied');
+    let live = true;
+    const refresh = () =>
+      void window.moose
+        .request('notificationPermission', {})
+        .then((value) => {
+          if (live) setPermission(value);
+        })
+        .catch((error) => {
+          if (live) onError(error);
+        });
+    refresh();
+    window.addEventListener('focus', refresh);
+    const stop = window.moose.subscribe((e) => {
+      if (e.type === 'notification-unavailable') refresh();
     });
+    return () => {
+      live = false;
+      window.removeEventListener('focus', refresh);
+      stop();
+    };
   }, []);
   async function toggle(key: 'notifyAttention' | 'notifyResults', value: boolean) {
     setBusy(true);
@@ -30,12 +43,7 @@ export function NotificationSettings({
       if (value) {
         const next = await window.moose.request('notificationPermission', { request: true });
         setPermission(next);
-        if (
-          next === 'denied' ||
-          next === 'unsupported' ||
-          (next === 'default' && window.moose.host === 'web')
-        )
-          return;
+        if (next === 'denied' || next === 'unsupported' || next === 'default') return;
       }
       await onSave({ [key]: value });
     } catch (e) {

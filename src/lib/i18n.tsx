@@ -113,7 +113,8 @@ export const en = {
   extPackage: 'Package name or source',
   extSearch: 'Search plugins',
   extDiscover: 'Search to find plugins',
-  extTitle: 'Configuration & extensions',
+  extensionsPage: 'Extensions',
+  extTitle: 'Configuration & Extensions',
   extUnsupported:
     'Extension management is not connected for this CLI yet. Manage it through the CLI.',
   extHint: 'User settings apply across projects, starting with the next run.',
@@ -547,6 +548,7 @@ export const zh: Record<TranslationKey, string> = {
   extPackage: '包名或来源地址',
   extSearch: '搜索插件',
   extDiscover: '搜索并发现插件',
+  extensionsPage: '扩展',
   extTitle: '配置与扩展',
   extUnsupported: 'Moose 尚未接入此 CLI 的扩展管理，请通过该 CLI 配置。',
   extHint: '用户配置对所有项目生效，从下次运行开始应用。',

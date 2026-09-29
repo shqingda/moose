@@ -1,3 +1,4 @@
+import { notificationPermission } from './notification-permission';
 import { fault, MooseError } from '../shared/errors';
 import {
   app,
@@ -60,6 +61,7 @@ function presence(focused = true) {
 async function desktopNotice(notice: import('../shared/experience').TaskNotice) {
   try {
     if (!Notification.isSupported()) return;
+    if ((await notificationPermission()) !== 'granted') return;
     await presence();
     const claimed = await runtime.request('claimNotice', { id: notice.id });
     if (!claimed) return;
@@ -173,7 +175,7 @@ async function createWindow() {
   );
   window.webContents.session.setPermissionCheckHandler(() => false);
   window.webContents.session.webRequest.onHeadersReceived((details, callback) => {
-    const csp = `default-src 'self'; script-src 'self'${isDev ? " 'unsafe-inline'" : ''}; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'${isDev ? ' ws://127.0.0.1:5173 http://127.0.0.1:5173' : ''}; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'`;
+    const csp = `default-src 'self'; worker-src 'self' blob:; script-src 'self'${isDev ? " 'unsafe-inline'" : ''}; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'${isDev ? ' ws://127.0.0.1:5173 http://127.0.0.1:5173' : ''}; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'`;
     callback({ responseHeaders: { ...details.responseHeaders, 'Content-Security-Policy': [csp] } });
   });
   window.once('ready-to-show', () => {
@@ -331,7 +333,9 @@ else {
             throw new Error('Untrusted IPC sender');
           const params = validate(method, input);
           if (method === 'notificationPermission')
-            return Notification.isSupported() ? 'default' : 'unsupported';
+            return Notification.isSupported()
+              ? notificationPermission((params as Requests['notificationPermission']).request)
+              : 'unsupported';
           if (method === 'clientPresence') {
             viewedSession = (params as Requests['clientPresence']).sessionId;
             return presence((params as Requests['clientPresence']).focused);

@@ -156,6 +156,46 @@ it('previews bounded UTF-8 and images, offers binary downloads, and denies path/
     content: 'attachment',
   });
 });
+it('lists one workspace directory at a time and enforces worktree and symlink boundaries', async () => {
+  const { root, store, project, session } = fixture();
+  const files = new FilePreviews(store, new Attachments(store.sqlite.name));
+  mkdirSync(join(root, 'src'));
+  mkdirSync(join(root, '.git'));
+  writeFileSync(join(root, 'src', 'hello.ts'), 'export const hello = 1;');
+  writeFileSync(join(root, 'z.txt'), 'root');
+  symlinkSync('/etc', join(root, 'outside'));
+  const listing = await files.list({ projectId: project.id, path: '.' });
+  expect(listing.entries[0]).toMatchObject({ name: 'src', kind: 'directory' });
+  expect(
+    listing.entries.some((entry) => ['.git', 'outside', 'hello.ts'].includes(entry.name)),
+  ).toBe(false);
+  expect(await files.list({ projectId: project.id, path: 'src' })).toEqual({
+    entries: [{ name: 'hello.ts', path: 'src/hello.ts', kind: 'file' }],
+    truncated: false,
+  });
+  await expect(files.list({ projectId: project.id, path: '..' })).rejects.toMatchObject({
+    code: 'file-access',
+  });
+  await expect(files.list({ projectId: project.id, path: 'outside' })).rejects.toMatchObject({
+    code: 'file-access',
+  });
+  await expect(files.list({ projectId: project.id, path: 'missing' })).rejects.toMatchObject({
+    code: 'missing-file',
+  });
+  store.saveWorktree({
+    id: 'tree',
+    projectId: project.id,
+    path: join(root, 'src'),
+    status: 'ready',
+  } as Parameters<Store['saveWorktree']>[0]);
+  store.updateSession(session.id, { worktreeId: 'tree' });
+  expect(
+    (await files.list({ projectId: project.id, sessionId: session.id, path: '.' })).entries,
+  ).toEqual([{ name: 'hello.ts', path: 'hello.ts', kind: 'file' }]);
+  await expect(
+    files.list({ projectId: project.id, sessionId: session.id, path: '..' }),
+  ).rejects.toMatchObject({ code: 'file-access' });
+});
 it('retains typed faults and never labels an unknown write result as safe to retry', () => {
   expect(restoreError(fault(new MooseError('version', 'detail')))).toMatchObject({
     code: 'version',

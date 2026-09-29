@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { fault } from '../../shared/errors';
+import { useCallback, useEffect, useState } from 'react';
 import type { Project, Provider, Session } from '../../shared/types';
 import type { NativeCapabilities, NativeEntry, NativeThread } from '../../shared/native-sessions';
 import { useI18n } from '../lib/i18n';
@@ -28,7 +29,8 @@ export function NativeTools({
     [error, setError] = useState(''),
     [notice, setNotice] = useState('');
   const [checkpoint, setCheckpoint] = useState('');
-  const { messages, earlier: loadMore, hasMore: more } = useTranscript(session?.id, setError);
+  const report = useCallback((error: unknown) => setError(fault(error).message), []);
+  const { messages, earlier: loadMore, hasMore: more } = useTranscript(session?.id, report);
   const turns = [
     ...new Map(
       messages

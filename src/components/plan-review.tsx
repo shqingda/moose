@@ -13,7 +13,7 @@ export function PlanReview({
 }: {
   message: Message;
   busy: boolean;
-  onError(error: string): void;
+  onError(error: unknown): void;
 }) {
   const t = useI18n();
   const [editing, setEditing] = useState(false);
@@ -32,7 +32,7 @@ export function PlanReview({
       else await window.moose.request('editPlan', { ...args, text });
       setEditing(false);
     } catch (error) {
-      onError(String(error));
+      onError(error);
     } finally {
       setSending(false);
     }

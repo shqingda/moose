@@ -44,6 +44,11 @@ try {
   }));
   if (process.env.MOOSE_TEST_BACKGROUND !== '0' && details.visible)
     throw new Error('Packaged acceptance window must stay hidden');
+  const notificationPermission = await page.evaluate(() =>
+    window.moose.request('notificationPermission', {}),
+  );
+  if (!['default', 'granted', 'denied'].includes(notificationPermission))
+    throw new Error('Packaged notification permission bridge is unavailable');
   const snapshot = await page.evaluate(() => window.moose.request('snapshot', {}));
   if (details.version !== version || !details.sandbox || !Array.isArray(snapshot.projects))
     throw new Error('Packaged smoke failed');

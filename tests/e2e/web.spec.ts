@@ -523,7 +523,7 @@ test('web appearance, browser shortcuts, narrow layout and expired login recover
   await expect(page.locator('.shortcut-section')).not.toContainText('⌘ L');
   await page
     .locator('.settings-navigation')
-    .getByRole('button', { name: 'Configuration & extensions', exact: true })
+    .getByRole('button', { name: 'Extensions', exact: true })
     .click();
   await page.getByRole('button', { name: 'Authenticate', exact: true }).click();
   const authLink = page

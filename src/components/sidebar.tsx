@@ -126,7 +126,7 @@ export function Sidebar({
           if (archived && !items.length) return null;
           return (
             <section className="project-group" key={project.id}>
-              <div className="project-heading-row">
+              <div className="project-heading-row" data-hover-surface>
                 <button
                   className={cn('project-heading', projectId === project.id && 'current')}
                   aria-expanded={!collapsed.has(project.id)}
@@ -174,7 +174,7 @@ export function Sidebar({
               </div>
               <div className="session-list" hidden={collapsed.has(project.id)}>
                 {items.map((session) => (
-                  <div key={session.id} className="session-entry">
+                  <div key={session.id} className="session-entry" data-hover-surface>
                     <button
                       className={cn('session-row', selected === session.id && 'selected')}
                       onClick={() => onSelect(session.id)}
@@ -184,9 +184,7 @@ export function Sidebar({
                         <span className="session-title">{session.title || t('untitled')}</span>
                       </span>
                       {(activities?.[session.id]?.pendingMessageId ||
-                        (session.status !== 'idle' &&
-                          session.status !== 'completed' &&
-                          session.status !== 'cancelled')) &&
+                        (session.status !== 'idle' && session.status !== 'completed')) &&
                         (() => {
                           const state = activities?.[session.id]?.pendingMessageId
                             ? 'waiting'
@@ -202,9 +200,13 @@ export function Sidebar({
                                     ? CircleAlert
                                     : CirclePause;
                           return (
-                            <span className="session-status" title={t(state)}>
+                            <span
+                              className="session-status"
+                              role="img"
+                              aria-label={t(state)}
+                              title={t(state)}
+                            >
                               <Icon className={state === 'running' ? 'session-spinner' : ''} />
-                              <small>{t(state)}</small>
                             </span>
                           );
                         })()}

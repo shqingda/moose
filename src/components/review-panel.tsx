@@ -24,7 +24,7 @@ function FileReview({
   sessionId?: string;
   file: GitFile;
   revision: number;
-  onError(error: string): void;
+  onError(error: unknown): void;
   changed(): void;
 }) {
   const files = useFiles();
@@ -41,7 +41,7 @@ function FileReview({
           if (live) setDiff(d);
         })
         .catch((error) => {
-          if (live) onError(String(error));
+          if (live) onError(error);
         });
     }
     return () => {
@@ -93,7 +93,7 @@ function FileReview({
               });
               changed();
             } catch (error) {
-              onError(String(error));
+              onError(error);
             } finally {
               setStaging(false);
             }
@@ -143,7 +143,7 @@ export function ReviewPanel({
   project: Project;
   sessionId?: string;
   onClose(): void;
-  onError(error: string): void;
+  onError(error: unknown): void;
   reduceMotion: boolean;
 }) {
   const [resizing, setResizing] = useState(false);
@@ -174,7 +174,7 @@ export function ReviewPanel({
           setRevision((n) => n + 1);
         }
       } catch (error) {
-        if (live) onError(String(error));
+        if (live) onError(error);
       } finally {
         inFlight = false;
         if (live) setLoading(false);

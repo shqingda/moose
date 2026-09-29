@@ -299,6 +299,8 @@ export class MooseService {
     switch (method) {
       case 'filePreview':
         return this.files.preview(args as Requests['filePreview']);
+      case 'listDirectory':
+        return this.files.list(args as Requests['listDirectory']);
       case 'fileInfo':
         return this.files.info(args as Requests['fileInfo']);
       case 'sessionActivity':

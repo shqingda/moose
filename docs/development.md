@@ -36,6 +36,8 @@ Oxfmt 负责格式，Oxlint 负责基础正确性检查，不依赖 ESLint。统
 
 `vite-plugin-electron` Flat API 管理 main、preload、runtime、pty-host、web-server 五个入口。全部首次构建完成后启动 Electron；preload 修改重载窗口，其他后台入口修改重启应用，React 使用 HMR。沙箱 preload 输出单文件 CJS，其余入口输出 ESM。
 
+macOS 构建额外使用 Xcode Command Line Tools 编译 `native/notification-permission.mm`，通过 Node-API 在应用自身进程内读取／请求系统通知权限；产物 `dist-native/notifications.node` 随桌面包签名并从 ASAR 解包，独立 Web 包不需要它。构建会优先使用 Electron 重建缓存中的 Node-API 头文件，缺少时先执行 `pnpm native:rebuild`。
+
 better-sqlite3 和 node-pty 是运行时原生依赖；安装与打包会准备原生模块，打包按 Electron arm64 ABI 重建，并将 `.node` 从 ASAR 解包。手动修复使用 `pnpm native:rebuild`。数据库与代理处理在独立后台：安装版使用共享本机服务，开发默认使用 utility process；renderer 无 Node 权限。
 
 `MOOSE_DATA_DIR` 可指定隔离数据目录，测试不应使用正式用户数据库。Codex 协议类型基于 0.155.0（包含 `--experimental` 字段），`pnpm protocol:generate` 用当前系统 CLI 重新生成，更新后需检查兼容性。

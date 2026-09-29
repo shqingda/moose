@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { FileReference, FilePreview } from '../../shared/experience';
+import type { WorkspaceFileReference } from '../../shared/experience';
 import { fault } from '../../shared/errors';
 import { useI18n } from '../lib/i18n';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
@@ -12,9 +13,11 @@ const FilesContext = createContext<{
 export const useFiles = () => useContext(FilesContext);
 export function FilePreviewProvider({
   scope,
+  onOpenFile,
   children,
 }: {
   scope?: { projectId: string; sessionId?: string };
+  onOpenFile?(ref: WorkspaceFileReference): void;
   children: ReactNode;
 }) {
   const trigger = useRef<HTMLElement | null>(null);
@@ -49,6 +52,10 @@ export function FilePreviewProvider({
     <FilesContext
       value={{
         open: (ref) => {
+          if ('projectId' in ref && onOpenFile) {
+            onOpenFile(ref);
+            return;
+          }
           trigger.current = document.activeElement as HTMLElement;
           setReference(ref);
         },

@@ -19,6 +19,12 @@ export interface SearchHit {
 export type FileReference =
   | { attachmentId: string }
   | { projectId: string; sessionId?: string; path: string };
+export type WorkspaceFileReference = Extract<FileReference, { projectId: string }>;
+export interface DirectoryEntry {
+  name: string;
+  path: string;
+  kind: 'file' | 'directory';
+}
 export interface FilePreview {
   name: string;
   size: number;
@@ -40,6 +46,7 @@ export interface ExperienceRequests {
   locateMessage: { sessionId: string; messageId: string };
   fileInfo: FileReference;
   filePreview: FileReference;
+  listDirectory: WorkspaceFileReference;
   fileDownload: FileReference;
   clientPresence: { sessionId?: string; focused: boolean };
   claimNotice: { id: string };
@@ -52,6 +59,7 @@ export interface ExperienceResponses {
   locateMessage: { messages: Message[]; hasMore: boolean; hasLater: boolean };
   fileInfo: { name: string; size: number };
   filePreview: FilePreview;
+  listDirectory: { entries: DirectoryEntry[]; truncated: boolean };
   fileDownload: null;
   clientPresence: null;
   claimNotice: TaskNotice | null;

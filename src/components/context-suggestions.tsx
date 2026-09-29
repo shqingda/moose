@@ -12,7 +12,7 @@ export function useSuggestions(
   onDraft: (text: string) => void,
   context: PromptContext,
   onContext: (value: PromptContext) => void,
-  onError: (error: string) => void,
+  onError: (error: unknown) => void,
   sessionId?: string,
 ) {
   const t = useI18n(),
@@ -52,7 +52,7 @@ export function useSuggestions(
             );
         })
         .catch((error) => {
-          if (live) onError(String(error));
+          if (live) onError(error);
         })
         .finally(() => {
           if (live) setLoading(false);

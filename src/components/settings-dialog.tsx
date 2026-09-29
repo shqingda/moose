@@ -59,17 +59,18 @@ export function SettingsDialog({
               [
                 { id: 'general', label: 'generalPage', Icon: Monitor },
                 { id: 'providers', label: 'providersPage', Icon: Plug },
-                { id: 'extensions', label: 'extTitle', Icon: Puzzle },
+                { id: 'extensions', label: 'extensionsPage', Icon: Puzzle },
               ] as const
             ).map(({ id, label, Icon }) => (
               <Button
                 key={id}
                 variant={page === id ? 'secondary' : 'ghost'}
                 aria-current={page === id ? 'page' : undefined}
+                title={t(label)}
                 onClick={() => setPage(id)}
               >
                 <Icon />
-                {t(label)}
+                <span className="settings-navigation-label">{t(label)}</span>
               </Button>
             ))}
           </div>

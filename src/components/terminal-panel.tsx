@@ -11,11 +11,9 @@ import { IconButton } from './common';
 import { Plus, X, Terminal } from 'lucide-react';
 export function TerminalPanel({
   scope,
-  runtimeMode,
   selected,
   onSelect: setSelected,
 }: {
-  runtimeMode?: 'shared' | 'local';
   scope: BackgroundScope;
   selected: string;
   onSelect(id: string): void;
@@ -73,7 +71,7 @@ export function TerminalPanel({
         <div className="terminal-session-tabs">
           <TabsList variant="line" aria-label={t('ptySession')}>
             {sessions.map((row) => (
-              <div className="terminal-session-tab" key={row.id}>
+              <div className="terminal-session-tab" data-hover-surface key={row.id}>
                 <TabsTrigger value={row.id} title={row.cwd}>
                   <Terminal />
                   <span>{row.title || t('ptyTitle')}</span>
@@ -128,16 +126,11 @@ export function TerminalPanel({
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-      {session ? (
+      {session && (
         <TabsContent value={session.id} className="terminal-session-content">
           <TerminalView key={session.id} session={session} onError={setError} />
         </TabsContent>
-      ) : (
-        <p className="extension-note">{t('ptyEmpty')}</p>
       )}
-      <p className="extension-note">
-        {t(runtimeMode === 'local' ? 'terminalLocal' : 'terminalShared')}
-      </p>
       <ConfirmDialog
         value={confirmation}
         onClose={() => setConfirmation(undefined)}

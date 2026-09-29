@@ -24,7 +24,7 @@ export function ConfirmDialog({
 }: {
   value?: Confirmation;
   onClose(): void;
-  onError(error: string): void;
+  onError(error: unknown): void;
 }) {
   const cancel = useRef<HTMLButtonElement>(null);
   const t = useI18n(),
@@ -54,7 +54,7 @@ export function ConfirmDialog({
               void value
                 .action()
                 .then(onClose)
-                .catch((error) => onError(String(error)))
+                .catch((error) => onError(error))
                 .finally(() => setPending(false));
             }}
           >

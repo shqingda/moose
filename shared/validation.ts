@@ -82,6 +82,15 @@ export const schemas = {
   locateMessage: z.strictObject({ sessionId: id, messageId: z.string().min(1).max(500) }),
   fileInfo: fileReference,
   filePreview: fileReference,
+  listDirectory: z.strictObject({
+    projectId: id,
+    sessionId: id.optional(),
+    path: z
+      .string()
+      .min(1)
+      .max(4096)
+      .refine((p) => !p.includes('\0')),
+  }),
   fileDownload: fileReference,
   clientPresence: z.strictObject({ sessionId: id.optional(), focused: z.boolean() }),
   claimNotice: z.strictObject({ id: z.string().min(1).max(1000) }),

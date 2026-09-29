@@ -1,8 +1,9 @@
 import { constants } from 'node:fs';
-import { open, realpath, lstat, type FileHandle } from 'node:fs/promises';
-import { basename, extname, resolve } from 'node:path';
+import { open, opendir, realpath, lstat, type FileHandle } from 'node:fs/promises';
+import { basename, extname, resolve, relative, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { FileReference, FilePreview } from '../shared/experience';
+import type { DirectoryEntry, WorkspaceFileReference } from '../shared/experience';
 import { MooseError } from '../shared/errors';
 import type { Store } from './db/store';
 import type { Attachments } from './attachments';
@@ -13,6 +14,47 @@ export class FilePreviews {
     private store: Store,
     private attachments: Attachments,
   ) {}
+  /** Read only one directory, bounded and restricted to the active workspace/worktree. */
+  async list(reference: WorkspaceFileReference) {
+    try {
+      const root = await realpath(this.store.directory(reference.projectId, reference.sessionId));
+      const path = resolve(root, reference.path);
+      if (!inside(root, path))
+        throw new MooseError('file-access', 'Directory is outside this workspace');
+      const canonical = await realpath(path);
+      if (!inside(root, canonical))
+        throw new MooseError('file-access', 'Directory is outside this workspace');
+      const entries: DirectoryEntry[] = [];
+      let truncated = false;
+      const directory = await opendir(canonical);
+      for await (const entry of directory) {
+        if (entry.name === '.git' || (!entry.isFile() && !entry.isDirectory())) continue;
+        if (entries.length === 2000) {
+          truncated = true;
+          break;
+        }
+        entries.push({
+          name: entry.name,
+          path: relative(root, join(path, entry.name)),
+          kind: entry.isDirectory() ? 'directory' : 'file',
+        });
+      }
+      if ((await realpath(path)) !== canonical)
+        throw new MooseError('file-access', 'Directory changed during access');
+      entries.sort(
+        (a, b) =>
+          Number(b.kind === 'directory') - Number(a.kind === 'directory') ||
+          a.name.localeCompare(b.name, undefined, { numeric: true }),
+      );
+      return { entries, truncated };
+    } catch (error) {
+      if (error instanceof MooseError) throw error;
+      throw new MooseError(
+        (error as NodeJS.ErrnoException).code === 'ENOENT' ? 'missing-file' : 'file-access',
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+  }
   async open(reference: FileReference) {
     let path: string, root: string, name: string;
     try {

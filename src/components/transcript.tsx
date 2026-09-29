@@ -4,7 +4,17 @@ import { useEffect } from 'react';
 import { memo, useState } from 'react';
 import { Markdown } from './markdown';
 import { PlanReview } from './plan-review';
-import { Check, ChevronRight, Copy, Terminal, ShieldCheck, Brain, Pencil } from 'lucide-react';
+import {
+  LoaderCircle,
+  CirclePause,
+  Check,
+  ChevronRight,
+  Copy,
+  Terminal,
+  ShieldCheck,
+  Brain,
+  Pencil,
+} from 'lucide-react';
 import type { Message as MessageData, Session } from '../../shared/types';
 import { useI18n } from '../lib/i18n';
 import { useTranscript } from '../lib/workspace';
@@ -29,7 +39,7 @@ import { Picker, IconButton } from './common';
 import { SubagentActivity } from './subagent-activity';
 
 /** 展示代理提问并提交答案，由后台校验请求是否仍有效。 */
-function Questions({ message, onError }: { message: MessageData; onError(error: string): void }) {
+function Questions({ message, onError }: { message: MessageData; onError(error: unknown): void }) {
   const t = useI18n();
   const [answers, setAnswers] = useState<Record<string, string>>({}),
     [sending, setSending] = useState(false);
@@ -74,7 +84,7 @@ function Questions({ message, onError }: { message: MessageData; onError(error: 
             setSending(true);
             void window.moose
               .request('respond', { sessionId: message.sessionId, messageId: message.id, answers })
-              .catch((error) => onError(String(error)))
+              .catch((error) => onError(error))
               .finally(() => setSending(false));
           }}
         >
@@ -98,7 +108,7 @@ const TranscriptRow = memo(function TranscriptRow({
   lastAssistant,
 }: {
   message: MessageData;
-  onError(error: string): void;
+  onError(error: unknown): void;
   onEdit(message: MessageData, text: string): Promise<void>;
   busy: boolean;
   latestUser: boolean;
@@ -117,7 +127,7 @@ const TranscriptRow = memo(function TranscriptRow({
       <ErrorNotice
         value={message.failure || { code: 'unknown', message: message.text }}
         onReconnect={() =>
-          void window.moose.request('snapshot', {}).catch((error) => onError(String(error)))
+          void window.moose.request('snapshot', {}).catch((error) => onError(error))
         }
         onSettings={() => window.dispatchEvent(new Event('moose-open-providers'))}
       />
@@ -155,7 +165,7 @@ const TranscriptRow = memo(function TranscriptRow({
                       messageId: message.id,
                       choice: choice.id,
                     })
-                    .catch((error) => onError(String(error)));
+                    .catch((error) => onError(error));
                 }}
               >
                 {choice.id === 'accept'
@@ -184,7 +194,9 @@ const TranscriptRow = memo(function TranscriptRow({
           {message.kind === 'tool' ? <Terminal size={14} /> : <Brain size={14} />}
           <span>{message.title || t(message.kind === 'tool' ? 'tool' : 'reasoning')}</span>
           {message.state === 'done' && <Check size={13} />}
-          {message.state === 'running' && <span className="activity-dot" />}
+          {message.state === 'running' && (
+            <LoaderCircle className="activity-spinner" size={13} aria-hidden="true" />
+          )}
         </summary>
         <pre>{message.text || '…'}</pre>
       </details>
@@ -213,7 +225,7 @@ const TranscriptRow = memo(function TranscriptRow({
               setSending(true);
               void onEdit(message, edited)
                 .then(() => setEditing(false))
-                .catch((error) => onError(String(error)))
+                .catch((error) => onError(error))
                 .finally(() => setSending(false));
             }}
           >
@@ -291,7 +303,7 @@ const TranscriptRow = memo(function TranscriptRow({
                     setCopied(true);
                     setTimeout(() => setCopied(false), 1500);
                   })
-                  .catch((error) => onError(String(error)));
+                  .catch((error) => onError(error));
               }}
             >
               {copied ? <Check /> : <Copy />}
@@ -332,7 +344,7 @@ export function Transcript({
   targetMessage?: string;
   onLatest?(): void;
   session: Session;
-  onError(error: string): void;
+  onError(error: unknown): void;
   onEdit(message: MessageData, text: string): Promise<void>;
 }) {
   const t = useI18n(),
@@ -410,11 +422,17 @@ export function Transcript({
               ))}
             {['running', 'waiting'].includes(session.status) && (
               <MessageScrollerItem messageId="working">
-                <div className="working-status" role="status">
-                  <span className="activity-dot" />
-                  <span className={session.status === 'running' ? 'shimmer' : ''}>
-                    {t(session.status === 'waiting' ? 'waiting' : 'thinking')}
-                  </span>
+                <div
+                  className="working-status"
+                  role="status"
+                  aria-label={t(session.status === 'waiting' ? 'waiting' : 'thinking')}
+                  title={t(session.status === 'waiting' ? 'waiting' : 'thinking')}
+                >
+                  {session.status === 'running' ? (
+                    <LoaderCircle className="activity-spinner" aria-hidden="true" />
+                  ) : (
+                    <CirclePause aria-hidden="true" />
+                  )}
                 </div>
               </MessageScrollerItem>
             )}

@@ -13,3 +13,4 @@ distribution/public/
 distribution/.wrangler/
 merch-store/.wrangler/
 .tanstack/
+dist-native/

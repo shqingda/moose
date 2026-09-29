@@ -136,6 +136,27 @@ if (mode === 'prepare') {
     '--clobber',
   ]);
   pnpm('dlx', 'wrangler@4.135.0', 'deploy', '--config', 'distribution/wrangler.jsonc');
+  // Wait for the canonical manifest to switch before installing from the public URL.
+  // Never install a cached previous release and never retry user work to validate deployment.
+  let ready = false;
+  for (let attempt = 0; attempt < 12; attempt++) {
+    try {
+      ready =
+        output('curl', [
+          '-fsSL',
+          '--max-time',
+          '10',
+          '-H',
+          'Cache-Control: no-cache',
+          'https://moose.shqingda.workers.dev/latest-darwin-arm64.txt',
+        ]).trim() === manifest;
+    } catch {
+      /* The edge may still be switching deployments. */
+    }
+    if (ready) break;
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+  }
+  if (!ready) throw new Error('Public Web manifest has not switched; release remains draft.');
   run(process.execPath, ['distribution/scripts/smoke.mjs'], {
     env: { ...process.env, MOOSE_SMOKE_BASE: 'https://moose.shqingda.workers.dev' },
   });

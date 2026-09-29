@@ -24,12 +24,12 @@ export function ErrorNotice({
         {t(`error_${value.code.replaceAll('-', '_')}` as TranslationKey)}
       </AlertDescription>
       <div className="flex flex-wrap gap-2">
-        {['disconnected', 'auth', 'uncertain'].includes(value.code) && (
+        {['disconnected', 'uncertain'].includes(value.code) && (
           <Button variant="secondary" size="sm" onClick={onReconnect}>
-            {t('retry')}
+            {t(value.code === 'uncertain' ? 'checkStatus' : 'reconnectAction')}
           </Button>
         )}
-        {value.code === 'provider' && onSettings && (
+        {['provider', 'auth'].includes(value.code) && onSettings && (
           <Button variant="secondary" size="sm" onClick={onSettings}>
             {t('connectAgent')}
           </Button>
