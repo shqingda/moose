@@ -699,6 +699,9 @@ test('native shortcuts toggle and create terminals, switch tools and keep each t
   const tab = page.locator('.terminal-session-tab').last();
   await tab.getByRole('tab').hover();
   await expect(tab.getByRole('tab')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+  await tab.evaluate(async (el) => {
+    await Promise.all(el.getAnimations().map((animation) => animation.finished));
+  });
   const background = await tab.evaluate((el) => getComputedStyle(el).backgroundColor);
   await tab.getByRole('button', { name: 'End terminal' }).hover();
   await expect(tab.getByRole('button', { name: 'End terminal' })).toHaveCSS(
