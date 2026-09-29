@@ -4,7 +4,7 @@
 
 ## 环境与常用命令
 
-使用 Node.js 26 和 pnpm 12.5.1；包管理器版本由 `package.json` 的 `packageManager` 固定，依赖解析以 `pnpm-lock.yaml` 为准。升级依赖时一并更新锁文件，CI 使用 `pnpm install --frozen-lockfile`。
+使用 Node.js 26 和 pnpm 12.6.0；包管理器版本由 `package.json` 的 `packageManager` 固定，依赖解析以 `pnpm-lock.yaml` 为准。升级依赖时一并更新锁文件，CI 使用 `pnpm install --frozen-lockfile`。
 
 如果 macOS 报 `node: not found`，先确认 Node 已安装且终端 PATH 正确。Homebrew 默认安装位置可这样加入当前终端：
 

@@ -28,7 +28,7 @@ curl -fsSL https://moose.shqingda.workers.dev/install.sh | sh
 
 ## 本地开发
 
-当前验证环境为 macOS Apple Silicon、Node.js 26 和 pnpm 12.5.1；构建原生依赖需要 Xcode Command Line Tools。精确依赖版本由 [package.json](package.json) 和锁文件管理。
+当前验证环境为 macOS Apple Silicon、Node.js 26 和 pnpm 12.6.0；构建原生依赖需要 Xcode Command Line Tools。精确依赖版本由 [package.json](package.json) 和锁文件管理。
 
 ```sh
 pnpm install
