@@ -13,6 +13,15 @@ const data = resolve(process.env.MOOSE_WEB_DATA_DIR || join(homedir(), '.moose/w
 const file = join(data, 'connection.json');
 const command = process.argv[2] || 'start';
 const { version } = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
+if (command === 'update') {
+  try {
+    await (await import('./update.mjs')).update(root);
+  } catch (error) {
+    console.error(error.message);
+    process.exitCode = 1;
+  }
+  process.exit(process.exitCode || 0);
+}
 const checkVersion = ['web', 'start', 'desktop'].includes(command);
 if (command === '--version' || command === '-v') {
   console.log(version);
@@ -20,7 +29,7 @@ if (command === '--version' || command === '-v') {
 }
 if (command === '--help' || command === '-h') {
   console.log(
-    'Usage: moose [web|start|status|stop]\n  web     Start and open the browser (default)\n  start   Start without opening a browser\n  status  Show runtime status\n  stop    Stop the service and its tasks',
+    'Usage: moose [web|start|status|stop|update]\n  web     Start and open the browser (default)\n  start   Start without opening a browser\n  status  Show runtime status\n  stop    Stop the service and its tasks\n  update  Install the latest Web version without stopping tasks',
   );
   process.exit(0);
 }

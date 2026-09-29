@@ -88,6 +88,10 @@ try {
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
   assert.ok(found, 'Installed PTY must execute a command');
+  const update = await exec(moose, ['update'], { env, timeout: 180000 });
+  assert.match(update.stdout, /Running tasks have not been interrupted/);
+  assert.equal(await readFile(join(env.MOOSE_WEB_DATA_DIR, 'server.lock'), 'utf8'), pid);
+  assert.equal((await run('--version')).stdout.trim(), version);
   // Reinstallation does not stop a running service or lose its data.
   await exec('/bin/sh', [installer], { env, timeout: 120000 });
   assert.equal(await readFile(join(env.MOOSE_WEB_DATA_DIR, 'server.lock'), 'utf8'), pid);
@@ -97,6 +101,8 @@ try {
       exec('/bin/sh', [installer], { env, timeout: 120000 }),
       /checksum mismatch/,
     );
+    await assert.rejects(exec(moose, ['update'], { env, timeout: 180000 }), /checksum mismatch/);
+    assert.equal((await run('--version')).stdout.trim(), version);
     await run('status');
   }
   await run('stop');
@@ -126,7 +132,7 @@ try {
   assert.equal(opened.hostname, 'localhost');
   assert.equal(new URLSearchParams(opened.hash.slice(1)).get('token'), next.token);
   console.log(
-    'PASS: clean install without Node on PATH, localhost auth, SQLite, PTY, repeated start, reinstall, checksum rejection (local), stop/restart, browser opening',
+    'PASS: clean install without Node on PATH, localhost auth, SQLite, PTY, repeated start, update without stopping tasks, reinstall, checksum rejection (local), stop/restart, browser opening',
   );
 } finally {
   await run('stop').catch(() => {});

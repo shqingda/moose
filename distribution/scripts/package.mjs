@@ -29,6 +29,8 @@ for (const dir of ['dist', 'dist-electron/web-server', 'dist-electron/pty-host']
 }
 await mkdir(join(app, 'scripts'));
 await cp(join(root, 'scripts/runtime.mjs'), join(app, 'scripts/runtime.mjs'));
+await cp(join(root, 'scripts/update.mjs'), join(app, 'scripts/update.mjs'));
+await cp(join(root, 'distribution/install.sh'), join(app, 'scripts/install.sh'));
 await mkdir(join(app, 'bin'));
 await cp(join(root, 'distribution/scripts/moose'), join(app, 'bin/moose'));
 await chmod(join(app, 'bin/moose'), 0o755);

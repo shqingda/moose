@@ -43,6 +43,7 @@ main() {
   "$staging/package/bin/moose" --version
   destination="$install_dir/releases/$release"
   if [ ! -d "$destination" ]; then mv "$staging/package" "$destination"; fi
+  "$destination/runtime/bin/node" -e 'const fs=require("node:fs"),path=require("node:path");const target=path.join(process.argv[1],"install.json");const staging=process.argv[2];fs.writeFileSync(staging,JSON.stringify({binDir:path.resolve(process.argv[3]),base:process.argv[4]}),{mode:0o600});fs.renameSync(staging,target)' "$install_dir" "$staging/install.json" "$bin_dir" "$base"
   ln -s "$destination" "$staging/current"
   "$destination/runtime/bin/node" -e 'require("node:fs").renameSync(process.argv[1], process.argv[2])' "$staging/current" "$install_dir/current"
   ln -sfn "$install_dir/current/bin/moose" "$bin_dir/moose"
@@ -56,6 +57,6 @@ main() {
   fi
   printf '\nMoose installed. Open a new terminal and run: moose\n'
   printf 'Or run now: %s/moose\n' "$bin_dir"
-  printf 'Update: run this installer again, then moose stop && moose\n'
+  printf 'Update: moose update (running tasks keep their current version until you restart)\n'
 }
 main "$@"

@@ -12,7 +12,7 @@ curl -fsSL https://moose.shqingda.workers.dev/install.sh | sh
 
 新终端输入 `moose`，启动本机服务并自动打开 localhost 页面。`moose start` 仅启动，`moose status` 查看状态，`moose stop` 停止服务和任务。独立安装版自带 Node.js，不要求用户预装运行环境。数据默认在 `~/.moose/web`，与桌面默认数据目录独立。
 
-重新执行安装命令即可更新。若后台版本不同，启动器会提示在任务结束后执行 `moose stop` 再启动，不会自动中断任务。Web 与桌面每次使用同一个版本号发布。
+执行 `moose update` 即可更新独立 Web 安装版。更新会校验安装包并保留旧版本；下载或校验失败不切换版本，不会停止现有后台和任务。0.21.0 及更早版本需先重新运行一次安装命令，之后即可使用 `moose update`。若后台版本不同，启动器会提示在任务结束后执行 `moose stop` 再启动，不会自动中断任务。Web 与桌面每次使用同一个版本号发布。
 
 ## 安装版：直接使用
 

@@ -25,8 +25,7 @@ moose stop
 Closing a browser leaves tasks running; `moose stop` stops the service and tasks.
 Installation lives in `~/.local/share/moose`, with the command in `~/.local/bin`.
 The installer adds this bin directory to standard bash/zsh startup files.
-Re-run the installer to update, then stop and start Moose when running tasks may
-be interrupted. Old release directories are retained, and workspace data is untouched.
+Run `moose update` to install the latest Web release. Download/checksum failures keep the current version. Updates never stop running tasks; after tasks finish, run `moose stop && moose` to use the installed version. Old release directories and workspace data are retained. Versions 0.21.0 and earlier need the installer run once to gain the update command.
 
 ## Build and publish
 
