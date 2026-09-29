@@ -1,6 +1,6 @@
 # Moose 技术架构
 
-> 按 0.17.0 源码核对。安装版桌面与浏览器共用本机后台及原桌面数据目录；源码独立 Web 工作区不自动合并。
+> 按 0.21.1 源码更新（2026-09-29）。安装版桌面与浏览器共用本机后台及原桌面数据目录；源码独立 Web 工作区不自动合并。
 
 ## 1. 项目定位
 
@@ -8,7 +8,7 @@ Moose 是可扩展的 AI 编程代理工作台，提供项目、会话、消息�
 
 Moose 负责交互、调度与历史存储；模型推理、工具执行及账号认证由代理 CLI 和对应服务完成。会话数据保存在本机，但使用代理时仍会与代理服务通信，“本地客户端”不代表离线推理。
 
-当前有内置 PTY 终端、worktree 管理和独立本机 Web 服务；没有托管云端、多租户、内置文件编辑器、自动更新或遥测。Web 服务不是公网部署方案。
+当前有内置 PTY 终端、worktree、全文搜索、通知和只读文件面板；Web 安装版可用 `moose update` 手动更新。没有托管云端、多租户、文件编辑保存、自动安装升级或遥测。公网地址分发安装包，本机 Web 工作区仍在用户机器运行。
 
 ## 2. 总体架构：界面与执行分离
 
@@ -62,7 +62,7 @@ flowchart TB
 
 - **工程**：pnpm、ES modules、TypeScript、Vite 8、`vite-plugin-electron`。
 - **界面**：React、shadcn / Base UI、Tailwind CSS、Motion、Lucide。
-- **消息展示**：react-markdown、remark-gfm、rehype-highlight。
+- **消息展示**：react-markdown、remark-gfm、rehype-highlight；只读源码面板使用 Pierre／Shiki，本地打包语法资源。
 - **存储**：Drizzle ORM + better-sqlite3。
 - **代理协议**：Codex 生成的 TypeScript 协议类型、ACP SDK。
 - **验证与分发**：Vitest、Playwright Electron、electron-builder。
@@ -247,7 +247,7 @@ Renderer 开启 sandbox、contextIsolation，关闭 nodeIntegration，只能通�
 
 新增代理时实现 AgentAdapter，并接入 provider 类型、校验、发现逻辑及 UI 选项；可选能力应由探测结果驱动。新增 IPC 操作时同步修改 Requests/Responses、Zod 校验、处理端和调用端。修改数据结构时同时维护 Drizzle schema 与实际迁移。
 
-验证入口：`pnpm typecheck`、`pnpm test`、`pnpm test:e2e`；分发使用 `pnpm dist`，安装包启动检查见 [package-smoke.ts](../scripts/package-smoke.ts)。Mock 测试验证客户端流程，不能替代真实 CLI 的认证、协议兼容和额度验收。
+验证入口：`pnpm typecheck`、`pnpm test`、`pnpm test:e2e`；`pnpm dist` 只构建桌面包，正式联合发布使用 `pnpm release:prepare` 和 `pnpm release:publish`。安装包启动检查见 [package-smoke.ts](../scripts/package-smoke.ts)。Mock 测试验证客户端流程，不能替代真实 CLI 的认证、协议兼容和额度验收。
 
 ## 13. Web 宿主与共享连接
 
@@ -284,3 +284,23 @@ SSE 对积压超过阈值的慢连接断开，重连后按游标补读。终端�
 颜色统一定义在 `src/styles.css` 的语义变量中。基础控件为 8px 圆角，输入框为 18px，对话气泡为 16px，发送按钮为圆形。侧栏使用轻微半透明背景，浮层保留有限阴影；会话、气泡和输入框不添加装饰性外框或切角。
 
 输入区通过文字光标反馈编辑状态，按钮保留键盘焦点环。保留减少动态效果、减少透明度和提高对比度的适配。终端背景、前景与光标读取同一组主题变量。视觉更新不改变标题栏位置、快捷键、停靠方式或控件点击范围。
+
+## 16. 搜索、通知、文件查看与错误恢复
+
+这些功能经 [shared/experience.ts](../shared/experience.ts) 扩展既有请求／响应契约，沿用 IPC 或 HTTP 传输，不另建服务。新增偏好沿用设置存储，旧数据默认关闭通知；等待原因、客户端焦点和通知领取仅保存在运行时内存。
+
+| 功能 | 后台职责 | 前端与宿主职责 |
+| --- | --- | --- |
+| 等待原因 | Service 根据暂停、禁用、目录任务／终端／操作占用返回原因及可用目标 | 侧栏用图标，输入区解释原因并提供定位；不按计时猜测 |
+| 全文搜索 | `experience-data.ts` 参数化字面子串查询，每页 50 条；`locateMessage` 按位置读目标前后文 | 搜索防抖 200 ms、丢弃旧请求，查历史时不跟随新消息 |
+| 通知 | `notices.ts` 按事件 ID 单次分配；有效焦点登记可抑制提醒 | 主动开启时请求权限，获得授权后领取并显示；点击导航 |
+| 文件查看 | `file-preview.ts` 验证会话实际目录和真实路径，限制读取大小，提供目录列表及受控下载 | 右侧只读面板、多标签、Markdown／源码切换；桌面另存与 Web 认证下载 |
+| 错误恢复 | `shared/errors.ts` 定义稳定代码，传输保留代码和详情，兼容旧字符串 | 分离连接状态与操作失败；认证打开设置，未知写入先核对 |
+
+搜索直接查询已保存的项目、会话和消息内容，不读取草稿或 CLI 隐藏数据；没有全文索引，查询成本会随文本规模增长。搜索结果游标与历史分页游标不是同一个接口，后者仍按消息 `position` 每页 80 条向前读取。
+
+通知去重范围是同一个后台，不是跨机器的全局保证。领取后不再分配，即使客户端未成功显示，也不补发历史通知。桌面通过 [Node-API 原生桥接](../native/notification-permission.mm) 在应用自身进程读取／请求 macOS 权限；Web 使用浏览器权限，没有关闭全部客户端后的推送服务。
+
+文件预览最多读取 1 MiB 文本，支持的图片最多 20 MiB；PDF 等只提供下载。目录树按需读取单个目录，最多 2,000 项，隐藏 `.git` 与符号链接。Markdown 不执行 HTML，远程图片保留链接，本地相对链接再次经过后台边界检查。该检查保护受控入口，不是隔离同一用户所有本机程序的系统沙箱。
+
+具体用户步骤见[使用指南](usage.md#状态搜索和结果查看)，设计取舍与例子见[面试追问](interview/project-interview-reference.md#19-搜索通知和文件预览怎样串起用户体验)，验证范围见[测试指南](testing.md#用户体验收尾验收)。

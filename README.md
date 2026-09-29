@@ -23,7 +23,7 @@ curl -fsSL https://moose.shqingda.workers.dev/install.sh | sh
 ```
 
 安装后打开新的终端，输入 `moose` 即可启动服务并打开浏览器。`moose status` 查看状态，
-`moose stop` 停止服务及任务。代理 CLI 仍需单独安装和登录。
+`moose stop` 停止服务及任务；`moose update` 下载并校验新版，待任务结束后重启后台生效。0.21.0 及更早版本需先重跑安装命令，详见 [Web 更新](docs/web.md#独立-web-安装)。代理 CLI 仍需单独安装和登录。
 安装与发布细节见 [Web 分发说明](distribution/README.md)。
 
 ## 本地开发
@@ -47,5 +47,5 @@ pnpm dev
 | 在浏览器中使用同一工作区 | [Web 使用说明](docs/web.md)                                                                  |
 | 理解分层与执行链路       | [技术架构](docs/architecture.md)                                                             |
 | 开发、测试与发布         | [开发与打包](docs/development.md) · [测试与验证](docs/testing.md)                            |
-| 准备项目面试             | [项目面试指南](docs/interview/project-interview-guide.md)                                    |
+| 准备项目面试             | [面试材料入口](docs/interview/README.md)                                    |
 | 查看剩余工作和版本记录   | [开发计划](docs/providers/native-capabilities-plan.md) · [发布记录](docs/README.md#历史记录) |

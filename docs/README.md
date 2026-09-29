@@ -11,7 +11,7 @@
 | 选择测试、后台验收与验证边界 | [测试与验证](testing.md) |
 | 各代理已经接入哪些能力 | [底座能力与接入边界](providers/native-capabilities.md) |
 | 已完成的阶段和后续范围 | [开发计划](providers/native-capabilities-plan.md) |
-| 项目介绍、简历写法与技术追问 | [项目经历与面试指南](interview/project-interview-guide.md) |
+| 项目介绍、简历写法与技术追问 | [面试材料入口](interview/README.md) |
 
 ## 专题与练习
 
@@ -20,7 +20,7 @@
 - [React 搜索代码审查练习](interview/react-search-results-code-review.md)。
 - [Agent 与 Skill 追问备忘](interview/agent-skill-interview-retrospective.md)：相关岗位按需阅读，不作为 Moose 的实现说明。
 
-项目经历、协议适配讲解和启动调用链统一放在面试指南中，不再维护多份项目介绍。
+项目介绍放在[简明指南](interview/project-interview-guide.md)，协议与调用链放在[追问资料](interview/project-interview-reference.md)。通用题用“章节＋原题号”定位，每题链接到对应答案。
 
 ## 历史记录
 

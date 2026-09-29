@@ -2,15 +2,13 @@
 
 记录范围：0.8.0–0.13.0 开发阶段。以下保留各阶段的验证事实与当时限制，**不作为当前版本操作指南**。旧入口名称、退出行为和测试数量可能已变化。现行步骤见[使用指南](../usage.md)，复测命令见[测试与验证](../testing.md)，支持范围见[能力表](../providers/native-capabilities.md)。
 
-- [Plan 与插话](#phase-one)
-- [原生历史与子代理](#phase-two)
-- [Worktree](#phase-three)
-- [Git 与原生审查](#phase-four)
-- [配置与扩展](#phase-five)
-- [终端与调度](#phase-six)
+- [Plan 与插话](#plan-与插话)
+- [原生历史与子代理](#原生历史与子代理)
+- [Worktree](#worktree)
+- [Git 与原生审查](#git-与原生审查)
+- [配置与扩展](#配置与扩展)
+- [终端与调度](#终端与调度)
 
-
-<a id="phase-one"></a>
 
 ## Plan 与插话
 
@@ -55,8 +53,6 @@ PATH="/opt/homebrew/bin:$PATH" pnpm test:e2e --grep 'automatic native delegation
 
 不要默认运行 `scripts/check-native-workflows.ts`：它会调用真实模型，适合底座升级后需要重新核查协议时使用。
 
-
-<a id="phase-two"></a>
 
 ## 原生历史与子代理
 
@@ -113,8 +109,6 @@ Codex `thread/resume` 只是加载会话，不等同于恢复关闭的子任务�
 - 操作互斥只覆盖 Moose 自己的项目任务；同时在外部 CLI 修改同一会话不受 Moose 锁控制。
 
 
-<a id="phase-three"></a>
-
 ## Worktree
 
 已纳入 0.9.0 及后续安装包。入口是项目右上角的“独立工作目录”。
@@ -154,8 +148,6 @@ PATH="/opt/homebrew/bin:$PATH" pnpm exec vitest run tests/unit/worktrees.test.ts
 - Moose 的目录锁约束 Moose 内的任务，不能锁住外部编辑器或 CLI；执行合并／清理时应避免外部进程同时修改同一目录。
 - 本轮测试代理协议使用 fixture，不请求真实模型；Git 创建、合并、冲突和清理使用真实 Git 命令。
 
-
-<a id="phase-four"></a>
 
 ## Git 与原生审查
 
@@ -204,8 +196,6 @@ Moose 的目录锁约束自身代理、Git 操作与审查，不能锁住外部�
 
 新增场景覆盖：子目录暂存与 diff.relative 完整预览、字面路径与未暂存内容隔离、无首个提交时取消暂存、重命名后继续编辑、陈旧 HEAD／index、hook 拒绝及修改提交树、冲突拒绝、worktree 目录归属、重复请求、PR 已发布 head／base 漂移／精确正文、独立只读审查、无关线程通知、停止／退出／重启、禁用底座和不支持的交互问题。
 
-
-<a id="phase-five"></a>
 
 ## 配置与扩展
 
@@ -263,7 +253,7 @@ pnpm exec tsx scripts/check-extensions.ts
 
 本地生成的 0.155.1 协议类型确认 `config/read`、`config/value/write`、`hooks/list`、MCP 状态与 OAuth 接口；本地 `codex plugin --help` 确认 CLI 命令。官方 [app-server 文档](https://developers.openai.com/zh-Hans/docs/app-server) 明确配置写入限用户配置文件，并提示插件 RPC 仍在开发中、不供生产客户端调用，因此此处使用插件 CLI。
 
-配置语法错误导致底座整体读取失败时，仅显示安全的诊断并指引使用 CLI 查看原始错误，不透传可能包含密钥的报错片段。Hooks 编辑、项目级配置写入、插件安装时的交互认证以及 Grok／Pi 管理适配仍待后续补齐。第六阶段首批后台文本命令与持久化定时任务也纳入 0.11.0，见[第六阶段验收](feature-validation-history.md#phase-six)。
+配置语法错误导致底座整体读取失败时，仅显示安全的诊断并指引使用 CLI 查看原始错误，不透传可能包含密钥的报错片段。Hooks 编辑、项目级配置写入、插件安装时的交互认证以及 Grok／Pi 管理适配仍待后续补齐。第六阶段首批后台文本命令与持久化定时任务也纳入 0.11.0，见[第六阶段验收](feature-validation-history.md#终端与调度)。
 
 ### MCP 注册增量验证
 
@@ -284,8 +274,6 @@ pnpm exec tsx scripts/check-extensions.ts
 
 本批验证：完整单元测试 126 项、完整 Electron 回归 34 项通过；类型检查、lint、格式和 diff 检查通过。新增桌面场景覆盖添加环境变量请求头、编辑连接保留凭据引用、取消移除及确认移除，并检查中文 130% 字号、较小窗口和键盘分区切换。视觉检查使用隔离数据目录的应用截图，不消耗模型额度。此次未打包、推送或发布。
 
-
-<a id="phase-six"></a>
 
 ## 终端与调度
 

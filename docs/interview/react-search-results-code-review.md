@@ -43,9 +43,11 @@ function SearchResults({ query }) {
 
 ## 一种修正示例
 
-下面示例在请求变化时取消旧请求，分别处理 HTTP 错误、数据结构错误和加载状态。防抖与空查询规则可在父组件或搜索输入层按需求加入。
+下面选择“开始新查询时清空旧结果”的交互，避免把旧关键词的结果当成新结果。示例假定 API 返回唯一字符串 ID 与标题；逐项验证后才渲染。取消处理保证旧请求的成功、失败和 finally 都不能更新当前查询。防抖与空查询规则由父组件决定；防抖本身不能解决响应乱序。
 
 ```jsx
+import { useEffect, useState } from 'react';
+
 function SearchResults({ query }) {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -57,6 +59,7 @@ function SearchResults({ query }) {
     async function search() {
       setLoading(true);
       setError(null);
+      setResults([]);
 
       try {
         const params = new URLSearchParams({ q: query });
@@ -66,7 +69,12 @@ function SearchResults({ query }) {
         if (!res.ok) throw new Error(`搜索失败：HTTP ${res.status}`);
 
         const data = await res.json();
-        if (!Array.isArray(data)) throw new Error('搜索结果格式错误');
+        if (!Array.isArray(data) || !data.every(item =>
+          item !== null && typeof item === 'object' &&
+          typeof item.id === 'string' && typeof item.title === 'string'
+        ) || new Set(data.map(item => item.id)).size !== data.length) {
+          throw new Error('搜索结果格式错误');
+        }
         if (!controller.signal.aborted) setResults(data);
       } catch (err) {
         if (!controller.signal.aborted) {
@@ -83,8 +91,8 @@ function SearchResults({ query }) {
   }, [query]);
 
   return (
-    <div>
-      {loading && <Spinner />}
+    <div aria-busy={loading}>
+      {loading && <p role="status">搜索中…</p>}
       {error && <p role="alert">{error}</p>}
       {!loading && !error && results.length === 0 && <p>没有搜索结果</p>}
       {!error && results.map(r => <div key={r.id}>{r.title}</div>)}
@@ -94,3 +102,17 @@ function SearchResults({ query }) {
 ```
 
 **追问：** 只调用 `AbortController.abort()` 就够了吗？客户端取消请求可以减少无用工作、避免旧请求更新当前组件；但服务端可能已开始处理，因此不能把取消当成服务端一定停止执行。若使用不支持取消的请求方式，可用 effect 内的失效标记或请求序号忽略旧响应。
+
+## 怎样证明修好了
+
+不要只测一次成功请求。用可控制返回顺序的请求替身覆盖以下场景：
+
+| 操作顺序 | 应看到什么 |
+| --- | --- |
+| 搜 `a`，再搜 `ab`；先返回 `ab`，再返回 `a` | 只展示 `ab` 的结果，旧请求不能改 loading 或 error |
+| 请求返回 500、非法 JSON，或数组中混入 `null` | 结束加载并显示错误，不在渲染阶段崩溃 |
+| 搜 `a&b` | 服务端收到一个值为 `a&b` 的查询参数 |
+| 查询过程中卸载，再挂载组件 | 旧请求不能更新新组件，也没有遗留监听 |
+| 请求返回空数组 | 加载结束后显示“没有搜索结果” |
+
+在 Moose 中可继续追问：桌面 IPC 不提供和 fetch 一样的取消信号怎么办？搜索弹窗用请求代次忽略过期结果。用户点中尚未加载的历史消息时，则调用定位接口读取上下文，不能只对当前 DOM 执行滚动。见[项目搜索链路](project-interview-reference.md#搜索命中后怎样找到很久以前的消息)。
