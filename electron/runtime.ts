@@ -1,3 +1,5 @@
+import { validate } from '../shared/validation';
+import { fault } from '../shared/errors';
 // utility process 入口：创建数据库和业务服务，处理主进程请求并回传结果或事件。
 import { join } from 'node:path';
 import { mkdirSync, existsSync } from 'node:fs';
@@ -21,6 +23,9 @@ port.on('message', async ({ data: request }) => {
       await service.close();
       port.postMessage({ id, result: null });
       process.exit(0);
+    } else if (method === '_saveFile') {
+      await service.files.save(validate('fileDownload', params.reference), params.path);
+      result = null;
     } else if (method === '_addProject') result = await service.addProject(params.path);
     else if (method === '_importAttachments')
       result = await Promise.all(
@@ -29,7 +34,7 @@ port.on('message', async ({ data: request }) => {
     else result = await service.handle(method, params, clientId);
     port.postMessage({ id, result });
   } catch (error) {
-    port.postMessage({ id, error: error instanceof Error ? error.message : String(error) });
+    port.postMessage({ id, error: fault(error) });
   }
 });
 port.postMessage({ ready: true });

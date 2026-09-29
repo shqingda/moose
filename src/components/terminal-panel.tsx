@@ -1,3 +1,4 @@
+import { ConfirmDialog, type Confirmation } from './confirm-dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 import { useEffect, useState } from 'react';
 import type { BackgroundScope } from '../../shared/background';
@@ -10,9 +11,11 @@ import { IconButton } from './common';
 import { Plus, X, Terminal } from 'lucide-react';
 export function TerminalPanel({
   scope,
+  runtimeMode,
   selected,
   onSelect: setSelected,
 }: {
+  runtimeMode?: 'shared' | 'local';
   scope: BackgroundScope;
   selected: string;
   onSelect(id: string): void;
@@ -21,6 +24,7 @@ export function TerminalPanel({
     [sessions, setSessions] = useState<TerminalSession[]>([]),
     [busy, setBusy] = useState(false),
     [error, setError] = useState('');
+  const [confirmation, setConfirmation] = useState<Confirmation>();
   const session = sessions.find((item) => item.id === selected);
   useEffect(() => {
     let live = true,
@@ -75,13 +79,18 @@ export function TerminalPanel({
                   <span>{row.title || t('ptyTitle')}</span>
                 </TabsTrigger>
                 <IconButton
-                  label={t('ptyStop')}
+                  label={t('endTerminal')}
                   size="icon-xs"
                   disabled={busy}
                   onClick={() =>
-                    void act(async () => {
-                      await window.moose.request('terminalStop', { id: row.id });
-                      if (selected === row.id) setSelected('');
+                    setConfirmation({
+                      title: t('endTerminal'),
+                      description: t('endTerminalDescription'),
+                      destructive: true,
+                      action: async () => {
+                        await window.moose.request('terminalStop', { id: row.id });
+                        if (selected === row.id) setSelected('');
+                      },
                     })
                   }
                 >
@@ -126,6 +135,14 @@ export function TerminalPanel({
       ) : (
         <p className="extension-note">{t('ptyEmpty')}</p>
       )}
+      <p className="extension-note">
+        {t(runtimeMode === 'local' ? 'terminalLocal' : 'terminalShared')}
+      </p>
+      <ConfirmDialog
+        value={confirmation}
+        onClose={() => setConfirmation(undefined)}
+        onError={setError}
+      />
     </Tabs>
   );
 }

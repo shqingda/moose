@@ -176,6 +176,7 @@ export class Store {
       sourceThreadId,
       plan,
       delivery,
+      failure,
       ...data
     } = message;
     const row = {
@@ -190,6 +191,7 @@ export class Store {
         sourceThreadId,
         plan,
         delivery,
+        failure,
       }),
     };
     const existing = this.db

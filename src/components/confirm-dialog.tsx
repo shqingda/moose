@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -26,6 +26,7 @@ export function ConfirmDialog({
   onClose(): void;
   onError(error: string): void;
 }) {
+  const cancel = useRef<HTMLButtonElement>(null);
   const t = useI18n(),
     [pending, setPending] = useState(false);
   return (
@@ -35,13 +36,15 @@ export function ConfirmDialog({
         if (!open && !pending) onClose();
       }}
     >
-      <AlertDialogContent>
+      <AlertDialogContent initialFocus={cancel}>
         <AlertDialogHeader>
           <AlertDialogTitle>{value?.title}</AlertDialogTitle>
           <AlertDialogDescription>{value?.description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={pending}>{t('cancel')}</AlertDialogCancel>
+          <AlertDialogCancel ref={cancel} disabled={pending}>
+            {t('cancel')}
+          </AlertDialogCancel>
           <Button
             variant={value?.destructive ? 'destructive' : 'default'}
             disabled={pending}

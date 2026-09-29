@@ -1,5 +1,7 @@
+import { experienceEn, experienceZh } from './experience-i18n';
 import { createContext, useContext } from 'react';
 export const en = {
+  ...experienceEn,
   mcpUnauthenticated: 'Not signed in',
   mcpAuthenticated: 'Signed in',
   mcpAvailable: 'Configured',
@@ -42,7 +44,7 @@ export const en = {
   ptyTakeControl: 'Take control',
   ptyEmpty: 'Open a shell in this workspace. Supports interactive programs and keyboard shortcuts.',
   ptyHint:
-    'The terminal reserves this directory until closed. Closing the panel keeps it running; quitting Moose stops it.',
+    'The terminal reserves this directory until closed. Closing the panel keeps it running. Stop the terminal explicitly to end it.',
   bgTabCommands: 'Commands',
   bgTabSchedules: 'Schedules',
   bgPosition: 'Panel position',
@@ -442,6 +444,7 @@ export const en = {
 };
 export type TranslationKey = keyof typeof en;
 export const zh: Record<TranslationKey, string> = {
+  ...experienceZh,
   mcpUnauthenticated: '未认证',
   mcpAuthenticated: '已认证',
   mcpAvailable: '已配置',
@@ -480,7 +483,7 @@ export const zh: Record<TranslationKey, string> = {
   ptyReadOnly: '仅查看',
   ptyTakeControl: '接管终端',
   ptyEmpty: '在当前工作目录打开 Shell，支持交互程序和键盘快捷键。',
-  ptyHint: '终端关闭前独占此目录。收起面板会继续运行，退出 Moose 时停止。',
+  ptyHint: '终端关闭前独占此目录。收起面板会继续运行；结束终端才会停止。',
   bgTabCommands: '命令',
   bgTabSchedules: '计划',
   bgPosition: '面板位置',

@@ -1,28 +1,22 @@
+import { NotificationSettings } from './notification-settings';
+import { ProviderConnection } from './provider-connection';
+import { useEffect } from 'react';
 import { webShortcuts } from '../lib/web-shortcuts';
 import { ExtensionTools } from './extension-tools';
-import { providerDefinitions, providerIds } from '../../shared/providers';
+import { providerIds } from '../../shared/providers';
 import { useState } from 'react';
-import {
-  ArrowLeft,
-  Puzzle,
-  ChevronRight,
-  Monitor,
-  Terminal,
-  Keyboard,
-  Plug,
-  RefreshCw,
-} from 'lucide-react';
+import { ArrowLeft, Puzzle, Monitor, Keyboard, Plug, RefreshCw } from 'lucide-react';
 import type { Provider, ProviderInfo, Settings } from '../../shared/types';
 import { useI18n } from '../lib/i18n';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
-import { Field, FieldGroup, FieldLabel, FieldDescription } from './ui/field';
-import { Switch } from './ui/switch';
-import { Input } from './ui/input';
+import { Field, FieldGroup, FieldLabel } from './ui/field';
 import { Button } from './ui/button';
 import { IconButton, Picker } from './common';
 /** 组织通用、服务商与扩展页面，配置保存和重新连接由父组件处理。 */
 export function SettingsDialog({
   open,
+  initialPage,
+  initialProvider,
   onOpenChange,
   settings,
   providers,
@@ -31,6 +25,8 @@ export function SettingsDialog({
   onReconnect,
   onError,
 }: {
+  initialPage?: 'general' | 'providers';
+  initialProvider?: Provider;
   open: boolean;
   onOpenChange(open: boolean): void;
   settings: Settings;
@@ -38,12 +34,14 @@ export function SettingsDialog({
   checking: boolean;
   onSave(settings: Partial<Settings>): Promise<unknown>;
   onReconnect(): Promise<unknown>;
-  onError(error: string): void;
+  onError(error: unknown): void;
 }) {
   const t = useI18n(),
     [page, setPage] = useState<'general' | 'providers' | 'extensions'>('general'),
-    [expanded, setExpanded] = useState(''),
     [extensionProvider, setExtensionProvider] = useState<Provider>('codex');
+  useEffect(() => {
+    if (open && initialPage) setPage(initialPage);
+  }, [open, initialPage]);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -101,7 +99,9 @@ export function SettingsDialog({
                       label: t(value),
                     }))}
                     onChange={(theme) => {
-                      void onSave({ theme: theme as Settings['theme'] });
+                      void onSave({ theme: theme as Settings['theme'] }).catch((error) =>
+                        onError(error),
+                      );
                     }}
                   />
                 </Field>
@@ -116,7 +116,9 @@ export function SettingsDialog({
                       { value: 'zh-CN', label: '简体中文' },
                     ]}
                     onChange={(language) => {
-                      void onSave({ language: language as Settings['language'] });
+                      void onSave({ language: language as Settings['language'] }).catch((error) =>
+                        onError(error),
+                      );
                     }}
                   />
                 </Field>
@@ -130,12 +132,15 @@ export function SettingsDialog({
                       label: `${Math.round(value * 100)}%`,
                     }))}
                     onChange={(value) => {
-                      void onSave({ fontScale: Number(value) });
+                      void onSave({ fontScale: Number(value) }).catch((error) => onError(error));
                     }}
                   />
                 </Field>
               </FieldGroup>
             </section>
+          )}
+          {page === 'general' && (
+            <NotificationSettings settings={settings} onSave={onSave} onError={onError} />
           )}
           {page === 'general' && (
             <section className="settings-section shortcut-section">
@@ -186,85 +191,19 @@ export function SettingsDialog({
                   <RefreshCw />
                 </IconButton>
               </div>
-              {providerIds.map((provider) => {
-                const info = providers.find((p) => p.provider === provider),
-                  key = providerDefinitions[provider].pathKey;
-                return (
-                  <section className="provider-card" key={provider}>
-                    <div className="provider-summary">
-                      <button
-                        className="provider-row"
-                        aria-expanded={expanded === provider}
-                        onClick={() => setExpanded(expanded === provider ? '' : provider)}
-                      >
-                        <span className="provider-symbol">
-                          <Terminal size={22} />
-                          <span
-                            className={`connection-dot ${info?.connected ? 'connected' : ''}`}
-                          />
-                        </span>
-                        <span>
-                          <strong>
-                            {t(provider)} <small>{info?.version}</small>
-                          </strong>
-                          <span className="provider-path">
-                            {checking
-                              ? t('checking')
-                              : info?.path || `${t('notInPath')} ${provider}`}
-                            {!checking &&
-                              info?.connected &&
-                              ` · ${info.models.length} ${t('model')}`}
-                          </span>
-                        </span>
-                        <ChevronRight className="provider-chevron" size={16} />
-                      </button>
-                      {info?.available && (
-                        <Switch
-                          aria-label={`${t('enableProvider')} ${t(provider)}`}
-                          checked={settings[providerDefinitions[provider].enabledKey]}
-                          disabled={checking}
-                          onCheckedChange={(enabled) => {
-                            void onSave({
-                              [providerDefinitions[provider].enabledKey]: enabled,
-                            })
-                              .then(onReconnect)
-                              .catch((error) => onError(String(error)));
-                          }}
-                        />
-                      )}
-                    </div>
-                    {expanded === provider && (
-                      <FieldGroup className="provider-details">
-                        <Field>
-                          <FieldLabel htmlFor={key}>{t('cliPath')}</FieldLabel>
-                          <Input
-                            id={key}
-                            defaultValue={settings[key]}
-                            placeholder={t('autoDetect')}
-                            onBlur={(e) => {
-                              const value = e.currentTarget.value.trim();
-                              e.currentTarget.value = value;
-                              if (value === settings[key]) return;
-                              void onSave({ [key]: value })
-                                .then(onReconnect)
-                                .catch((error) => onError(String(error)));
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
-                                e.preventDefault();
-                                e.currentTarget.blur();
-                              }
-                            }}
-                          />
-                          {info?.error && (info.available || settings[key]) && (
-                            <FieldDescription>{info.error}</FieldDescription>
-                          )}
-                        </Field>
-                      </FieldGroup>
-                    )}
-                  </section>
-                );
-              })}
+              {providerIds.map((provider) => (
+                <ProviderConnection
+                  key={provider}
+                  provider={provider}
+                  initiallyExpanded={initialProvider === provider}
+                  info={providers.find((p) => p.provider === provider)}
+                  settings={settings}
+                  checking={checking}
+                  onSave={onSave}
+                  onReconnect={onReconnect}
+                  onError={onError}
+                />
+              ))}
             </section>
           )}
           {page === 'extensions' && (

@@ -145,7 +145,7 @@ test('handles 10,000 persisted events, paging, IME input, archive and restore', 
   await expect(page.locator('.header-title')).toHaveText('Renamed conversation');
   await page.getByRole('button', { name: 'Workspace tools', exact: true }).click();
   await page.getByRole('menuitem', { name: 'Archive', exact: true }).click();
-  await page.getByRole('button', { name: 'Confirm', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeVisible();
   await expect(page.locator('#composer')).toBeEnabled();
   await expect(page.locator('.header-title')).toHaveCount(0);
   await page.getByRole('button', { name: 'Archived sessions', exact: true }).click();
@@ -296,7 +296,7 @@ test('archives before deletion, opens an unsaved conversation and keeps project 
   await page.locator('.session-row').filter({ hasText: 'One' }).click();
   await page.getByRole('button', { name: 'Workspace tools', exact: true }).click();
   await page.getByRole('menuitem', { name: 'Archive', exact: true }).click();
-  await page.getByRole('button', { name: 'Confirm', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeVisible();
   await expect(page.locator('.session-row')).toHaveCount(1);
   await expect(page.locator('#composer')).toBeEnabled();
   await expect(page.locator('.header-title')).toHaveCount(0);
@@ -676,9 +676,13 @@ test('provider path saves on blur without a save button or duplicate model count
   const row = page
     .locator('.provider-card')
     .filter({ has: page.locator('.provider-row strong').filter({ hasText: /^Pi/ }) });
-  await expect(row.locator('.provider-path')).toHaveText('Not found in PATH: pi');
+  await expect(row.locator('.provider-path')).toHaveText('Not installed or not found');
   await row.locator('.provider-row').click();
-  await expect(row.locator('.provider-details button')).toHaveCount(0);
+  await expect(row.getByRole('button', { name: 'Installation and sign-in guide' })).toBeVisible();
+  await expect(row.getByRole('button', { name: 'Save', exact: true })).toHaveCount(0);
+  await row.locator('input').fill('relative-path');
+  await page.getByRole('heading', { name: 'Providers', exact: true }).click();
+  await expect(row.locator('input')).toHaveAttribute('aria-invalid', 'true');
   await row.locator('input').fill(resolve('tests/fixtures/pi.mjs'));
   await page.getByRole('heading', { name: 'Providers', exact: true }).click();
   await expect
@@ -743,7 +747,7 @@ test('reviews, edits and approves a native plan, restoring execution permissions
       draftContext: { mode: 'plan', references: [], skills: [] },
     });
   });
-  await page.getByRole('button', { name: 'Native plan test', exact: true }).click();
+  await page.locator('.session-row').filter({ hasText: 'Native plan test' }).click();
   await page.locator('#composer').fill('plan-fixture');
   await page.locator('#composer').press('Enter');
   const plan = page.getByRole('region', { name: 'Review plan' });
@@ -757,7 +761,7 @@ test('reviews, edits and approves a native plan, restoring execution permissions
   await plan.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(plan).toContainText('v2');
   await page.reload();
-  await page.getByRole('button', { name: 'Native plan test', exact: true }).click();
+  await page.locator('.session-row').filter({ hasText: 'Native plan test' }).click();
   await expect(plan).toContainText('EDITED_SCOPE');
   await page.screenshot({ path: 'test-results/native-plan-review.png' });
   await plan.getByRole('button', { name: 'Approve and execute' }).click();

@@ -1,8 +1,13 @@
+import { useNotifications } from './lib/notifications';
+import { FilePreviewProvider } from './components/file-preview';
+import { SearchDialog } from './components/search-dialog';
+import { ArchiveUndo } from './components/archive-undo';
+import { ErrorNotice } from './components/error-notice';
 import { BackgroundTools, type BackgroundPlacement } from './components/background-tools';
 import { WorkspaceTools } from './components/workspace-tools';
 import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { MotionConfig, motion, useReducedMotion } from 'motion/react';
-import { ChevronDown, Folder, PanelRight, Search, X, CircleAlert, PanelLeft } from 'lucide-react';
+import { ChevronDown, Folder, PanelRight, PanelLeft } from 'lucide-react';
 import type {
   Attachment,
   PromptContext,
@@ -34,7 +39,6 @@ import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
 import { Field, FieldLabel } from './components/ui/field';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './components/ui/dialog';
-import { Alert, AlertDescription } from './components/ui/alert';
 import { TooltipProvider } from './components/ui/tooltip';
 
 /** 应用根入口：加载工作区快照并同步语言、主题和辅助功能设置。 */
@@ -47,7 +51,7 @@ export default function App() {
       ? snapshot.locale.startsWith('zh')
         ? 'zh-CN'
         : 'en'
-      : snapshot?.settings.language || 'en';
+      : snapshot?.settings.language || (navigator.language.startsWith('zh') ? 'zh-CN' : 'en');
   useLayoutEffect(() => {
     if (!snapshot) return;
     const root = document.documentElement;
@@ -62,11 +66,15 @@ export default function App() {
     root.style.fontSize = `${15 * snapshot.settings.fontScale}px`;
   }, [snapshot, locale]);
   useEffect(() => {
-    if (reportedReady.current || window.moose.host === 'web' || (!snapshot && !workspace.error))
+    if (
+      reportedReady.current ||
+      window.moose.host === 'web' ||
+      (!snapshot && !workspace.error && !workspace.connection)
+    )
       return;
     reportedReady.current = true;
     window.moose.ready();
-  }, [snapshot, workspace.error]);
+  }, [snapshot, workspace.error, workspace.connection]);
   return (
     <LocaleContext value={locale}>
       <TooltipProvider>
@@ -76,14 +84,18 @@ export default function App() {
           ) : (
             <div className="boot-screen">
               <MooseMark />
-              <span>{workspace.error || 'Opening your workspace…'}</span>
-              {workspace.error && (
+              <span>
+                {workspace.error ||
+                  workspace.connection?.message ||
+                  (locale === 'zh-CN' ? '正在打开工作区…' : 'Opening your workspace…')}
+              </span>
+              {(workspace.error || workspace.connection) && (
                 <Button
                   onClick={() => {
                     void workspace.refresh();
                   }}
                 >
-                  Reconnect
+                  {locale === 'zh-CN' ? '重新连接' : 'Reconnect'}
                 </Button>
               )}
             </div>
@@ -96,7 +108,8 @@ export default function App() {
 /** 协调项目选择、会话、输入区、审阅与设置，具体展示交给子组件。 */
 function Workspace({
   snapshot,
-  error,
+  failure,
+  connection,
   setError,
   perform,
   refresh,
@@ -118,7 +131,6 @@ function Workspace({
   // Undefined defers the first load; false keeps dialog state and exit motion after closing.
   const [settingsOpen, setSettingsOpen] = useState<boolean>(),
     [searchOpen, setSearchOpen] = useState(false),
-    [search, setSearch] = useState(''),
     [review, setReview] = useState(false),
     [archived, setArchived] = useState(false);
   const [renaming, setRenaming] = useState(false),
@@ -132,6 +144,29 @@ function Workspace({
   useLayoutEffect(() => {
     if (sidebarOpen) setSidebarParked(false);
   }, [sidebarOpen]);
+  const [undoArchive, setUndoArchive] = useState<Session>();
+  const [settingsPage, setSettingsPage] = useState<'general' | 'providers'>('general');
+  const [targetMessage, setTargetMessage] = useState<string>();
+  const attentionTarget = useRef<string | undefined>(undefined);
+  const [backgroundReveal, setBackgroundReveal] = useState<{
+    terminalId?: string;
+    commandId?: string;
+    nonce: number;
+  }>();
+  const [setupProvider, setSetupProvider] = useState<Provider>();
+  const openProviders = () => {
+    setSetupProvider(currentProvider);
+    setSettingsPage('providers');
+    setSettingsOpen(true);
+  };
+  useEffect(() => {
+    const open = () => {
+      setSettingsPage('providers');
+      setSettingsOpen(true);
+    };
+    window.addEventListener('moose-open-providers', open);
+    return () => window.removeEventListener('moose-open-providers', open);
+  }, []);
   const [confirmation, setConfirmation] = useState<Confirmation>();
   const [attachmentDrafts, setAttachmentDrafts] = useState<Record<string, Attachment[]>>({});
   const [drafts, setDrafts] = useState<Record<string, string>>({});
@@ -150,6 +185,16 @@ function Workspace({
     snapshot.projects[0];
   const draftKey = session?.id || `new:${project?.id || ''}`;
   const attachments = attachmentDrafts[draftKey] ?? session?.draftAttachments ?? [];
+  useEffect(() => {
+    if (
+      attentionTarget.current &&
+      targetMessage === attentionTarget.current &&
+      snapshot.activities?.[session?.id || '']?.pendingMessageId !== attentionTarget.current
+    ) {
+      attentionTarget.current = undefined;
+      setTargetMessage(undefined);
+    }
+  }, [snapshot.activities, session?.id, targetMessage]);
   /** 切换并持久化侧栏展开状态，不改变当前会话。 */
   const toggleSidebar = () =>
     setSidebarOpen((value) => {
@@ -168,14 +213,13 @@ function Workspace({
       );
   };
   const currentProvider = session?.provider || provider;
-  const busy = !!session && ['running', 'waiting', 'queued'].includes(session.status);
   const connect = useCallback(async () => {
     setChecking(true);
     try {
       const info = await window.moose.request('providers', { refresh: true });
       setProviders(info);
     } catch (error) {
-      setError(String(error));
+      setError(error);
     } finally {
       setChecking(false);
     }
@@ -230,6 +274,9 @@ function Workspace({
   const select = (id: string) => {
     if (window.moose.host === 'web' && matchMedia('(max-width: 760px)').matches)
       setSidebarOpen(false);
+    attentionTarget.current = snapshot.activities?.[id]?.pendingMessageId;
+    setTargetMessage(attentionTarget.current);
+    setBackgroundReveal(undefined);
     setSelected(id);
     const s = snapshot.sessions.find((s) => s.id === id);
     if (s) {
@@ -237,12 +284,17 @@ function Workspace({
       setArchived(s.archived);
     }
   };
+  useNotifications(session?.id, snapshot.settings, (id, messageId) => {
+    select(id);
+    if (messageId) setTargetMessage(messageId);
+  });
   /** 打开原生目录选择器，将选中的项目设为当前工作区。 */
   const addProject = async () => {
     const p = await perform(() => window.moose.request('addProject', {}));
     if (p) {
       setProjectId(p.id);
       setSelected(undefined);
+      setTargetMessage(undefined);
     }
   };
   /** 进入未保存的新会话输入页，真正发送时才创建数据库记录。 */
@@ -260,6 +312,7 @@ function Workspace({
     });
     setProjectId(targetProject.id);
     setSelected(undefined);
+    setTargetMessage(undefined);
     setArchived(false);
     setDrafts((old) => ({ ...old, [`new:${targetProject.id}`]: '' }));
     setAttachmentDrafts((old) => ({ ...old, [`new:${targetProject.id}`]: [] }));
@@ -322,13 +375,14 @@ function Workspace({
         }),
       );
       setSelected(target.id);
+      setTargetMessage(undefined);
       return true;
     }
     return false;
   };
   /** 保存配置并刷新快照；代理重连由设置页统一触发，避免重复探测。 */
   const saveSettings = async (settings: Partial<Settings>) => {
-    const result = await perform(() => window.moose.request('settings', settings));
+    const result = await window.moose.request('settings', settings);
     await refresh();
     return result;
   };
@@ -343,27 +397,28 @@ function Workspace({
       void perform(() => window.moose.request('updateSession', { id: session.id, ...patch }));
     else setNewOptions((old) => ({ ...old, ...patch }));
   };
-  /** 确认后归档会话；若归档的是当前会话，切换到未保存的新输入页。 */
   const archiveSession = (target: Session) => {
     if (target.archived) {
       void perform(() => window.moose.request('updateSession', { id: target.id, archived: false }));
       return;
     }
-    setConfirmation({
-      title: t('confirmArchive'),
-      description: t('archiveDescription'),
-      action: async () => {
-        await window.moose.request('updateSession', { id: target.id, archived: true });
-        if (selected === target.id) {
-          setProjectId(target.projectId);
-          setProvider(target.provider);
-          setSelected(undefined);
-          setArchived(false);
-          setDrafts((old) => ({ ...old, [`new:${target.projectId}`]: '' }));
-          setAttachmentDrafts((old) => ({ ...old, [`new:${target.projectId}`]: [] }));
-        }
-        await refresh();
-      },
+    const action = async () => {
+      await window.moose.request('updateSession', { id: target.id, archived: true });
+      if (selected === target.id) {
+        setProjectId(target.projectId);
+        setProvider(target.provider);
+        setSelected(undefined);
+        setTargetMessage(undefined);
+        setArchived(false);
+      }
+      setUndoArchive(target);
+      await refresh();
+    };
+    void perform(async () => {
+      const queue = await window.moose.request('queue', { sessionId: target.id });
+      if (queue.length)
+        setConfirmation({ title: t('confirmArchive'), description: t('archiveQueued'), action });
+      else await action();
     });
   };
   /** 确认后删除项目记录及关联会话，保留真实目录文件。 */
@@ -402,6 +457,7 @@ function Workspace({
     });
     await refresh();
     setSelected(next.id);
+    setTargetMessage(undefined);
     setProjectId(next.projectId);
     setArchived(false);
   };
@@ -416,306 +472,338 @@ function Workspace({
         }),
       );
   };
-  const sessions = snapshot.sessions.filter(
-    (s) =>
-      s.title &&
-      `${s.title} ${snapshot.projects.find((p) => p.id === s.projectId)?.name || ''}`
-        .toLowerCase()
-        .includes(search.toLowerCase()),
-  );
+  const revealBlocker = () => {
+    const target = snapshot.activities?.[session?.id || '']?.target;
+    if (!target) return;
+    if (target.sessionId) select(target.sessionId);
+    if (target.terminalId || target.commandId)
+      setBackgroundReveal({ ...target, nonce: Date.now() });
+  };
   return (
-    <div
-      className={`app-shell ${sidebarOpen ? '' : 'sidebar-collapsed'}`}
-      data-host={window.moose.host || 'desktop'}
+    <FilePreviewProvider
+      scope={project ? { projectId: project.id, sessionId: session?.id } : undefined}
     >
-      <div className="global-sidebar-toggle">
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={t('toggleSidebar')}
-          onClick={toggleSidebar}
-          aria-expanded={sidebarOpen}
-        >
-          <PanelLeft />
-        </Button>
-      </div>
-      {window.moose.host === 'web' && sidebarOpen && (
-        <button
-          className="web-sidebar-backdrop"
-          aria-label={t('toggleSidebar')}
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-      <motion.div
-        className="sidebar-frame"
-        initial={false}
-        animate={{ width: sidebarOpen ? 264 : 0 }}
-        transition={
-          reduceMotion || snapshot.reduceMotion
-            ? { duration: 0 }
-            : { type: 'spring', stiffness: 380, damping: 39 }
-        }
-        data-parked={sidebarParked || undefined}
-        onAnimationComplete={() => {
-          if (!sidebarOpen) setSidebarParked(true);
-        }}
-        inert={!sidebarOpen}
-        aria-hidden={!sidebarOpen}
+      <div
+        className={`app-shell ${sidebarOpen ? '' : 'sidebar-collapsed'}`}
+        data-host={window.moose.host || 'desktop'}
       >
-        <Sidebar
-          onDeleteSession={deleteSession}
-          onDeleteProject={projectAction}
-          onArchiveSession={archiveSession}
-          projects={snapshot.projects}
-          sessions={snapshot.sessions}
-          selected={selected}
-          projectId={project?.id}
-          onSelect={select}
-          onAdd={() => {
-            void addProject();
-          }}
-          onNew={(id) => {
-            void newSession(id);
-          }}
-          onSettings={() => setSettingsOpen(true)}
-          onSearch={() => setSearchOpen(true)}
-          archived={archived}
-          onArchived={() => setArchived((value) => !value)}
-        />
-      </motion.div>
-      <div className="workspace-stage" data-dock={dock || undefined}>
-        <div className="workspace-main">
-          <main className="workspace">
-            <header className="workspace-header">
-              <div className="header-path">
-                {project && (
-                  <>
-                    <Folder size={14} />
-                    <span className="header-project" title={project.path}>
-                      {project.name}
-                    </span>
-                  </>
-                )}
-                {session && (
-                  <>
-                    <span className="path-divider">/</span>
-                    <span className="header-title" title={session.title || t('untitled')}>
-                      {session.title || t('untitled')}
-                    </span>
-                  </>
-                )}
-              </div>
-              <div className="header-actions">
-                {project && (
-                  <WorkspaceTools
-                    trigger={toolsTrigger}
-                    key={`${project.id}:${session?.id}:${currentProvider}`}
-                    project={project}
-                    provider={currentProvider}
-                    session={session}
-                    busy={busy}
-                    onSelect={(target) => {
-                      setSelected(target.id);
-                      setProjectId(target.projectId);
-                      setArchived(target.archived);
-                      void refresh();
-                    }}
-                    onRename={() => {
-                      if (session) {
-                        setTitle(session.title);
-                        setRenaming(true);
-                      }
-                    }}
-                    onArchive={() => {
-                      if (session) void archiveSession(session);
-                    }}
-                    onEditor={() => void openProject('editor')}
-                  />
-                )}
-                {project && (
-                  <BackgroundTools
-                    reviewOpen={review}
-                    dockHost={dockHost}
-                    onDockChange={onDockChange}
-                    key={`${project.id}:${session?.id}`}
-                    scope={{ projectId: project.id, sessionId: session?.id }}
-                  />
-                )}
-                <span className="header-action-divider" />
-                <IconButton
-                  label={t('review')}
-                  onClick={() => setReview((value) => !value)}
-                  disabled={!project}
-                  aria-pressed={review}
-                >
-                  <PanelRight />
-                </IconButton>
-              </div>
-            </header>
-            {error && (
-              <Alert variant="destructive" className="workspace-error">
-                <CircleAlert />
-                <AlertDescription>{error}</AlertDescription>
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  aria-label={t('dismiss')}
-                  onClick={() => setError('')}
-                >
-                  <X />
-                </Button>
-              </Alert>
-            )}
-            {session?.title ? (
-              <Suspense fallback={<div className="transcript" aria-busy="true" />}>
-                <Transcript
-                  key={`transcript:${session.id}`}
-                  session={session}
-                  onError={setError}
-                  onEdit={editMessage}
-                />
-              </Suspense>
-            ) : (
-              <Welcome
-                projectName={project?.name}
-                onAdd={() => {
-                  void addProject();
-                }}
-              />
-            )}
-            {project && (
-              <Composer
-                projectId={project.id}
-                attachments={attachments}
-                onAttachments={onAttachments}
-                key={`composer:${draftKey}`}
-                session={session}
-                options={session || newOptions}
-                provider={currentProvider}
-                providers={providers}
-                draft={drafts[draftKey] ?? session?.draft ?? ''}
-                onDraft={onDraft}
-                onProvider={(value) => {
-                  setProvider(value);
-                  setNewOptions({ model: '', effort: '', mode: 'ask' });
-                }}
-                onOptions={updateSession}
-                onSend={onSend}
-                onStop={() => {
-                  if (session)
-                    void perform(() => window.moose.request('stop', { sessionId: session.id }));
-                }}
-                onError={setError}
-              />
-            )}
-            {!checking && providers.length > 0 && !providers.some((p) => p.connected) && (
-              <button className="connection-banner" onClick={() => setSettingsOpen(true)}>
-                {t('noAgent')}
-                <ChevronDown size={12} />
-              </button>
-            )}
-          </main>
-          {project && (
-            <Suspense fallback={null}>
-              <ReviewPanel
-                open={review}
-                key={`${project.id}:${session?.id}`}
-                project={project}
-                sessionId={session?.id}
-                onClose={() => setReview(false)}
-                onError={setError}
-                reduceMotion={!!reduceMotion || snapshot.reduceMotion}
-              />
-            </Suspense>
-          )}
+        <div className="global-sidebar-toggle">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={t('toggleSidebar')}
+            onClick={toggleSidebar}
+            aria-expanded={sidebarOpen}
+          >
+            <PanelLeft />
+          </Button>
         </div>
-        <div className="workspace-dock" ref={setDockHost} />
-      </div>
-      <ConfirmDialog
-        value={confirmation}
-        onClose={() => setConfirmation(undefined)}
-        onError={setError}
-      />
-      <Suspense fallback={null}>
-        {settingsOpen !== undefined && (
-          <SettingsDialog
-            open={!!settingsOpen}
-            onOpenChange={setSettingsOpen}
-            settings={snapshot.settings}
-            providers={providers}
-            checking={checking}
-            onSave={saveSettings}
-            onReconnect={connect}
-            onError={setError}
+        {window.moose.host === 'web' && sidebarOpen && (
+          <button
+            className="web-sidebar-backdrop"
+            aria-label={t('toggleSidebar')}
+            onClick={() => setSidebarOpen(false)}
           />
         )}
-      </Suspense>
-      <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
-        <DialogContent className="search-dialog">
-          <DialogHeader>
-            <DialogTitle>{t('search')}</DialogTitle>
-          </DialogHeader>
-          <div className="search-input">
-            <Search size={17} />
-            <Input
-              aria-label={t('search')}
-              placeholder={t('search')}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-          <div className="search-results">
-            {sessions.slice(0, 100).map((s) => (
-              <button
-                key={s.id}
-                onClick={() => {
-                  select(s.id);
-                  setSearchOpen(false);
-                }}
-              >
-                <span>{s.title || t('untitled')}</span>
-                <small>
-                  {snapshot.projects.find((p) => p.id === s.projectId)?.name} / {t(s.provider)}
-                  {s.archived ? ` / ${t('archived')}` : ''}
-                </small>
-              </button>
-            ))}
-            {!sessions.length && <p>{t('noResults')}</p>}
-          </div>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={renaming} onOpenChange={setRenaming}>
-        <DialogContent finalFocus={toolsTrigger}>
-          <DialogHeader>
-            <DialogTitle>{t('rename')}</DialogTitle>
-          </DialogHeader>
-          <form
-            className="rename-form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (session)
-                void perform(() =>
-                  window.moose.request('updateSession', { id: session.id, title }),
-                ).then((result) => {
-                  if (result) setRenaming(false);
-                });
+        <motion.div
+          className="sidebar-frame"
+          initial={false}
+          animate={{ width: sidebarOpen ? 264 : 0 }}
+          transition={
+            reduceMotion || snapshot.reduceMotion
+              ? { duration: 0 }
+              : { type: 'spring', stiffness: 380, damping: 39 }
+          }
+          data-parked={sidebarParked || undefined}
+          onAnimationComplete={() => {
+            if (!sidebarOpen) setSidebarParked(true);
+          }}
+          inert={!sidebarOpen}
+          aria-hidden={!sidebarOpen}
+        >
+          <Sidebar
+            onDeleteSession={deleteSession}
+            onDeleteProject={projectAction}
+            onArchiveSession={archiveSession}
+            projects={snapshot.projects}
+            activities={snapshot.activities}
+            sessions={snapshot.sessions}
+            selected={selected}
+            projectId={project?.id}
+            onSelect={select}
+            onAdd={() => {
+              void addProject();
             }}
-          >
-            <Field>
-              <FieldLabel htmlFor="session-title">{t('sessionTitle')}</FieldLabel>
-              <Input
-                id="session-title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                maxLength={160}
-              />
-            </Field>
-            <Button type="submit" disabled={!title.trim()}>
-              {t('save')}
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </div>
+            onNew={(id) => {
+              void newSession(id);
+            }}
+            onSettings={() => setSettingsOpen(true)}
+            onSearch={() => setSearchOpen(true)}
+            archived={archived}
+            onArchived={() => setArchived((value) => !value)}
+          />
+        </motion.div>
+        <div className="workspace-stage" data-dock={dock || undefined}>
+          <div className="workspace-main">
+            <main className="workspace">
+              <header className="workspace-header">
+                <div className="header-path">
+                  {project && (
+                    <>
+                      <Folder size={14} />
+                      <span className="header-project" title={project.path}>
+                        {project.name}
+                      </span>
+                    </>
+                  )}
+                  {session && (
+                    <>
+                      <span className="path-divider">/</span>
+                      <span className="header-title" title={session.title || t('untitled')}>
+                        {session.title || t('untitled')}
+                      </span>
+                    </>
+                  )}
+                </div>
+                <div className="header-actions">
+                  {project && (
+                    <WorkspaceTools
+                      trigger={toolsTrigger}
+                      key={`${project.id}:${session?.id}:${currentProvider}`}
+                      project={project}
+                      provider={currentProvider}
+                      session={session}
+                      onSelect={(target) => {
+                        setSelected(target.id);
+                        setTargetMessage(undefined);
+                        setProjectId(target.projectId);
+                        setArchived(target.archived);
+                        void refresh();
+                      }}
+                      onRename={() => {
+                        if (session) {
+                          setTitle(session.title);
+                          setRenaming(true);
+                        }
+                      }}
+                      onArchive={() => {
+                        if (session) void archiveSession(session);
+                      }}
+                      onEditor={() => void openProject('editor')}
+                    />
+                  )}
+                  {project && (
+                    <BackgroundTools
+                      runtimeMode={snapshot.runtimeMode}
+                      reveal={backgroundReveal}
+                      reviewOpen={review}
+                      dockHost={dockHost}
+                      onDockChange={onDockChange}
+                      key={`${project.id}:${session?.id}`}
+                      scope={{ projectId: project.id, sessionId: session?.id }}
+                    />
+                  )}
+                  <span className="header-action-divider" />
+                  <IconButton
+                    label={t('review')}
+                    onClick={() => setReview((value) => !value)}
+                    disabled={!project}
+                    aria-pressed={review}
+                  >
+                    <PanelRight />
+                  </IconButton>
+                </div>
+              </header>
+              {connection && (
+                <ErrorNotice
+                  value={connection}
+                  onReconnect={() => void refresh()}
+                  onSettings={openProviders}
+                />
+              )}
+              {failure && (
+                <ErrorNotice
+                  value={failure}
+                  onDismiss={() => setError('')}
+                  onReconnect={() => void refresh()}
+                  onSettings={openProviders}
+                  onBlocker={
+                    snapshot.activities?.[session?.id || '']?.target
+                      ? () => revealBlocker()
+                      : undefined
+                  }
+                />
+              )}
+              {session?.title ? (
+                <Suspense fallback={<div className="transcript" aria-busy="true" />}>
+                  <Transcript
+                    key={`transcript:${session.id}:${targetMessage || 'latest'}`}
+                    targetMessage={targetMessage}
+                    onLatest={() => setTargetMessage(undefined)}
+                    session={session}
+                    onError={setError}
+                    onEdit={editMessage}
+                  />
+                </Suspense>
+              ) : (
+                <Welcome
+                  projectName={project?.name}
+                  onAdd={() => {
+                    void addProject();
+                  }}
+                />
+              )}
+              {project &&
+                !checking &&
+                !providers.some((p) => p.connected && p.enabled !== false) && (
+                  <button className="connection-banner" onClick={openProviders}>
+                    {t('noAgent')}
+                  </button>
+                )}
+              {session && snapshot.activities?.[session.id]?.reason && (
+                <div className="waiting-reason" role="status">
+                  <span>{t(`waiting_${snapshot.activities[session.id].reason!}`)}</span>
+                  {snapshot.activities[session.id].target && (
+                    <Button size="sm" variant="ghost" onClick={revealBlocker}>
+                      {t('viewBlocker')}
+                    </Button>
+                  )}
+                  {snapshot.activities[session.id].reason === 'disabled' && (
+                    <Button size="sm" variant="ghost" onClick={openProviders}>
+                      {t('settings')}
+                    </Button>
+                  )}
+                </div>
+              )}
+              {project && (
+                <Composer
+                  projectId={project.id}
+                  attachments={attachments}
+                  onAttachments={onAttachments}
+                  key={`composer:${draftKey}`}
+                  session={session}
+                  options={session || newOptions}
+                  provider={currentProvider}
+                  providers={providers}
+                  draft={drafts[draftKey] ?? session?.draft ?? ''}
+                  onDraft={onDraft}
+                  onProvider={(value) => {
+                    setProvider(value);
+                    setNewOptions({ model: '', effort: '', mode: 'ask' });
+                  }}
+                  onOptions={updateSession}
+                  onSend={onSend}
+                  onStop={() => {
+                    if (session)
+                      void perform(() => window.moose.request('stop', { sessionId: session.id }));
+                  }}
+                  onError={setError}
+                />
+              )}
+              {!project &&
+                !checking &&
+                !providers.some((p) => p.connected && p.enabled !== false) && (
+                  <button className="connection-banner" onClick={openProviders}>
+                    {t('noAgent')}
+                    <ChevronDown size={12} />
+                  </button>
+                )}
+            </main>
+            {project && (
+              <Suspense fallback={null}>
+                <ReviewPanel
+                  open={review}
+                  key={`${project.id}:${session?.id}`}
+                  project={project}
+                  sessionId={session?.id}
+                  onClose={() => setReview(false)}
+                  onError={setError}
+                  reduceMotion={!!reduceMotion || snapshot.reduceMotion}
+                />
+              </Suspense>
+            )}
+          </div>
+          <div className="workspace-dock" ref={setDockHost} />
+        </div>
+        {undoArchive && (
+          <ArchiveUndo
+            key={undoArchive.id}
+            onClose={() => setUndoArchive(undefined)}
+            onError={setError}
+            onUndo={async () => {
+              await window.moose.request('updateSession', { id: undoArchive.id, archived: false });
+              await refresh();
+              setSelected(undoArchive.id);
+              setProjectId(undoArchive.projectId);
+              setArchived(false);
+              setTargetMessage(undefined);
+            }}
+          />
+        )}
+        <ConfirmDialog
+          value={confirmation}
+          onClose={() => setConfirmation(undefined)}
+          onError={setError}
+        />
+        <Suspense fallback={null}>
+          {settingsOpen !== undefined && (
+            <SettingsDialog
+              initialPage={settingsPage}
+              initialProvider={setupProvider}
+              open={!!settingsOpen}
+              onOpenChange={setSettingsOpen}
+              settings={snapshot.settings}
+              providers={providers}
+              checking={checking}
+              onSave={saveSettings}
+              onReconnect={connect}
+              onError={setError}
+            />
+          )}
+        </Suspense>
+        <SearchDialog
+          open={searchOpen}
+          onOpenChange={setSearchOpen}
+          projectId={project?.id}
+          sessionId={session?.id}
+          onSelect={(hit) => {
+            select(hit.sessionId);
+            setTargetMessage(hit.messageId);
+          }}
+        />
+        <Dialog open={renaming} onOpenChange={setRenaming}>
+          <DialogContent finalFocus={toolsTrigger}>
+            <DialogHeader>
+              <DialogTitle>{t('rename')}</DialogTitle>
+            </DialogHeader>
+            <form
+              className="rename-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (session)
+                  void perform(() =>
+                    window.moose.request('updateSession', { id: session.id, title }),
+                  ).then((result) => {
+                    if (result) setRenaming(false);
+                  });
+              }}
+            >
+              <Field>
+                <FieldLabel htmlFor="session-title">{t('sessionTitle')}</FieldLabel>
+                <Input
+                  id="session-title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  maxLength={160}
+                />
+              </Field>
+              <Button type="submit" disabled={!title.trim()}>
+                {t('save')}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </FilePreviewProvider>
   );
 }

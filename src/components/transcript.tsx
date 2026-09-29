@@ -1,16 +1,10 @@
+import { ErrorNotice } from './error-notice';
+import { useFiles } from './file-preview';
+import { useEffect } from 'react';
 import { memo, useState } from 'react';
 import { Markdown } from './markdown';
 import { PlanReview } from './plan-review';
-import {
-  Check,
-  ChevronRight,
-  Copy,
-  Terminal,
-  ShieldCheck,
-  Brain,
-  CircleAlert,
-  Pencil,
-} from 'lucide-react';
+import { Check, ChevronRight, Copy, Terminal, ShieldCheck, Brain, Pencil } from 'lucide-react';
 import type { Message as MessageData, Session } from '../../shared/types';
 import { useI18n } from '../lib/i18n';
 import { useTranscript } from '../lib/workspace';
@@ -28,7 +22,6 @@ import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { Input } from './ui/input';
 import { Field, FieldLabel, FieldGroup } from './ui/field';
-import { Alert, AlertDescription } from './ui/alert';
 import { Marker, MarkerContent } from './ui/marker';
 import { Skeleton } from './ui/skeleton';
 import { AttachmentList } from './attachments';
@@ -111,6 +104,7 @@ const TranscriptRow = memo(function TranscriptRow({
   latestUser: boolean;
   lastAssistant: boolean;
 }) {
+  const files = useFiles();
   const t = useI18n();
   const [copied, setCopied] = useState(false),
     [editing, setEditing] = useState(false),
@@ -120,10 +114,13 @@ const TranscriptRow = memo(function TranscriptRow({
     return <PlanReview message={message} busy={busy} onError={onError} />;
   if (message.kind === 'error')
     return (
-      <Alert variant="destructive">
-        <CircleAlert />
-        <AlertDescription>{message.text}</AlertDescription>
-      </Alert>
+      <ErrorNotice
+        value={message.failure || { code: 'unknown', message: message.text }}
+        onReconnect={() =>
+          void window.moose.request('snapshot', {}).catch((error) => onError(String(error)))
+        }
+        onSettings={() => window.dispatchEvent(new Event('moose-open-providers'))}
+      />
     );
   if (message.kind === 'notice')
     return (
@@ -240,6 +237,20 @@ const TranscriptRow = memo(function TranscriptRow({
             {message.kind === 'user' ? (
               <div>
                 <div className="user-text">{message.text}</div>
+                {!!message.context?.references.length && files.scope && (
+                  <div className="file-references">
+                    {message.context.references.map((path) => (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        key={path}
+                        onClick={() => files.open({ ...files.scope!, path })}
+                      >
+                        {path}
+                      </Button>
+                    ))}
+                  </div>
+                )}
                 {message.delivery && (
                   <small role="status">
                     {t(
@@ -264,7 +275,7 @@ const TranscriptRow = memo(function TranscriptRow({
           <div className="message-actions">
             <IconButton
               size="icon-xs"
-              label={copied ? '✓' : t('copy')}
+              label={t(copied ? 'copied' : 'copy')}
               onClick={() => {
                 void (async () => {
                   const text =
@@ -312,23 +323,44 @@ const TranscriptRow = memo(function TranscriptRow({
 });
 /** 管理历史分页、阅读位置与最新消息跟随，避免流式输出打断上翻阅读。 */
 export function Transcript({
+  targetMessage,
+  onLatest,
   session,
   onError,
   onEdit,
 }: {
+  targetMessage?: string;
+  onLatest?(): void;
   session: Session;
   onError(error: string): void;
   onEdit(message: MessageData, text: string): Promise<void>;
 }) {
   const t = useI18n(),
-    { messages, hasMore, loading, earlier } = useTranscript(session.id, onError);
+    { messages, hasMore, loading, earlier } = useTranscript(session.id, onError, targetMessage);
+  useEffect(() => {
+    if (!targetMessage || !messages.some((m) => m.id === targetMessage)) return;
+    const timer = requestAnimationFrame(() => {
+      const node = document.getElementById(`message-${targetMessage}`);
+      node?.scrollIntoView({ block: 'center' });
+      node?.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(timer);
+  }, [targetMessage, !!messages.find((m) => m.id === targetMessage)]);
   const latestUser = messages.findLast((m) => m.kind === 'user')?.id;
   const lastAssistants = new Map(
     messages.filter((m) => m.kind === 'assistant').map((m) => [m.runId, m.id]),
   );
   return (
-    <MessageScrollerProvider autoScroll defaultScrollPosition="end">
+    <MessageScrollerProvider
+      autoScroll={!targetMessage}
+      defaultScrollPosition={targetMessage ? 'start' : 'end'}
+    >
       <MessageScroller className="transcript">
+        {targetMessage && (
+          <Button className="history-return" size="sm" variant="secondary" onClick={onLatest}>
+            {t('showLatest')}
+          </Button>
+        )}
         <MessageScrollerViewport>
           <MessageScrollerContent className="transcript-content">
             {hasMore && (
@@ -358,12 +390,15 @@ export function Transcript({
               .map((message) => (
                 <MessageScrollerItem
                   key={message.id}
+                  id={`message-${message.id}`}
+                  tabIndex={-1}
+                  data-search-target={message.id === targetMessage || undefined}
                   messageId={message.id}
                   scrollAnchor={message.kind === 'user'}
                 >
                   <TranscriptRow
                     message={message}
-                    latestUser={message.id === latestUser}
+                    latestUser={!targetMessage && message.id === latestUser}
                     lastAssistant={lastAssistants.get(message.runId) === message.id}
                     onError={onError}
                     onEdit={onEdit}
@@ -385,7 +420,7 @@ export function Transcript({
             )}
           </MessageScrollerContent>
         </MessageScrollerViewport>
-        <MessageScrollerButton aria-label={t('latest')} />
+        {!targetMessage && <MessageScrollerButton aria-label={t('latest')} />}
       </MessageScroller>
     </MessageScrollerProvider>
   );

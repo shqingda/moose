@@ -1,3 +1,4 @@
+import { MooseError, restoreError, transportError } from '../../shared/errors';
 import { webCommand } from './web-shortcuts';
 
 export const WEB_AUTH_REQUIRED = 'moose-auth-required';
@@ -15,14 +16,23 @@ export async function webRequest(method: string, params: unknown): Promise<unkno
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: payload,
-    keepalive: savingDraft && new TextEncoder().encode(payload).length < 60 * 1024,
+    keepalive:
+      (savingDraft || method === 'clientPresence') &&
+      new TextEncoder().encode(payload).length < 60 * 1024,
     signal: ['terminalControl', 'snapshot'].includes(method)
       ? AbortSignal.timeout(10000)
       : undefined,
+  }).catch((error) => {
+    throw transportError(method, error);
   });
   if (response.status === 401) window.dispatchEvent(new Event(WEB_AUTH_REQUIRED));
-  const body = await response.json();
-  if (!response.ok) throw new Error(body.error || 'Request failed');
+  const body = await response.json().catch((error) => {
+    throw transportError(method, error);
+  });
+  if (!response.ok)
+    throw response.status === 401
+      ? new MooseError('auth', body.error)
+      : restoreError(body.fault || body.error || 'Request failed');
   return body.result;
 }
 function appearance() {
@@ -43,10 +53,11 @@ async function pickFiles(): Promise<Attachment[]> {
     input.addEventListener('cancel', () => resolve([]));
     input.click();
   });
-  if (files.length > 10) throw new Error('Select at most 10 attachments');
+  if (files.length > 10) throw new MooseError('attachments', 'Select at most 10 attachments');
   const result: Attachment[] = [];
   for (const file of files) {
-    if (file.size > 20 * 1024 * 1024) throw new Error('Attachments must be at most 20 MB');
+    if (file.size > 20 * 1024 * 1024)
+      throw new MooseError('attachments', 'Attachments must be at most 20 MB');
     const data = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result).split(',')[1]);
@@ -87,10 +98,14 @@ export function createWebAPI(chooseProject: () => Promise<string | null>): Moose
     suspend();
     stream = new EventSource('/api/events');
     stream.onmessage = (event) => emit(JSON.parse(event.data));
-    stream.onopen = () => emit({ type: 'changed' });
+    stream.onopen = () => {
+      emit({ type: 'runtime-connected' });
+      emit({ type: 'changed' });
+    };
     stream.onerror = () => {
       emit({
         type: 'runtime-error',
+        code: 'disconnected',
         error: navigator.language.startsWith('zh')
           ? '连接已断开，正在重连。请勿重复发送刚才的操作。'
           : 'Disconnected. Reconnecting; do not repeat the last action.',
@@ -119,6 +134,48 @@ export function createWebAPI(chooseProject: () => Promise<string | null>): Moose
       }
     }
     if (method === 'pickAttachments') return pickFiles();
+    if (method === 'notificationPermission') {
+      if (!('Notification' in window)) return 'unsupported';
+      return (params as { request?: boolean }).request && Notification.permission === 'default'
+        ? Notification.requestPermission()
+        : Notification.permission;
+    }
+    if (method === 'showNotification') {
+      if (!('Notification' in window) || Notification.permission !== 'granted') return null;
+      const { notice, label } = params as import('../../shared/types').Requests['showNotification'];
+      const notification = new Notification(`Moose · ${label}`, {
+        body: `${notice.project} · ${notice.title}`,
+        tag: notice.id,
+        silent: true,
+      });
+      notification.onclick = () => {
+        window.focus();
+        emit({ type: 'navigate', sessionId: notice.sessionId, messageId: notice.messageId });
+        notification.close();
+      };
+      return null;
+    }
+    if (method === 'fileDownload') {
+      const response = await fetch('/api/download', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
+      });
+      if (response.status === 401) window.dispatchEvent(new Event(WEB_AUTH_REQUIRED));
+      if (!response.ok) {
+        const body = await response.json();
+        throw restoreError(body.fault || body.error);
+      }
+      const disposition = response.headers.get('Content-Disposition') || '';
+      const name = decodeURIComponent(disposition.split("filename*=UTF-8''")[1] || 'download');
+      const url = URL.createObjectURL(await response.blob());
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = name;
+      anchor.click();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      return null;
+    }
     if (method === 'copyText') {
       await navigator.clipboard.writeText((params as { text: string }).text);
       return null;
@@ -132,7 +189,9 @@ export function createWebAPI(chooseProject: () => Promise<string | null>): Moose
     if (method === 'openProject')
       throw new Error('Open the project on the machine running Moose Web.');
     const result = await webRequest(method, params);
-    return method === 'snapshot' ? { ...(result as Snapshot), ...appearance() } : result;
+    return method === 'snapshot'
+      ? { ...(result as Snapshot), ...appearance(), runtimeMode: 'shared' }
+      : result;
   };
   return {
     host: 'web',

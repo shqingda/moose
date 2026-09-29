@@ -1,3 +1,8 @@
+import { FilePreviews } from './file-preview';
+import { MooseError, fault } from '../shared/errors';
+import type { SessionActivity, TaskNotice } from '../shared/experience';
+import { pendingMessage, searchMessages, locateMessage } from './experience-data';
+import { Notices } from './notices';
 import { Background, isBackgroundMethod } from './background';
 import { Extensions, isExtensionMethod } from './extensions';
 import { ReviewWorkbench, isReviewMethod } from './review-workbench';
@@ -30,6 +35,7 @@ type Active = {
   promise?: Promise<void>;
 };
 export class MooseService {
+  private notices = new Notices();
   private background: Background;
   private extensions: Extensions;
   private configuring = false;
@@ -40,6 +46,7 @@ export class MooseService {
   private steering: Steering;
   private catalog = new ContextCatalog();
   readonly attachments: Attachments;
+  readonly files: FilePreviews;
   private editing = new Set<string>();
   private active = new Map<string, Active>();
   private paused = new Set<string>();
@@ -105,6 +112,7 @@ export class MooseService {
     this.plans = new Plans(store);
     this.steering = new Steering(store, (message) => this.emit({ type: 'message', message }));
     this.attachments = new Attachments(store.sqlite.name);
+    this.files = new FilePreviews(store, this.attachments);
     for (const item of store.queued()) this.paused.add(item.sessionId);
     this.flushTimer = setInterval(() => this.flush(), 80);
     this.background = new Background(store, {
@@ -151,14 +159,58 @@ export class MooseService {
     return this.adapterFactory(provider, await this.providerPath(provider));
   }
   private lockDirectory(path: string) {
-    if (this.configuring) throw new Error('Wait for configuration changes to finish');
+    if (this.configuring) throw new MooseError('busy', 'Wait for configuration changes to finish');
     if (this.active.has(path) || this.editing.has(path) || this.worktrees.blocks(path))
-      throw new Error('Wait for project tasks and directory operations to finish');
+      throw new MooseError('busy', 'Wait for project tasks and directory operations to finish');
     this.editing.add(path);
     return () => {
       this.editing.delete(path);
       void this.drain();
     };
+  }
+  activity(sessionId: string): SessionActivity {
+    const session = this.store.session(sessionId);
+    const queued = this.store.queued(sessionId).length;
+    const result: SessionActivity = {
+      queued,
+      pendingMessageId: pendingMessage(this.store, sessionId)?.id,
+    };
+    if (!queued) return result;
+    const path = this.store.sessionPath(session);
+    if (this.paused.has(sessionId) || session.archived) result.reason = 'paused';
+    else if (!this.store.getSettings()[providerDefinitions[session.provider].enabledKey])
+      result.reason = 'disabled';
+    else if (this.active.has(path)) {
+      result.reason = 'task';
+      result.target = { sessionId: this.active.get(path)!.session.id };
+    } else {
+      const terminal = this.background.terminals
+        .list(session.projectId)
+        .find((t) => t.cwd === path);
+      const command = this.background.commands
+        .list(session.projectId)
+        .find((c) => c.cwd === path && c.status === 'running');
+      if (terminal) {
+        result.reason = 'terminal';
+        result.target = { sessionId: terminal.sessionId, terminalId: terminal.id };
+      } else if (command) {
+        result.reason = 'command';
+        result.target = { sessionId: command.sessionId, commandId: command.id };
+      } else if (this.editing.has(path) || this.worktrees.blocks(path) || this.configuring)
+        result.reason = 'operation';
+    }
+    return result;
+  }
+  private notice(session: Session, kind: TaskNotice['kind'], id: string, messageId?: string) {
+    const notice: TaskNotice = {
+      id,
+      sessionId: session.id,
+      kind,
+      messageId,
+      project: this.store.project(session.projectId).name,
+      title: this.store.session(session.id).title,
+    };
+    if (this.notices.add(notice)) this.emit({ type: 'task-notice', notice });
   }
   /** 通知界面重新读取项目、会话或队列快照。 */
   changed() {
@@ -173,7 +225,11 @@ export class MooseService {
   /** 根据用户配置或默认搜索路径定位本机代理 CLI。 */
   private async providerPath(provider: Provider) {
     const settings = this.store.getSettings();
-    return discover(provider, settings[providerDefinitions[provider].pathKey]);
+    try {
+      return await discover(provider, settings[providerDefinitions[provider].pathKey]);
+    } catch (error) {
+      throw new MooseError('provider', String(error));
+    }
   }
   /** 并行探测代理版本与能力；缓存结果，并合并重复探测请求。 */
   async providers(refresh = false): Promise<ProviderInfo[]> {
@@ -240,6 +296,25 @@ export class MooseService {
     if (isWorktreeMethod(method)) return this.worktrees.handle(method, args);
     if (isNativeMethod(method)) return this.native.handle(method, args);
     switch (method) {
+      case 'filePreview':
+        return this.files.preview(args as Requests['filePreview']);
+      case 'fileInfo':
+        return this.files.info(args as Requests['fileInfo']);
+      case 'sessionActivity':
+        return this.activity((args as Requests['sessionActivity']).sessionId);
+      case 'searchMessages':
+        return searchMessages(this.store, args as Requests['searchMessages']);
+      case 'locateMessage':
+        return locateMessage(this.store, args as Requests['locateMessage']);
+      case 'clientPresence':
+        this.notices.presence(clientId, args as Requests['clientPresence']);
+        return null;
+      case 'claimNotice':
+        return this.notices.claim(
+          (args as Requests['claimNotice']).id,
+          clientId,
+          this.store.getSettings(),
+        );
       case 'workspacePath': {
         const a = args as Requests['workspacePath'];
         return this.store.directory(a.projectId, a.sessionId);
@@ -249,6 +324,9 @@ export class MooseService {
           projects: this.store.listProjects(),
           sessions: this.store.listSessions(),
           settings: this.store.getSettings(),
+          activities: Object.fromEntries(
+            this.store.listSessions().map((s) => [s.id, this.activity(s.id)]),
+          ),
         };
       case 'searchFiles': {
         const a = args as Requests['searchFiles'];
@@ -317,7 +395,8 @@ export class MooseService {
           ([...this.active.values()].some((run) => run.session.id === id) ||
             this.editing.has(projectPath))
         )
-          throw new Error(
+          throw new MooseError(
+            'busy',
             'Wait for this task and native history operations to finish before changing execution settings',
           );
         if (patch.archived) this.paused.add(id);
@@ -576,12 +655,14 @@ export class MooseService {
             sessionId: session.id,
             seq: 1,
             kind: 'error',
+            failure: fault(error),
             text: error instanceof Error ? error.message : String(error),
             title: '',
             state: 'error',
             createdAt: Date.now(),
           });
           this.changed();
+          this.notice(session, 'failed', `result:${item.id}`);
           continue;
         }
         if (this.stopping || this.configuring) break;
@@ -645,6 +726,7 @@ export class MooseService {
     row.seq = ++run.seq;
     if (event.text !== undefined) row.text = event.text.slice(0, 500_000);
     if (event.delta) row.text = (row.text + event.delta).slice(0, 500_000);
+    if (event.failure) row.failure = event.failure;
     if (event.title !== undefined) row.title = event.title;
     if (event.state) row.state = event.state;
     if (event.choices) row.choices = event.choices;
@@ -658,6 +740,8 @@ export class MooseService {
       this.store.updateSession(run.session.id, { status: 'waiting' });
       this.flush();
       this.changed();
+      if (row.kind === 'approval' || row.kind === 'question')
+        this.notice(run.session, 'attention', `attention:${row.id}`, row.id);
     }
   }
   /** 只保存 dirty 消息并推送界面，减少每个文本增量触发的数据库与 IPC 开销。 */
@@ -714,6 +798,7 @@ export class MooseService {
         this.accept(run, {
           key: 'error',
           kind: 'error',
+          failure: fault(error),
           text: providerError(error),
           state: 'error',
         });
@@ -745,6 +830,10 @@ export class MooseService {
         status: run.cancelled ? 'cancelled' : failed ? 'failed' : 'completed',
       });
       this.changed();
+      const pending = pendingMessage(this.store, run.session.id);
+      if (pending) this.notice(run.session, 'attention', `attention:${pending.id}`, pending.id);
+      else if (!run.cancelled && !this.stopping)
+        this.notice(run.session, failed ? 'failed' : 'completed', `result:${run.id}`);
       queueMicrotask(() => {
         void this.drain();
       });

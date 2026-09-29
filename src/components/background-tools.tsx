@@ -19,10 +19,14 @@ import { Alert, AlertDescription } from './ui/alert';
 export type BackgroundPlacement = 'dialog' | 'bottom' | 'right';
 export function BackgroundTools({
   scope,
+  runtimeMode,
+  reveal,
   dockHost,
   onDockChange,
   reviewOpen,
 }: {
+  runtimeMode?: 'shared' | 'local';
+  reveal?: { terminalId?: string; commandId?: string; nonce: number };
   reviewOpen: boolean;
   scope: BackgroundScope;
   dockHost: HTMLDivElement | null;
@@ -49,6 +53,13 @@ export function BackgroundTools({
   }, [open, reviewOpen, placement]);
   const [tab, setTab] = useState('terminal');
   const [terminalId, setTerminalId] = useState('');
+  useEffect(() => {
+    if (!reveal) return;
+    setOpen(true);
+    setTab(reveal.commandId ? 'commands' : 'terminal');
+    if (reveal.terminalId) setTerminalId(reveal.terminalId);
+    if (reveal.commandId) setSelected(reveal.commandId);
+  }, [reveal]);
   useEffect(() => {
     onDockChange(open && placement !== 'dialog' ? placement : null);
   }, [open, placement, onDockChange]);
@@ -187,7 +198,12 @@ export function BackgroundTools({
           </IconButton>
         </div>
         <TabsContent value="terminal" className="background-terminal">
-          <TerminalPanel scope={scope} selected={terminalId} onSelect={setTerminalId} />
+          <TerminalPanel
+            runtimeMode={runtimeMode}
+            scope={scope}
+            selected={terminalId}
+            onSelect={setTerminalId}
+          />
         </TabsContent>
         <TabsContent value="commands" className="extension-section background-scroll">
           <p className="extension-note break-all">{cwd}</p>

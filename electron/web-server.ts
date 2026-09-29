@@ -1,3 +1,6 @@
+import { validate } from '../shared/validation';
+import { pipeline } from 'node:stream/promises';
+import { fault } from '../shared/errors';
 /** Loopback-bound browser host with an optional trusted HTTPS tunnel origin. A disconnected browser never owns task lifetime. */
 import { createServer, type ServerResponse, type IncomingMessage } from 'node:http';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
@@ -125,6 +128,31 @@ const server = createServer(async (req, res) => {
         json(res, 401, { error: 'Open the access link printed by the Moose web service.' });
         return;
       }
+      if (url.pathname === '/api/download' && req.method === 'POST') {
+        if (
+          req.headers.origin !== requestOrigin ||
+          !req.headers['content-type']?.startsWith('application/json')
+        ) {
+          json(res, 403, { error: 'Untrusted request' });
+          return;
+        }
+        const reference = validate('fileDownload', await body(req));
+        const { handle, name, size } = await service.files.open(reference);
+        try {
+          res.writeHead(200, {
+            'Content-Type': 'application/octet-stream',
+            'Content-Length': size,
+            'X-Moose-File-Identity': `${(await handle.stat()).dev}:${(await handle.stat()).ino}`,
+            'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(name)}`,
+            'Cache-Control': 'no-store',
+            'X-Content-Type-Options': 'nosniff',
+          });
+          await pipeline(handle.createReadStream(), res);
+        } finally {
+          await handle.close().catch(() => {});
+        }
+        return;
+      }
       if (url.pathname === '/api/events' && req.method === 'GET') {
         res.writeHead(200, {
           'Content-Type': 'text/event-stream',
@@ -155,7 +183,13 @@ const server = createServer(async (req, res) => {
             ? input.clientId
             : undefined;
         if (
-          ['terminalControl', 'terminalInput', 'terminalResize'].includes(input.method) &&
+          [
+            'terminalControl',
+            'terminalInput',
+            'terminalResize',
+            'clientPresence',
+            'claimNotice',
+          ].includes(input.method) &&
           !clientId
         )
           throw new Error('Missing terminal client identity');
@@ -242,9 +276,8 @@ const server = createServer(async (req, res) => {
     });
     res.end(req.method === 'HEAD' ? undefined : bytes);
   } catch (error) {
-    if (!res.headersSent)
-      json(res, 400, { error: error instanceof Error ? error.message : 'Request failed' });
-    else res.destroy();
+    if (res.headersSent) res.destroy();
+    else json(res, 400, { error: fault(error).message, fault: fault(error) });
   }
 });
 server.requestTimeout = 30000;

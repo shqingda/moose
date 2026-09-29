@@ -1,3 +1,4 @@
+import { MooseError } from '../shared/errors';
 import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile, stat } from 'node:fs/promises';
 import { basename, dirname, extname, join } from 'node:path';
@@ -22,14 +23,15 @@ export class Attachments {
   async importPath(path: string) {
     const info = await stat(path);
     if (!info.isFile() || info.size > MAX_BYTES)
-      throw new Error('Attachments must be files of at most 20 MB.');
+      throw new MooseError('attachments', 'Attachments must be files of at most 20 MB.');
     return this.import(basename(path), await readFile(path));
   }
   /** 生成附件 ID，识别 MIME 并保存实体与元数据；拒绝超限文件和视频。 */
   async import(name: string, bytes: Buffer): Promise<Attachment> {
-    if (bytes.length > MAX_BYTES) throw new Error('Attachments must be at most 20 MB.');
+    if (bytes.length > MAX_BYTES)
+      throw new MooseError('attachments', 'Attachments must be at most 20 MB.');
     if (/\.(mp4|mov|mkv|avi|webm|m4v)$/i.test(name))
-      throw new Error('Video attachments are not supported yet.');
+      throw new MooseError('attachments', 'Video attachments are not supported yet.');
     const mime =
       imageMime(bytes) ||
       (extname(name).toLowerCase() === '.pdf'

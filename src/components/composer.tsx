@@ -63,7 +63,7 @@ export function Composer({
   onOptions(patch: { model?: string; effort?: string; mode?: PermissionMode }): void;
   onSend(context: PromptContext, delivery?: 'steer'): Promise<boolean | undefined>;
   onStop(): void;
-  onError(error: string): void;
+  onError(error: unknown): void;
   disabled?: boolean;
 }) {
   const t = useI18n(),
@@ -85,7 +85,7 @@ export function Composer({
           setSkillsReady(true);
         }
       })
-      .catch((error) => onError(String(error)));
+      .catch((error) => onError(error));
     return () => {
       live = false;
     };
@@ -96,7 +96,7 @@ export function Composer({
     if (session)
       void window.moose
         .request('updateSession', { id: session.id, draftContext: value })
-        .catch((error) => onError(String(error)));
+        .catch((error) => onError(error));
   };
   useEffect(() => {
     if (migrated.current || !skillsReady) return;
@@ -145,7 +145,7 @@ export function Composer({
         .then((q) => {
           if (live) setQueue(q);
         })
-        .catch((error) => onError(String(error)));
+        .catch((error) => onError(error));
     };
     refresh();
     const stop = window.moose.subscribe((event) => {
@@ -180,7 +180,7 @@ export function Composer({
     void window.moose
       .request('updateQueue', { id, remove, text })
       .then(() => setEditing(''))
-      .catch((error) => onError(String(error)));
+      .catch((error) => onError(error));
   };
   /** 接收拖放或粘贴文件，上传成功后加入附件列表。 */
   const receive = async (files: File[]) => {
@@ -189,7 +189,7 @@ export function Composer({
       if (attachments.length + added.length > 10) throw new Error(t('attachmentLimit'));
       onAttachments([...attachments, ...added]);
     } catch (error) {
-      onError(String(error));
+      onError(error);
     }
   };
   const unsupportedImages =
@@ -274,7 +274,7 @@ export function Composer({
                   onClick={() => {
                     void window.moose
                       .request('resumeQueue', { sessionId: session.id })
-                      .catch((error) => onError(String(error)));
+                      .catch((error) => onError(error));
                   }}
                 >
                   <Play data-icon="inline-start" />
@@ -344,7 +344,7 @@ export function Composer({
                       throw new Error(t('attachmentLimit'));
                     onAttachments([...attachments, ...added]);
                   })
-                  .catch((error) => onError(String(error)));
+                  .catch((error) => onError(error));
               }}
             >
               <Plus />

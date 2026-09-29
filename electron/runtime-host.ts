@@ -1,3 +1,4 @@
+import { restoreError, transportError } from '../shared/errors';
 import { utilityProcess, type UtilityProcess } from 'electron';
 import { randomUUID } from 'node:crypto';
 import type { AppEvent } from '../shared/types';
@@ -7,6 +8,7 @@ export class RuntimeHost {
   private pending = new Map<
     string,
     {
+      method: string;
       resolve(value: unknown): void;
       reject(error: Error): void;
       timer: ReturnType<typeof setTimeout>;
@@ -45,7 +47,7 @@ export class RuntimeHost {
           if (!request) return;
           this.pending.delete(message.id);
           clearTimeout(request.timer);
-          if (message.error) request.reject(new Error(message.error));
+          if (message.error) request.reject(restoreError(message.error));
           else request.resolve(message.result);
         }
       });
@@ -58,7 +60,7 @@ export class RuntimeHost {
         for (const request of this.pending.values()) {
           clearTimeout(request.timer);
           if (this.closing && code === 0) request.resolve(null);
-          else request.reject(error);
+          else request.reject(transportError(request.method, error));
         }
         this.pending.clear();
         if (!this.closing) this.emit({ type: 'runtime-error', error: error.message });
@@ -74,7 +76,7 @@ export class RuntimeHost {
       const timer = setTimeout(
         () => {
           this.pending.delete(id);
-          reject(new Error(`Operation timed out: ${method}`));
+          reject(transportError(method, new Error(`Operation timed out: ${method}`)));
         },
         (
           {
@@ -102,7 +104,7 @@ export class RuntimeHost {
           } as Record<string, number>
         )[method] || 20000,
       );
-      this.pending.set(id, { resolve, reject, timer });
+      this.pending.set(id, { method, resolve, reject, timer });
       this.child!.postMessage({ id, method, params, clientId: this.clientId });
     });
   }

@@ -1,3 +1,9 @@
+import type {
+  ExperienceRequests,
+  ExperienceResponses,
+  SessionActivity,
+  TaskNotice,
+} from './experience';
 import type { BackgroundRequests, BackgroundResponses } from './background';
 import type { ExtensionRequests, ExtensionResponses } from './extensions';
 import type { GitRequests, GitResponses } from './git-actions';
@@ -81,6 +87,7 @@ export interface Question {
   secret?: boolean;
 }
 export interface Message {
+  failure?: import('./errors').Fault;
   id: string;
   position: number;
   sessionId: string;
@@ -129,6 +136,8 @@ export interface QueueItem {
   createdAt: number;
 }
 export interface Settings {
+  notifyAttention: boolean;
+  notifyResults: boolean;
   theme: 'system' | 'light' | 'dark';
   language: 'system' | 'en' | 'zh-CN';
   codexEnabled: boolean;
@@ -176,6 +185,8 @@ export interface GitDiff {
   truncated: boolean;
 }
 export interface Snapshot {
+  runtimeMode?: 'shared' | 'local';
+  activities?: Record<string, SessionActivity>;
   projects: Project[];
   sessions: Session[];
   settings: Settings;
@@ -189,7 +200,8 @@ export interface TranscriptPage {
   messages: Message[];
   hasMore: boolean;
 }
-export interface Requests extends GitRequests, ExtensionRequests, BackgroundRequests {
+export interface Requests
+  extends GitRequests, ExtensionRequests, BackgroundRequests, ExperienceRequests {
   worktreeList: { projectId: string };
   worktreeCreate: {
     projectId: string;
@@ -276,7 +288,8 @@ export interface Requests extends GitRequests, ExtensionRequests, BackgroundRequ
   openProject: { projectId: string; sessionId?: string; target: 'finder' | 'editor' };
   openExternal: { url: string };
 }
-export interface Responses extends GitResponses, ExtensionResponses, BackgroundResponses {
+export interface Responses
+  extends GitResponses, ExtensionResponses, BackgroundResponses, ExperienceResponses {
   worktreeList: import('./worktrees').Worktree[];
   worktreeCreate: Session;
   worktreeStatus: import('./worktrees').WorktreeStatus;
@@ -335,6 +348,10 @@ export interface Responses extends GitResponses, ExtensionResponses, BackgroundR
 }
 export type Method = keyof Requests;
 export type AppEvent =
+  | { type: 'notification-unavailable' }
+  | { type: 'task-notice'; notice: TaskNotice }
+  | { type: 'navigate'; sessionId: string; messageId?: string }
+  | { type: 'runtime-connected' }
   | { type: 'terminal-output'; output: import('./terminal').TerminalOutput }
   | { type: 'terminal-sync' }
   | { type: 'terminal-control'; id: string }
@@ -358,7 +375,7 @@ export type AppEvent =
         | 'composer';
     }
   | { type: 'appearance' }
-  | { type: 'runtime-error'; error: string };
+  | { type: 'runtime-error'; error: string; code?: import('./errors').ErrorCode };
 export interface MooseAPI {
   host?: 'desktop' | 'web';
   ready(): void;
@@ -366,6 +383,8 @@ export interface MooseAPI {
   subscribe(listener: (event: AppEvent) => void): () => void;
 }
 export const defaultSettings: Settings = {
+  notifyAttention: false,
+  notifyResults: false,
   theme: 'system',
   language: 'system',
   codexEnabled: true,

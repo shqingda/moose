@@ -1,3 +1,6 @@
+import { open } from 'node:fs/promises';
+import { constants } from 'node:fs';
+import { MooseError, restoreError, transportError } from '../shared/errors';
 import { readFile, stat } from 'node:fs/promises';
 import { basename } from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -72,6 +75,7 @@ export class SharedRuntime {
           signal: this.controller.signal,
         });
         if (!response.ok || !response.body) throw new Error('Shared runtime disconnected');
+        this.emit({ type: 'runtime-connected' });
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let pending = '';
@@ -96,6 +100,7 @@ export class SharedRuntime {
         if (this.controller.signal.aborted) return;
         this.emit({
           type: 'runtime-error',
+          code: 'disconnected',
           error: String(error instanceof Error ? error.message : error),
         });
         await new Promise<void>((resolve) => {
@@ -125,18 +130,62 @@ export class SharedRuntime {
       this.version !== this.expectedVersion &&
       !['webStopService', 'webDisconnect'].includes(method)
     )
-      throw new Error(
+      throw new MooseError(
+        'version',
         'Background service version changed. Choose Moose → Quit and Stop Background Service, then reopen Moose.',
       );
+    if (method === '_saveFile') {
+      const { reference, path } = params as { reference: unknown; path: string };
+      const response = await fetch(this.origin + '/api/download', {
+        method: 'POST',
+        headers: { Origin: this.origin, Cookie: this.cookie, 'Content-Type': 'application/json' },
+        body: JSON.stringify(reference),
+        signal: this.controller.signal,
+        redirect: 'error',
+      });
+      if (!response.ok || !response.body) {
+        const body = await response.json();
+        throw restoreError(body.fault || body.error);
+      }
+      // The save dialog is the only source of this destination path.
+      const target = await open(
+        path,
+        constants.O_WRONLY | constants.O_CREAT | constants.O_NOFOLLOW,
+        0o600,
+      );
+      const reader = response.body.getReader();
+      try {
+        const stat = await target.stat();
+        if (`${stat.dev}:${stat.ino}` === response.headers.get('X-Moose-File-Identity'))
+          throw new MooseError(
+            'file-access',
+            'Choose a different destination to preserve the original file',
+          );
+        await target.truncate(0);
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          let offset = 0;
+          while (offset < value.length) {
+            const { bytesWritten } = await target.write(value, offset, value.length - offset);
+            offset += bytesWritten;
+          }
+        }
+      } finally {
+        await reader.cancel().catch(() => {});
+        await target.close();
+      }
+      return null;
+    }
     if (method === '_addProject') method = 'webAddProject';
     else if (method === '_importAttachments') {
       const paths = (params as { paths: string[] }).paths;
-      if (paths.length > 10) throw new Error('Select at most 10 attachments');
+      if (paths.length > 10) throw new MooseError('attachments', 'Select at most 10 attachments');
       return Promise.all(
         paths.map(async (path) => {
           const info = await stat(path);
           if (!info.isFile() || info.size > 20 * 1024 * 1024)
-            throw new Error('Attachments must be files of at most 20 MB');
+            throw new MooseError('attachments', 'Attachments must be files of at most 20 MB');
           return this.request('uploadAttachment', {
             name: basename(path),
             data: (await readFile(path)).toString('base64'),
@@ -151,9 +200,14 @@ export class SharedRuntime {
       headers: { Origin: this.origin, Cookie: this.cookie, 'Content-Type': 'application/json' },
       body: JSON.stringify({ method, params, clientId: this.clientId }),
       signal: AbortSignal.any([this.controller.signal, AbortSignal.timeout(240000)]),
+    }).catch((error) => {
+      throw transportError(method, error);
     });
-    const body = await response.json();
-    if (!response.ok) throw new Error(body.error || 'Shared runtime request failed');
+    const body = await response.json().catch((error) => {
+      throw transportError(method, error);
+    });
+    if (!response.ok)
+      throw restoreError(body.fault || body.error || 'Shared runtime request failed');
     return body.result;
   }
   async browserURL() {

@@ -1,6 +1,7 @@
 import type { Choice, Message, ProviderInfo, Question, Session } from '../../shared/types';
 export type AgentEvent = {
   key: string;
+  failure?: Message['failure'];
   kind: Message['kind'];
   text?: string;
   delta?: string;

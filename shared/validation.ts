@@ -59,7 +59,44 @@ const terminalSize = {
   cols: z.number().int().min(2).max(500),
   rows: z.number().int().min(1).max(200),
 };
+const fileReference = z.union([
+  z.strictObject({ attachmentId: id }),
+  z.strictObject({
+    projectId: id,
+    sessionId: id.optional(),
+    path: z
+      .string()
+      .min(1)
+      .max(4096)
+      .refine((p) => !p.includes('\0')),
+  }),
+]);
 export const schemas = {
+  sessionActivity: z.strictObject({ sessionId: id }),
+  searchMessages: z.strictObject({
+    query: z.string().max(300),
+    projectId: id.optional(),
+    sessionId: id.optional(),
+    cursor,
+  }),
+  locateMessage: z.strictObject({ sessionId: id, messageId: z.string().min(1).max(500) }),
+  fileInfo: fileReference,
+  filePreview: fileReference,
+  fileDownload: fileReference,
+  clientPresence: z.strictObject({ sessionId: id.optional(), focused: z.boolean() }),
+  claimNotice: z.strictObject({ id: z.string().min(1).max(1000) }),
+  notificationPermission: z.strictObject({ request: z.boolean().optional() }),
+  showNotification: z.strictObject({
+    notice: z.strictObject({
+      id: z.string().max(1000),
+      sessionId: id,
+      messageId: z.string().max(500).optional(),
+      kind: z.enum(['attention', 'completed', 'failed']),
+      project: z.string().max(4096),
+      title: z.string().max(1000),
+    }),
+    label: z.string().max(100),
+  }),
   terminalList: z.strictObject(backgroundScope),
   terminalStart: z.strictObject({ ...backgroundScope, requestId: id, ...terminalSize }),
   terminalRead: z.strictObject({
@@ -229,6 +266,8 @@ export const schemas = {
   }),
   providers: z.strictObject({ refresh: z.boolean().optional() }),
   settings: z.strictObject({
+    notifyAttention: z.boolean().optional(),
+    notifyResults: z.boolean().optional(),
     codexEnabled: z.boolean().optional(),
     grokEnabled: z.boolean().optional(),
     piEnabled: z.boolean().optional(),

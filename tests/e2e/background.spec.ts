@@ -254,7 +254,9 @@ test('runs a real PTY, resizes it, edits with vim and survives closing the panel
   await expect(page.locator('.xterm-screen')).toBeVisible();
   await expect.poll(async () => (await output()).data).toContain('HIDDEN_PANEL\r\n');
   await page.screenshot({ path: 'test-results/interactive-terminal.png', animations: 'disabled' });
-  await page.getByRole('button', { name: 'Close terminal', exact: true }).click();
+  await page.getByRole('button', { name: 'End terminal', exact: true }).click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Confirm', exact: true }).click();
+  await expect(page.getByRole('alertdialog')).not.toBeVisible();
   await expect.poll(async () => (await output()).session.status).toBe('cancelled');
   // Directory ownership is released after the PTY helper exits.
   const job = await page.evaluate(
@@ -501,7 +503,9 @@ test('moves the same terminal between window, bottom and right without stopping 
   const dialog = await page.getByRole('dialog').boundingBox();
   expect(screen!.height / dialog!.height).toBeGreaterThan(0.7);
   await page.screenshot({ path: 'test-results/terminal-window.png', animations: 'disabled' });
-  await page.getByRole('button', { name: 'Close terminal', exact: true }).click();
+  await page.getByRole('button', { name: 'End terminal', exact: true }).click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Confirm', exact: true }).click();
+  await expect(page.getByRole('alertdialog')).not.toBeVisible();
 });
 
 test('opens concurrent terminal tabs and releases the directory only after the last closes', async () => {
@@ -541,7 +545,9 @@ test('opens concurrent terminal tabs and releases the directory only after the l
   await panel.getByRole('tab').first().press('ArrowRight');
   await expect(panel.getByRole('tab').last()).toBeFocused();
   await page.screenshot({ path: 'test-results/terminal-tabs.png' });
-  await panel.getByRole('button', { name: 'Close terminal', exact: true }).first().click();
+  await panel.getByRole('button', { name: 'End terminal', exact: true }).first().click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Confirm', exact: true }).click();
+  await expect(page.getByRole('alertdialog')).not.toBeVisible();
   await expect(panel.getByRole('tab')).toHaveCount(1);
   await expect(panel.locator('.xterm-screen')).toBeVisible();
   const parallel = await page.evaluate(
@@ -563,7 +569,9 @@ test('opens concurrent terminal tabs and releases the directory only after the l
   expect(
     (await page.evaluate((id) => window.moose.request('commandRead', { id }), parallel.id)).output,
   ).toBe('alongside-terminal');
-  await panel.getByRole('button', { name: 'Close terminal', exact: true }).click();
+  await panel.getByRole('button', { name: 'End terminal', exact: true }).click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Confirm', exact: true }).click();
+  await expect(page.getByRole('alertdialog')).not.toBeVisible();
   await expect(panel.getByRole('tab')).toHaveCount(0);
   expect(
     await page.evaluate((scope) => window.moose.request('terminalList', scope), scope),
@@ -633,7 +641,9 @@ test('runs pnpm test alongside a terminal and preserves directory protection unt
     scope,
   );
   await page.getByRole('tab', { name: 'Terminal', exact: true }).click();
-  await page.getByRole('button', { name: 'Close terminal', exact: true }).click();
+  await page.getByRole('button', { name: 'End terminal', exact: true }).click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Confirm', exact: true }).click();
+  await expect(page.getByRole('alertdialog')).not.toBeVisible();
   await expect(
     page.evaluate(
       (scope) => window.moose.request('deleteProject', { projectId: scope.projectId }),
@@ -642,7 +652,9 @@ test('runs pnpm test alongside a terminal and preserves directory protection unt
   ).rejects.toThrow('Stop the project tasks');
   await page.getByRole('button', { name: 'New terminal', exact: true }).click();
   await expect(page.locator('.terminal-screen')).toBeVisible();
-  await page.getByRole('button', { name: 'Close terminal', exact: true }).click();
+  await page.getByRole('button', { name: 'End terminal', exact: true }).click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Confirm', exact: true }).click();
+  await expect(page.getByRole('alertdialog')).not.toBeVisible();
   await expect(page.locator('.terminal-session-tab')).toHaveCount(0);
   await page.evaluate((id) => window.moose.request('commandStop', { id }), command.id);
   await page.evaluate(
@@ -688,8 +700,8 @@ test('native shortcuts toggle and create terminals, switch tools and keep each t
   await tab.getByRole('tab').hover();
   await expect(tab.getByRole('tab')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
   const background = await tab.evaluate((el) => getComputedStyle(el).backgroundColor);
-  await tab.getByRole('button', { name: 'Close terminal' }).hover();
-  await expect(tab.getByRole('button', { name: 'Close terminal' })).toHaveCSS(
+  await tab.getByRole('button', { name: 'End terminal' }).hover();
+  await expect(tab.getByRole('button', { name: 'End terminal' })).toHaveCSS(
     'background-color',
     'rgba(0, 0, 0, 0)',
   );

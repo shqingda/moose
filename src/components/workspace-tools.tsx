@@ -24,7 +24,6 @@ export function WorkspaceTools({
   project,
   provider,
   session,
-  busy,
   onSelect,
   onRename,
   onArchive,
@@ -34,7 +33,6 @@ export function WorkspaceTools({
   project: Project;
   provider: Provider;
   session?: Session;
-  busy: boolean;
   onSelect(session: Session): void;
   onRename(): void;
   onArchive(): void;
@@ -89,7 +87,10 @@ export function WorkspaceTools({
                   <Pencil />
                   {t('rename')}
                 </DropdownMenuItem>
-                <DropdownMenuItem disabled={busy} onClick={onArchive}>
+                <DropdownMenuItem
+                  disabled={['running', 'waiting'].includes(session.status)}
+                  onClick={onArchive}
+                >
                   <Archive />
                   {t(session.archived ? 'restore' : 'archive')}
                 </DropdownMenuItem>

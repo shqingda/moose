@@ -1,3 +1,5 @@
+import { MooseError } from '../../shared/errors';
+import { useFiles } from './file-preview';
 import { useEffect, useState } from 'react';
 import { File, X } from 'lucide-react';
 import type { Attachment } from '../../shared/types';
@@ -5,28 +7,57 @@ import { IconButton } from './common';
 import { useI18n } from '../lib/i18n';
 /** 加载单个附件的图片预览，按需要提供移除入口。 */
 function AttachmentItem({ item, onRemove }: { item: Attachment; onRemove?(): void }) {
+  const files = useFiles();
+  const [failed, setFailed] = useState(false),
+    [attempt, setAttempt] = useState(0);
   const t = useI18n(),
     [image, setImage] = useState<string | null>(null);
   useEffect(() => {
     let live = true;
+    setFailed(false);
+    setImage(null);
     if (item.mime.startsWith('image/'))
       void window.moose
         .request('attachmentPreview', { id: item.id })
         .then((data) => {
           if (live) setImage(data);
         })
-        .catch(() => {});
+        .catch(() => {
+          if (live) setFailed(true);
+        });
     return () => {
       live = false;
     };
-  }, [item.id, item.mime]);
+  }, [item.id, item.mime, attempt]);
   return (
     <div className="attachment-chip" title={item.name}>
-      {image ? <img src={image} alt={item.name} /> : <File size={20} />}
-      <span>
-        <strong>{item.name}</strong>
-        <small>{Math.max(1, Math.round(item.size / 1024))} KB</small>
-      </span>
+      <button
+        className="attachment-preview-button"
+        aria-label={`${t('preview')} ${item.name}`}
+        onClick={() => files.open({ attachmentId: item.id })}
+      >
+        {image ? (
+          <img
+            src={image}
+            alt={item.name}
+            onError={() => {
+              setImage(null);
+              setFailed(true);
+            }}
+          />
+        ) : (
+          <File size={20} />
+        )}
+        <span>
+          <strong>{item.name}</strong>
+          <small>{Math.max(1, Math.round(item.size / 1024))} KB</small>
+        </span>
+      </button>
+      {failed && (
+        <button onClick={() => setAttempt((v) => v + 1)}>
+          {t('previewFailed')} · {t('tryAgain')}
+        </button>
+      )}
       {onRemove && (
         <IconButton label={`${t('removeAttachment')} ${item.name}`} onClick={onRemove}>
           <X />
@@ -58,7 +89,7 @@ export function AttachmentList({
 /** 将浏览器 File 转成 IPC 可传输的数据，交给后台校验和保存。 */
 export async function uploadFiles(files: File[]): Promise<Attachment[]> {
   if (files.length > 10 || files.some((f) => f.size > 20 * 1024 * 1024))
-    throw new Error('Up to 10 attachments, 20 MB each.');
+    throw new MooseError('attachments', 'Up to 10 attachments, 20 MB each.');
   return Promise.all(
     files.map(async (file) => {
       const data = await new Promise<string>((resolve, reject) => {

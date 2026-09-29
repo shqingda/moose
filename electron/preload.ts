@@ -13,4 +13,4 @@ const api: MooseAPI = {
     return () => ipcRenderer.removeListener('moose:event', handler);
   },
 };
-contextBridge.exposeInMainWorld('moose', api);
+contextBridge.exposeInMainWorld('mooseBridge', api);

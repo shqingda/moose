@@ -1,3 +1,5 @@
+import type { SessionActivity } from '../../shared/experience';
+import { Clock, CircleAlert, CirclePause, MessageCircleQuestion } from 'lucide-react';
 import { useState } from 'react';
 import {
   LoaderCircle,
@@ -26,6 +28,7 @@ import { cn } from '../lib/utils';
 export function Sidebar({
   projects,
   sessions,
+  activities,
   selected,
   projectId,
   onSelect,
@@ -42,6 +45,7 @@ export function Sidebar({
   onDeleteSession(session: Session): void;
   onDeleteProject(id: string): void;
   onArchiveSession(session: Session): void;
+  activities?: Record<string, SessionActivity>;
   projects: Project[];
   sessions: Session[];
   selected?: string;
@@ -179,9 +183,31 @@ export function Sidebar({
                       <span className="session-row-content">
                         <span className="session-title">{session.title || t('untitled')}</span>
                       </span>
-                      {['running', 'waiting', 'queued'].includes(session.status) && (
-                        <LoaderCircle className="session-spinner" aria-label={t(session.status)} />
-                      )}
+                      {(activities?.[session.id]?.pendingMessageId ||
+                        (session.status !== 'idle' &&
+                          session.status !== 'completed' &&
+                          session.status !== 'cancelled')) &&
+                        (() => {
+                          const state = activities?.[session.id]?.pendingMessageId
+                            ? 'waiting'
+                            : session.status;
+                          const Icon =
+                            state === 'running'
+                              ? LoaderCircle
+                              : state === 'waiting'
+                                ? MessageCircleQuestion
+                                : state === 'queued'
+                                  ? Clock
+                                  : state === 'failed'
+                                    ? CircleAlert
+                                    : CirclePause;
+                          return (
+                            <span className="session-status" title={t(state)}>
+                              <Icon className={state === 'running' ? 'session-spinner' : ''} />
+                              <small>{t(state)}</small>
+                            </span>
+                          );
+                        })()}
                     </button>
                     {session.archived ? (
                       <DropdownMenu>
@@ -218,7 +244,7 @@ export function Sidebar({
                         className="session-row-action sidebar-row-action"
                         size="icon-sm"
                         label={`${t('archive')} · ${session.title || t('untitled')}`}
-                        disabled={['running', 'waiting', 'queued'].includes(session.status)}
+                        disabled={['running', 'waiting'].includes(session.status)}
                         onClick={() => onArchiveSession(session)}
                       >
                         <Archive />

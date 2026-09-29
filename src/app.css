@@ -2777,3 +2777,129 @@ button:not(:disabled):not([data-variant='default']):not([data-variant='destructi
     border-top: 1px solid var(--border);
   }
 }
+
+/* Feedback stays readable without depending on colour or animation. */
+.session-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.session-status svg {
+  width: 13px;
+  height: 13px;
+}
+.session-status small {
+  font-size: 10px;
+  max-width: 5.5em;
+}
+.waiting-reason {
+  padding: 8px 20px;
+  font-size: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted-foreground);
+}
+.experience-error {
+  margin: 8px 16px;
+  width: auto;
+  flex-shrink: 0;
+}
+.experience-error details {
+  grid-column: 1 / -1;
+}
+.experience-error pre,
+.provider-details pre {
+  max-height: 150px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.archive-undo {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--popover);
+  color: var(--popover-foreground);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 30px #0002;
+}
+.history-return {
+  align-self: center;
+  margin: 6px;
+  flex-shrink: 0;
+}
+[data-search-target] {
+  outline: 2px solid var(--ring);
+  outline-offset: 5px;
+  border-radius: 6px;
+}
+.search-results [aria-selected='true'] {
+  background: var(--accent);
+}
+.search-results p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  margin: 4px 0;
+}
+.provider-details {
+  display: grid;
+  gap: 12px;
+}
+.file-preview-dialog {
+  width: min(90vw, 960px);
+  max-width: min(90vw, 960px);
+}
+.file-preview-image {
+  overflow: auto;
+  max-height: 60vh;
+}
+.file-preview-image img {
+  display: block;
+  height: auto;
+}
+.file-preview-text {
+  overflow: auto;
+  max-height: 60vh;
+  white-space: pre;
+  padding: 16px;
+  background: var(--muted);
+  border-radius: 8px;
+  font-size: 12px;
+}
+.attachment-preview-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  min-width: 0;
+}
+.code-block {
+  position: relative;
+}
+.code-block > button {
+  position: sticky;
+  top: 0;
+  display: block;
+  margin-left: auto;
+}
+.local-image img {
+  max-width: 100%;
+  max-height: 360px;
+  object-fit: contain;
+}
+.file-references {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}

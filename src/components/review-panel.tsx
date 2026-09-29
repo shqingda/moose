@@ -1,3 +1,4 @@
+import { useFiles } from './file-preview';
 import { GitCommit } from './git-commit';
 import { PullRequestTools } from './pull-request-tools';
 import { CodeReviewTools } from './code-review-tools';
@@ -26,6 +27,7 @@ function FileReview({
   onError(error: string): void;
   changed(): void;
 }) {
+  const files = useFiles();
   const t = useI18n(),
     [staging, setStaging] = useState(false),
     [open, setOpen] = useState(false),
@@ -67,6 +69,14 @@ function FileReview({
             <span className="file-status">{file.status}</span>
           )}
         </button>
+        <Button
+          size="sm"
+          variant="ghost"
+          aria-label={`${t('preview')} ${file.path}`}
+          onClick={() => files.open({ projectId, sessionId, path: file.path })}
+        >
+          {t('preview')}
+        </Button>
         <Button
           size="sm"
           variant="ghost"

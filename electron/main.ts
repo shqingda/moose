@@ -1,3 +1,4 @@
+import { fault, MooseError } from '../shared/errors';
 import {
   app,
   clipboard,
@@ -5,6 +6,7 @@ import {
   dialog,
   ipcMain,
   Menu,
+  Notification,
   nativeTheme,
   net,
   protocol,
@@ -36,7 +38,10 @@ let window: BrowserWindow | null = null;
 let nativeFrameReady = false;
 let rendererReady = false;
 let quitting = false;
+let viewedSession: string | undefined;
+let pendingNavigation: Extract<AppEvent, { type: 'navigate' }> | undefined;
 const emit = (event: AppEvent) => {
+  if (event.type === 'task-notice') void desktopNotice(event.notice);
   if (window && !window.isDestroyed()) window.webContents.send('moose:event', event);
 };
 const runtime = process.env.MOOSE_SHARED_RUNTIME_FILE
@@ -45,6 +50,58 @@ const runtime = process.env.MOOSE_SHARED_RUNTIME_FILE
       (app.isPackaged && !process.env.MOOSE_DATA_DIR && process.env.MOOSE_RUNTIME_MODE !== 'local')
     ? desktopRuntime(join(directory, '../web-server/web-server.js'), app.getPath('userData'), emit)
     : new RuntimeHost(join(directory, '../runtime/runtime.js'), app.getPath('userData'), emit);
+function presence(focused = true) {
+  return runtime.request('clientPresence', {
+    sessionId: viewedSession,
+    focused:
+      focused && !!window && !window.isDestroyed() && window.isFocused() && window.isVisible(),
+  });
+}
+async function desktopNotice(notice: import('../shared/experience').TaskNotice) {
+  try {
+    if (!Notification.isSupported()) return;
+    await presence();
+    const claimed = await runtime.request('claimNotice', { id: notice.id });
+    if (!claimed) return;
+    const snapshot = (await runtime.request('snapshot', {})) as Snapshot;
+    const zh =
+      snapshot.settings.language === 'zh-CN' ||
+      (snapshot.settings.language === 'system' && app.getLocale().startsWith('zh'));
+    const label = zh
+      ? { attention: '需要你的操作', completed: '任务已完成', failed: '任务失败' }[notice.kind]
+      : { attention: 'Needs your attention', completed: 'Task completed', failed: 'Task failed' }[
+          notice.kind
+        ];
+    const notification = new Notification({
+      title: `Moose · ${label}`,
+      body: `${notice.project} · ${notice.title}`,
+      silent: true,
+    });
+    notification.on('click', () => {
+      pendingNavigation = {
+        type: 'navigate',
+        sessionId: notice.sessionId,
+        messageId: notice.messageId,
+      };
+      void createWindow().then(() => {
+        window?.show();
+        window?.focus();
+        if (rendererReady && pendingNavigation) {
+          emit(pendingNavigation);
+          pendingNavigation = undefined;
+        }
+      });
+    });
+    notification.on('failed', () => emit({ type: 'notification-unavailable' }));
+    notification.show();
+  } catch {
+    /* Notifications never interrupt task execution. */
+  }
+}
+const presenceTimer = setInterval(() => {
+  if (app.isReady() && !quitting) void presence().catch(() => {});
+}, 15000);
+presenceTimer.unref();
 process.on('SIGTERM', () => app.quit());
 process.on('SIGINT', () => app.quit());
 const appearance = () => ({
@@ -125,6 +182,7 @@ async function createWindow() {
   });
   window.on('closed', () => {
     window = null;
+    void presence(false).catch(() => {});
   });
   if (isDev) await window.loadURL(process.env.VITE_DEV_SERVER_URL!);
   else await window.loadURL('moose://app/index.html');
@@ -252,69 +310,100 @@ else {
           return;
         rendererReady = true;
         revealWindow();
+        if (pendingNavigation) {
+          emit(pendingNavigation);
+          pendingNavigation = undefined;
+        }
       });
       // 页面请求的安全网关：确认来源 frame 和参数，再处理原生能力或转发后台。
       ipcMain.handle('moose:request', async (event, method: Method, input: unknown) => {
-        const frame = event.senderFrame;
-        if (
-          !window ||
-          frame !== window.webContents.mainFrame ||
-          !(
-            frame.url.startsWith('moose://app/') ||
-            (isDev &&
-              new URL(frame.url).origin === new URL(process.env.VITE_DEV_SERVER_URL!).origin)
+        try {
+          const frame = event.senderFrame;
+          if (
+            !window ||
+            frame !== window.webContents.mainFrame ||
+            !(
+              frame.url.startsWith('moose://app/') ||
+              (isDev &&
+                new URL(frame.url).origin === new URL(process.env.VITE_DEV_SERVER_URL!).origin)
+            )
           )
-        )
-          throw new Error('Untrusted IPC sender');
-        const params = validate(method, input);
-        if (method === 'addProject') {
-          const result = await dialog.showOpenDialog(window, {
-            properties: ['openDirectory'],
-            buttonLabel: 'Open project',
-          });
-          return result.canceled
-            ? null
-            : runtime.request('_addProject', { path: result.filePaths[0] });
+            throw new Error('Untrusted IPC sender');
+          const params = validate(method, input);
+          if (method === 'notificationPermission')
+            return Notification.isSupported() ? 'default' : 'unsupported';
+          if (method === 'clientPresence') {
+            viewedSession = (params as Requests['clientPresence']).sessionId;
+            return presence((params as Requests['clientPresence']).focused);
+          }
+          if (method === 'showNotification') return null;
+          if (method === 'addProject') {
+            const result = await dialog.showOpenDialog(window, {
+              properties: ['openDirectory'],
+              buttonLabel: 'Open project',
+            });
+            return result.canceled
+              ? null
+              : runtime.request('_addProject', { path: result.filePaths[0] });
+          }
+          if (method === 'pickAttachments') {
+            const result = await dialog.showOpenDialog(window, {
+              properties: ['openFile', 'multiSelections'],
+            });
+            if (result.filePaths.length > 10)
+              throw new MooseError('attachments', 'Select at most 10 attachments.');
+            return result.canceled
+              ? []
+              : runtime.request('_importAttachments', { paths: result.filePaths });
+          }
+          if (method === 'fileDownload') {
+            const info = (await runtime.request('fileInfo', params)) as {
+              name: string;
+              size: number;
+            };
+            const target = await dialog.showSaveDialog(window, { defaultPath: info.name });
+            if (!target.canceled && target.filePath)
+              await runtime.request('_saveFile', { reference: params, path: target.filePath });
+            return null;
+          }
+          if (method === 'copyText') {
+            clipboard.writeText((params as Requests['copyText']).text);
+            return null;
+          }
+          if (method === 'openExternal') {
+            await shell.openExternal((params as Requests['openExternal']).url);
+            return null;
+          }
+          if (method === 'openProject') {
+            const p = params as Requests['openProject'],
+              path = (await runtime.request('workspacePath', {
+                projectId: p.projectId,
+                sessionId: p.sessionId,
+              })) as string;
+            if (p.target === 'finder') {
+              const error = await shell.openPath(path);
+              if (error) throw new Error(error);
+            } else await openEditor(path);
+            return null;
+          }
+          const result = await runtime.request(method, params);
+          if (method === 'snapshot' || method === 'settings') {
+            const settings =
+              method === 'snapshot' ? (result as Snapshot).settings : (result as Settings);
+            if (settings && nativeTheme.themeSource !== settings.theme)
+              nativeTheme.themeSource = settings.theme;
+            if (settings) menu(settings.language);
+          }
+          if (method === 'snapshot')
+            return {
+              ...(result as Snapshot),
+              ...appearance(),
+              runtimeMode: runtime instanceof RuntimeHost ? 'local' : 'shared',
+            };
+          return result;
+        } catch (error) {
+          return { __mooseError: fault(error) };
         }
-        if (method === 'pickAttachments') {
-          const result = await dialog.showOpenDialog(window, {
-            properties: ['openFile', 'multiSelections'],
-          });
-          if (result.filePaths.length > 10) throw new Error('Select at most 10 attachments.');
-          return result.canceled
-            ? []
-            : runtime.request('_importAttachments', { paths: result.filePaths });
-        }
-        if (method === 'copyText') {
-          clipboard.writeText((params as Requests['copyText']).text);
-          return null;
-        }
-        if (method === 'openExternal') {
-          await shell.openExternal((params as Requests['openExternal']).url);
-          return null;
-        }
-        if (method === 'openProject') {
-          const p = params as Requests['openProject'],
-            path = (await runtime.request('workspacePath', {
-              projectId: p.projectId,
-              sessionId: p.sessionId,
-            })) as string;
-          if (p.target === 'finder') {
-            const error = await shell.openPath(path);
-            if (error) throw new Error(error);
-          } else await openEditor(path);
-          return null;
-        }
-        const result = await runtime.request(method, params);
-        if (method === 'snapshot' || method === 'settings') {
-          const settings =
-            method === 'snapshot' ? (result as Snapshot).settings : (result as Settings);
-          if (settings && nativeTheme.themeSource !== settings.theme)
-            nativeTheme.themeSource = settings.theme;
-          if (settings) menu(settings.language);
-        }
-        if (method === 'snapshot') return { ...(result as Snapshot), ...appearance() };
-        return result;
       });
       nativeTheme.on('updated', () => emit({ type: 'appearance' }));
       menu();
@@ -335,8 +424,9 @@ else {
     if (quitting) return;
     event.preventDefault();
     quitting = true;
-    void runtime
-      .close()
+    void presence(false)
+      .catch(() => {})
+      .then(() => runtime.close())
       .catch(console.error)
       .finally(() => app.quit());
   });
