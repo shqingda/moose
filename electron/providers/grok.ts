@@ -204,6 +204,10 @@ export class GrokAdapter implements AgentAdapter {
           );
         }),
       ]);
+    } catch (error) {
+      if (error instanceof RequestError && error.code === -32000)
+        throw new RpcRejected(error.message, 'auth');
+      throw error;
     } finally {
       clearTimeout(timer);
     }

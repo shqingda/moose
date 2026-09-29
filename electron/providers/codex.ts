@@ -163,9 +163,14 @@ export class CodexAdapter implements AgentAdapter {
         if (this.reviewing && this.cancelled) this.finish?.resolve();
         else if (turn.status === 'failed')
           this.finish?.reject(
-            this.reviewing
-              ? new RpcRejected(string(record(turn.error).message) || 'Codex review failed')
-              : new Error(string(record(turn.error).message) || 'Codex turn failed'),
+            record(turn.error).codexErrorInfo === 'unauthorized'
+              ? new RpcRejected(
+                  string(record(turn.error).message) || 'Authentication required',
+                  'auth',
+                )
+              : this.reviewing
+                ? new RpcRejected(string(record(turn.error).message) || 'Codex review failed')
+                : new Error(string(record(turn.error).message) || 'Codex turn failed'),
           );
         else if (this.reviewing && turn.status !== 'completed')
           this.finish?.reject(new RpcRejected('Review did not complete'));

@@ -25,6 +25,7 @@ export class OpenCodeAdapter implements AgentAdapter {
     if (!/(?:^|\s|v)2\./.test(version))
       throw new Error('OpenCode v2 is required. Install opencode-v2 or select its executable.');
     const rpc = (this.rpc = new JsonRpc(this.path, ['acp'], cwd, {
+      authenticationErrorCode: -32000,
       encode: (value) => ({ jsonrpc: '2.0', ...value }),
       decode: (value) => value as import('./rpc').RpcMessage,
     }));

@@ -271,6 +271,7 @@ export class MooseService {
             info.connected = true;
           } catch (error) {
             info.error = providerError(error);
+            info.failure = fault(error);
           } finally {
             if (adapter) {
               await adapter.close();

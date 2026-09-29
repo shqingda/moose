@@ -1,3 +1,4 @@
+import { JsonRpc, type RpcMessage } from '../../electron/providers/rpc';
 import { afterEach, expect, it } from 'vitest';
 import { mkdtempSync, rmSync, writeFileSync, mkdirSync, symlinkSync, realpathSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -179,4 +180,29 @@ it('searches 10,000 one-KiB messages under the 300 ms P95 budget', () => {
   timings.sort((a, b) => a - b);
   console.log(`Search 10k P95: ${timings[18].toFixed(1)} ms`);
   expect(timings[18]).toBeLessThan(300);
+});
+
+it('recognizes explicit ACP authentication errors without guessing from generic RPC codes or text', async () => {
+  for (const acp of [false, true]) {
+    const rpc = new JsonRpc(
+      process.execPath,
+      [
+        '-e',
+        `process.stdin.on('data', data => { const request=JSON.parse(data); process.stdout.write(JSON.stringify({id: request.id, error:{code:-32000,message:'login failed'}})+'\\n'); });`,
+      ],
+      undefined,
+      {
+        authenticationErrorCode: acp ? -32000 : undefined,
+        encode: (value) => value,
+        decode: (value) => value as RpcMessage,
+      },
+    );
+    try {
+      await expect(rpc.request('initialize', {})).rejects.toMatchObject({
+        code: acp ? 'auth' : 'unknown',
+      });
+    } finally {
+      await rpc.close();
+    }
+  }
 });

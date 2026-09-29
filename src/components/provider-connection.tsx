@@ -51,7 +51,9 @@ export function ProviderConnection({
       ? 'missing'
       : info.connected
         ? 'ready'
-        : 'failed';
+        : info.failure?.code === 'auth'
+          ? 'auth'
+          : 'failed';
   useEffect(() => {
     if (initiallyExpanded) setExpanded(true);
   }, [initiallyExpanded]);
@@ -68,11 +70,12 @@ export function ProviderConnection({
       setValue(path);
       setDirty(false);
       setState('saved');
-      await onReconnect();
     } catch (error) {
       setState('failed');
       onError(error);
+      return;
     }
+    await onReconnect().catch(onError);
   }
   return (
     <section className="provider-card">

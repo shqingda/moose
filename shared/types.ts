@@ -156,6 +156,7 @@ export interface ModelOption {
   efforts: Choice[];
 }
 export interface ProviderInfo {
+  failure?: import('./errors').Fault;
   enabled?: boolean;
   provider: Provider;
   path: string;

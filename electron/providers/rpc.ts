@@ -9,10 +9,18 @@ export type RpcMessage = {
 };
 /** 只转换协议信封，复用请求关联、缓冲限制、超时及子进程清理。 */
 export interface RpcCodec {
+  authenticationErrorCode?: number;
   encode(message: RpcMessage): unknown;
   decode(message: unknown): RpcMessage;
 }
-export class RpcRejected extends Error {}
+export class RpcRejected extends Error {
+  constructor(
+    message: string,
+    public code: 'auth' | 'unknown' = 'unknown',
+  ) {
+    super(message);
+  }
+}
 export class JsonRpc {
   readonly child;
   onNotification: (method: string, params: unknown) => void = () => {};
@@ -79,7 +87,13 @@ export class JsonRpc {
       clearTimeout(pending.timer);
       if (message.error)
         pending.reject(
-          new RpcRejected(string(record(message.error).message) || 'Agent request failed'),
+          new RpcRejected(
+            string(record(message.error).message) || 'Agent request failed',
+            this.codec?.authenticationErrorCode !== undefined &&
+              message.error.code === this.codec.authenticationErrorCode
+              ? 'auth'
+              : 'unknown',
+          ),
         );
       else pending.resolve(message.result);
     }
