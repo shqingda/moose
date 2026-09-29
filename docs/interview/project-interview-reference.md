@@ -337,23 +337,49 @@ SQLite、CLI、Git 和远端没有统一事务，因此不能承诺外部副作�
 
 ## 8. Plan、Goal 和运行中插话
 
-Plan 先审方案，Goal 围绕目标持续推进，插话在当前回合补充要求。
+Plan 是“先给我方案，我批准后再做”；Goal 是“按这个目标继续做，直到完成或遇到阻碍”；插话是在当前任务执行中补充要求。
+
+输入框中的 `/plan` 和 `/goal` 首先是 **Moose 的模式选择入口**：输入 `/` 后选中对应候选项，前端会删掉这段命令文字，并把 `mode: 'plan'` 或 `mode: 'goal'` 放进草稿上下文。发送时，正文和模式一起进入 Moose 的持久化队列，后台按模式调用对应 CLI。仅把 `/plan` 或 `/goal` 留在正文里、不选候选项，不会切换 Moose 的模式。Plan 目前只对 Codex 开放，Goal 对 Codex 和 Grok 开放。
+
+下面的 `thread/goal/set`、`turn/start` 等是 **Moose 后台向 Codex 发的请求名**，不是用户要输入的命令，也不是网页地址。这里没有走 HTTP：Moose 用 Node.js 启动本机的 `codex app-server` 子进程，与它之间建立标准输入、标准输出管道。`rpc.request(method, params)` 给请求分配一个数字 ID，将 `{ id, method, params }` 转成一行 JSON 写入子进程的标准输入；Codex 从标准输出写回一行 JSON，Moose 按 ID 找到等待中的请求并返回结果。没有 ID 的消息则是 Codex 主动发来的进度通知。这种方式是本机进程间通信；HTTP 只是另一种传输方式，并不是发请求的必要条件。实现见 [启动进程](../../electron/providers/process.ts)、[写入与接收 JSON](../../electron/providers/rpc.ts)、[连接 Codex](../../electron/providers/codex.ts)。
+
+先按动作理解这些请求名：
+
+| 名称 | 在这里做什么 |
+| --- | --- |
+| thread（会话） | Codex 保存对话和任务状态的地方；同一会话可以执行多轮任务。 |
+| turn（执行轮次） | 在某条会话里处理一次输入。Plan 的“写方案”和批准后的“执行方案”是两轮。 |
+| `turn/start` | 在会话中开始一轮执行，把用户正文和本轮模式交给 Codex。 |
+| `thread/goal/set` | 在会话上创建或更新长期目标：目标文字、暂停或继续状态，以及可选的 token 预算。 |
+| `thread/goal/get` | 读取这个目标现在的状态，供 Moose 判断是否还要等待。 |
 
 ### Plan：审阅的是哪一版计划
 
-Codex Plan 自 0.11.0 起使用原生 `collaborationMode: plan`，并限制为只读 sandbox、禁止提权；即使会话选了完全访问，规划这轮也不沿用。
+例如输入 `/plan`、选中“Plan mode”，再发送“给登录页加验证码”：
 
-Moose 保存计划正文和版本；修改后版本递增。批准时，后台检查完成状态、最新版本、是否已批准及其他排队消息。
+1. 前端记录 `mode: 'plan'`，正文仍是“给登录页加验证码”。后台从队列取出任务，打开 Codex 会话，并询问 Codex 是否支持规划模式（`collaborationMode/list`）。
+2. 后台把这轮任务的文件权限限制为只读，并禁止提权；然后开始“写方案”这一轮（`turn/start`），告诉 Codex 本轮使用规划模式（`mode: 'plan'`）。这里没有给正文拼接 `/plan`。即使会话平时允许写入，规划这轮也不能沿用写入权限。
+3. Codex 逐段返回计划（`item/plan/delta` 等通知）。Moose 把它保存成计划消息，初始版本为 1，页面显示“修改计划”和“批准并执行”。规划结束后，Moose 暂停该会话的队列，等待用户决定。
+4. 用户修改计划时，后台保存新正文并把版本加 1。批准时，后台重新检查这条计划已完成、版本仍是最新、尚未批准、会话没有更新的需求或待执行消息。批准记录和“按已批准版本执行”的新任务在同一个数据库事务里保存，避免重复点击执行两次或执行旧版本。
+5. 新任务沿用同一个 Codex 会话，开始“执行方案”这一轮（再次调用 `turn/start`），切回普通模式（`mode: 'default'`）并恢复会话原本的权限。它收到的是带批准版本号的计划正文；规划完成本身不会直接开始写代码。
 
-批准记录与正文入队在同一事务中完成。执行切回原生 default 模式，沿用原生会话并恢复所选权限；规划结束不会顺手执行下一条需求。
+例如页面还显示版本 2，但另一处已经把计划改成版本 3，版本 2 的批准请求会被后台拒绝。只把旧按钮置灰不能防止迟到请求，所以后台也检查版本。
 
-例如用户看到版本 2，计划已改成版本 3，旧批准必须失败；按钮置灰挡不住旧请求，后台和数据库也要校验。
+代码入口：[模式候选项](../../src/components/context-suggestions.tsx)、[计划展示与按钮](../../src/components/plan-review.tsx)、[计划版本及批准事务](../../electron/plans.ts)、[队列及暂停](../../electron/service.ts)、[Codex Plan 协议](../../electron/providers/codex.ts)。
 
 ### Goal：谁在继续安排下一轮
 
-Codex Goal 用 `thread/goal/set`、`get` 设置目标和可选 token 预算。输入先进入原生任务，再由底座继续执行；完成、阻塞、预算或额度限制时结束等待。
+例如输入 `/goal`、选中“Goal mode”，再发送“把项目里的类型错误修完”：正文和 `mode: 'goal'` 一起入队。Moose 负责启动任务并显示结果；要不要继续下一轮，由底座的 Goal 机制决定。
 
-Grok 通过 ACP 发送原生 `/goal`。Moose 不自行循环提问，也不套用 Codex 的预算和状态语义。Pi、OpenCode 尚未接入 Goal。
+**选择 Codex 时：**
+
+1. 后台打开 Codex 会话，把“把项目里的类型错误修完”保存为这条会话的长期目标（`thread/goal/set`）。目标先设为暂停；如果请求中有 token 预算，也一并保存。
+2. 后台先把正文作为普通任务交给 Codex 执行一轮（`turn/start`）。这一轮完成后，查询目标状态（`thread/goal/get`）。如果已经完成、阻塞，或达到预算、额度限制，任务就结束；否则把目标改为继续（再次调用 `thread/goal/set`，状态设为 `active`），由 Codex 安排后续执行。
+3. Codex 后续每完成一轮，Moose 再查询目标状态。目标仍在继续时，Moose 保持等待；目标完成、阻塞、达到预算或额度限制等不再继续的状态时，等待结束。用户停止任务或关闭连接时，后台会尝试把仍在继续的目标改为暂停。
+
+**选择 Grok 时：** 后台把 `/goal ` 加在正文前面，通过 ACP（与 Grok CLI 通信的协议）的 `session/prompt` 发给 Grok。例如上面的正文实际发送为 `/goal 把项目里的类型错误修完`。这条命令由 Grok 原生处理，Moose 等待这次调用返回。Grok 不用 Codex 的 `thread/goal/*` 接口；Pi、OpenCode 尚未接入 Goal。
+
+代码入口：[模式候选项](../../src/components/context-suggestions.tsx)、[队列到适配器](../../electron/service.ts)、[Codex Goal 协议和状态等待](../../electron/providers/codex.ts)、[Grok ACP 命令](../../electron/providers/grok.ts)。
 
 ### 插话：和下一条排队消息有什么不同
 
