@@ -2,6 +2,7 @@ import mark from '../assets/moose-mark.json';
 import type { ComponentProps, ReactNode } from 'react';
 import { Button } from './ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { cn } from '../lib/utils';
 import {
   Select,
   SelectContent,
@@ -14,11 +15,22 @@ import {
 export function IconButton({
   label,
   children,
+  className,
   ...props
 }: ComponentProps<typeof Button> & { label: string }) {
   return (
     <Tooltip>
-      <TooltipTrigger render={<Button variant="ghost" size="icon" aria-label={label} {...props} />}>
+      <TooltipTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={label}
+            className={cn('icon-button', className)}
+            {...props}
+          />
+        }
+      >
         {children}
       </TooltipTrigger>
       <TooltipContent>{label}</TooltipContent>

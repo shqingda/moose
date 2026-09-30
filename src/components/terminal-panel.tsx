@@ -1,6 +1,6 @@
 import { ConfirmDialog, type Confirmation } from './confirm-dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { BackgroundScope } from '../../shared/background';
 import type { TerminalSession } from '../../shared/terminal';
 import { useI18n } from '../lib/i18n';
@@ -13,16 +13,21 @@ export function TerminalPanel({
   scope,
   selected,
   onSelect: setSelected,
+  initializing,
+  onEmpty,
 }: {
   scope: BackgroundScope;
   selected: string;
   onSelect(id: string): void;
+  initializing: boolean;
+  onEmpty(): void;
 }) {
   const t = useI18n(),
     [sessions, setSessions] = useState<TerminalSession[]>([]),
     [busy, setBusy] = useState(false),
     [error, setError] = useState('');
   const [confirmation, setConfirmation] = useState<Confirmation>();
+  const hadSessions = useRef(false);
   const session = sessions.find((item) => item.id === selected);
   useEffect(() => {
     let live = true,
@@ -35,6 +40,8 @@ export function TerminalPanel({
         if (live) {
           setSessions(rows);
           if (!rows.some((row) => row.id === selected)) setSelected(rows[0]?.id || '');
+          if (rows.length) hadSessions.current = true;
+          else if (hadSessions.current && !initializing) onEmpty();
         }
       } catch (e) {
         if (live) setError(String(e));
@@ -48,13 +55,15 @@ export function TerminalPanel({
       live = false;
       clearInterval(timer);
     };
-  }, [scope.projectId, scope.sessionId, selected, setSelected]);
+  }, [scope.projectId, scope.sessionId, selected, setSelected, initializing, onEmpty]);
   async function act(action: () => Promise<void>) {
     setBusy(true);
     setError('');
     try {
       await action();
-      setSessions(await window.moose.request('terminalList', scope));
+      const rows = await window.moose.request('terminalList', scope);
+      setSessions(rows);
+      if (rows.length) hadSessions.current = true;
     } catch (e) {
       setError(String(e));
     } finally {
@@ -66,6 +75,7 @@ export function TerminalPanel({
       value={selected}
       onValueChange={(value) => setSelected(String(value))}
       className="terminal-panel"
+      aria-busy={busy || initializing}
     >
       <div className="terminal-toolbar">
         <div className="terminal-session-tabs">
@@ -86,8 +96,16 @@ export function TerminalPanel({
                       description: t('endTerminalDescription'),
                       destructive: true,
                       action: async () => {
-                        await window.moose.request('terminalStop', { id: row.id });
-                        if (selected === row.id) setSelected('');
+                        setBusy(true);
+                        try {
+                          await window.moose.request('terminalStop', { id: row.id });
+                          const rows = await window.moose.request('terminalList', scope);
+                          setSessions(rows);
+                          if (selected === row.id) setSelected(rows[0]?.id || '');
+                          if (!rows.length) onEmpty();
+                        } finally {
+                          setBusy(false);
+                        }
                       },
                     })
                   }
@@ -104,7 +122,7 @@ export function TerminalPanel({
           variant="ghost"
           size={sessions.length ? 'icon' : 'default'}
           className="terminal-new-button"
-          disabled={busy}
+          disabled={busy || initializing}
           onClick={() =>
             void act(async () => {
               const next = await window.moose.request('terminalStart', {
@@ -121,6 +139,11 @@ export function TerminalPanel({
           {!sessions.length && t('ptyNew')}
         </Button>
       </div>
+      {initializing && !sessions.length && (
+        <p role="status" className="terminal-loading">
+          {t('loading')}
+        </p>
+      )}
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>

@@ -55,6 +55,7 @@ export function WorkspaceTools({
               ref={trigger}
               variant="ghost"
               size="icon"
+              className="icon-button"
               aria-label={t('workspaceTools')}
               title={t('workspaceTools')}
             />

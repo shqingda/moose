@@ -193,17 +193,13 @@ test('runs a real PTY, resizes it, edits with vim and survives closing the panel
   const { page, root, scope } = await launch();
   await page.getByRole('button', { name: 'Background commands & schedules', exact: true }).click();
   const dialog = page.getByRole('dialog');
-  await expect(dialog.getByRole('button', { name: 'New terminal', exact: true })).toHaveText(
-    'New terminal',
-  );
-  const emptyButtonHeight = await dialog
+  await expect(dialog.locator('.terminal-session-tab')).toBeVisible();
+  const newButtonHeight = await dialog
     .getByRole('button', { name: 'New terminal', exact: true })
     .evaluate((el) => getComputedStyle(el).height);
-  await dialog.getByRole('button', { name: 'New terminal', exact: true }).click();
-  await expect(dialog.locator('.terminal-session-tab')).toBeVisible();
   expect(
     await dialog.locator('.terminal-session-tab').evaluate((el) => getComputedStyle(el).height),
-  ).toBe(emptyButtonHeight);
+  ).toBe(newButtonHeight);
   await expect(dialog.getByRole('button', { name: 'New terminal', exact: true })).toHaveText('');
   await expect(dialog.locator('.xterm-screen')).toBeVisible();
   let id = '';
@@ -421,7 +417,6 @@ test('previews timezone calendar runs and preserves weekdays when editing', asyn
 test('moves the same terminal between window, bottom and right without stopping its shell', async () => {
   const { page, scope } = await launch();
   await page.getByRole('button', { name: 'Background commands & schedules', exact: true }).click();
-  await page.getByRole('button', { name: 'New terminal', exact: true }).click();
   await expect(page.locator('.xterm-screen')).toBeVisible();
   const id = (await page.evaluate((scope) => window.moose.request('terminalList', scope), scope))[0]
     .id;
@@ -506,6 +501,30 @@ test('moves the same terminal between window, bottom and right without stopping 
   await page.getByRole('button', { name: 'End terminal', exact: true }).click();
   await page.getByRole('alertdialog').getByRole('button', { name: 'Confirm', exact: true }).click();
   await expect(page.getByRole('alertdialog')).not.toBeVisible();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: 'Background commands & schedules', exact: true }),
+  ).toHaveAttribute('aria-expanded', 'false');
+  // Each placement reopens with one shell and disappears when that shell exits.
+  for (const placement of ['Bottom', 'Right', 'Window']) {
+    await page
+      .getByRole('button', { name: 'Background commands & schedules', exact: true })
+      .click();
+    await expect(page.locator('.terminal-session-tab')).toHaveCount(1);
+    await change(placement);
+    const sessions = await page.evaluate(
+      (scope) => window.moose.request('terminalList', scope),
+      scope,
+    );
+    expect(sessions).toHaveLength(1);
+    await page.evaluate(
+      (id) => window.moose.request('terminalInput', { id, text: 'exit\r' }),
+      sessions[0].id,
+    );
+    await expect(page.locator('.terminal-panel')).toHaveCount(0);
+    await expect(page.locator('.workspace-stage')).not.toHaveAttribute('data-dock');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+  }
 });
 
 test('opens concurrent terminal tabs and releases the directory only after the last closes', async () => {
@@ -513,7 +532,6 @@ test('opens concurrent terminal tabs and releases the directory only after the l
   await page.getByRole('button', { name: 'Background commands & schedules', exact: true }).click();
   const panel = page.locator('.terminal-panel');
   const newTerminal = page.getByRole('button', { name: 'New terminal', exact: true });
-  await newTerminal.click();
   await expect(panel.getByRole('tab')).toHaveCount(1);
   await newTerminal.click();
   await expect(panel.getByRole('tab')).toHaveCount(2);
@@ -573,6 +591,7 @@ test('opens concurrent terminal tabs and releases the directory only after the l
   await page.getByRole('alertdialog').getByRole('button', { name: 'Confirm', exact: true }).click();
   await expect(page.getByRole('alertdialog')).not.toBeVisible();
   await expect(panel.getByRole('tab')).toHaveCount(0);
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   expect(
     await page.evaluate((scope) => window.moose.request('terminalList', scope), scope),
   ).toEqual([]);
@@ -608,7 +627,6 @@ test('runs pnpm test alongside a terminal and preserves directory protection unt
     JSON.stringify({ scripts: { test: 'node -e "console.log(\'TEST_COMMAND_OK\')"' } }),
   );
   await page.getByRole('button', { name: 'Background commands & schedules', exact: true }).click();
-  await page.getByRole('button', { name: 'New terminal', exact: true }).click();
   await expect(page.locator('.terminal-screen')).toHaveCSS(
     'background-color',
     'rgb(255, 255, 255)',
@@ -650,7 +668,7 @@ test('runs pnpm test alongside a terminal and preserves directory protection unt
       scope,
     ),
   ).rejects.toThrow('Stop the project tasks');
-  await page.getByRole('button', { name: 'New terminal', exact: true }).click();
+  await page.getByRole('button', { name: 'Background commands & schedules', exact: true }).click();
   await expect(page.locator('.terminal-screen')).toBeVisible();
   await page.getByRole('button', { name: 'End terminal', exact: true }).click();
   await page.getByRole('alertdialog').getByRole('button', { name: 'Confirm', exact: true }).click();

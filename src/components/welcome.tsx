@@ -1,4 +1,4 @@
-import { FolderOpen } from 'lucide-react';
+import { ChevronRight, FolderOpen } from 'lucide-react';
 import { useI18n } from '../lib/i18n';
 import { Button } from './ui/button';
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from './ui/empty';
@@ -22,9 +22,20 @@ export function Welcome({ projectName, onAdd }: { projectName?: string; onAdd():
         </EmptyHeader>
       </Empty>
       {!projectName && (
-        <Button onClick={onAdd} size="lg">
-          <FolderOpen data-icon="inline-start" />
-          {t('addProject')}
+        <Button
+          onClick={onAdd}
+          variant="outline"
+          className="welcome-project-entry"
+          aria-label={t('addProject')}
+        >
+          <span className="welcome-project-icon" aria-hidden="true">
+            <FolderOpen />
+          </span>
+          <span className="welcome-project-label">
+            <span>{t('addProject')}</span>
+            <span className="welcome-project-hint">{t('chooseProjectFolder')}</span>
+          </span>
+          <ChevronRight className="welcome-project-chevron" />
         </Button>
       )}
     </div>

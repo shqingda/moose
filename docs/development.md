@@ -4,7 +4,7 @@
 
 ## 环境与常用命令
 
-使用 Node.js 26 和 pnpm 12.6.0；包管理器版本由 `package.json` 的 `packageManager` 固定，依赖解析以 `pnpm-lock.yaml` 为准。升级依赖时一并更新锁文件，CI 使用 `pnpm install --frozen-lockfile`。
+使用 Node.js 26 和 pnpm 12.6.0；包管理器版本由 `package.json` 的 `packageManager` 固定，依赖解析以 `pnpm-lock.yaml` 为准。升级依赖时一并更新锁文件，复现既有依赖使用 `pnpm install --frozen-lockfile`。独立 Web 安装包自带的 Node.js 版本由分发脚本固定，与本地开发运行时分别管理。
 
 如果 macOS 报 `node: not found`，先确认 Node 已安装且终端 PATH 正确。Homebrew 默认安装位置可这样加入当前终端：
 
@@ -26,7 +26,9 @@ pnpm lint
 pnpm lint:fix
 pnpm typecheck
 pnpm build
-pnpm dist
+pnpm icon:build # 图标母图修改后重新生成 macOS 图标与 Web favicon
+pnpm dist      # 仅构建桌面 DMG；不等于正式联合发布
+pnpm site:build # 构建官网并同步到分发目录，不部署
 pnpm perf:measure # 测量已打包应用，使用隔离数据
 ```
 
@@ -44,6 +46,23 @@ better-sqlite3 和 node-pty 是运行时原生依赖；安装与打包会准备�
 
 发行包仅保留当前 macOS 架构所需的原生依赖；排除其他平台预编译文件、依赖源码与生产 source map。开发构建保留 source map。Electron 系统界面资源仅保留英语、简体中文及对应变体，与当前产品语言范围一致；其他系统语言回退英语。Unicode 数据与字体支持不裁剪。调整排除规则后必须运行安装包验收，尤其检查 SQLite 和 PTY，不以构建成功代替运行验证。
 
+## 图标与品牌资源
+
+0.21.3 的 macOS 应用与 Dock 使用白底拟物版；0.21.2 安装包使用黑底版，官网仍沿用黑底标识。各用途分别维护，不要把侧边栏剪影替换成大尺寸应用图标：
+
+| 用途 | 源资源与使用位置 | 生成或更新方式 |
+| --- | --- | --- |
+| macOS 应用与 Dock | [moose-icon-white.png](../src/assets/moose-icon-white.png)；桌面打包读取 `build/icon.icns` | 修改白底母图后执行 `pnpm icon:build` |
+| 官网与 README 标识 | [moose-icon-black.png](../src/assets/moose-icon-black.png) | 直接导入黑底母图 |
+| 会话区欢迎 logo | [moose-logo-transparent.png](../src/assets/moose-logo-transparent.png)；[welcome.tsx](../src/components/welcome.tsx) 使用透明 PNG，容器无底色 | 单独维护透明素材；保留金色鹿角、象牙白鹿头、黑色实心眼睛和透明边缘 |
+| 侧边栏剪影与 Web favicon | [moose-mark.json](../src/assets/moose-mark.json)；[MooseMark](../src/components/common.tsx) 使用 `currentColor`，favicon 导出为深浅两份 | 修改共享矢量轮廓后执行 `pnpm icon:build`；侧边栏外观沿用原版 |
+
+`pnpm icon:build` 调用 [scripts/icon.swift](../scripts/icon.swift) 生成 `build/icon.iconset/` 各尺寸 PNG，以及 `public/` 和 `distribution/site/public/` 中的 `favicon.svg`、`favicon-light.svg`，再通过 `iconutil` 生成 `build/icon.icns`。生成资源随源文件一起提交；该命令不会重新生成透明 logo。
+
+应用入口 [index.html](../index.html) 与官网 [根路由](../distribution/site/src/routes/__root.tsx) 通过 `prefers-color-scheme` 选择 favicon：浅色系统用 `favicon.svg`（深色剪影），深色系统用 `favicon-light.svg`（浅色剪影）。它跟随系统偏好，不读取 Moose 的主题设置。
+
+旧绿色拟物 PNG 保留为历史素材，不作为当前打包源。生成提示与历史来源见[图标生成记录](../src/assets/moose-icon-skeuomorphic.md)。视觉核查方法见[测试指南](testing.md#图标与主题验收)。
+
 ## 发布流程
 
 每次必须同时发布桌面与 Web，版本号统一从 `package.json` 读取。不得只更新一端或复用旧版本号替换安装包。
@@ -53,6 +72,28 @@ better-sqlite3 和 node-pty 是运行时原生依赖；安装与打包会准备�
 3. `pnpm release:publish`：要求工作区干净，准备记录对应当前提交，桌面 App、DMG、Web 清单和校验值匹配同一版本。推送代码及 tag，把两端安装包上传至 GitHub 草稿 Release，再部署 Cloudflare。
 4. 脚本等待公网版本清单与本地产物一致，再从正式 Web 地址重新安装并验证；通过后才将 GitHub Release 公开并设为最新。任何一步失败均不报告发布完成；保留草稿，排查后重试，不能绕过另一端验证。
 
+```sh
+pnpm release:prepare
+pnpm release:publish
+```
+
+正式发布前需能使用已登录的 `gh` 和 Cloudflare Wrangler，并能下载分发脚本固定的官方 Node.js 压缩包。`release:publish` 推送当前提交及 `v<version>` 标签，不自动切换或重写分支。
+
+| 文件或记录 | 含义 |
+| --- | --- |
+| `release/Moose-<version>-arm64.dmg` | macOS 桌面安装包 |
+| `release/Moose-<version>-web-darwin-arm64.tar.gz` | 独立 Web 安装包 |
+| `release/Moose-<version>-SHA256SUMS.txt` | 两端安装包的 SHA-256 |
+| `release/prepared.json` | 已验收的版本、Git 提交与安装包路径 |
+| `distribution/public/latest-darwin-arm64.txt` | Web 发行标识、完整压缩包 SHA-256 和分片数；标识形如 `<version>-<hash前12位>`，包内版本仍取自 `package.json` |
+
 发布入口在 `scripts/release.mjs`。两处服务无法进行跨平台原子提交，因此按上述顺序进行一次联合发布；公网验证未通过时桌面保持草稿。已发布 Web 的历史分片需要保留，避免升级时打断正在进行的下载。详情见 [Web 分发说明](../distribution/README.md)。
 
-当前使用 ad-hoc 签名，没有 Apple 公证、自动安装升级或遥测；Web 的 `moose update` 是用户主动执行的安装更新，保留现有后台直到用户重启。签名失败应中止发布；不要把去除下载隔离标记描述为签名或公证的替代品。应用图标源在仓库中，`pnpm icon:build` 可重新生成。
+### 发布失败后的处理
+
+- **准备失败**：修复格式、测试或打包问题并提交；从新的干净提交重新执行 `pnpm release:prepare`，再发布。准备记录与提交绑定，不能直接复用旧记录。
+- **上传或部署失败**：保留草稿 Release、当前标签和发行文件。问题解决后，在相同版本、相同准备提交上重跑 `pnpm release:publish`；该命令可恢复草稿发布。
+- **公网安装失败**：即使版本清单已经切换，也需确认所有分片可下载。部署传播期间分片可能短暂返回 404；核对[分发说明](../distribution/README.md#deployment-recovery)中的地址后重跑正式发布命令，不能手动跳过 smoke 或提前公开 Release。
+- **版本已经公开**：发布脚本拒绝覆盖已公开版本。需要修改安装包时增加新版本；单纯文档修订不重新打包或改写发布标签。
+
+当前使用 ad-hoc 签名，没有 Apple 公证、自动安装升级或遥测；Web 的 `moose update` 是用户主动执行的安装更新，保留现有后台直到用户重启。签名失败应中止发布；不要把去除下载隔离标记描述为签名或公证的替代品。

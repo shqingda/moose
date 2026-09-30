@@ -1,9 +1,10 @@
 import { createPortal } from 'react-dom';
 import { Picker } from './common';
 import { TerminalPanel } from './terminal-panel';
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Terminal, X } from 'lucide-react';
 import type { BackgroundScope, CommandJob, Schedule } from '../../shared/background';
+import type { TerminalSession } from '../../shared/terminal';
 import { useI18n } from '../lib/i18n';
 import { IconButton } from './common';
 import { Button } from './ui/button';
@@ -52,6 +53,49 @@ export function BackgroundTools({
   }, [open, reviewOpen, placement]);
   const [tab, setTab] = useState('terminal');
   const [terminalId, setTerminalId] = useState('');
+  const [terminalStarting, setTerminalStarting] = useState(false);
+  const terminalPending = useRef<Promise<TerminalSession> | null>(null);
+  const terminalSelection = useRef(terminalId);
+  terminalSelection.current = terminalId;
+  const close = useCallback(() => setOpen(false), []);
+  // All entry points share the same in-flight start, including a shortcut while opening.
+  const ensureTerminal = useCallback(
+    async (forceNew = false) => {
+      const previous = terminalPending.current;
+      if (previous && !forceNew) return previous;
+      const pending = (async () => {
+        await previous;
+        const sessions = await window.moose.request('terminalList', scope);
+        const existing =
+          sessions.find((row) => row.id === terminalSelection.current) || sessions[0];
+        return !forceNew && existing
+          ? existing
+          : window.moose.request('terminalStart', {
+              ...scope,
+              requestId: crypto.randomUUID(),
+              cols: 100,
+              rows: 24,
+            });
+      })();
+      terminalPending.current = pending;
+      setTerminalStarting(true);
+      try {
+        const terminal = await pending;
+        setTerminalId(terminal.id);
+        return terminal;
+      } finally {
+        if (terminalPending.current === pending) {
+          terminalPending.current = null;
+          setTerminalStarting(false);
+        }
+      }
+    },
+    [scope.projectId, scope.sessionId],
+  );
+  useEffect(() => {
+    if (!open || tab !== 'terminal') return;
+    void ensureTerminal().catch((e) => setError(String(e)));
+  }, [open, tab, ensureTerminal]);
   useEffect(() => {
     if (!reveal) return;
     setOpen(true);
@@ -84,22 +128,9 @@ export function BackgroundTools({
         }
         setTab('terminal');
         setOpen(true);
-        void (async () => {
-          const sessions = await window.moose.request('terminalList', scope);
-          const existing = sessions.find((row) => row.id === terminalId) || sessions[0];
-          const terminal =
-            event.command !== 'new-terminal' && existing
-              ? existing
-              : await window.moose.request('terminalStart', {
-                  ...scope,
-                  requestId: crypto.randomUUID(),
-                  cols: 100,
-                  rows: 24,
-                });
-          setTerminalId(terminal.id);
-        })().catch((e) => setError(String(e)));
+        void ensureTerminal(event.command === 'new-terminal').catch((e) => setError(String(e)));
       }),
-    [open, tab, terminalId, scope.projectId, scope.sessionId],
+    [open, tab, ensureTerminal],
   );
   const read = () =>
     Promise.all([
@@ -197,7 +228,13 @@ export function BackgroundTools({
           </IconButton>
         </div>
         <TabsContent value="terminal" className="background-terminal">
-          <TerminalPanel scope={scope} selected={terminalId} onSelect={setTerminalId} />
+          <TerminalPanel
+            scope={scope}
+            selected={terminalId}
+            onSelect={setTerminalId}
+            initializing={terminalStarting}
+            onEmpty={close}
+          />
         </TabsContent>
         <TabsContent value="commands" className="extension-section background-scroll">
           <p className="extension-note break-all">{cwd}</p>

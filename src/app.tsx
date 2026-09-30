@@ -504,15 +504,13 @@ function Workspace({
         data-host={window.moose.host || 'desktop'}
       >
         <div className="global-sidebar-toggle">
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={t('toggleSidebar')}
+          <IconButton
+            label={t('toggleSidebar')}
             onClick={toggleSidebar}
             aria-expanded={sidebarOpen}
           >
             <PanelLeft />
-          </Button>
+          </IconButton>
         </div>
         {window.moose.host === 'web' && sidebarOpen && (
           <button
