@@ -47,5 +47,5 @@ pnpm dev
 | 在浏览器中使用同一工作区 | [Web 使用说明](docs/web.md)                                                                  |
 | 理解分层与执行链路       | [技术架构](docs/architecture.md)                                                             |
 | 开发、测试与发布         | [开发与打包](docs/development.md) · [测试与验证](docs/testing.md)                            |
-| 准备项目面试             | [面试材料入口](docs/interview/README.md)                                    |
+| 准备项目面试             | [面试材料入口](docs/interview/README.md)                                                     |
 | 查看剩余工作和版本记录   | [开发计划](docs/providers/native-capabilities-plan.md) · [发布记录](docs/README.md#历史记录) |
