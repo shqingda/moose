@@ -562,8 +562,9 @@ test('web appearance, browser shortcuts, narrow layout and expired login recover
   await page.getByRole('button', { name: 'Review changes', exact: true }).click();
   const review = page.locator('.review-panel');
   await expect(review).toBeVisible();
+  // Visibility can precede the responsive panel reaching its final width.
+  await expect.poll(async () => (await review.boundingBox())?.width || 0).toBeGreaterThan(350);
   expect((await review.boundingBox())!.width).toBeLessThanOrEqual(390);
-  expect((await review.boundingBox())!.width).toBeGreaterThan(350);
   await page.screenshot({ path: 'test-results/web-narrow-review.png' });
   await page.getByRole('button', { name: 'Close', exact: true }).click();
   await page.keyboard.press('Alt+Shift+Comma');
