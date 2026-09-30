@@ -60,6 +60,7 @@ MOOSE_TEST_BACKGROUND=0 pnpm exec tsx scripts/package-smoke.ts
 | 终端与后台命令 | 新建两个终端，执行 `printf 'ok\n'`；切换停靠、关闭标签；单独执行一次命令 | 用户 Shell 配置及交互式程序 |
 | 定时任务 | 保存未来执行时间并检查预览、暂停和编辑；自动化使用受控时间 | 真实长时间运行与休眠后的恢复 |
 | 桌面与 Web | 共用同一后台，刷新恢复会话；检查终端只读、接管与释放 | 托管云端工作区与多人权限不在支持范围内 |
+| 侧栏动效 | 按帧验证标题展开／折叠单向移动、位置不超出起止范围、中途反向连续；草稿保留 | 实际显示窗口与用户录屏仍需视觉核对 |
 | 图标与主题 | 浅深主题切换；欢迎图标透明、侧栏剪影保持原样、favicon 对比清晰 | 实际 Dock 展示和不同浏览器的缓存行为需单独观察 |
 
 实际入口见[使用指南](usage.md)与[Web 使用说明](web.md)。真实 CLI 握手使用 `pnpm test:providers`；`scripts/check-native-workflows.ts` 和 `scripts/check-reasoning.ts` 会发送模型任务，应按需运行。只读探测也可能启动 CLI 或连接其已配置的扩展，不等于完全离线。

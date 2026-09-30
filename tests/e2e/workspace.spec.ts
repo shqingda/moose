@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { Store } from '../../electron/db/store';
 import { randomUUID } from 'node:crypto';
+import { verifySidebarMotion } from './sidebar-motion';
 
 let app: ElectronApplication;
 let dir: string;
@@ -926,6 +927,8 @@ test('keeps empty archives conversation-only and presents quiet workspace contro
   await page.screenshot({ path: 'test-results/quiet-empty-archive.png', animations: 'disabled' });
   await page.getByRole('button', { name: 'Archived sessions', exact: true }).click();
   await page.locator('#composer').fill('A focused workspace');
+  await verifySidebarMotion(page);
+  await expect(page.locator('#composer')).toHaveValue('A focused workspace');
   await page.screenshot({ path: 'test-results/quiet-composer-light.png', animations: 'disabled' });
   await page.evaluate(async () => {
     await window.moose.request('settings', { language: 'zh-CN', theme: 'dark' });

@@ -2,7 +2,7 @@
 
 Public installer: `https://moose.shqingda.workers.dev/install.sh`.
 
-This guide covers distribution operations for Moose 0.21.3. End-user steps are in
+This guide covers distribution operations for Moose 0.21.4. End-user steps are in
 the [Web guide](../docs/web.md); the complete release workflow is maintained in
 [Development and packaging](../docs/development.md#发布流程).
 

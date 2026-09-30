@@ -7,6 +7,7 @@ import { mkdtemp, mkdir, rm, realpath } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { Store } from '../../electron/db/store';
+import { verifySidebarMotion } from './sidebar-motion';
 let app: ElectronApplication,
   desktop: ElectronApplication | undefined,
   child: ChildProcess,
@@ -158,6 +159,7 @@ test('browser login, project selection, OpenCode approval and terminal survive p
   const sidebar = page.locator('.sidebar');
   await expect(sidebar.locator('.sidebar-drag')).toHaveCount(0);
   const toggle = page.locator('.global-sidebar-toggle button');
+  await verifySidebarMotion(page);
   const expandedToggle = await toggle.boundingBox();
   const toolbar = await page.locator('.workspace-header').boundingBox();
   expect(expandedToggle!.y + expandedToggle!.height / 2).toBe(toolbar!.y + toolbar!.height / 2);

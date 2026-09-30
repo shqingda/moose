@@ -1,6 +1,6 @@
 # 使用指南
 
-适用于 0.21.3。浏览器连接方式见 [Web 使用说明](web.md)，各代理支持哪些功能见[能力表](providers/native-capabilities.md)。
+适用于 0.21.4。浏览器连接方式见 [Web 使用说明](web.md)，各代理支持哪些功能见[能力表](providers/native-capabilities.md)。
 
 ## 安装与连接
 

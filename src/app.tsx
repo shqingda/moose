@@ -7,7 +7,15 @@ import { ErrorNotice } from './components/error-notice';
 import { BackgroundTools, type BackgroundPlacement } from './components/background-tools';
 import { WorkspaceTools } from './components/workspace-tools';
 import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { MotionConfig, motion, useReducedMotion } from 'motion/react';
+import {
+  MotionConfig,
+  motion,
+  useMotionValueEvent,
+  useReducedMotion,
+  useSpring,
+  useTransform,
+  type MotionStyle,
+} from 'motion/react';
 import { ChevronDown, Folder, PanelRight, PanelLeft } from 'lucide-react';
 import type {
   Attachment,
@@ -151,9 +159,25 @@ function Workspace({
       !(window.moose.host === 'web' && matchMedia('(max-width: 760px)').matches),
   );
   const [sidebarParked, setSidebarParked] = useState(() => !sidebarOpen);
+  // One interruptible spring keeps the sidebar and toolbar on the same timeline.
+  const sidebarProgress = useSpring(sidebarOpen ? 1 : 0, {
+    stiffness: 380,
+    damping: 39,
+    restDelta: 0.0001,
+    restSpeed: 0.0001,
+  });
+  const sidebarWidth = useTransform(sidebarProgress, [0, 1], [0, 264]);
   useLayoutEffect(() => {
     if (sidebarOpen) setSidebarParked(false);
-  }, [sidebarOpen]);
+    const target = sidebarOpen ? 1 : 0;
+    if (reduceMotion || snapshot.reduceMotion) {
+      sidebarProgress.jump(target);
+      if (!sidebarOpen) setSidebarParked(true);
+    } else sidebarProgress.set(target);
+  }, [sidebarOpen, reduceMotion, snapshot.reduceMotion, sidebarProgress]);
+  useMotionValueEvent(sidebarProgress, 'animationComplete', () => {
+    if (sidebarProgress.get() === 0) setSidebarParked(true);
+  });
   const [undoArchive, setUndoArchive] = useState<Session>();
   const [settingsPage, setSettingsPage] = useState<'general' | 'providers'>('general');
   const [targetMessage, setTargetMessage] = useState<string>();
@@ -499,9 +523,10 @@ function Workspace({
       }}
       scope={project ? { projectId: project.id, sessionId: session?.id } : undefined}
     >
-      <div
+      <motion.div
         className={`app-shell ${sidebarOpen ? '' : 'sidebar-collapsed'}`}
         data-host={window.moose.host || 'desktop'}
+        style={{ '--sidebar-expansion': sidebarProgress } as MotionStyle}
       >
         <div className="global-sidebar-toggle">
           <IconButton
@@ -521,17 +546,8 @@ function Workspace({
         )}
         <motion.div
           className="sidebar-frame"
-          initial={false}
-          animate={{ width: sidebarOpen ? 264 : 0 }}
-          transition={
-            reduceMotion || snapshot.reduceMotion
-              ? { duration: 0 }
-              : { type: 'spring', stiffness: 380, damping: 39 }
-          }
+          style={{ width: sidebarWidth }}
           data-parked={sidebarParked || undefined}
-          onAnimationComplete={() => {
-            if (!sidebarOpen) setSidebarParked(true);
-          }}
           inert={!sidebarOpen}
           aria-hidden={!sidebarOpen}
         >
@@ -844,7 +860,7 @@ function Workspace({
             </form>
           </DialogContent>
         </Dialog>
-      </div>
+      </motion.div>
     </FilePreviewProvider>
   );
 }
