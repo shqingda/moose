@@ -16,7 +16,20 @@ export const Route = createRootRoute({
       { property: 'og:description', content: '在 macOS 桌面端或本机 Web UI 中统一管理编程代理。' },
       { title: 'Moose — AI 编程代理工作台' },
     ],
-    links: [{ rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' }],
+    links: [
+      {
+        rel: 'icon',
+        href: '/favicon.svg',
+        type: 'image/svg+xml',
+        media: '(prefers-color-scheme: light)',
+      },
+      {
+        rel: 'icon',
+        href: '/favicon-light.svg',
+        type: 'image/svg+xml',
+        media: '(prefers-color-scheme: dark)',
+      },
+    ],
   }),
   component: Root,
 });

@@ -356,13 +356,13 @@ kbd {
   justify-content: center;
   width: 96px;
   height: 96px;
-  border-radius: 23px;
   margin-bottom: 1.8rem;
-  background: #21383b;
 }
-.welcome-symbol svg {
-  width: 80px;
-  height: 80px;
+.welcome-symbol img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 .welcome-copy {
   flex: none;
@@ -2638,13 +2638,6 @@ button:not(:disabled):not([data-variant='default']):not([data-variant='destructi
   [data-slot='dialog-overlay'],
   [data-slot='alert-dialog-overlay'] {
     backdrop-filter: none;
-  }
-}
-
-@media (max-height: 720px) {
-  .welcome-symbol svg {
-    width: 66px;
-    height: 66px;
   }
 }
 
