@@ -426,7 +426,10 @@ test('project hover stays uniform and its compose button targets that project', 
   await mkdir(join(dir, 'second'));
   await page.locator('.session-row').click();
   const titleBefore = await page.locator('.header-title').textContent();
-  const heading = page.locator('.project-heading').first();
+  const heading = page
+    .locator('.project-group')
+    .filter({ has: page.locator('.session-row') })
+    .locator('.project-heading');
   await heading.click();
   await expect(page.locator('.session-row')).not.toBeVisible();
   await expect(page.locator('.header-title')).toHaveText(titleBefore!);
