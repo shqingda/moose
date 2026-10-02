@@ -1,5 +1,5 @@
 import { providerDefinitions } from '../../shared/providers';
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { Box, File, Folder, Lightbulb, Target } from 'lucide-react';
 import type { ContextEntry, PromptContext, Provider } from '../../shared/types';
 import { referenceText } from '../../shared/prompt-context';
@@ -14,6 +14,7 @@ export function useSuggestions(
   onContext: (value: PromptContext) => void,
   onError: (error: unknown) => void,
   sessionId?: string,
+  taskModes?: PromptContext['mode'][],
 ) {
   const t = useI18n(),
     [caret, setCaret] = useState(0),
@@ -22,6 +23,13 @@ export function useSuggestions(
     [index, setIndex] = useState(0),
     [loading, setLoading] = useState(false);
   const input = useRef<HTMLTextAreaElement>(null);
+  const nextCaret = useRef<number | undefined>(undefined);
+  useLayoutEffect(() => {
+    if (nextCaret.current === undefined) return;
+    input.current?.focus();
+    input.current?.setSelectionRange(nextCaret.current, nextCaret.current);
+    nextCaret.current = undefined;
+  }, [draft]);
   const match = draft.slice(0, caret).match(/(?:^|\s)([@/])([^\s@]*)$/);
   const trigger = match?.[1],
     query = match?.[2] || '',
@@ -84,8 +92,9 @@ export function useSuggestions(
           ] as const
         ).filter(
           (item) =>
-            (providerDefinitions[provider].taskModes as readonly string[]).includes(item.id) &&
-            `${item.id} ${item.name}`.toLowerCase().includes(query.toLowerCase()),
+            (taskModes || (providerDefinitions[provider].taskModes as readonly string[])).includes(
+              item.id,
+            ) && `${item.id} ${item.name}`.toLowerCase().includes(query.toLowerCase()),
         )
       : [];
   const rows = [
@@ -113,6 +122,7 @@ export function useSuggestions(
         : row.kind === 'skill'
           ? `${referenceText('/', row.name)} `
           : '';
+    nextCaret.current = start + insertion.length;
     onDraft(draft.slice(0, start) + insertion + draft.slice(caret));
     onContext(
       row.mode
@@ -122,10 +132,6 @@ export function useSuggestions(
           : { ...context, references: [...new Set([...context.references, row.path])] },
     );
     setDismissed(true);
-    requestAnimationFrame(() => {
-      input.current?.focus();
-      input.current?.setSelectionRange(start + insertion.length, start + insertion.length);
-    });
   };
   /** 处理候选列表方向键、确认和关闭；返回是否已消费该按键。 */
   const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {

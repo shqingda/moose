@@ -180,10 +180,7 @@ export function SettingsDialog({
           {page === 'providers' && (
             <section className="settings-section">
               <div className="provider-page-heading">
-                <div>
-                  <h3>{t('connections')}</h3>
-                  <p className="provider-intro">{t('providerIntro')}</p>
-                </div>
+                <p className="provider-intro">{t('providerIntro')}</p>
                 <IconButton
                   label={t('refresh')}
                   disabled={checking}

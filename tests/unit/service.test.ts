@@ -48,7 +48,7 @@ function fixture() {
     },
   );
   cleanups.push(async () => {
-    await service.close();
+    if (store.sqlite.open) await service.close();
     rmSync(dir, { recursive: true, force: true });
   });
   return { dir, store, service, agents };
@@ -245,4 +245,28 @@ it('dispatches scheduled agent messages through the normal queue and records the
   );
   await service.handle('scheduleCreate', args);
   expect(agents).toHaveLength(1);
+});
+
+it('waits for pending directory preparation before closing the shared store', async () => {
+  const { store, service, agents, dir } = fixture();
+  const session = store.createSession(store.addProject(dir).id, 'codex');
+  let release!: () => void;
+  vi.spyOn(service['worktrees'], 'ensure').mockImplementation(
+    () =>
+      new Promise<string>((resolve) => {
+        release = () => resolve(dir);
+      }),
+  );
+  await service.handle('send', { sessionId: session.id, text: 'closing during preparation' });
+  await vi.waitFor(() => expect(release).toBeTypeOf('function'));
+  let closed = false;
+  const closing = service.close().then(() => {
+    closed = true;
+  });
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  expect(closed).toBe(false);
+  release();
+  await closing;
+  expect(agents).toHaveLength(0);
+  // fixture cleanup may call close again; all owned resources are already settled.
 });

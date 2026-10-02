@@ -15,6 +15,12 @@ const context = z.strictObject({
   subagents: z.boolean().optional(),
 });
 const nativeId = z.string().min(1).max(200);
+// Pi identifies native sessions by an absolute filename, which can exceed an opaque ID's size.
+const nativeSessionId = z
+  .string()
+  .min(1)
+  .max(4096)
+  .refine((value) => !value.includes('\0'));
 const cursor = z.string().min(1).max(4096).optional();
 const gitRef = z
   .string()
@@ -174,14 +180,14 @@ export const schemas = {
     sessionId: id.optional(),
     projectId: id,
     provider: z.enum(providerIds),
-    nativeId,
+    nativeId: nativeSessionId,
     cursor,
   }),
   nativeImport: z.strictObject({
     sessionId: id.optional(),
     projectId: id,
     provider: z.enum(providerIds),
-    nativeId,
+    nativeId: nativeSessionId,
   }),
   nativeFork: z.strictObject({ sessionId: id, turnId: nativeId, requestId: id }),
   nativeCompact: z.strictObject({ sessionId: id, requestId: id }),

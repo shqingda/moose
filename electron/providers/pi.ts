@@ -1,5 +1,7 @@
+import { PiSessions } from './pi-sessions';
+import { cliVersion } from './process';
 import { attachmentText, promptText } from './prompt';
-import { JsonRpc, type RpcCodec } from './rpc';
+import { JsonRpc, RpcRejected, type RpcCodec } from './rpc';
 import {
   array,
   record,
@@ -86,14 +88,22 @@ export function normalizePi(event: Record<string, unknown>, messageIndex: number
 }
 
 export class PiAdapter implements AgentAdapter {
+  readonly sessions = new PiSessions();
   private rpc?: JsonRpc;
   private context?: RunContext;
   private messageIndex = 0;
   private failure?: Error;
   private cancelled = false;
+  private steeringVersion?: Promise<boolean>;
+  private modelImages = false;
   private finish?: { resolve(): void; reject(error: Error): void };
   private requests = new Map<string, Record<string, unknown>>();
   constructor(private path: string) {}
+  private supportsSteering() {
+    return (this.steeringVersion ||= cliVersion(this.path).then((version) =>
+      /(?:^|\s|v)1\./.test(version),
+    ));
+  }
 
   /** 探测时禁用持久化；运行时由 Pi 保存原生 sessionFile，后续通过 --session 恢复。 */
   private connect(context?: RunContext) {
@@ -130,7 +140,9 @@ export class PiAdapter implements AgentAdapter {
   }
 
   /** 查询真实配置模型与逐模型推理档位，不从模型名称猜测支持的强度。 */
-  async probe(): Promise<Pick<ProviderInfo, 'models' | 'modes' | 'images'>> {
+  async probe(): Promise<
+    Pick<ProviderInfo, 'models' | 'modes' | 'images' | 'taskModes' | 'steering'>
+  > {
     const rpc = this.connect();
     const data = record(await rpc.request('get_available_models', {}));
     const models: ProviderInfo['models'] = [];
@@ -149,7 +161,13 @@ export class PiAdapter implements AgentAdapter {
       });
       images ||= array(model.input).includes('image');
     }
-    return { models, modes: [{ id: 'full', label: 'Full access' }], images };
+    return {
+      models,
+      modes: [{ id: 'full', label: 'Full access' }],
+      images,
+      taskModes: ['build'],
+      steering: await this.supportsSteering(),
+    };
   }
 
   /** 保持 Moose 自己排队；Pi 只接收当前一条输入，所有续聊都恢复指定文件。 */
@@ -174,6 +192,7 @@ export class PiAdapter implements AgentAdapter {
     const state = record(await rpc.request('get_state', {}));
     if (this.cancelled) return;
     const model = record(state.model);
+    this.modelImages = array(model.input).includes('image');
     if (
       (context.attachments || []).some((a) => a.mime.startsWith('image/')) &&
       !array(model.input).includes('image')
@@ -187,13 +206,20 @@ export class PiAdapter implements AgentAdapter {
     const files = (context.attachments || [])
       .filter((a) => !a.mime.startsWith('image/'))
       .map(attachmentText);
-    await rpc.request('prompt', {
-      message: [promptText(context), ...files].join('\n\n'),
-      images: (context.attachments || [])
-        .filter((a) => a.mime.startsWith('image/'))
-        .map((a) => ({ type: 'image', data: a.data, mimeType: a.mime })),
-    });
-    await finished;
+    const receipt = record(
+      await rpc.request('prompt', {
+        message: [promptText(context), ...files].join('\n\n'),
+        images: (context.attachments || [])
+          .filter((a) => a.mime.startsWith('image/'))
+          .map((a) => ({ type: 'image', data: a.data, mimeType: a.mime })),
+      }),
+    );
+    // Input hooks may consume a command without starting an agent loop.
+    try {
+      if (receipt.disposition !== 'handled') await finished;
+    } finally {
+      this.finish = undefined;
+    }
     if (this.cancelled) return;
     const after = record(await rpc.request('get_state', {}));
     if (string(after.sessionFile)) context.nativeId(string(after.sessionFile));
@@ -205,6 +231,34 @@ export class PiAdapter implements AgentAdapter {
         used: usage.tokens,
         capacity: typeof usage.contextWindow === 'number' ? usage.contextWindow : null,
       });
+  }
+
+  /** A positive Pi receipt acknowledges delivery; this protocol has no native turn ID. */
+  async steer(context: RunContext): Promise<undefined> {
+    if (!(await this.supportsSteering()))
+      throw new RpcRejected('This Pi version does not provide verified steering receipts');
+    if (!this.rpc || !this.context || this.cancelled || !this.finish)
+      throw new RpcRejected('No active Pi turn accepts steering');
+    if (context.promptContext && context.promptContext.mode !== 'build')
+      throw new RpcRejected('Pi steering supports Build mode only');
+    if (!this.modelImages && context.attachments?.some((item) => item.mime.startsWith('image/')))
+      throw new RpcRejected('The selected Pi model does not support images');
+    const receipt = record(
+      await this.rpc.request('steer', {
+        message: [
+          promptText(context),
+          ...(context.attachments || [])
+            .filter((item) => !item.mime.startsWith('image/'))
+            .map(attachmentText),
+        ].join('\n\n'),
+        images: (context.attachments || [])
+          .filter((item) => item.mime.startsWith('image/'))
+          .map((item) => ({ type: 'image', data: item.data, mimeType: item.mime })),
+      }),
+    );
+    if (!['queued', 'handled'].includes(string(receipt.disposition)))
+      throw new Error('Pi did not confirm steering delivery');
+    return undefined;
   }
 
   /** Pi 扩展可以提问；这些交互不代表 Pi 内置了沙箱或全局权限审批。 */
@@ -265,7 +319,14 @@ export class PiAdapter implements AgentAdapter {
       }
     }
     this.requests.clear();
-    await this.rpc?.request('abort', {}, 3000).catch(() => {});
+    // Pi abort drains pending input unless it is cleared first. If clear_queue is
+    // unavailable or ambiguous, close the process instead of allowing another turn.
+    try {
+      await this.rpc?.request('clear_queue', {}, 3000);
+      await this.rpc?.request('abort', {}, 3000);
+    } catch {
+      await this.rpc?.close();
+    }
     this.finish?.resolve();
   }
   /** 由公共传输层回收进程组，释放当前执行的引用。 */

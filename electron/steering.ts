@@ -15,7 +15,7 @@ export class Steering {
     args: Requests['steer'],
     runId: string,
     attachments: Attachment[],
-    deliver: () => Promise<string>,
+    deliver: () => Promise<string | undefined>,
   ): Promise<Message> {
     const existing = this.store.message(args.requestId);
     if (
@@ -37,7 +37,7 @@ export class Steering {
     args: Requests['steer'],
     runId: string,
     attachments: Attachment[],
-    deliver: () => Promise<string>,
+    deliver: () => Promise<string | undefined>,
   ) {
     let row = this.store.saveMessage({
       id: args.requestId,

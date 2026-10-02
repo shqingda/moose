@@ -156,6 +156,9 @@ export interface ModelOption {
   efforts: Choice[];
 }
 export interface ProviderInfo {
+  /** Capabilities verified for the connected CLI, not inferred from its name in the UI. */
+  taskModes?: PromptContext['mode'][];
+  steering?: boolean;
   failure?: import('./errors').Fault;
   enabled?: boolean;
   provider: Provider;

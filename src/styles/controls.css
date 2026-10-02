@@ -1,0 +1,71 @@
+/* controls: shared workspace styles. */
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+button {
+  -webkit-app-region: no-drag;
+}
+button:not(:disabled) {
+  cursor: default;
+}
+button:not([data-variant]):focus-visible,
+summary:focus-visible,
+[tabindex]:not([data-variant]):focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+button:active:not(:disabled) {
+  filter: brightness(0.96);
+}
+::selection {
+  background: color-mix(in srgb, var(--primary) 23%, transparent);
+}
+[data-slot='button'][data-size^='icon'] {
+  min-width: 32px;
+  min-height: 32px;
+}
+.icon-button {
+  color: var(--muted-foreground);
+}
+.icon-button:is([aria-pressed='true'], [aria-expanded='true']),
+.icon-button[data-popup-open]:not([data-base-ui-tooltip-trigger]) {
+  background: var(--accent);
+}
+.icon-button:not(:disabled):hover {
+  color: var(--foreground);
+}
+button,
+[data-slot='select-trigger'],
+summary {
+  transition:
+    background-color 120ms,
+    color 120ms,
+    opacity 120ms;
+}
+button:not(:disabled):not([data-variant='default']):not([data-variant='destructive']):not(
+    :where([data-hover-surface] button)
+  ):hover,
+[data-slot='select-trigger']:not(:disabled):hover,
+summary:hover {
+  background-color: color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+button:not(:disabled):not([data-variant='default']):not([data-variant='destructive']):not(
+    :where([data-hover-surface] button)
+  ):active,
+[data-slot='select-trigger']:not(:disabled):active {
+  background-color: color-mix(in srgb, var(--foreground) 11%, transparent);
+  transition-duration: 0ms;
+}
+[data-hover-surface] {
+  transition: background-color 120ms;
+}
+[data-hover-surface]:not([data-hover-surface='image']):hover {
+  background-color: var(--hover-surface-background, var(--accent));
+}
+[data-hover-surface] button {
+  background-color: transparent;
+}

@@ -162,6 +162,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@pierre/diffs@1.5.1': befa37aaa3c0422a6820838b17fadba8ba235430d18e3aceb51c5e2547678d0d
+
 importers:
 
   .:
@@ -184,7 +187,7 @@ importers:
         version: 0.5.1
       '@pierre/diffs':
         specifier: 1.5.1
-        version: 1.5.1(@shikijs/themes@4.4.3)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+        version: 1.5.1(patch_hash=befa37aaa3c0422a6820838b17fadba8ba235430d18e3aceb51c5e2547678d0d)(@shikijs/themes@4.4.3)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@playwright/test':
         specifier: 1.63.0
         version: 1.63.0
@@ -218,9 +221,6 @@ importers:
       class-variance-authority:
         specifier: 0.7.1
         version: 0.7.1
-      clsx:
-        specifier: 2.1.1
-        version: 2.1.1
       cn:
         specifier: 0.4.0
         version: 0.4.0
@@ -278,9 +278,6 @@ importers:
       smol-toml:
         specifier: ^1.9.0
         version: 1.9.0
-      tailwind-merge:
-        specifier: 3.7.0
-        version: 3.7.0
       tailwindcss:
         specifier: 4.3.3
         version: 4.3.3
@@ -4492,9 +4489,6 @@ packages:
     os: [darwin, linux, win32, freebsd, openbsd, netbsd, sunos, android]
     hasBin: true
 
-  tailwind-merge@3.7.0:
-    resolution: {integrity: sha512-XPPUyAc+cvspz3lHTcR/QgPfW2A0lv/xQNIjX3HGhLR+Nq2lHaLq5MtTesHn8GUr3W3DguT2KT5x3NVgRtYwmA==}
-
   tailwindcss@4.3.3:
     resolution: {integrity: sha512-gOhV3P7ufE62QDGg1zVaTgCR+EtPv92k2nIhVcVKcLmxT1sUBsQGhnZj175j+MqRt4zLF7ic+sCYjfhxMxj7YQ==}
 
@@ -5742,7 +5736,7 @@ snapshots:
       tslib: 2.8.1
       webcrypto-core: 1.9.2
 
-  '@pierre/diffs@1.5.1(@shikijs/themes@4.4.3)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
+  '@pierre/diffs@1.5.1(patch_hash=befa37aaa3c0422a6820838b17fadba8ba235430d18e3aceb51c5e2547678d0d)(@shikijs/themes@4.4.3)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
     dependencies:
       '@pierre/theme': 2.0.0
       '@pierre/theming': 1.0.1(@pierre/theme@2.0.0)(@shikijs/themes@4.4.3)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(shiki@4.4.3)
@@ -9012,8 +9006,6 @@ snapshots:
       has-flag: 4.0.0
 
   systeminformation@5.33.13: {}
-
-  tailwind-merge@3.7.0: {}
 
   tailwindcss@4.3.3: {}
 

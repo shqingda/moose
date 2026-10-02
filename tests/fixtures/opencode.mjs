@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { createInterface } from 'node:readline';
 if (process.argv.includes('--version')) {
-  console.log('opencode v2.0.10');
+  console.log(process.env.MOOSE_TEST_OPENCODE_VERSION || 'opencode v2.0.10');
   process.exit(0);
 }
 if (!process.argv.includes('acp')) process.exit(2);
@@ -30,7 +30,23 @@ createInterface({ input: process.stdin }).on('line', (line) => {
     case 'initialize':
       reply(m.id, {
         protocolVersion: 1,
-        agentCapabilities: { loadSession: true, promptCapabilities: { image: true } },
+        agentCapabilities: {
+          loadSession: true,
+          sessionCapabilities: { list: {} },
+          promptCapabilities: { image: true },
+        },
+      });
+      break;
+    case 'session/list':
+      reply(m.id, {
+        sessions: [
+          {
+            sessionId: 'opencode-history',
+            cwd: process.env.MOOSE_HISTORY_CWD || p.cwd || process.cwd(),
+            title: 'OpenCode history',
+            updatedAt: '2026-10-02T00:00:00Z',
+          },
+        ],
       });
       break;
     case 'session/new':
@@ -38,6 +54,15 @@ createInterface({ input: process.stdin }).on('line', (line) => {
       break;
     case 'session/load':
       session = p.sessionId;
+      if (process.env.MOOSE_TEST_LARGE_HISTORY) {
+        for (let i = 0; i < 41; i++)
+          update({
+            sessionUpdate: 'tool_call',
+            toolCallId: String(i),
+            title: 'Large history',
+            rawOutput: 'x'.repeat(500000),
+          });
+      }
       update({
         sessionUpdate: 'agent_message_chunk',
         content: { type: 'text', text: 'HISTORICAL_REPLAY' },

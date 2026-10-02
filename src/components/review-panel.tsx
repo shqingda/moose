@@ -1,3 +1,4 @@
+import { useAuxiliaryPanel, PanelResizeHandle } from '../lib/auxiliary-panel';
 import { useFiles } from './file-preview';
 import { GitCommit } from './git-commit';
 import { PullRequestTools } from './pull-request-tools';
@@ -146,19 +147,15 @@ export function ReviewPanel({
   onError(error: unknown): void;
   reduceMotion: boolean;
 }) {
-  const [resizing, setResizing] = useState(false);
+  const { width, resizing, panel, onKeyDown, resize, setResizing } = useAuxiliaryPanel(
+    open,
+    onClose,
+  );
   const t = useI18n(),
     [status, setStatus] = useState<GitStatus>(),
-    [width, setWidth] = useState(() => Math.max(340, Math.round(window.innerWidth * 0.43))),
     [refreshKey, setRefreshKey] = useState(0),
     [loading, setLoading] = useState(false),
     [revision, setRevision] = useState(0);
-  const clamp = (w: number) => Math.max(300, Math.min(window.innerWidth - 460, w));
-  useEffect(() => {
-    const resize = () => setWidth((w) => clamp(w));
-    window.addEventListener('resize', resize);
-    return () => window.removeEventListener('resize', resize);
-  }, []);
   useEffect(() => {
     if (!open) return;
     let live = true,
@@ -200,43 +197,19 @@ export function ReviewPanel({
       inert={!open}
       aria-hidden={!open}
     >
-      <aside className="review-panel" style={{ width }} aria-label={t('changes')}>
-        <div
-          className="resize-handle"
-          role="separator"
-          aria-label={t('changes')}
-          aria-orientation="vertical"
-          aria-valuemin={300}
-          aria-valuemax={window.innerWidth - 460}
-          aria-valuenow={width}
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-              e.preventDefault();
-              setWidth((w) => clamp(w + (e.key === 'ArrowLeft' ? 16 : -16)));
-            }
-          }}
-          onPointerDown={(e) => {
-            setResizing(true);
-            e.currentTarget.setPointerCapture(e.pointerId);
-            e.currentTarget.dataset.startX = String(e.clientX);
-            e.currentTarget.dataset.startWidth = String(width);
-          }}
-          onPointerMove={(e) => {
-            if (e.currentTarget.hasPointerCapture(e.pointerId))
-              setWidth(
-                clamp(
-                  Number(e.currentTarget.dataset.startWidth) +
-                    Number(e.currentTarget.dataset.startX) -
-                    e.clientX,
-                ),
-              );
-          }}
-          onPointerUp={(e) => {
-            e.currentTarget.releasePointerCapture(e.pointerId);
-            setResizing(false);
-          }}
-          onLostPointerCapture={() => setResizing(false)}
+      <aside
+        ref={panel}
+        tabIndex={-1}
+        onKeyDown={onKeyDown}
+        className="review-panel"
+        style={{ width }}
+        aria-label={t('changes')}
+      >
+        <PanelResizeHandle
+          label={t('changes')}
+          width={width}
+          onResize={resize}
+          onResizing={setResizing}
         />
         <header className="review-header">
           <span>{t('review')}</span>

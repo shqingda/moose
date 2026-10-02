@@ -30,14 +30,14 @@ export interface RunContext {
 export interface AgentAdapter {
   sessions?: import('./native-types').NativeSessions;
   usage?(): Promise<import('../../shared/types').UsageInfo>;
-  probe(): Promise<Pick<ProviderInfo, 'models' | 'modes' | 'images'>>;
+  probe(): Promise<Pick<ProviderInfo, 'models' | 'modes' | 'images' | 'taskModes' | 'steering'>>;
   fork?(session: Session, cwd: string, lastTurnId: string): Promise<string>;
   run(context: RunContext): Promise<void>;
   review?(
     context: RunContext,
     target: import('../../shared/git-actions').ReviewTarget,
   ): Promise<void>;
-  steer?(context: RunContext): Promise<string>;
+  steer?(context: RunContext): Promise<string | undefined>;
   respond(key: string, choice?: string, answers?: Record<string, string>): void;
   cancel(): Promise<void>;
   close(): Promise<void>;

@@ -1,6 +1,6 @@
 // 端到端验收：临时数据库 + 测试 CLI 驱动真实 Electron 界面，覆盖关键用户流程。
 import { test, expect, _electron as electron, type ElectronApplication } from '@playwright/test';
-import { mkdtemp, chmod, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, chmod, readFile, realpath, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
@@ -520,7 +520,7 @@ test('provider switches persist and usage displays actual windows through Cmd U'
     store.addProject(dir);
   });
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  await page.getByRole('button', { name: 'Providers', exact: true }).click();
+  await page.getByRole('button', { name: 'Agent connections', exact: true }).click();
   const toggle = page.getByRole('switch', { name: 'Enable Codex', exact: true });
   await expect(toggle).toBeChecked();
   await toggle.click();
@@ -595,7 +595,7 @@ test('provider switches persist and usage displays actual windows through Cmd U'
   await page.screenshot({ path: 'test-results/usage-hover-compact.png' });
 });
 
-test('aligns sidebar labels at unchanged row heights and reveals message times on hover', async () => {
+test('aligns sidebar labels at the shared row height and reveals message times on hover', async () => {
   const page = await launch((store) => {
     const p = store.addProject(dir),
       s = store.createSession(p.id, 'codex');
@@ -628,7 +628,7 @@ test('aligns sidebar labels at unchanged row heights and reveals message times o
     return [newIcon.left - projectIcon.left, projectText.left - sessionText.left];
   });
   for (const delta of positions) expect(Math.abs(delta)).toBeLessThan(1);
-  expect((await page.locator('.session-row').boundingBox())!.height).toBe(32);
+  expect((await page.locator('.session-row').boundingBox())!.height).toBe(36);
   for (const kind of ['user', 'assistant']) {
     const row = page.locator('.message-' + kind);
     await row.hover();
@@ -672,7 +672,7 @@ test('provider path saves on blur without a save button or duplicate model count
   await expect(page.getByText('Keyboard shortcuts', { exact: true })).toBeVisible();
   await page
     .locator('.settings-navigation')
-    .getByRole('button', { name: 'Providers', exact: true })
+    .getByRole('button', { name: 'Agent connections', exact: true })
     .click();
   const row = page
     .locator('.provider-card')
@@ -682,10 +682,10 @@ test('provider path saves on blur without a save button or duplicate model count
   await expect(row.getByRole('button', { name: 'Installation and sign-in guide' })).toBeVisible();
   await expect(row.getByRole('button', { name: 'Save', exact: true })).toHaveCount(0);
   await row.locator('input').fill('relative-path');
-  await page.getByRole('heading', { name: 'Providers', exact: true }).click();
+  await page.getByRole('heading', { name: 'Agent connections', exact: true }).click();
   await expect(row.locator('input')).toHaveAttribute('aria-invalid', 'true');
   await row.locator('input').fill(resolve('tests/fixtures/pi.mjs'));
-  await page.getByRole('heading', { name: 'Providers', exact: true }).click();
+  await page.getByRole('heading', { name: 'Agent connections', exact: true }).click();
   await expect
     .poll(
       async () => (await page.evaluate(() => window.moose.request('snapshot', {}))).settings.piPath,
@@ -883,6 +883,19 @@ test('keeps workspace tools keyboard accessible and restores focus after dialogs
   await expect(page.getByRole('dialog', { name: 'Native sessions', exact: true })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(trigger).toBeFocused();
+  await app.evaluate(({ shell }) => {
+    shell.openPath = async (path) => {
+      (globalThis as unknown as { openedFinder: string }).openedFinder = path;
+      return '';
+    };
+  });
+  await trigger.click();
+  await page.getByRole('menuitem', { name: 'Show in Finder', exact: true }).click();
+  await expect
+    .poll(() =>
+      app.evaluate(() => (globalThis as unknown as { openedFinder: string }).openedFinder),
+    )
+    .toBe(await realpath(dir));
   await trigger.click();
   await page.getByRole('menuitem', { name: 'Rename', exact: true }).click();
   await expect(page.getByRole('dialog', { name: 'Rename', exact: true })).toBeVisible();
@@ -916,7 +929,7 @@ test('keeps empty archives conversation-only and presents quiet workspace contro
   const terminalBox = await page
     .getByRole('button', { name: 'Background commands & schedules', exact: true })
     .boundingBox();
-  expect(toolsBox!.x).toBeLessThan(terminalBox!.x);
+  expect(toolsBox!.x).toBeGreaterThan(terminalBox!.x);
   await page.getByRole('button', { name: 'Archived sessions', exact: true }).click();
   await expect(page.getByText('No archived conversations', { exact: true })).toBeVisible();
   await expect(page.locator('.project-group')).toHaveCount(0);
@@ -990,7 +1003,7 @@ test('keeps model picker height stable across providers and empty searches with 
       page.evaluate(() => {
         const selectors = [
           '.global-sidebar-toggle button',
-          '.header-project',
+          '.header-context',
           '.header-actions button',
         ];
         const centers = selectors.map((selector) => {
@@ -1053,4 +1066,82 @@ test('steers Grok natively while ordinary messages stay in the Moose queue', asy
         ).length,
     )
     .toBe(1);
+});
+
+for (const fresh of [false, true])
+  test(`keeps input typed while ${fresh ? 'the first' : 'an existing'} send is awaiting acknowledgement`, async () => {
+    let id = '';
+    const page = await launch((store) => {
+      const session = store.createSession(store.addProject(dir).id, 'codex');
+      id = session.id;
+      store.updateSession(id, { title: 'Draft delivery' });
+    });
+    if (!fresh) await page.getByRole('button', { name: 'Draft delivery', exact: true }).click();
+    else await page.getByRole('button', { name: 'New session', exact: true }).click();
+    await page.evaluate(() => {
+      const original = window.moose.request;
+      window.moose.request = async (method, params) => {
+        const response = await original(method, params);
+        if (method === 'send') {
+          Reflect.set(window, 'sendAccepted', true);
+          await new Promise<void>((resolve) => Reflect.set(window, 'releaseSend', resolve));
+        }
+        return response;
+      };
+    });
+    await page.locator('#composer').fill('inspect-input first message');
+    await page.locator('#composer').press('Enter');
+    await expect.poll(() => page.evaluate(() => Reflect.get(window, 'sendAccepted'))).toBe(true);
+    await page.locator('#composer').fill('A new thought while sending');
+    await page.evaluate(() => Reflect.get(window, 'releaseSend')());
+    await expect(page.locator('#composer')).toHaveValue('A new thought while sending');
+    await expect
+      .poll(async () =>
+        (await page.evaluate(() => window.moose.request('snapshot', {}))).sessions.some(
+          (s) => s.draft === 'A new thought while sending',
+        ),
+      )
+      .toBe(true);
+    await expect(page.locator('#composer')).toBeFocused();
+    await page.reload();
+    await expect(page.locator('#composer')).toHaveValue('A new thought while sending');
+  });
+
+test('Pi steering preserves rejection, accepts receipts without turn IDs and clears pending input on cancel', async () => {
+  let id = '';
+  const page = await launch((store) => {
+    const session = store.createSession(store.addProject(dir).id, 'pi');
+    id = session.id;
+    store.updateSession(id, { title: 'Pi steering', mode: 'full' });
+  });
+  await page.getByRole('button', { name: 'Pi steering', exact: true }).click();
+  await page.locator('#composer').fill('wait');
+  await page.locator('#composer').press('Enter');
+  await expect(page.getByRole('button', { name: 'Stop task', exact: true })).toBeVisible();
+  await page.locator('#composer').fill('reject');
+  await page.getByRole('button', { name: 'Send now', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Not sent' })).toBeVisible();
+  await expect(page.locator('#composer')).toHaveValue('reject');
+  await page.locator('#composer').fill('Take this revised direction');
+  await page.getByRole('button', { name: 'Send now', exact: true }).click();
+  await expect(
+    page.getByText('Accepted by the agent for the active turn', { exact: true }),
+  ).toBeVisible();
+  const entries = await page.evaluate(
+    (sessionId) => window.moose.request('messages', { sessionId }),
+    id,
+  );
+  expect(
+    entries.messages.find((m) => m.delivery?.status === 'accepted')?.nativeTurnId,
+  ).toBeUndefined();
+  expect(
+    await page.evaluate((sessionId) => window.moose.request('queue', { sessionId }), id),
+  ).toEqual([]);
+  await page.getByRole('button', { name: 'Stop task', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Stop task', exact: true })).toHaveCount(0);
+  expect(
+    (
+      await page.evaluate((sessionId) => window.moose.request('messages', { sessionId }), id)
+    ).messages.some((m) => m.text.includes('UNEXPECTED_QUEUED_TURN')),
+  ).toBe(false);
 });

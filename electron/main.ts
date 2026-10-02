@@ -135,7 +135,7 @@ async function createWindow() {
     minHeight: 620,
     title: 'Moose',
     titleBarStyle: 'hiddenInset',
-    trafficLightPosition: { x: 18, y: 20 },
+    trafficLightPosition: { x: 18, y: 16 },
     vibrancy: 'sidebar',
     visualEffectState: 'followWindow',
     backgroundColor: '#00000000',

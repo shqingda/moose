@@ -1,3 +1,4 @@
+import { AcpSessions } from './acp-sessions';
 import { homedir } from 'node:os';
 import type { SessionNotification } from '@agentclientprotocol/sdk';
 import { JsonRpc } from './rpc';
@@ -17,7 +18,10 @@ export class OpenCodeAdapter implements AgentAdapter {
   private kind = '';
   private cancelled = false;
   private pending = new Map<string, { id: number | string; options: Set<string> }>();
-  constructor(private path: string) {}
+  readonly sessions: AcpSessions;
+  constructor(private path: string) {
+    this.sessions = new AcpSessions(path, 'opencode');
+  }
   private async connect(cwd?: string) {
     if (this.rpc) return this.rpc;
     const version = await cliVersion(this.path);
@@ -108,10 +112,15 @@ export class OpenCodeAdapter implements AgentAdapter {
     const nativeId = context.session.nativeId;
     if (nativeId && !record(this.initialization.agentCapabilities).loadSession)
       throw new Error('This OpenCode CLI cannot restore sessions.');
+    const cwd =
+      nativeId && context.session.nativeOrigin?.kind === 'import'
+        ? (await this.sessions.read(nativeId, context.cwd)).cwd
+        : context.cwd;
+    if (this.cancelled) return;
     const session = record(
       await rpc.request(nativeId ? 'session/load' : 'session/new', {
         ...(nativeId ? { sessionId: nativeId } : {}),
-        cwd: context.cwd,
+        cwd,
         mcpServers: [],
       }),
     );
@@ -185,6 +194,7 @@ export class OpenCodeAdapter implements AgentAdapter {
     await this.close();
   }
   async close() {
+    await this.sessions.close();
     this.cancelled = true;
     this.pending.clear();
     await this.rpc?.close();

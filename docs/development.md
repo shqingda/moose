@@ -97,3 +97,11 @@ pnpm release:publish
 - **版本已经公开**：发布脚本拒绝覆盖已公开版本。需要修改安装包时增加新版本；单纯文档修订不重新打包或改写发布标签。
 
 当前使用 ad-hoc 签名，没有 Apple 公证、自动安装升级或遥测；Web 的 `moose update` 是用户主动执行的安装更新，保留现有后台直到用户重启。签名失败应中止发布；不要把去除下载隔离标记描述为签名或公证的替代品。
+
+## 资源与包体积
+
+`pnpm size:measure` 输出当前干净构建的 JSON：前端资源总字节、入口静态依赖图的原始／gzip 字节、按需 JS 以及桌面 App、DMG、Web 归档大小。可用 `node scripts/measure-size.mjs <另一构建目录>` 按同一口径比较；没有生成的安装包标为 `null`，不能当成零。入口依赖图不包含交互后加载的模块，也不是网络瀑布。
+
+高亮使用 Pierre 1.5.1、JavaScript 正则引擎和 GitHub 浅／深两套实际主题，所有现有语言加载器仍打包。`pnpm-workspace.yaml` 注册 [Pierre 补丁](../patches/@pierre__diffs@1.5.1.patch)，锁文件记录指纹；它只收窄未使用的主题集合和 WASM 入口。依赖升级时重新审阅补丁并验证源码、Markdown 与 diff 的离线显示，不能直接丢弃补丁或删语言包来追求数字下降。
+
+主应用、官网 `distribution/site`、周边站 `merch-store` 继续独立构建。截图、测试夹具和验收报告不进入生产包；SQLite、PTY、原生通知桥和签名检查保留。

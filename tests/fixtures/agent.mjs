@@ -11,6 +11,7 @@ if (process.argv.includes('--version')) {
 }
 const acp = process.argv.includes('agent');
 let goal = null;
+let streamTimer;
 let cwd = process.cwd(),
   sessionId = randomUUID(),
   turnId = '',
@@ -248,6 +249,21 @@ createInterface({ input: process.stdin }).on('line', (line) => {
           notify('turn/started', { threadId: sessionId, turn: { id: turnId } });
       }
       if (pendingPrompt === 'steer-response-first') break;
+      if (pendingPrompt === 'soak-fixture') {
+        let count = 0;
+        streamTimer = setInterval(() => {
+          notify('item/agentMessage/delta', {
+            threadId: sessionId,
+            itemId: turnId + '-text',
+            delta: `Continuous output ${++count}.\n`,
+          });
+          if (count === 120) {
+            clearInterval(streamTimer);
+            complete('Continuous output completed.', false);
+          }
+        }, 250);
+        break;
+      }
       if (pendingPrompt.startsWith('plan-fixture')) {
         if (p.collaborationMode?.mode !== 'plan' || threadSettings.sandbox !== 'read-only') {
           complete('Native plan settings missing', false);
@@ -400,6 +416,7 @@ createInterface({ input: process.stdin }).on('line', (line) => {
       }
       break;
     case 'turn/interrupt':
+      clearInterval(streamTimer);
       // Completion is allowed to precede the interrupt acknowledgement.
       notify('turn/completed', {
         threadId: sessionId,
