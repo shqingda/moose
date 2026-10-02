@@ -8,5 +8,5 @@ allowBuilds:
   better-sqlite3: true
   esbuild: true
   node-pty: true
-minimumReleaseAgeExclude:
-  - tailwind-merge@3.7.0
+patchedDependencies:
+  '@pierre/diffs@1.5.1': patches/@pierre__diffs@1.5.1.patch

@@ -1,0 +1,62 @@
+diff --git a/dist/highlighter/shared_highlighter.js b/dist/highlighter/shared_highlighter.js
+index e231d3c2396b82a0aa7dee8d3c3352dbcae4adb6..27702acd3e3a07e2533a5d34b2930577d78acc15 100644
+--- a/dist/highlighter/shared_highlighter.js
++++ b/dist/highlighter/shared_highlighter.js
+@@ -3,19 +3,19 @@ import { attachResolvedLanguages } from "./languages/attachResolvedLanguages.js"
+ import { cleanUpResolvedLanguages } from "./languages/cleanUpResolvedLanguages.js";
+ import { getResolvedOrResolveLanguage } from "./languages/getResolvedOrResolveLanguage.js";
+ import { areThemesAttached } from "./themes/areThemesAttached.js";
+-import { themeResolver } from "./themes/themeResolver.js";
+ import { attachResolvedThemes } from "./themes/attachResolvedThemes.js";
+ import { cleanUpResolvedThemes } from "./themes/cleanUpResolvedThemes.js";
+ import { getResolvedOrResolveTheme } from "./themes/getResolvedOrResolveTheme.js";
+-import { createHighlighter, createJavaScriptRegexEngine, createOnigurumaEngine } from "shiki";
+-import { pierreThemes } from "@pierre/theming/themes";
++import { createHighlighterCore as createHighlighter } from "shiki/core";
++import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
+ //#region src/highlighter/shared_highlighter.ts
+ let highlighter;
+ async function getSharedHighlighter({ themes, langs, preferredHighlighter = "shiki-js" }) {
++	if (preferredHighlighter !== "shiki-js") throw new Error("Moose uses the JavaScript highlighter");
+ 	highlighter ??= createHighlighter({
+ 		themes: [],
+ 		langs: ["text"],
+-		engine: preferredHighlighter === "shiki-wasm" ? createOnigurumaEngine(import("shiki/wasm")) : createJavaScriptRegexEngine()
++		engine: createJavaScriptRegexEngine()
+ 	});
+ 	const instance = isHighlighterLoading(highlighter) ? await highlighter : highlighter;
+ 	highlighter = instance;
+@@ -63,7 +63,7 @@ async function disposeHighlighter() {
+ 	cleanUpResolvedThemes();
+ 	highlighter = void 0;
+ }
+-for (const descriptor of pierreThemes.getThemes()) themeResolver.registerThemeIfAbsent(descriptor.name, descriptor.load);
++
+ //#endregion
+ export { disposeHighlighter, getHighlighterIfLoaded, getSharedHighlighter, isHighlighterLoaded, isHighlighterLoading, isHighlighterNull, preloadHighlighter };
+ 
+diff --git a/dist/highlighter/themes/themeResolution.js b/dist/highlighter/themes/themeResolution.js
+index ae9dd9044adb1b7e6106b5e6fabbb255e9c62ac3..77d4064386b3276ac26bd24408cfad99f4afa956 100644
+--- a/dist/highlighter/themes/themeResolution.js
++++ b/dist/highlighter/themes/themeResolution.js
+@@ -1,13 +1,16 @@
+ import { isWorkerContext } from "../../utils/isWorkerContext.js";
+ import { themeResolver } from "./themeResolver.js";
+-import { shikiThemes } from "@pierre/theming/themes";
++const loaders = {
++  "github-light": () => import("@shikijs/themes/github-light").then(m => m.default),
++  "github-dark": () => import("@shikijs/themes/github-dark").then(m => m.default)
++};
+ //#region src/highlighter/themes/themeResolution.ts
+ function prepareThemeResolution(themeName) {
+ 	if (isWorkerContext()) throw new Error(`Theme "${themeName}" cannot be resolved from a worker context. Themes must be pre-resolved on the main thread and passed to the worker via the resolvedLanguages parameter.`);
+ 	if (themeResolver.hasRegisteredTheme(themeName)) return;
+-	const descriptor = shikiThemes.getTheme(themeName);
+-	if (descriptor != null) {
+-		themeResolver.registerThemeIfAbsent(descriptor.name, descriptor.load);
++	const load = loaders[themeName];
++	if (load != null) {
++		themeResolver.registerThemeIfAbsent(themeName, load);
+ 		return;
+ 	}
+ 	throw new Error(`No valid theme loader registered for "${themeName}"`);

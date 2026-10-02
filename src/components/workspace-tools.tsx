@@ -1,5 +1,13 @@
 import { lazy, Suspense, useState, type RefObject } from 'react';
-import { Archive, ArrowUpRight, MoreHorizontal, GitBranch, History, Pencil } from 'lucide-react';
+import {
+  Archive,
+  ArrowUpRight,
+  FolderOpen,
+  MoreHorizontal,
+  GitBranch,
+  History,
+  Pencil,
+} from 'lucide-react';
 import type { Project, Provider, Session } from '../../shared/types';
 import { useI18n } from '../lib/i18n';
 import { Button } from './ui/button';
@@ -27,6 +35,7 @@ export function WorkspaceTools({
   onSelect,
   onRename,
   onArchive,
+  onFinder,
   onEditor,
 }: {
   trigger: RefObject<HTMLButtonElement | null>;
@@ -36,6 +45,7 @@ export function WorkspaceTools({
   onSelect(session: Session): void;
   onRename(): void;
   onArchive(): void;
+  onFinder(): void;
   onEditor(): void;
 }) {
   const t = useI18n();
@@ -74,10 +84,16 @@ export function WorkspaceTools({
               {t('wtTools')}
             </DropdownMenuItem>
             {window.moose.host !== 'web' && (
-              <DropdownMenuItem onClick={onEditor}>
-                <ArrowUpRight />
-                {t('editor')}
-              </DropdownMenuItem>
+              <>
+                <DropdownMenuItem onClick={onFinder}>
+                  <FolderOpen />
+                  {t('finder')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onEditor}>
+                  <ArrowUpRight />
+                  {t('editor')}
+                </DropdownMenuItem>
+              </>
             )}
           </DropdownMenuGroup>
           {session && (

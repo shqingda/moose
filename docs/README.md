@@ -1,10 +1,10 @@
 # 文档入口
 
-当前说明以 **0.21.4** 为基线。日常使用、实现原理和面试材料分别维护；历史发布记录只说明当时交付了什么。
+当前说明以 **0.22.0** 源码为基线。日常使用、实现原理和面试材料分别维护；历史发布记录只说明当时交付了什么。
 
 ## 当前版本
 
-[Moose 0.21.4](https://github.com/shqingda/moose/releases/tag/v0.21.4) 的 macOS 桌面与独立 Web 使用统一版本联合发布。本次修复标题栏图标对齐及侧栏折叠时的标题回拉，见[本版发布说明](releases/0.21.4.md)。
+0.22.0 重构极简工作区、整理界面与执行层职责，并接入 Pi 历史／插话和 OpenCode 历史。见[本版说明](releases/0.22.0.md)、[功能对照与发布验收](releases/0.22.0-validation.md)。正式下载以 GitHub Releases 和公网安装器为准；验收中的源码不代表已发布。
 
 桌面用户从应用菜单检查更新并下载替换；独立 Web 用户执行 `moose update`，任务结束后重启后台。具体步骤分别见[桌面更新](usage.md#更新桌面版)和[Web 更新](web.md#更新独立-web-版)。
 
@@ -17,6 +17,7 @@
 | 进程分工、消息执行与数据存储 | [技术架构](architecture.md) |
 | 本地开发、构建与发布 | [开发与打包](development.md) |
 | 应用图标、透明 logo 和 Web favicon | [图标与品牌资源](development.md#图标与品牌资源) |
+| 功能保留、体积对照、本轮验收状态 | [0.22.0 验收记录](releases/0.22.0-validation.md) |
 | 选择测试、后台验收与验证边界 | [测试与验证](testing.md) |
 | 各代理已经接入哪些能力 | [底座能力与接入边界](providers/native-capabilities.md) |
 | 已完成的阶段和后续范围 | [开发计划](providers/native-capabilities-plan.md) |

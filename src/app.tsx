@@ -1,24 +1,18 @@
+import { WorkspaceHeader } from './components/workspace-header';
+import { useWorkspaceLayout } from './lib/workspace-layout';
+import { useSessionDrafts } from './lib/session-drafts';
 import { useNotifications } from './lib/notifications';
 import type { WorkspaceFileReference } from '../shared/experience';
 import { FilePreviewProvider } from './components/file-preview';
 import { SearchDialog } from './components/search-dialog';
 import { ArchiveUndo } from './components/archive-undo';
 import { ErrorNotice } from './components/error-notice';
-import { BackgroundTools, type BackgroundPlacement } from './components/background-tools';
+import { BackgroundTools } from './components/background-tools';
 import { WorkspaceTools } from './components/workspace-tools';
 import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import {
-  MotionConfig,
-  motion,
-  useMotionValueEvent,
-  useReducedMotion,
-  useSpring,
-  useTransform,
-  type MotionStyle,
-} from 'motion/react';
+import { MotionConfig, motion, type MotionStyle } from 'motion/react';
 import { ChevronDown, Folder, PanelRight, PanelLeft } from 'lucide-react';
 import type {
-  Attachment,
   PromptContext,
   Message,
   PermissionMode,
@@ -75,7 +69,7 @@ export default function App() {
     root.classList.toggle('reduce-motion', snapshot.reduceMotion);
     root.classList.toggle('reduce-transparency', snapshot.reduceTransparency);
     root.classList.toggle('high-contrast', snapshot.highContrast);
-    root.style.fontSize = `${15 * snapshot.settings.fontScale}px`;
+    root.style.fontSize = `${16 * snapshot.settings.fontScale}px`;
   }, [snapshot, locale]);
   useEffect(() => {
     if (
@@ -126,8 +120,22 @@ function Workspace({
   perform,
   refresh,
 }: ReturnType<typeof useWorkspace> & { snapshot: Snapshot }) {
-  const t = useI18n(),
-    reduceMotion = useReducedMotion();
+  const t = useI18n();
+  const {
+    reduceMotion,
+    sidebarOpen,
+    setSidebarOpen,
+    sidebarParked,
+    sidebarProgress,
+    sidebarWidth,
+    toggleSidebar,
+    sidePanel,
+    setSidePanel,
+    dockHost,
+    setDockHost,
+    dock,
+    onDockChange,
+  } = useWorkspaceLayout(snapshot.reduceMotion);
   const [selected, setSelected] = useState<string | undefined>(
     () => localStorage.getItem('moose.selected') || undefined,
   );
@@ -143,7 +151,6 @@ function Workspace({
   // Undefined defers the first load; false keeps dialog state and exit motion after closing.
   const [settingsOpen, setSettingsOpen] = useState<boolean>(),
     [searchOpen, setSearchOpen] = useState(false),
-    [sidePanel, setSidePanel] = useState<'review' | 'files' | null>(null),
     [archived, setArchived] = useState(false);
   const review = sidePanel === 'review';
   const [filesOpened, setFilesOpened] = useState(false);
@@ -153,31 +160,6 @@ function Workspace({
   }>();
   const [renaming, setRenaming] = useState(false),
     [title, setTitle] = useState('');
-  const [sidebarOpen, setSidebarOpen] = useState(
-    () =>
-      localStorage.getItem('moose.sidebar') !== 'hidden' &&
-      !(window.moose.host === 'web' && matchMedia('(max-width: 760px)').matches),
-  );
-  const [sidebarParked, setSidebarParked] = useState(() => !sidebarOpen);
-  // One interruptible spring keeps the sidebar and toolbar on the same timeline.
-  const sidebarProgress = useSpring(sidebarOpen ? 1 : 0, {
-    stiffness: 380,
-    damping: 39,
-    restDelta: 0.0001,
-    restSpeed: 0.0001,
-  });
-  const sidebarWidth = useTransform(sidebarProgress, [0, 1], [0, 264]);
-  useLayoutEffect(() => {
-    if (sidebarOpen) setSidebarParked(false);
-    const target = sidebarOpen ? 1 : 0;
-    if (reduceMotion || snapshot.reduceMotion) {
-      sidebarProgress.jump(target);
-      if (!sidebarOpen) setSidebarParked(true);
-    } else sidebarProgress.set(target);
-  }, [sidebarOpen, reduceMotion, snapshot.reduceMotion, sidebarProgress]);
-  useMotionValueEvent(sidebarProgress, 'animationComplete', () => {
-    if (sidebarProgress.get() === 0) setSidebarParked(true);
-  });
   const [undoArchive, setUndoArchive] = useState<Session>();
   const [settingsPage, setSettingsPage] = useState<'general' | 'providers'>('general');
   const [targetMessage, setTargetMessage] = useState<string>();
@@ -202,23 +184,28 @@ function Workspace({
     return () => window.removeEventListener('moose-open-providers', open);
   }, []);
   const [confirmation, setConfirmation] = useState<Confirmation>();
-  const [attachmentDrafts, setAttachmentDrafts] = useState<Record<string, Attachment[]>>({});
-  const [drafts, setDrafts] = useState<Record<string, string>>({});
-  const [dockHost, setDockHost] = useState<HTMLDivElement | null>(null);
-  const [dock, setDock] = useState<BackgroundPlacement | null>(null);
-  const onDockChange = useCallback((position: BackgroundPlacement | null) => {
-    setDock(position);
-    if (position === 'right') setSidePanel(null);
-  }, []);
   const toolsTrigger = useRef<HTMLButtonElement>(null);
-  const saveTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
-  const pendingDrafts = useRef(new Map<string, string>());
+  const focusAfterSend = useRef<string | undefined>(undefined);
   const session = snapshot.sessions.find((s) => s.id === selected);
+  useLayoutEffect(() => {
+    if (session?.id && focusAfterSend.current === session.id) {
+      document.getElementById('composer')?.focus();
+      focusAfterSend.current = undefined;
+    }
+  }, [session?.id]);
   const project =
     snapshot.projects.find((p) => p.id === (session?.projectId || projectId)) ||
     snapshot.projects[0];
-  const draftKey = session?.id || `new:${project?.id || ''}`;
-  const attachments = attachmentDrafts[draftKey] ?? session?.draftAttachments ?? [];
+  const {
+    draftKey,
+    attachments,
+    drafts,
+    setDrafts,
+    setAttachmentDrafts,
+    onDraft,
+    onAttachments,
+    consumeDraft,
+  } = useSessionDrafts(session, project?.id, perform);
   useEffect(() => {
     if (
       attentionTarget.current &&
@@ -229,23 +216,6 @@ function Workspace({
       setTargetMessage(undefined);
     }
   }, [snapshot.activities, session?.id, targetMessage]);
-  /** 切换并持久化侧栏展开状态，不改变当前会话。 */
-  const toggleSidebar = () =>
-    setSidebarOpen((value) => {
-      localStorage.setItem('moose.sidebar', value ? 'hidden' : 'visible');
-      return !value;
-    });
-  /** 把附件选择写入当前会话草稿，或保存在未发送的新会话草稿中。 */
-  const onAttachments = (items: Attachment[]) => {
-    setAttachmentDrafts((old) => ({ ...old, [draftKey]: items }));
-    if (session)
-      void perform(() =>
-        window.moose.request('updateSession', {
-          id: session.id,
-          draftAttachments: items.map((a) => a.id),
-        }),
-      );
-  };
   const currentProvider = session?.provider || provider;
   const connect = useCallback(async () => {
     setChecking(true);
@@ -265,45 +235,6 @@ function Workspace({
     if (selected) localStorage.setItem('moose.selected', selected);
     else localStorage.removeItem('moose.selected');
   }, [selected]);
-  useEffect(() => {
-    const drafts = pendingDrafts.current,
-      timers = saveTimers.current;
-    const flush = () => {
-      for (const [id, draft] of drafts) {
-        clearTimeout(timers.get(id));
-        void window.moose.request('updateSession', { id, draft }).catch(() => {});
-      }
-      drafts.clear();
-    };
-    const hidden = () => {
-      if (document.visibilityState === 'hidden') flush();
-    };
-    window.addEventListener('pagehide', flush);
-    document.addEventListener('visibilitychange', hidden);
-    window.addEventListener('beforeunload', flush);
-    return () => {
-      window.removeEventListener('pagehide', flush);
-      document.removeEventListener('visibilitychange', hidden);
-      window.removeEventListener('beforeunload', flush);
-      flush();
-    };
-  }, []);
-  /** 同步输入文本并延迟保存已有会话草稿，避免每个按键都写库。 */
-  const onDraft = (draft: string) => {
-    setDrafts((old) => ({ ...old, [draftKey]: draft }));
-    if (session) {
-      const id = session.id;
-      clearTimeout(saveTimers.current.get(id));
-      pendingDrafts.current.set(id, draft);
-      saveTimers.current.set(
-        id,
-        setTimeout(() => {
-          pendingDrafts.current.delete(id);
-          void perform(() => window.moose.request('updateSession', { id, draft }));
-        }, 250),
-      );
-    }
-  };
   /** 选择已有会话并切换所属项目，退出未保存的新会话视图。 */
   const select = (id: string) => {
     if (window.moose.host === 'web' && matchMedia('(max-width: 760px)').matches)
@@ -371,7 +302,9 @@ function Workspace({
   );
   /** 首次发送时创建会话并保存选项，再把输入提交到后台队列。 */
   const onSend = async (context: PromptContext, delivery?: 'steer') => {
-    const text = (drafts[draftKey] ?? session?.draft ?? '').trim();
+    const sourceFocus = document.activeElement;
+    const submittedDraft = drafts[draftKey] ?? session?.draft ?? '';
+    const text = submittedDraft.trim();
     if (!project || (!text && !attachments.length)) return;
     const target =
       session ||
@@ -397,20 +330,21 @@ function Workspace({
           })()
         : await perform(() => window.moose.request('send', args));
     if (item) {
-      setAttachmentDrafts((old) => ({ ...old, [draftKey]: [], [target.id]: [] }));
-      clearTimeout(saveTimers.current.get(target.id));
-      pendingDrafts.current.delete(target.id);
-      setDrafts((old) => ({ ...old, [draftKey]: '', [target.id]: '' }));
+      const remaining = consumeDraft(target.id, submittedDraft, attachments);
+      if (
+        !session &&
+        (document.activeElement === sourceFocus || document.activeElement === document.body)
+      )
+        focusAfterSend.current = target.id;
+      setSelected(target.id);
+      setTargetMessage(undefined);
       await perform(() =>
         window.moose.request('updateSession', {
           id: target.id,
-          draft: '',
-          draftAttachments: [],
-          draftContext: { ...context, references: [], skills: [] },
+          ...remaining,
+          ...(!remaining.draft && { draftContext: { ...context, references: [], skills: [] } }),
         }),
       );
-      setSelected(target.id);
-      setTargetMessage(undefined);
       return true;
     }
     return false;
@@ -575,86 +509,66 @@ function Workspace({
         </motion.div>
         <div className="workspace-stage" data-dock={dock || undefined}>
           <div className="workspace-main">
-            <main className="workspace">
-              <header className="workspace-header">
-                <div className="header-path">
-                  {project && (
-                    <>
-                      <Folder size={14} />
-                      <span className="header-project" title={project.path}>
-                        {project.name}
-                      </span>
-                    </>
-                  )}
-                  {session && (
-                    <>
-                      <span className="path-divider">/</span>
-                      <span className="header-title" title={session.title || t('untitled')}>
-                        {session.title || t('untitled')}
-                      </span>
-                    </>
-                  )}
-                </div>
-                <div className="header-actions">
-                  {project && (
-                    <WorkspaceTools
-                      trigger={toolsTrigger}
-                      key={`${project.id}:${session?.id}:${currentProvider}`}
-                      project={project}
-                      provider={currentProvider}
-                      session={session}
-                      onSelect={(target) => {
-                        setSelected(target.id);
-                        setTargetMessage(undefined);
-                        setProjectId(target.projectId);
-                        setArchived(target.archived);
-                        void refresh();
-                      }}
-                      onRename={() => {
-                        if (session) {
-                          setTitle(session.title);
-                          setRenaming(true);
-                        }
-                      }}
-                      onArchive={() => {
-                        if (session) void archiveSession(session);
-                      }}
-                      onEditor={() => void openProject('editor')}
-                    />
-                  )}
-                  {project && (
-                    <BackgroundTools
-                      runtimeMode={snapshot.runtimeMode}
-                      reveal={backgroundReveal}
-                      reviewOpen={sidePanel !== null}
-                      dockHost={dockHost}
-                      onDockChange={onDockChange}
-                      key={`${project.id}:${session?.id}`}
-                      scope={{ projectId: project.id, sessionId: session?.id }}
-                    />
-                  )}
-                  <span className="header-action-divider" />
-                  <IconButton
-                    label={t('workspaceFiles')}
-                    disabled={!project}
-                    aria-pressed={sidePanel === 'files'}
-                    onClick={() => {
-                      setFilesOpened(true);
-                      setSidePanel((value) => (value === 'files' ? null : 'files'));
+            <main className="workspace" data-empty={!session?.title || undefined}>
+              <WorkspaceHeader project={project} session={session} onError={setError}>
+                <IconButton
+                  label={t('workspaceFiles')}
+                  disabled={!project}
+                  aria-pressed={sidePanel === 'files'}
+                  onClick={() => {
+                    setFilesOpened(true);
+                    setSidePanel((value) => (value === 'files' ? null : 'files'));
+                  }}
+                >
+                  <Folder />
+                </IconButton>
+                <IconButton
+                  label={t('review')}
+                  onClick={() => setSidePanel((value) => (value === 'review' ? null : 'review'))}
+                  disabled={!project}
+                  aria-pressed={review}
+                >
+                  <PanelRight />
+                </IconButton>
+                {project && (
+                  <BackgroundTools
+                    runtimeMode={snapshot.runtimeMode}
+                    reveal={backgroundReveal}
+                    reviewOpen={sidePanel !== null}
+                    dockHost={dockHost}
+                    onDockChange={onDockChange}
+                    key={`${project.id}:${session?.id}`}
+                    scope={{ projectId: project.id, sessionId: session?.id }}
+                  />
+                )}
+                {project && (
+                  <WorkspaceTools
+                    trigger={toolsTrigger}
+                    key={`${project.id}:${session?.id}:${currentProvider}`}
+                    project={project}
+                    provider={currentProvider}
+                    session={session}
+                    onSelect={(target) => {
+                      setSelected(target.id);
+                      setTargetMessage(undefined);
+                      setProjectId(target.projectId);
+                      setArchived(target.archived);
+                      void refresh();
                     }}
-                  >
-                    <Folder />
-                  </IconButton>
-                  <IconButton
-                    label={t('review')}
-                    onClick={() => setSidePanel((value) => (value === 'review' ? null : 'review'))}
-                    disabled={!project}
-                    aria-pressed={review}
-                  >
-                    <PanelRight />
-                  </IconButton>
-                </div>
-              </header>
+                    onRename={() => {
+                      if (session) {
+                        setTitle(session.title);
+                        setRenaming(true);
+                      }
+                    }}
+                    onArchive={() => {
+                      if (session) void archiveSession(session);
+                    }}
+                    onFinder={() => void openProject('finder')}
+                    onEditor={() => void openProject('editor')}
+                  />
+                )}
+              </WorkspaceHeader>
               {connection && (
                 <ErrorNotice
                   value={connection}

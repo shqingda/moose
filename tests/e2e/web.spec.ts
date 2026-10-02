@@ -169,7 +169,8 @@ test('browser login, project selection, OpenCode approval and terminal survive p
     .boundingBox();
   expect(brand!.y + brand!.height / 2).toBe(toolbar!.y + toolbar!.height / 2);
   const add = await sidebar.locator('.project-add-button').boundingBox();
-  expect(search!.y + search!.height / 2).toBe(add!.y + add!.height / 2);
+  expect(search!.y + search!.height).toBeLessThan(add!.y);
+  expect(search!.height).toBeGreaterThanOrEqual(36);
   await toggle.click();
   await expect(sidebar).toHaveAttribute('aria-label', 'Projects');
   await expect

@@ -1,6 +1,6 @@
 {
   "name": "moose",
-  "version": "0.21.4",
+  "version": "0.22.0",
   "private": true,
   "description": "A quiet workspace for your coding agents",
   "license": "UNLICENSED",
@@ -36,7 +36,9 @@
     "release:prepare": "node scripts/release.mjs prepare",
     "release:publish": "node scripts/release.mjs publish",
     "site:build": "pnpm --filter @moose/site build && node distribution/scripts/sync-site.mjs",
-    "merch:build": "pnpm --filter @moose/merch build"
+    "merch:build": "pnpm --filter @moose/merch build",
+    "test:stability": "tsx scripts/stability.ts",
+    "size:measure": "node scripts/measure-size.mjs"
   },
   "dependencies": {
     "better-sqlite3": "13.0.3",
@@ -58,7 +60,6 @@
     "@xterm/addon-fit": "0.11.0",
     "@xterm/xterm": "6.0.0",
     "class-variance-authority": "0.7.1",
-    "clsx": "2.1.1",
     "cn": "0.4.0",
     "drizzle-kit": "0.31.11",
     "drizzle-orm": "0.45.3",
@@ -78,7 +79,6 @@
     "remark-gfm": "4.0.1",
     "shadcn": "4.21.0",
     "smol-toml": "^1.9.0",
-    "tailwind-merge": "3.7.0",
     "tailwindcss": "4.3.3",
     "tsx": "4.23.15",
     "tw-animate-css": "1.4.0",

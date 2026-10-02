@@ -127,6 +127,7 @@ export function Composer({
     updateContext,
     onError,
     session?.id,
+    info?.taskModes,
   );
   const busy = !!session && ['running', 'waiting', 'queued'].includes(session.status);
   const [sending, setSending] = useState(false),
@@ -350,6 +351,21 @@ export function Composer({
               <Plus />
             </IconButton>
             <Picker
+              label={t('taskMode')}
+              value={context.mode}
+              onChange={(mode) =>
+                updateContext({ ...context, mode: mode as PromptContext['mode'] })
+              }
+              options={(info?.taskModes || providerDefinitions[provider].taskModes).map((mode) => ({
+                value: mode,
+                label: t(
+                  mode === 'build' ? 'buildMode' : mode === 'plan' ? 'planMode' : 'goalMode',
+                ),
+              }))}
+              className="compact-picker task-mode-picker"
+              disabled={session?.archived}
+            />
+            <Picker
               title={t(
                 options.mode === 'full'
                   ? 'fullDescription'
@@ -386,9 +402,10 @@ export function Composer({
                   onProvider(next);
                   updateContext({
                     ...context,
-                    mode: (providerDefinitions[next].taskModes as readonly string[]).includes(
-                      context.mode,
-                    )
+                    mode: (
+                      providers.find((item) => item.provider === next)?.taskModes ||
+                      (providerDefinitions[next].taskModes as readonly string[])
+                    ).includes(context.mode)
                       ? context.mode
                       : 'build',
                   });
@@ -417,7 +434,7 @@ export function Composer({
                 <Square fill="currentColor" />
               </IconButton>
             )}
-            {['codex', 'grok'].includes(provider) &&
+            {info?.steering === true &&
               session &&
               ['running', 'waiting'].includes(session.status) && (
                 <Button

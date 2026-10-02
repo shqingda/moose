@@ -1,3 +1,4 @@
+import { useAuxiliaryPanel, PanelResizeHandle } from '../lib/auxiliary-panel';
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import {
@@ -45,8 +46,6 @@ function relativeFile(path: string, root: string) {
   return parts.join('/');
 }
 
-const clamp = (width: number) =>
-  Math.min(Math.max(320, window.innerWidth - 440), Math.max(380, width));
 export function FilesPanel({
   open,
   project,
@@ -63,8 +62,10 @@ export function FilesPanel({
   reduceMotion: boolean;
 }) {
   const t = useI18n();
-  const [width, setWidth] = useState(() => clamp(window.innerWidth * 0.52));
-  const [resizing, setResizing] = useState(false);
+  const { width, resizing, panel, onKeyDown, resize, setResizing } = useAuxiliaryPanel(
+    open,
+    onClose,
+  );
   const [workspaceRoot, setWorkspaceRoot] = useState<string>();
   const [tabs, setTabs] = useState<string[]>([]);
   const [active, setActive] = useState<string>();
@@ -80,8 +81,6 @@ export function FilesPanel({
   const [copied, setCopied] = useState(false);
   const [zoom, setZoom] = useState(1);
   const viewStates = useRef(new Map<string, CodeViewState>());
-  const panel = useRef<HTMLElement>(null);
-  const trigger = useRef<HTMLElement | null>(null);
   const data = loaded && loaded.path === active ? loaded.data : undefined;
   const markdown = data?.kind === 'text' && /\.(md|markdown|mdown|mkd)$/i.test(active || '');
   const showMarkdown = markdown && !sourceFiles.has(active || '');
@@ -111,18 +110,7 @@ export function FilesPanel({
     if (request && workspaceRoot) select(request.reference.path);
   }, [request, workspaceRoot, select]);
   useEffect(() => {
-    const resize = () => setWidth((value) => clamp(value));
-    window.addEventListener('resize', resize);
-    return () => window.removeEventListener('resize', resize);
-  }, []);
-  useEffect(() => {
-    if (open) {
-      trigger.current = document.activeElement as HTMLElement;
-      panel.current?.focus({ preventScroll: true });
-    } else {
-      setExpanded(false);
-      trigger.current?.focus({ preventScroll: true });
-    }
+    if (!open) setExpanded(false);
   }, [open]);
   useEffect(() => {
     if (!open) return;
@@ -182,45 +170,18 @@ export function FilesPanel({
     >
       <aside
         ref={panel}
+        onKeyDown={onKeyDown}
         tabIndex={-1}
         className="review-panel files-panel"
         style={{ width }}
         aria-label={t('workspaceFiles')}
       >
         {!expanded && (
-          <div
-            className="resize-handle"
-            role="separator"
-            aria-label={t('workspaceFiles')}
-            aria-orientation="vertical"
-            aria-valuemin={320}
-            aria-valuemax={Math.max(320, window.innerWidth - 440)}
-            aria-valuenow={width}
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-                e.preventDefault();
-                setWidth((value) => clamp(value + (e.key === 'ArrowLeft' ? 16 : -16)));
-              }
-            }}
-            onPointerDown={(e) => {
-              setResizing(true);
-              e.currentTarget.setPointerCapture(e.pointerId);
-              e.currentTarget.dataset.startX = String(e.clientX);
-              e.currentTarget.dataset.startWidth = String(width);
-            }}
-            onPointerMove={(e) => {
-              if (e.currentTarget.hasPointerCapture(e.pointerId))
-                setWidth(
-                  clamp(
-                    Number(e.currentTarget.dataset.startWidth) +
-                      Number(e.currentTarget.dataset.startX) -
-                      e.clientX,
-                  ),
-                );
-            }}
-            onPointerUp={(e) => e.currentTarget.releasePointerCapture(e.pointerId)}
-            onLostPointerCapture={() => setResizing(false)}
+          <PanelResizeHandle
+            label={t('workspaceFiles')}
+            width={width}
+            onResize={resize}
+            onResizing={setResizing}
           />
         )}
         <header className="files-header">

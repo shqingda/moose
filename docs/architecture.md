@@ -1,6 +1,6 @@
 # Moose 技术架构
 
-> 按 0.21.4 源码更新（2026-09-30）。安装版桌面与浏览器共用本机后台及原桌面数据目录；源码独立 Web 工作区不自动合并。
+> 按 0.22.0 源码更新（2026-10-02）。安装版桌面与浏览器共用本机后台及原桌面数据目录；源码独立 Web 工作区不自动合并。
 
 ## 1. 项目定位
 
@@ -52,9 +52,13 @@ flowchart TB
 | Preload | 暴露受限的请求与订阅接口 | [electron/preload.ts](../electron/preload.ts) |
 | Main | 原生窗口、菜单、文件选择、剪贴板、系统入口、安全校验 | [electron/main.ts](../electron/main.ts) |
 | Runtime | 安装版按需启动并连接本机共享服务；开发／独立模式保留 utility process | [electron/desktop-runtime.ts](../electron/desktop-runtime.ts)、[electron/shared-runtime.ts](../electron/shared-runtime.ts)、[electron/runtime-host.ts](../electron/runtime-host.ts) |
-| Runtime / Service | 请求分发、执行调度、代理生命周期、事件落库 | [electron/web-server.ts](../electron/web-server.ts)、[electron/runtime.ts](../electron/runtime.ts)、[electron/service.ts](../electron/service.ts) |
+| Runtime / Service | 请求分发与共享目录锁，协调业务服务 | [electron/web-server.ts](../electron/web-server.ts)、[electron/runtime.ts](../electron/runtime.ts)、[electron/service.ts](../electron/service.ts) |
 | Provider | 抹平代理协议差异 | [electron/providers/types.ts](../electron/providers/types.ts) |
 | Store | SQLite 读写、事务、迁移与重启恢复 | [electron/db/store.ts](../electron/db/store.ts) |
+| ProviderRegistry | CLI 发现、能力探测、额度缓存与探测进程清理 | [provider-registry.ts](../electron/provider-registry.ts) |
+| SessionExecution | 按目录执行队列、合并流式事件、批量落库、取消与关闭 | [session-execution.ts](../electron/session-execution.ts) |
+
+`MooseService` 继续拥有同一个 Store、目录锁、附件、Git、worktree、后台任务和原生历史服务。拆分没有引入第二套数据库或执行器。关闭时等待尚在准备目录的任务与运行任务释放资源，再关闭数据库；配置刷新使过期探测和额度缓存失效。
 
 同步 SQLite 操作、代理协议处理和 Git 查询放在独立运行进程，避免直接阻塞界面。主进程仍负责原生窗口与系统能力，后台执行不依赖窗口是否打开。
 
@@ -70,6 +74,18 @@ flowchart TB
 构建包含 main、preload、runtime、pty-host 和 web-server 五个入口。preload 为沙箱兼容的单文件 CJS，其余为 ESM；SQLite 和 PTY 原生依赖按 Electron ABI 准备。构建、热更新和打包约束统一见[开发与打包](development.md#构建与原生依赖)。
 
 首屏按功能边界加载代码：历史与 worktree 由工具菜单持有公共弹窗外壳，首次打开时加载内容；计划面板首次切换时加载；Git 审阅模块在选中项目后加载，保留面板关闭动画和状态。扩展认证有跨弹窗的生命周期，继续由现有组件持有，不为缩小 bundle 强制卸载。终端启动恢复通过 SQLite 更新状态，避免把所有历史输出反序列化到 JS。
+
+### 界面职责与设计变量
+
+- `app.tsx` 组织应用壳；`workspace-header.tsx` 显示实际工作目录。
+- `useSessionDrafts` 管理文本、附件及延迟保存；发送只消费已经提交的内容，保留等待回执时的新输入。
+- `useWorkspaceLayout` 管理侧栏弹簧与面板位置；`useAuxiliaryPanel` 共用宽度、指针／键盘调整、关闭及焦点返回。
+- 导航、对话、输入、文件／审阅、终端和设置组件继续各自拥有业务交互。没有新增全局状态框架。
+- `styles/tokens.css` 管理中性灰日夜颜色、系统字体、间距和尺寸；`styles/base.css`／`controls.css` 管理基础与无障碍规则；其余样式按对应界面职责组织。`styles.css` 只配置样式基础，`app.css` 只组织导入。
+
+所有组件沿用 Base UI、Motion 与现有图标。持久侧栏使用不透明表面；覆盖内容的弹窗可使用背景模糊，减少透明度和高对比度时关闭。面板与侧栏共用无回弹弹簧参数，拖动即时更新；降低动态效果时直接到达目标位置。
+
+Pierre 使用现有 JavaScript 正则引擎与 GitHub 浅／深两套主题；通过锁定版本的 pnpm patch 移除从未使用的主题集合与 WASM 引擎入口。语言加载器全部保留，本地按需加载，不依赖远程字体或高亮资源。补丁与测量方法见[开发指南](development.md#资源与包体积)。
 
 ## 4. 先分清四个概念
 

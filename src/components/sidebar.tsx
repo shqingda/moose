@@ -9,7 +9,6 @@ import {
   SquarePen,
   Search,
   Settings,
-  Circle,
   MoreHorizontal,
   Trash2,
 } from 'lucide-react';
@@ -82,27 +81,22 @@ export function Sidebar({
       <div className="brand-row">
         <MooseMark className="brand-mark" />
         <span>Moose</span>
-        {!web && (
-          <IconButton label={t('search')} onClick={onSearch}>
-            <Search />
-          </IconButton>
-        )}
       </div>
       <div className="sidebar-actions">
         <Button variant="ghost" className="justify-start" onClick={() => onNew()}>
           <SquarePen data-icon="inline-start" />
           {t('newSession')}
-          {!web && <kbd>⌘ N</kbd>}
+          {!web && <kbd aria-hidden="true">⌘ N</kbd>}
+        </Button>
+        <Button variant="ghost" className="justify-start" onClick={onSearch}>
+          <Search data-icon="inline-start" />
+          {t('search')}
+          {!web && <kbd aria-hidden="true">⌘ K</kbd>}
         </Button>
       </div>
       <div className="section-caption">
         <span>{archived ? t('archived') : t('projects')}</span>
         <div className="flex items-center gap-1">
-          {web && (
-            <IconButton label={t('search')} onClick={onSearch} size="icon-xs">
-              <Search />
-            </IconButton>
-          )}
           {!archived && (
             <IconButton
               label={t('addProject')}
@@ -261,18 +255,14 @@ export function Sidebar({
         })}
       </nav>
       <footer className="sidebar-footer">
-        <div className="local-label">
-          <Circle size={6} fill="currentColor" />
-          {t(window.moose.host === 'web' ? 'webWorkspace' : 'local')}
-        </div>
-        <div className="flex items-center gap-1">
-          <IconButton label={t('archived')} onClick={onArchived} aria-pressed={archived}>
-            <Archive />
-          </IconButton>
-          <IconButton label={t('settings')} onClick={onSettings}>
-            <Settings />
-          </IconButton>
-        </div>
+        <Button variant="ghost" onClick={onArchived} aria-pressed={archived}>
+          <Archive />
+          {t('archived')}
+        </Button>
+        <Button variant="ghost" onClick={onSettings}>
+          <Settings />
+          {t('settings')}
+        </Button>
       </footer>
     </aside>
   );

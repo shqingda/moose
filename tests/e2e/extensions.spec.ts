@@ -255,7 +255,7 @@ test('manages Pi and OpenCode user settings without showing unsupported controls
       }),
     resolve('tests/fixtures/extensions.mjs'),
   );
-  await dialog.getByRole('combobox', { name: 'Providers', exact: true }).click();
+  await dialog.getByRole('combobox', { name: 'Agent connections', exact: true }).click();
   await page.getByRole('option', { name: 'Pi', exact: true }).click();
   await expect(dialog.getByRole('tab', { name: 'MCP', exact: true })).toHaveCount(0);
   await dialog.getByRole('textbox', { name: 'Default model', exact: true }).fill('grok-4.6');
@@ -265,7 +265,7 @@ test('manages Pi and OpenCode user settings without showing unsupported controls
       async () => JSON.parse(await readFile(join(dir, 'pi/settings.json'), 'utf8')).defaultModel,
     )
     .toBe('grok-4.6');
-  await dialog.getByRole('combobox', { name: 'Providers', exact: true }).click();
+  await dialog.getByRole('combobox', { name: 'Agent connections', exact: true }).click();
   await page.getByRole('option', { name: 'OpenCode', exact: true }).click();
   await expect(dialog.getByRole('tab', { name: 'MCP', exact: true })).toBeVisible();
   await expect(dialog.getByRole('button', { name: 'Authenticate', exact: true })).toHaveCount(0);

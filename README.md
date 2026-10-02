@@ -8,7 +8,7 @@ Moose 负责交互、协议适配、任务调度和历史存储；模型推理�
 
 [下载最新版本](https://github.com/shqingda/moose/releases/latest) · [使用指南](docs/usage.md) · [文档目录](docs/README.md)
 
-本次发布版本为 **0.21.4**，macOS 桌面与独立 Web 使用同一版本发布。[本版说明](docs/releases/0.21.4.md)修复标题栏图标对齐与侧栏折叠时的标题回拉，使展开、折叠及中途反向平滑连续。
+当前源码版本为 **0.22.0**：统一侧栏、对话输入与辅助面板，保留全部已有入口，补齐 Pi 历史与原生插话、OpenCode 历史。见[本版说明](docs/releases/0.22.0.md)与[验收进度](docs/releases/0.22.0-validation.md)；桌面与独立 Web 按同一版本联合发布。
 
 ## 开始使用
 

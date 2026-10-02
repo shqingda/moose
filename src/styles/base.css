@@ -1,0 +1,76 @@
+/* base: shared workspace styles. */
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  color: var(--foreground);
+  background: transparent;
+}
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--muted-foreground) 25%, transparent);
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+pre,
+code,
+kbd {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+}
+kbd {
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 400;
+  opacity: 0.65;
+  margin-left: auto;
+}
+.high-contrast {
+  --border: var(--muted-foreground);
+  --muted-foreground: #4b4b4b;
+}
+.dark.high-contrast {
+  --muted-foreground: #c0c0c0;
+}
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+@media (prefers-contrast: more) {
+  :root {
+    --border: #808080;
+  }
+}
+@keyframes session-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

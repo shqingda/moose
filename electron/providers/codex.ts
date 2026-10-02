@@ -318,7 +318,9 @@ export class CodexAdapter implements AgentAdapter {
     };
   }
   /** 查询真实模型与推理强度，返回界面可选择的能力。 */
-  async probe(): Promise<Pick<ProviderInfo, 'models' | 'modes' | 'images'>> {
+  async probe(): Promise<
+    Pick<ProviderInfo, 'models' | 'modes' | 'images' | 'taskModes' | 'steering'>
+  > {
     const rpc = await this.connect();
     const result = await rpc.request<ModelListResponse>('model/list', {
       limit: 100,
@@ -326,7 +328,11 @@ export class CodexAdapter implements AgentAdapter {
     });
     const account = record(await rpc.request('account/read', { refreshToken: false }));
     if (!account.account) throw new Error('Sign in with `codex login`, then reconnect.');
+    const collaboration = record(await rpc.request('collaborationMode/list', {}).catch(() => ({})));
+    const plan = array(collaboration.data).some((value) => record(value).mode === 'plan');
     return {
+      taskModes: plan ? ['build', 'plan', 'goal'] : ['build', 'goal'],
+      steering: true,
       models: result.data
         .filter((m) => !m.hidden)
         .map((m) => ({

@@ -638,12 +638,12 @@ for (const web of [false, true]) {
     await page.getByRole('button', { name: 'Settings', exact: true }).click();
     await page
       .locator('.settings-navigation')
-      .getByRole('button', { name: 'Providers', exact: true })
+      .getByRole('button', { name: 'Agent connections', exact: true })
       .click();
     const row = page.locator('.provider-card').first();
     await row.locator('.provider-row').click();
     await row.locator('#codexPath').fill('/missing/keep-my-path');
-    await page.getByRole('heading', { name: 'Providers', exact: true }).click();
+    await page.getByRole('heading', { name: 'Agent connections', exact: true }).click();
     await expect(
       row.getByText('Could not save. Your input is kept.', { exact: true }),
     ).toBeVisible();
@@ -655,7 +655,9 @@ for (const web of [false, true]) {
     ).toBeVisible();
     await expect(error.getByRole('button', { name: 'Retry', exact: true })).toHaveCount(0);
     await error.getByRole('button', { name: 'Connect an agent', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Providers', exact: true })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Agent connections', exact: true }),
+    ).toBeVisible();
     expect(await page.evaluate(() => Reflect.get(window, 'saveAttempts'))).toBe(1);
   });
 
@@ -872,4 +874,82 @@ test('desktop asks permission only on opt-in and keeps denied notifications disa
   await toggle.click();
   await expect(toggle).toBeChecked();
   expect(await app!.evaluate(() => Reflect.get(globalThis, 'permissionRequests'))).toBe(2);
+});
+
+test('shares panel width and focus, reverses motion smoothly, and respects accessibility settings', async () => {
+  const { page } = await launch(true, 160);
+  await page.locator('.session-row').filter({ hasText: 'UX history' }).click();
+  const trigger = page.getByRole('button', { name: 'Files', exact: true });
+  await trigger.focus();
+  await trigger.press('Enter');
+  const panel = page.locator('.files-frame[aria-hidden="false"] .files-panel');
+  await expect(panel).toBeFocused();
+  const separator = panel.getByRole('separator');
+  const initial = Number(await separator.getAttribute('aria-valuenow'));
+  await separator.focus();
+  await separator.press('ArrowLeft');
+  await expect(separator).toHaveAttribute('aria-valuenow', String(initial + 16));
+  await separator.press('Escape');
+  await expect(trigger).toBeFocused();
+  await page.getByRole('button', { name: 'Review changes', exact: true }).click();
+  await expect(page.locator('.review-frame:not(.files-frame) [role="separator"]')).toHaveAttribute(
+    'aria-valuenow',
+    String(initial + 16),
+  );
+  await page.locator('.review-panel:not(.files-panel)').press('Escape');
+  await expect(page.getByRole('button', { name: 'Review changes', exact: true })).toBeFocused();
+  await trigger.click();
+  await expect
+    .poll(async () =>
+      Math.abs((await page.locator('.files-frame').boundingBox())!.width - (initial + 16)),
+    )
+    .toBeLessThan(1);
+  const frames = await page.evaluate(async () => {
+    const button = document.querySelector<HTMLButtonElement>('button[aria-label="Files"]')!;
+    const frame = document.querySelector('.files-frame')!;
+    const points: number[] = [frame.getBoundingClientRect().width];
+    const start = performance.now();
+    let reversed = false;
+    button.click();
+    while (performance.now() - start < 800) {
+      await new Promise(requestAnimationFrame);
+      points.push(frame.getBoundingClientRect().width);
+      if (!reversed && performance.now() - start >= 90) {
+        button.click();
+        reversed = true;
+      }
+    }
+    return points;
+  });
+  expect(Math.min(...frames)).toBeGreaterThanOrEqual(0);
+  expect(Math.max(...frames)).toBeLessThanOrEqual(initial + 17);
+  expect(Math.min(...frames)).toBeLessThan(initial - 30);
+  expect(Math.abs(frames.at(-1)! - (initial + 16))).toBeLessThan(1);
+  for (let i = 1; i < frames.length; i++)
+    expect(Math.abs(frames[i] - frames[i - 1])).toBeLessThan((initial + 16) * 0.4);
+  await page.locator('.files-panel').getByRole('button', { name: 'Close', exact: true }).click();
+  const accessibility = await page.context().newCDPSession(page);
+  await accessibility.send('Emulation.setEmulatedMedia', {
+    features: [
+      { name: 'prefers-reduced-motion', value: 'reduce' },
+      { name: 'prefers-reduced-transparency', value: 'reduce' },
+      { name: 'prefers-contrast', value: 'more' },
+    ],
+  });
+  await page.evaluate(() => window.moose.request('settings', { fontScale: 1.2 }));
+  await expect(page.locator('html')).toHaveClass(/reduce-motion/);
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await expect(page.locator('[data-slot="dialog-overlay"]')).toHaveCSS('backdrop-filter', 'none');
+  await page.getByRole('button', { name: 'Back', exact: true }).click();
+  await expect(page.locator('#composer')).toHaveValue('preserved draft');
+  await expect(page.locator('#composer')).toHaveCSS('font-size', '19.2px');
+  await app!.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(430, 780));
+  await page.locator('.global-sidebar-toggle button').click();
+  await trigger.click();
+  const box = (await panel.boundingBox())!;
+  expect(box.width).toBeLessThanOrEqual(430);
+  expect(box.width).toBeGreaterThan(400);
+  await panel.press('Escape');
+  await expect(trigger).toBeFocused();
+  await expect(page.locator('#composer')).toHaveValue('preserved draft');
 });

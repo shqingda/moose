@@ -1,19 +1,21 @@
 import { test, expect, _electron as electron, type ElectronApplication } from '@playwright/test';
-import { mkdtemp, realpath, rm } from 'node:fs/promises';
+import { mkdtemp, realpath, rm, mkdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { Store } from '../../electron/db/store';
+import { piSessionDirectory } from '../../electron/providers/pi-sessions';
 let app: ElectronApplication, dir: string;
 test.afterEach(async () => {
   await app?.close().catch(() => {});
   if (dir) await rm(dir, { recursive: true, force: true });
 });
-async function launch(provider: 'codex' | 'grok' = 'codex') {
+async function launch(provider: 'codex' | 'grok' | 'pi' | 'opencode' = 'codex') {
   dir = await realpath(await mkdtemp(join(tmpdir(), 'moose-history-e2e-')));
   const store = new Store(join(dir, 'moose.sqlite'));
   store.setSettings({
     language: 'en',
-    opencodeEnabled: false,
+    opencodeEnabled: provider === 'opencode',
+    opencodePath: resolve('tests/fixtures/opencode.mjs'),
     codexPath: resolve('tests/fixtures/agent.mjs'),
     grokPath: resolve('tests/fixtures/agent.mjs'),
     piPath: resolve('tests/fixtures/pi.mjs'),
@@ -22,10 +24,36 @@ async function launch(provider: 'codex' | 'grok' = 'codex') {
     session = store.createSession(project.id, provider);
   store.updateSession(session.id, { title: 'Native workspace' });
   store.close();
+  const piDir = join(dir, 'pi-agent');
+  const directory = piSessionDirectory(dir, piDir);
+  await mkdir(directory, { recursive: true });
+  await writeFile(
+    join(directory, '2026-10-02_session.jsonl'),
+    [
+      { type: 'session', version: 3, id: 'native-pi', cwd: dir },
+      {
+        type: 'message',
+        id: 'request',
+        parentId: null,
+        message: { role: 'user', content: 'Pi native history' },
+      },
+      {
+        type: 'message',
+        id: 'answer',
+        parentId: 'request',
+        message: { role: 'assistant', content: [{ type: 'text', text: 'PI_HISTORY_REPLAY' }] },
+      },
+    ]
+      .map((row) => JSON.stringify(row))
+      .join('\n'),
+  );
   const env: Record<string, string> = Object.fromEntries(
-    Object.entries({ ...process.env, MOOSE_DATA_DIR: dir, MOOSE_HISTORY_CWD: dir }).filter(
-      (entry): entry is [string, string] => typeof entry[1] === 'string',
-    ),
+    Object.entries({
+      ...process.env,
+      MOOSE_DATA_DIR: dir,
+      MOOSE_HISTORY_CWD: dir,
+      PI_CODING_AGENT_DIR: piDir,
+    }).filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
   );
   delete env.ELECTRON_RUN_AS_NODE;
   app = await electron.launch({ args: ['.'], env });
@@ -130,3 +158,47 @@ test('opens child history independently while child approvals remain in the pare
   await page.getByRole('button', { name: 'Allow once', exact: true }).click();
   await expect(page.locator('.markdown')).toContainText('Delegated work complete.');
 });
+
+for (const provider of ['pi', 'opencode'] as const)
+  test(`${provider} exposes native history, imports once and continues from the same source`, async () => {
+    const { page, project } = await launch(provider);
+    await page.getByRole('button', { name: 'Workspace tools', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Native sessions', exact: true }).click();
+    const dialog = page.getByRole('dialog');
+    const title = provider === 'pi' ? 'Pi native history' : 'OpenCode history';
+    await dialog.getByRole('button', { name: title, exact: true }).click();
+    await expect(dialog).toContainText(
+      provider === 'pi' ? 'PI_HISTORY_REPLAY' : 'HISTORICAL_REPLAY',
+    );
+    await dialog.getByRole('button', { name: 'Import or open conversation' }).click();
+    await expect(page.locator('.header-title')).toHaveText(title);
+    const nativeId = (
+      await page.evaluate(() => window.moose.request('snapshot', {}))
+    ).sessions.find((s) => s.title === title)!.nativeId!;
+    const again = await page.evaluate((args) => window.moose.request('nativeImport', args), {
+      projectId: project.id,
+      provider,
+      nativeId,
+    });
+    expect(
+      (await page.evaluate(() => window.moose.request('snapshot', {}))).sessions.filter(
+        (s) => s.nativeId === nativeId,
+      ),
+    ).toHaveLength(1);
+    if (provider === 'pi') {
+      await page.getByRole('combobox', { name: 'Permissions', exact: true }).click();
+      await page.getByRole('option', { name: 'Full access', exact: true }).click();
+    }
+    await page.locator('#composer').fill('Continue this imported history');
+    await page.locator('#composer').press('Enter');
+    if (provider === 'opencode')
+      await page.getByRole('button', { name: 'Allow once', exact: true }).click();
+    await expect(page.locator('.message-assistant').last()).toContainText(
+      provider === 'pi' ? 'Pi response' : 'OpenCode fixture completed',
+    );
+    expect(
+      (await page.evaluate(() => window.moose.request('snapshot', {}))).sessions.find(
+        (s) => s.id === again.id,
+      )?.nativeId,
+    ).toBe(nativeId);
+  });

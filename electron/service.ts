@@ -1,5 +1,5 @@
 import { FilePreviews } from './file-preview';
-import { MooseError, fault } from '../shared/errors';
+import { MooseError } from '../shared/errors';
 import type { SessionActivity, TaskNotice } from '../shared/experience';
 import { pendingMessage, searchMessages, locateMessage } from './experience-data';
 import { Notices } from './notices';
@@ -10,30 +10,20 @@ import { Worktrees, isWorktreeMethod } from './worktrees';
 import { NativeHistory, isNativeMethod } from './native-history';
 import { Plans } from './plans';
 import { Steering } from './steering';
-import { providerDefinitions, providerIds } from '../shared/providers';
+import { providerDefinitions } from '../shared/providers';
+import { ProviderRegistry } from './provider-registry';
 import { createAdapter } from './providers/registry';
 import { contextInText } from '../shared/prompt-context';
 import { ContextCatalog } from './context-catalog';
 import { Attachments, agentAttachments } from './attachments';
-import { randomUUID } from 'node:crypto';
 import { realpath } from 'node:fs/promises';
 import { Store } from './db/store';
-import { discover, cliVersion } from './providers/process';
 import { gitDiff, gitStatus } from './git';
-import { providerError, type AgentAdapter, type AgentEvent } from './providers/types';
-import type { AppEvent, Message, Provider, ProviderInfo, Requests, Session } from '../shared/types';
+import type { AgentAdapter } from './providers/types';
+import { SessionExecution } from './session-execution';
+import type { AppEvent, Provider, ProviderInfo, Requests, Session } from '../shared/types';
 import { validate } from '../shared/validation';
 
-type Active = {
-  id: string;
-  session: Session;
-  adapter: AgentAdapter;
-  seq: number;
-  cancelled: boolean;
-  rows: Map<string, Omit<Message, 'position'>>;
-  dirty: Set<string>;
-  promise?: Promise<void>;
-};
 export class MooseService {
   private notices = new Notices();
   private background: Background;
@@ -48,25 +38,23 @@ export class MooseService {
   readonly attachments: Attachments;
   readonly files: FilePreviews;
   private editing = new Set<string>();
-  private active = new Map<string, Active>();
-  private paused = new Set<string>();
+  private execution: SessionExecution;
+  private get active() {
+    return this.execution.active;
+  }
+  private get paused() {
+    return this.execution.paused;
+  }
   private stopping = false;
-  private usageCache = new Map<
-    Provider,
-    { at: number; value: import('../shared/types').UsageInfo }
-  >();
-  private usagePending = new Map<Provider, Promise<import('../shared/types').UsageInfo>>();
-  private providerCache?: ProviderInfo[];
-  private providerRevision = 0;
-  private probePromise?: Promise<ProviderInfo[]>;
-  private probing = new Set<AgentAdapter>();
-  private flushTimer: ReturnType<typeof setInterval>;
+  private agents: ProviderRegistry;
+  private operations = new Set<AgentAdapter>();
   /** 初始化后台服务；重启遗留队列先暂停，并每 80 ms 批量保存流式消息。 */
   constructor(
     readonly store: Store,
     private emit: (event: AppEvent) => void,
     private adapterFactory = createAdapter,
   ) {
+    this.agents = new ProviderRegistry(store, adapterFactory);
     this.worktrees = new Worktrees(store, {
       busy: (path) => this.active.has(path) || this.editing.has(path),
       lock: (paths) => {
@@ -113,8 +101,6 @@ export class MooseService {
     this.steering = new Steering(store, (message) => this.emit({ type: 'message', message }));
     this.attachments = new Attachments(store.sqlite.name);
     this.files = new FilePreviews(store, this.attachments);
-    for (const item of store.queued()) this.paused.add(item.sessionId);
-    this.flushTimer = setInterval(() => this.flush(), 80);
     this.background = new Background(store, {
       emit,
       lock: (cwd) => this.lockDirectory(cwd),
@@ -152,6 +138,23 @@ export class MooseService {
         void this.drain();
       },
     });
+    this.execution = new SessionExecution(
+      store,
+      this.attachments,
+      this.catalog,
+      this.worktrees,
+      this.background,
+      {
+        configuring: () => this.configuring,
+        stopping: () => this.stopping,
+        directoryBusy: (path) => this.editing.has(path),
+        providerPath: (provider) => this.providerPath(provider),
+        changed: () => this.changed(),
+        emit,
+        notice: (session, kind, id, messageId) => this.notice(session, kind, id, messageId),
+      },
+      adapterFactory,
+    );
   }
   private async enabledAdapter(provider: Provider) {
     if (!this.store.getSettings()[providerDefinitions[provider].enabledKey])
@@ -222,70 +225,11 @@ export class MooseService {
     this.changed();
     return project;
   }
-  /** 根据用户配置或默认搜索路径定位本机代理 CLI。 */
-  private async providerPath(provider: Provider) {
-    const settings = this.store.getSettings();
-    try {
-      return await discover(provider, settings[providerDefinitions[provider].pathKey]);
-    } catch (error) {
-      throw new MooseError('provider', String(error));
-    }
+  private providerPath(provider: Provider) {
+    return this.agents.path(provider);
   }
-  /** 并行探测代理版本与能力；缓存结果，并合并重复探测请求。 */
-  async providers(refresh = false): Promise<ProviderInfo[]> {
-    if (!refresh && this.providerCache) return this.providerCache;
-    if (this.probePromise) return this.probePromise;
-    this.probePromise = this.probeProviders();
-    try {
-      return await this.probePromise;
-    } finally {
-      this.probePromise = undefined;
-    }
-  }
-  /** 一轮使用同一份配置；保存期间过期的结果不返回、不缓存，合并到最新配置重试。 */
-  private async probeProviders(): Promise<ProviderInfo[]> {
-    while (true) {
-      const revision = this.providerRevision;
-      const settings = this.store.getSettings();
-      const results = await Promise.all(
-        providerIds.map(async (provider) => {
-          const info: ProviderInfo = {
-            enabled: settings[providerDefinitions[provider].enabledKey],
-            provider,
-            path: '',
-            version: '',
-            available: false,
-            connected: false,
-            models: [],
-            modes: [],
-          };
-          let adapter: AgentAdapter | undefined;
-          try {
-            info.path = await discover(provider, settings[providerDefinitions[provider].pathKey]);
-            info.available = true;
-            info.version = await cliVersion(info.path);
-            if (this.stopping || !info.enabled) return info;
-            adapter = this.adapterFactory(provider, info.path);
-            this.probing.add(adapter);
-            Object.assign(info, await adapter.probe());
-            info.connected = true;
-          } catch (error) {
-            info.error = providerError(error);
-            info.failure = fault(error);
-          } finally {
-            if (adapter) {
-              await adapter.close();
-              this.probing.delete(adapter);
-            }
-          }
-          return info;
-        }),
-      );
-      if (this.stopping) return results;
-      if (revision !== this.providerRevision) continue;
-      this.providerCache = results;
-      return results;
-    }
+  providers(refresh = false): Promise<ProviderInfo[]> {
+    return this.agents.providers(refresh);
   }
   /** 后台业务入口：校验 IPC 参数后分发项目、消息、审批、用量和 Git 操作。 */
   async handle(method: string, input: unknown, clientId = 'local'): Promise<unknown> {
@@ -552,57 +496,13 @@ export class MooseService {
         this.changed();
         return null;
       }
-      case 'usage': {
-        const a = args as Requests['usage'];
-        if (a.sessionId && this.store.session(a.sessionId).provider !== a.provider)
-          throw new Error('Provider does not match session');
-        const saved = a.sessionId
-          ? (this.store.sqlite
-              .prepare('SELECT value FROM settings WHERE key = ?')
-              .get('usage:' + a.sessionId) as { value: string } | undefined)
-          : undefined;
-        const context = saved ? JSON.parse(saved.value) : null;
-        let cached = this.usageCache.get(a.provider);
-        if (!cached || Date.now() - cached.at > 60000) {
-          let pending = this.usagePending.get(a.provider);
-          if (!pending) {
-            pending = (async () => {
-              const adapter = this.adapterFactory(a.provider, await this.providerPath(a.provider));
-              this.probing.add(adapter);
-              try {
-                const value = (await adapter.usage?.()) || { context: null, limits: [] };
-                this.usageCache.set(a.provider, { at: Date.now(), value });
-                return value;
-              } finally {
-                await adapter.close();
-                this.probing.delete(adapter);
-              }
-            })();
-            this.usagePending.set(a.provider, pending);
-            void pending.finally(() => this.usagePending.delete(a.provider)).catch(() => {});
-          }
-          try {
-            await pending;
-          } catch (error) {
-            return { ...(cached?.value || { limits: [] }), context, error: providerError(error) };
-          }
-          cached = this.usageCache.get(a.provider);
-        }
-        return {
-          ...(cached?.value || { limits: [] }),
-          context:
-            context ||
-            (!a.sessionId || !this.store.allMessages(a.sessionId).length
-              ? { used: 0, capacity: null }
-              : null),
-        };
-      }
+      case 'usage':
+        return this.agents.usage(args as Requests['usage']);
       case 'providers':
         return this.providers((args as Requests['providers']).refresh);
       case 'settings': {
         const s = this.store.setSettings(args as Requests['settings']);
-        this.providerRevision++;
-        this.providerCache = undefined;
+        this.agents.invalidate();
         this.changed();
         void this.drain();
         return s;
@@ -619,228 +519,11 @@ export class MooseService {
         throw new Error(`Operation is not available in the runtime: ${method}`);
     }
   }
-  private draining = false;
-  private drainAgain = false;
-  /** 按入队顺序启动可执行任务；同目录串行，不同目录可并行。 */
-  private async drain() {
-    if (this.configuring) return;
-    if (this.stopping) return;
-    if (this.draining) {
-      this.drainAgain = true;
-      return;
-    }
-    this.draining = true;
-    try {
-      for (const item of this.store.queued()) {
-        if (this.stopping || this.paused.has(item.sessionId)) continue;
-        const session = this.store.listSessions().find((s) => s.id === item.sessionId);
-        if (!session || !this.store.getSettings()[providerDefinitions[session.provider].enabledKey])
-          continue;
-        const location = this.store.sessionPath(session);
-        if (
-          session.archived ||
-          this.active.has(location) ||
-          this.editing.has(location) ||
-          this.worktrees.blocks(location)
-        )
-          continue;
-        let path: string, cwd: string;
-        try {
-          cwd = await this.worktrees.ensure(session);
-          path = await this.providerPath(session.provider);
-        } catch (error) {
-          this.paused.add(session.id);
-          this.background.schedules.failedToStart(item.id);
-          this.store.updateSession(session.id, { status: 'failed' });
-          this.store.saveMessage({
-            id: randomUUID(),
-            runId: randomUUID(),
-            sessionId: session.id,
-            seq: 1,
-            kind: 'error',
-            failure: fault(error),
-            text: error instanceof Error ? error.message : String(error),
-            title: '',
-            state: 'error',
-            createdAt: Date.now(),
-          });
-          this.changed();
-          this.notice(session, 'failed', `result:${item.id}`);
-          continue;
-        }
-        if (this.stopping || this.configuring) break;
-        const current = this.store.queued(session.id).find((queued) => queued.id === item.id);
-        if (
-          this.active.has(cwd) ||
-          this.editing.has(cwd) ||
-          this.worktrees.blocks(cwd) ||
-          !this.store.listSessions().some((s) => s.id === session.id && !s.archived) ||
-          this.paused.has(session.id) ||
-          !current
-        )
-          continue;
-        const run: Active = {
-          id: randomUUID(),
-          session,
-          adapter: this.adapterFactory(session.provider, path),
-          seq: 1,
-          cancelled: false,
-          rows: new Map(),
-          dirty: new Set(),
-        };
-        this.active.set(cwd, run);
-        this.emit({ type: 'message', message: this.store.begin(current, run.id) });
-        this.background.schedules.started(current.id, run.id);
-        this.changed();
-        run.promise = this.execute(
-          run,
-          cwd,
-          current.text,
-          current.attachments || [],
-          current.context,
-        );
-      }
-    } finally {
-      this.draining = false;
-      if (this.drainAgain) {
-        this.drainAgain = false;
-        queueMicrotask(() => {
-          void this.drain();
-        });
-      }
-    }
+  private drain() {
+    return this.execution.drain();
   }
-  /** 将代理事件合并为本轮消息记录；取消后的事件不再接收。 */
-  private accept(run: Active, event: AgentEvent) {
-    if (run.cancelled || this.stopping) return;
-    const id = `${run.id}:${event.key}`,
-      existing = run.rows.get(id);
-    const row: Omit<Message, 'position'> = existing || {
-      id,
-      sessionId: run.session.id,
-      runId: run.id,
-      seq: 0,
-      kind: event.kind,
-      text: '',
-      title: '',
-      state: 'running',
-      createdAt: Date.now(),
-    };
-    row.seq = ++run.seq;
-    if (event.text !== undefined) row.text = event.text.slice(0, 500_000);
-    if (event.delta) row.text = (row.text + event.delta).slice(0, 500_000);
-    if (event.failure) row.failure = event.failure;
-    if (event.title !== undefined) row.title = event.title;
-    if (event.state) row.state = event.state;
-    if (event.choices) row.choices = event.choices;
-    if (event.questions) row.questions = event.questions;
-    if (event.delegation) row.delegation = event.delegation;
-    if (event.sourceThreadId) row.sourceThreadId = event.sourceThreadId;
-    if (event.kind === 'plan') row.plan ||= { version: 1 };
-    run.rows.set(id, row);
-    run.dirty.add(id);
-    if (row.state === 'pending') {
-      this.store.updateSession(run.session.id, { status: 'waiting' });
-      this.flush();
-      this.changed();
-      if (row.kind === 'approval' || row.kind === 'question')
-        this.notice(run.session, 'attention', `attention:${row.id}`, row.id);
-    }
-  }
-  /** 只保存 dirty 消息并推送界面，减少每个文本增量触发的数据库与 IPC 开销。 */
   private flush() {
-    for (const run of this.active.values())
-      for (const id of run.dirty) {
-        const row = run.rows.get(id)!;
-        this.emit({ type: 'message', message: this.store.saveMessage(row) });
-        run.dirty.delete(id);
-      }
-  }
-  /** 执行一轮代理任务；无论成功或失败都关闭代理、保存状态并释放目录锁。 */
-  private async execute(
-    run: Active,
-    path: string,
-    text: string,
-    attachments: import('../shared/types').Attachment[],
-    context?: import('../shared/types').PromptContext,
-  ) {
-    let failed = false;
-    try {
-      const selection = await this.catalog.resolve(path, context);
-      const inputs = await agentAttachments(this.attachments, attachments);
-      if (run.cancelled || this.stopping) return;
-      await run.adapter.run({
-        usage: (usage) => {
-          if (!run.cancelled)
-            this.store.sqlite
-              .prepare(
-                'INSERT INTO settings(key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',
-              )
-              .run('usage:' + run.session.id, JSON.stringify(usage));
-        },
-        session: run.session,
-        cwd: path,
-        text:
-          run.session.historySeed && !run.session.nativeId
-            ? `${run.session.historySeed}\n\nCurrent user message:\n${text}`
-            : text,
-        promptContext: context,
-        selection,
-        attachments: inputs,
-        turnId: (id) => this.store.setTurnId(run.id, id),
-        emit: (event) => this.accept(run, event),
-        nativeId: (nativeId) => {
-          this.store.updateSession(run.session.id, { nativeId });
-          this.changed();
-        },
-      });
-    } catch (error) {
-      if (!run.cancelled && !this.stopping) {
-        failed = true;
-        this.paused.add(run.session.id);
-        this.accept(run, {
-          key: 'error',
-          kind: 'error',
-          failure: fault(error),
-          text: providerError(error),
-          state: 'error',
-        });
-      }
-    } finally {
-      await run.adapter.close();
-      if (context?.mode === 'plan') this.paused.add(run.session.id);
-      for (const row of run.rows.values()) {
-        if (row.kind === 'plan' && (failed || run.cancelled)) row.state = 'running';
-        if (row.state === 'pending' || row.state === 'running') {
-          row.state = row.state === 'pending' || failed || run.cancelled ? 'expired' : 'done';
-          row.seq = ++run.seq;
-          run.dirty.add(row.id);
-        }
-      }
-      this.flush();
-      this.background.schedules.finished(
-        run.id,
-        this.stopping
-          ? 'interrupted'
-          : run.cancelled
-            ? 'cancelled'
-            : failed
-              ? 'failed'
-              : 'completed',
-      );
-      this.active.delete(path);
-      this.store.updateSession(run.session.id, {
-        status: run.cancelled ? 'cancelled' : failed ? 'failed' : 'completed',
-      });
-      this.changed();
-      const pending = pendingMessage(this.store, run.session.id);
-      if (pending) this.notice(run.session, 'attention', `attention:${pending.id}`, pending.id);
-      else if (!run.cancelled && !this.stopping)
-        this.notice(run.session, failed ? 'failed' : 'completed', `result:${run.id}`);
-      queueMicrotask(() => {
-        void this.drain();
-      });
-    }
+    this.execution.flush();
   }
   /** 替换最新一条用户消息及其后续回复；保留 Moose 会话和附件，不回滚工作区文件。 */
   private async replaceMessage(
@@ -874,7 +557,7 @@ export class MooseService {
       const lastUser = retained.filter((m) => m.kind === 'user').at(-1);
       if (source.provider === 'codex' && source.nativeId && lastUser?.nativeTurnId) {
         adapter = this.adapterFactory(source.provider, await this.providerPath(source.provider));
-        this.probing.add(adapter);
+        this.operations.add(adapter);
         if (adapter.fork)
           nativeId = await adapter.fork(source, project.path, lastUser.nativeTurnId);
       }
@@ -913,7 +596,7 @@ export class MooseService {
       return this.store.session(source.id);
     } finally {
       await adapter?.close();
-      if (adapter) this.probing.delete(adapter);
+      if (adapter) this.operations.delete(adapter);
       this.editing.delete(project.path);
       void this.drain();
     }
@@ -922,38 +605,21 @@ export class MooseService {
   async stop(sessionId: string) {
     if (this.editing.has(this.store.sessionPath(this.store.session(sessionId))))
       throw new Error('Wait for the native history operation to finish');
-    this.paused.add(sessionId);
-    const run = [...this.active.values()].find((run) => run.session.id === sessionId);
-    if (run) {
-      run.cancelled = true;
-      await run.adapter.cancel();
-      await run.adapter.close();
-      await run.promise;
-    } else this.store.updateSession(sessionId, { status: 'cancelled' });
-    this.changed();
+    await this.execution.stop(sessionId);
   }
   /** 退出应用时停止接收任务，关闭探测与执行进程，最后落库并关闭数据库。 */
   async close() {
     this.stopping = true;
     this.background.schedules.close();
-    await Promise.all([...this.probing].map((adapter) => adapter.close()));
-    await this.probePromise?.catch(() => {});
-    await Promise.all(
-      [...this.active.values()].map(async (run) => {
-        run.cancelled = true;
-        await run.adapter.cancel();
-        await run.adapter.close();
-        await run.promise;
-      }),
-    );
+    await this.agents.close();
+    await Promise.all([...this.operations].map((adapter) => adapter.close()));
+    await this.execution.close();
     await this.background.close();
     await this.extensions.close();
     await this.workbench.close();
     await this.worktrees.close();
     await this.native.close();
     await this.steering.settle();
-    clearInterval(this.flushTimer);
-    this.flush();
     this.store.close();
   }
 }

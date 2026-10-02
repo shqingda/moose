@@ -1,4 +1,4 @@
-import { afterEach, expect, it } from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
 import { resolve } from 'node:path';
 import { PiAdapter, piCodec, normalizePi } from '../../electron/providers/pi';
 import type { AgentEvent } from '../../electron/providers/types';
@@ -6,6 +6,7 @@ import type { Session } from '../../shared/types';
 const adapters: PiAdapter[] = [];
 afterEach(async () => {
   await Promise.all(adapters.splice(0).map((a) => a.close()));
+  vi.unstubAllEnvs();
 });
 function adapter() {
   const a = new PiAdapter(resolve('tests/fixtures/pi.mjs'));
@@ -132,4 +133,41 @@ it('does not send a prompt after cancellation during setup', async () => {
   await a.cancel();
   await running;
   expect(events).toEqual([]);
+});
+
+it('finishes hook-handled prompts without waiting for an agent loop', async () => {
+  await adapter().run({ session, cwd: process.cwd(), text: 'handled', nativeId() {}, emit() {} });
+});
+it('acknowledges steering without a turn ID and clears native input before cancellation', async () => {
+  const a = adapter(),
+    events: AgentEvent[] = [];
+  let ready!: () => void;
+  const started = new Promise<void>((resolve) => {
+    ready = resolve;
+  });
+  const context = {
+    session,
+    cwd: process.cwd(),
+    text: 'wait',
+    nativeId: ready,
+    emit: (event: AgentEvent) => events.push(event),
+  };
+  const running = a.run(context);
+  await started;
+  await expect(a.steer({ ...context, text: 'new direction' })).resolves.toBeUndefined();
+  await expect(a.steer({ ...context, text: 'reject' })).rejects.toThrow('Steering rejected');
+  await expect(a.steer({ ...context, text: 'ambiguous' })).rejects.toThrow('did not confirm');
+  await a.cancel();
+  await running;
+  expect(events.some((event) => event.text?.includes('UNEXPECTED_QUEUED_TURN'))).toBe(false);
+  await expect(a.steer({ ...context, text: 'late' })).rejects.toThrow('No active');
+});
+
+it('keeps steering unavailable on older CLI versions and rejects direct attempts', async () => {
+  vi.stubEnv('MOOSE_TEST_PI_VERSION', 'pi 0.85.1');
+  const a = adapter();
+  expect(await a.probe()).toMatchObject({ steering: false, taskModes: ['build'] });
+  await expect(
+    a.steer({ session, cwd: process.cwd(), text: 'unsupported', nativeId() {}, emit() {} }),
+  ).rejects.toThrow('does not provide verified');
 });

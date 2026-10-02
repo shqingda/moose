@@ -3,7 +3,7 @@
 import { createInterface } from 'node:readline';
 import { resolve } from 'node:path';
 if (process.argv.includes('--version')) {
-  console.log('pi 0.85.1 fixture');
+  console.log(process.env.MOOSE_TEST_PI_VERSION || 'pi 1.0.0 fixture');
   process.exit(0);
 }
 const sessionFile = process.argv.includes('--session')
@@ -12,6 +12,7 @@ const sessionFile = process.argv.includes('--session')
 const model = { provider: 'test', id: 'model', name: 'Test Pi', input: ['text', 'image'] };
 const send = (value) => process.stdout.write(JSON.stringify(value) + '\n');
 let pending;
+let steering = [];
 const complete = () => {
   send({ type: 'message_start', message: { role: 'assistant' } });
   send({
@@ -45,6 +46,25 @@ createInterface({ input: process.stdin }).on('line', (line) => {
     return;
   }
   let data = {};
+  if (command.type === 'steer') {
+    if (command.message === 'disconnect') {
+      process.exit(0);
+      return;
+    }
+    if (command.message === 'reject') {
+      send({ type: 'response', id: command.id, success: false, error: 'Steering rejected' });
+      return;
+    }
+    steering.push(command.message);
+    data = command.message === 'ambiguous' ? {} : { disposition: 'queued' };
+  }
+  if (command.type === 'clear_queue') {
+    data = { steering, followUp: [] };
+    steering = [];
+  }
+  if (command.type === 'prompt')
+    data = { disposition: command.message === 'handled' ? 'handled' : 'started' };
+
   if (command.type === 'get_available_models') data = { models: [model] };
   if (command.type === 'get_available_thinking_levels') data = { levels: ['off', 'high'] };
   if (command.type === 'get_state') data = { sessionFile, model };
@@ -64,7 +84,15 @@ createInterface({ input: process.stdin }).on('line', (line) => {
         method: 'confirm',
         title: 'Confirm tool',
       });
-    else if (pending !== 'wait') complete();
+    else if (!['wait', 'handled'].includes(pending)) complete();
   }
-  if (command.type === 'abort') send({ type: 'agent_settled' });
+  if (command.type === 'abort') {
+    if (steering.length) {
+      send({
+        type: 'message_end',
+        message: { role: 'assistant', content: [{ type: 'text', text: 'UNEXPECTED_QUEUED_TURN' }] },
+      });
+    }
+    send({ type: 'agent_settled' });
+  }
 });
