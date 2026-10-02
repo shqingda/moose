@@ -5,7 +5,7 @@ import { webShortcuts } from '../lib/web-shortcuts';
 import { ExtensionTools } from './extension-tools';
 import { providerIds } from '../../shared/providers';
 import { useState } from 'react';
-import { ArrowLeft, Puzzle, Monitor, Keyboard, Plug, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Puzzle, Monitor, Plug, RefreshCw } from 'lucide-react';
 import type { Provider, ProviderInfo, Settings } from '../../shared/types';
 import { useI18n } from '../lib/i18n';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
@@ -145,10 +145,7 @@ export function SettingsDialog({
           )}
           {page === 'general' && (
             <section className="settings-section shortcut-section">
-              <h3>
-                <Keyboard size={18} />
-                {t('shortcuts')}
-              </h3>
+              <h3>{t('shortcuts')}</h3>
               {(window.moose.host === 'web'
                 ? [
                     ...webShortcuts.map(({ label, key }) => [label, `Alt ⇧ ${key}`] as const),

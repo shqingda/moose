@@ -178,7 +178,7 @@
 .settings-navigation button {
   justify-content: flex-start;
   height: 42px;
-  font-size: 1rem;
+  font-size: 14px;
   gap: 12px;
 }
 .settings-body {
