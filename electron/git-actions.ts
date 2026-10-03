@@ -7,7 +7,7 @@ export async function ordinaryGit(cwd: string) {
   if ((await gitOperationPending(cwd)) || (await conflicts(cwd)).length)
     throw new Error('Finish or abort the pending Git operation before staging or committing here');
 }
-export async function headAt(cwd: string): Promise<string | null> {
+async function headAt(cwd: string): Promise<string | null> {
   try {
     return (await git(cwd, ['rev-parse', '--verify', 'HEAD'])).trim();
   } catch (error) {

@@ -1,0 +1,54 @@
+{
+  "recoveredOn": "2026-10-03",
+  "files": [
+    {
+      "file": "stability-failed-report.json",
+      "source": "/Users/shqingda/.codex/worktrees/moose-0-22/moose/.moose-test/stability-1790916097980/report.json",
+      "sourceSha256": "4944b46751914e734adfb303185afbc9b7584d50aad487606b8338472fa8edbf",
+      "archivedSha256": "4944b46751914e734adfb303185afbc9b7584d50aad487606b8338472fa8edbf",
+      "redacted": false
+    },
+    {
+      "file": "stability-runtime.redacted.log",
+      "source": "/Users/shqingda/.codex/worktrees/moose-0-22/moose/.moose-test/stability-1790916097980/data/runtime.log",
+      "sourceSha256": "e30d8f6331cdf4903088e8f541f146c3188f72d6793b598ede3a591b6f5c03ef",
+      "archivedSha256": "e30ce028613b890d8de85ebc8db215184e6076f53177e3ec76cd5a29ceb05afd",
+      "redacted": true
+    },
+    {
+      "file": "stability-preflight-notes.md",
+      "source": "/Users/shqingda/.codex/worktrees/moose-0-22/moose/.moose-test/reports/stability-preflight-notes.md",
+      "sourceSha256": "7ae1fe434f833ad6e5544085c121beb21cd8fc7f843031090c352e9f62e4cb5d",
+      "archivedSha256": "7ae1fe434f833ad6e5544085c121beb21cd8fc7f843031090c352e9f62e4cb5d",
+      "redacted": false
+    },
+    {
+      "file": "release-prepared.json",
+      "source": "/Users/shqingda/.codex/worktrees/moose-0-22/moose/release/prepared.json",
+      "sourceSha256": "f2d68af46b7f29830c5e7b53872a7bc7388094c9c512d43302e625cac303a146",
+      "archivedSha256": "f2d68af46b7f29830c5e7b53872a7bc7388094c9c512d43302e625cac303a146",
+      "redacted": false
+    },
+    {
+      "file": "baseline-size.json",
+      "source": "/Users/shqingda/.codex/worktrees/moose-0-22/moose/.moose-test/reports/baseline-size-complete.json",
+      "sourceSha256": "3dae7befc35dea8379553c9c33a6dcc20e1a64a9dd6b86b7aee84d325831615c",
+      "archivedSha256": "3dae7befc35dea8379553c9c33a6dcc20e1a64a9dd6b86b7aee84d325831615c",
+      "redacted": false
+    },
+    {
+      "file": "final-size.json",
+      "source": "/Users/shqingda/.codex/worktrees/moose-0-22/moose/.moose-test/reports/final-size.json",
+      "sourceSha256": "552f766e881f2aec0ea6f64f4e8ebd329d405957e32586d1a1acfc61605f0657",
+      "archivedSha256": "552f766e881f2aec0ea6f64f4e8ebd329d405957e32586d1a1acfc61605f0657",
+      "redacted": false
+    },
+    {
+      "file": "final-performance.log",
+      "source": "/Users/shqingda/.codex/worktrees/moose-0-22/moose/.moose-test/reports/final-performance.log",
+      "sourceSha256": "f5d807e2744897c29cf131a557ba8597746ac04e8c9ae024c9e29e950ff9df39",
+      "archivedSha256": "f5d807e2744897c29cf131a557ba8597746ac04e8c9ae024c9e29e950ff9df39",
+      "redacted": false
+    }
+  ]
+}

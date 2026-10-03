@@ -1,0 +1,117 @@
+{
+  "capturedOn": "2026-10-03",
+  "version": "0.22.0",
+  "commit": "6e0162d49b235d3ade5af3be438eb20a74e4d905",
+  "buildManifestHash": "fd26509b39c7c05bd9f189934d1b0bed7ed475420e397647a497220cefb51105",
+  "condition": "Hidden isolated Electron desktop or Electron-hosted Web; fixture content; masks hide account/machine terminal title and discovered local CLI paths. No bitmap retouching.",
+  "screenshots": [
+    {
+      "file": "approval-desktop.png",
+      "sha256": "b1a40cd0d4272241df1007fb0c31523201d7807771c8c1c08e71858407383e09",
+      "pixels": [
+        2560,
+        1720
+      ],
+      "masked": false
+    },
+    {
+      "file": "extensions-chinese-large-text.png",
+      "sha256": "5e454108d18c2e6e2f3aa266917268942a5224dfb02e2bc1b3863a0ce85d7240",
+      "pixels": [
+        1840,
+        1360
+      ],
+      "masked": false
+    },
+    {
+      "file": "files-desktop-dark.png",
+      "sha256": "a51b1a12ac543f5c7db84fa5a57f4cb274aff4d45ce936bdfec9f1cdc9641014",
+      "pixels": [
+        2560,
+        1720
+      ],
+      "masked": false
+    },
+    {
+      "file": "files-web-narrow.png",
+      "sha256": "b9e5f6a5403d4d8c14f8f81b0d997ba1a7e1d3c9f60932793014bb49070ee738",
+      "pixels": [
+        640,
+        800
+      ],
+      "masked": false
+    },
+    {
+      "file": "native-plan-review.png",
+      "sha256": "48869df3df246f21521dc1fb451ac7c7f67724c114e188e25b6b21c24e35abc3",
+      "pixels": [
+        2560,
+        1720
+      ],
+      "masked": false
+    },
+    {
+      "file": "quiet-composer-dark-narrow.png",
+      "sha256": "bfba0bfac2e30c5ef5d0cd32219fe6a921faadc968532eee9f53be4bedfa9303",
+      "pixels": [
+        1800,
+        1400
+      ],
+      "masked": false
+    },
+    {
+      "file": "quiet-composer-light.png",
+      "sha256": "a20327a655205c4c3895ee0d51fdd8e437f7bd88434df2f962d7ae0a32746372",
+      "pixels": [
+        2560,
+        1720
+      ],
+      "masked": false
+    },
+    {
+      "file": "settings-dark.png",
+      "sha256": "76d2c6b009fca692c94de50cd06e38fa59c327445a8f710e3da6ffe5d36f7ad1",
+      "pixels": [
+        2560,
+        1720
+      ],
+      "masked": false
+    },
+    {
+      "file": "settings-error-desktop.png",
+      "sha256": "6f7e086726a0f00479f0babf660fbe05e930b37ab33b1a18df7b8065ffce8ca1",
+      "pixels": [
+        2560,
+        1720
+      ],
+      "masked": true
+    },
+    {
+      "file": "settings-error-web.png",
+      "sha256": "71a3b19ee500004d6f01f6391cefa282b00bb5cce582485796f4d6548d9f9d7a",
+      "pixels": [
+        2400,
+        1636
+      ],
+      "masked": true
+    },
+    {
+      "file": "terminal-right.png",
+      "sha256": "e75fa0acb45fc7c319f364b6dcfc9becc95f0e9aba75cb1ad5b446fd5a1978c0",
+      "pixels": [
+        2560,
+        1720
+      ],
+      "masked": true
+    },
+    {
+      "file": "workspace-light.png",
+      "sha256": "10acfb34e45cc09107b49fa07503466ca6fc9ecb2d1d15e536d6703057c97ac7",
+      "pixels": [
+        2560,
+        1720
+      ],
+      "masked": false
+    }
+  ]
+}

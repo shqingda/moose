@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 2,
+  "root": "/Users/shqingda/Projects/moose/.moose-test/stability-1790989395651",
+  "host": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "release": "27.0.0",
+    "node": "v26.10.0"
+  },
+  "source": {
+    "commit": "6e0162d49b235d3ade5af3be438eb20a74e4d905",
+    "dirty": [
+      "M docs/TODO-0.22.0.md",
+      " M docs/releases/0.22.0-validation.md",
+      " M docs/testing.md",
+      " M electron/context-catalog.ts",
+      " M electron/git-actions.ts",
+      " M electron/providers/codex-sessions.ts",
+      " M electron/pull-requests.ts",
+      " M scripts/stability.ts",
+      " M shared/git-actions.ts",
+      " M shared/types.ts",
+      " M shared/validation.ts",
+      " M src/components/schedule-timing.tsx",
+      " M src/components/ui/alert-dialog.tsx",
+      " M src/components/ui/alert.tsx",
+      " M src/components/ui/badge.tsx",
+      " M src/components/ui/bubble.tsx",
+      " M src/components/ui/button.tsx",
+      " M src/components/ui/dialog.tsx",
+      " M src/components/ui/dropdown-menu.tsx",
+      " M src/components/ui/empty.tsx",
+      " M src/components/ui/input-group.tsx",
+      " M src/components/ui/marker.tsx",
+      " M src/components/ui/message-scroller.tsx",
+      " M src/components/ui/message.tsx",
+      " M src/components/ui/popover.tsx",
+      " M src/components/ui/select.tsx",
+      " M src/components/ui/tabs.tsx",
+      " M src/lib/i18n.tsx",
+      " M src/lib/workspace.ts",
+      "?? docs/releases/evidence/"
+    ],
+    "diffHash": "1c2f451f21149c7250c3846feddaa31bde2c50915b0107fd48e0fa9b111ed40c",
+    "harnessHash": "a9b9d009d940e87d18431f08698f8ac0d61f3d59c79b1cb489d7cc76943ed561",
+    "buildManifestHash": "fd26509b39c7c05bd9f189934d1b0bed7ed475420e397647a497220cefb51105"
+  },
+  "profile": "diagnostic",
+  "intervals": {
+    "reopenSeconds": 20,
+    "reconnectSeconds": 20
+  },
+  "fault": null,
+  "version": "0.22.0",
+  "rendererEntryHash": "a5ec195de933ae96c015d57bfc5d096d2e75c57d60997a37380c865c991bf468",
+  "started": "2026-10-03T01:03:19.605Z",
+  "minutes": 1,
+  "finished": "2026-10-03T01:03:25.814Z",
+  "elapsedSeconds": 0,
+  "status": "failed",
+  "buildHash": "907d850f1f69f8262be715c3b62320336f43701d86af7047380da5b448376e8f",
+  "conditions": "Hidden desktop + Web; isolated shared service; 10,000 historical events; 4 Hz streamed turns; 2 Hz PTY; 10-second panel/search cycle; minute reconnects; desktop reopen every 10 minutes; version mismatch writes rejected",
+  "cycles": 0,
+  "streamedTurns": 0,
+  "reconnects": 0,
+  "reopenings": 0,
+  "errors": [
+    "electronApplication.evaluate: ReferenceError: __name is not defined\n    at eval (eval at evaluate (:311:30), <anonymous>:1:40)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at Protocol.handle (node:electron/js2c/browser_init:1:66001)\n    at Object.handle (node:electron/js2c/browser_init:1:69537)\n    at file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989395651/build/dist-electron/main/main.js:5495:32\n    at observeApp (/Users/shqingda/Projects/moose/scripts/stability.ts:245:13)\n    at launchDesktop (/Users/shqingda/Projects/moose/scripts/stability.ts:264:9)\n    at async <anonymous> (/Users/shqingda/Projects/moose/scripts/stability.ts:345:3)",
+    "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: false\nReceived: true\n\nCall Log:\n- Timeout 5000ms exceeded while waiting on the predicate"
+  ],
+  "failurePhase": "desktop-launch",
+  "cleanup": {
+    "checked": true,
+    "survivors": []
+  },
+  "samples": []
+}

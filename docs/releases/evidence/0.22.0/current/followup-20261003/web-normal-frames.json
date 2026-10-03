@@ -1,0 +1,1247 @@
+{
+  "host": "web",
+  "width": 528,
+  "reduced": false,
+  "points": [
+    {
+      "ms": 4.899999991059303,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 28.200000002980232,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 31,
+      "filesWidth": 488.4140625,
+      "reviewWidth": 39.578125,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 40.8999999910593,
+      "filesWidth": 479.2734375,
+      "reviewWidth": 48.71875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 49.5,
+      "filesWidth": 445.4140625,
+      "reviewWidth": 82.578125,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 55,
+      "filesWidth": 416.03125,
+      "reviewWidth": 111.9609375,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 63.29999999701977,
+      "filesWidth": 393.4140625,
+      "reviewWidth": 134.578125,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 71.59999999403954,
+      "filesWidth": 363.1953125,
+      "reviewWidth": 164.796875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 94.8999999910593,
+      "filesWidth": 291.90625,
+      "reviewWidth": 236.0859375,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 105.5,
+      "filesWidth": 291.1328125,
+      "reviewWidth": 236.859375,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 113.29999999701977,
+      "filesWidth": 293.34375,
+      "reviewWidth": 234.6484375,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 121.59999999403954,
+      "filesWidth": 300.15625,
+      "reviewWidth": 227.8359375,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 130,
+      "filesWidth": 309.890625,
+      "reviewWidth": 218.1015625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 138.29999999701977,
+      "filesWidth": 323.1171875,
+      "reviewWidth": 204.875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 161.20000000298023,
+      "filesWidth": 337.296875,
+      "reviewWidth": 190.6953125,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 165.29999999701977,
+      "filesWidth": 332.4921875,
+      "reviewWidth": 195.5,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 170.70000000298023,
+      "filesWidth": 326.515625,
+      "reviewWidth": 201.4765625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 182.29999999701977,
+      "filesWidth": 317.6875,
+      "reviewWidth": 210.3046875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 188.09999999403954,
+      "filesWidth": 292.265625,
+      "reviewWidth": 235.7265625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 196.59999999403954,
+      "filesWidth": 280.5546875,
+      "reviewWidth": 247.4375,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 204.79999999701977,
+      "filesWidth": 258.7265625,
+      "reviewWidth": 269.265625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 228.59999999403954,
+      "filesWidth": 219.4609375,
+      "reviewWidth": 308.53125,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 229.5,
+      "filesWidth": 221.2421875,
+      "reviewWidth": 306.75,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 238.59999999403954,
+      "filesWidth": 222.0234375,
+      "reviewWidth": 305.96875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 246.59999999403954,
+      "filesWidth": 232.3984375,
+      "reviewWidth": 295.59375,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 255,
+      "filesWidth": 245.5234375,
+      "reviewWidth": 282.46875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 262.29999999701977,
+      "filesWidth": 263.078125,
+      "reviewWidth": 264.9140625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 271.70000000298023,
+      "filesWidth": 277.9375,
+      "reviewWidth": 250.0546875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 292.59999999403954,
+      "filesWidth": 313.875,
+      "reviewWidth": 214.1171875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 297.5,
+      "filesWidth": 312.4453125,
+      "reviewWidth": 215.546875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 307.29999999701977,
+      "filesWidth": 308.21875,
+      "reviewWidth": 219.7734375,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 313.09999999403954,
+      "filesWidth": 294.4296875,
+      "reviewWidth": 233.5625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 321.59999999403954,
+      "filesWidth": 283.7109375,
+      "reviewWidth": 244.28125,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 329.8999999910593,
+      "filesWidth": 265.4765625,
+      "reviewWidth": 262.515625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 336.59999999403954,
+      "filesWidth": 247.9921875,
+      "reviewWidth": 280,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 356.20000000298023,
+      "filesWidth": 217.703125,
+      "reviewWidth": 310.2890625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 363.3999999910593,
+      "filesWidth": 218.7421875,
+      "reviewWidth": 309.25,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 371.59999999403954,
+      "filesWidth": 224.4140625,
+      "reviewWidth": 303.578125,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 379.20000000298023,
+      "filesWidth": 236.828125,
+      "reviewWidth": 291.1640625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 386.79999999701977,
+      "filesWidth": 249.2421875,
+      "reviewWidth": 278.75,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 396.8999999910593,
+      "filesWidth": 265.3125,
+      "reviewWidth": 262.6796875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 419.59999999403954,
+      "filesWidth": 303.15625,
+      "reviewWidth": 224.8359375,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 424.09999999403954,
+      "filesWidth": 301.3515625,
+      "reviewWidth": 226.640625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 430,
+      "filesWidth": 296.6640625,
+      "reviewWidth": 231.328125,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 439.70000000298023,
+      "filesWidth": 288.796875,
+      "reviewWidth": 239.1953125,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 445,
+      "filesWidth": 273.6328125,
+      "reviewWidth": 254.359375,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 453.29999999701977,
+      "filesWidth": 262,
+      "reviewWidth": 265.9921875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 463.20000000298023,
+      "filesWidth": 245.3515625,
+      "reviewWidth": 282.640625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 483,
+      "filesWidth": 211.21875,
+      "reviewWidth": 316.7734375,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 491.29999999701977,
+      "filesWidth": 212.84375,
+      "reviewWidth": 315.1484375,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 496.70000000298023,
+      "filesWidth": 221.015625,
+      "reviewWidth": 306.9765625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 505,
+      "filesWidth": 228.359375,
+      "reviewWidth": 299.6328125,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 513.2999999970198,
+      "filesWidth": 244.6015625,
+      "reviewWidth": 283.390625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 521.7000000029802,
+      "filesWidth": 261.203125,
+      "reviewWidth": 266.7890625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 530.0999999940395,
+      "filesWidth": 278.9140625,
+      "reviewWidth": 249.078125,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 549.7999999970198,
+      "filesWidth": 315.0078125,
+      "reviewWidth": 212.984375,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 557,
+      "filesWidth": 314.0625,
+      "reviewWidth": 213.9296875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 565.3999999910593,
+      "filesWidth": 307.390625,
+      "reviewWidth": 220.6015625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 571.5,
+      "filesWidth": 296.1015625,
+      "reviewWidth": 231.890625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 578.2999999970198,
+      "filesWidth": 285.5,
+      "reviewWidth": 242.4921875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 586.5999999940395,
+      "filesWidth": 271.5625,
+      "reviewWidth": 256.4296875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 595,
+      "filesWidth": 254.328125,
+      "reviewWidth": 273.6640625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 614.5,
+      "filesWidth": 218.640625,
+      "reviewWidth": 309.3515625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 621.7999999970198,
+      "filesWidth": 219.5390625,
+      "reviewWidth": 308.453125,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 629.8999999910593,
+      "filesWidth": 224.953125,
+      "reviewWidth": 303.0390625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 638.2999999970198,
+      "filesWidth": 237.109375,
+      "reviewWidth": 290.8828125,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 646.5999999940395,
+      "filesWidth": 251.2734375,
+      "reviewWidth": 276.71875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 655,
+      "filesWidth": 267.40625,
+      "reviewWidth": 260.5859375,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 675.8999999910593,
+      "filesWidth": 301.453125,
+      "reviewWidth": 226.5390625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 682.2000000029802,
+      "filesWidth": 299.6328125,
+      "reviewWidth": 228.359375,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 690.0999999940395,
+      "filesWidth": 294.296875,
+      "reviewWidth": 233.6953125,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 696.5999999940395,
+      "filesWidth": 283.453125,
+      "reviewWidth": 244.5390625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 704.8999999910593,
+      "filesWidth": 273.28125,
+      "reviewWidth": 254.7109375,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 713.2999999970198,
+      "filesWidth": 255.8828125,
+      "reviewWidth": 272.109375,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 721.5999999940395,
+      "filesWidth": 239.1484375,
+      "reviewWidth": 288.84375,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 740.5999999940395,
+      "filesWidth": 205.8515625,
+      "reviewWidth": 322.140625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 748.2000000029802,
+      "filesWidth": 207.0859375,
+      "reviewWidth": 320.90625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 754.7000000029802,
+      "filesWidth": 213.28125,
+      "reviewWidth": 314.7109375,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 763.2000000029802,
+      "filesWidth": 223.1171875,
+      "reviewWidth": 304.875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 771.5999999940395,
+      "filesWidth": 237.5,
+      "reviewWidth": 290.4921875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 780,
+      "filesWidth": 256.265625,
+      "reviewWidth": 271.7265625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 788.2000000029802,
+      "filesWidth": 274.2265625,
+      "reviewWidth": 253.765625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 796.5999999940395,
+      "filesWidth": 292.65625,
+      "reviewWidth": 235.3359375,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 804.8999999910593,
+      "filesWidth": 313.3359375,
+      "reviewWidth": 214.65625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 813.2999999970198,
+      "filesWidth": 331.2578125,
+      "reviewWidth": 196.734375,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 821.7000000029802,
+      "filesWidth": 348.4765625,
+      "reviewWidth": 179.515625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 830,
+      "filesWidth": 366.796875,
+      "reviewWidth": 161.1953125,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 838.2999999970198,
+      "filesWidth": 382.0390625,
+      "reviewWidth": 145.953125,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 846.5999999940395,
+      "filesWidth": 396.234375,
+      "reviewWidth": 131.7578125,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 855,
+      "filesWidth": 410.9453125,
+      "reviewWidth": 117.046875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 863.2999999970198,
+      "filesWidth": 422.90625,
+      "reviewWidth": 105.0859375,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 872.0999999940395,
+      "filesWidth": 433.859375,
+      "reviewWidth": 94.1328125,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 878.5999999940395,
+      "filesWidth": 445.015625,
+      "reviewWidth": 82.9765625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 887.0999999940395,
+      "filesWidth": 452.890625,
+      "reviewWidth": 75.1015625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 896.7999999970198,
+      "filesWidth": 461.0859375,
+      "reviewWidth": 66.90625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 905.2000000029802,
+      "filesWidth": 470.2109375,
+      "reviewWidth": 57.78125,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 913.2999999970198,
+      "filesWidth": 476.6875,
+      "reviewWidth": 51.3046875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 921.7000000029802,
+      "filesWidth": 482.5,
+      "reviewWidth": 45.4921875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 929.8999999910593,
+      "filesWidth": 488.3125,
+      "reviewWidth": 39.6796875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 938.2999999970198,
+      "filesWidth": 492.890625,
+      "reviewWidth": 35.1015625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 946.5999999940395,
+      "filesWidth": 496.9765625,
+      "reviewWidth": 31.015625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 954.8999999910593,
+      "filesWidth": 501.0390625,
+      "reviewWidth": 26.953125,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 961.8999999910593,
+      "filesWidth": 504.2265625,
+      "reviewWidth": 23.765625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 970.2999999970198,
+      "filesWidth": 506.71875,
+      "reviewWidth": 21.2734375,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 978.5,
+      "filesWidth": 509.265625,
+      "reviewWidth": 18.7265625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 988.7000000029802,
+      "filesWidth": 511.78125,
+      "reviewWidth": 16.2109375,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 995.2999999970198,
+      "filesWidth": 514.1953125,
+      "reviewWidth": 13.796875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1005,
+      "filesWidth": 515.4765625,
+      "reviewWidth": 12.515625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1011.7999999970198,
+      "filesWidth": 517.359375,
+      "reviewWidth": 10.6328125,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1020.5999999940395,
+      "filesWidth": 518.515625,
+      "reviewWidth": 9.4765625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1028.7000000029802,
+      "filesWidth": 519.8203125,
+      "reviewWidth": 8.171875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1038.2999999970198,
+      "filesWidth": 520.828125,
+      "reviewWidth": 7.1640625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1046.7000000029802,
+      "filesWidth": 521.828125,
+      "reviewWidth": 6.1640625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1055.2999999970198,
+      "filesWidth": 522.6875,
+      "reviewWidth": 5.3046875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1063.5,
+      "filesWidth": 523.3515625,
+      "reviewWidth": 4.640625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1071.7999999970198,
+      "filesWidth": 524,
+      "reviewWidth": 3.9921875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1080.0999999940395,
+      "filesWidth": 524.5078125,
+      "reviewWidth": 3.484375,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1088,
+      "filesWidth": 524.9453125,
+      "reviewWidth": 3.046875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1096.7000000029802,
+      "filesWidth": 525.3359375,
+      "reviewWidth": 2.65625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1105.2999999970198,
+      "filesWidth": 525.7109375,
+      "reviewWidth": 2.28125,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1112,
+      "filesWidth": 526.0078125,
+      "reviewWidth": 1.984375,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1120.7999999970198,
+      "filesWidth": 526.2265625,
+      "reviewWidth": 1.765625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1129.3999999910593,
+      "filesWidth": 526.484375,
+      "reviewWidth": 1.5078125,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1138.2999999970198,
+      "filesWidth": 526.6953125,
+      "reviewWidth": 1.296875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1145.2000000029802,
+      "filesWidth": 526.8671875,
+      "reviewWidth": 1.125,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1155.7999999970198,
+      "filesWidth": 526.9921875,
+      "reviewWidth": 1,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1163.3999999910593,
+      "filesWidth": 527.171875,
+      "reviewWidth": 0.8203125,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1172.0999999940395,
+      "filesWidth": 527.265625,
+      "reviewWidth": 0.7265625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1180.2000000029802,
+      "filesWidth": 527.3671875,
+      "reviewWidth": 0.625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1188.7000000029802,
+      "filesWidth": 527.453125,
+      "reviewWidth": 0.5390625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1197,
+      "filesWidth": 527.53125,
+      "reviewWidth": 0.4609375,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1205.2999999970198,
+      "filesWidth": 527.59375,
+      "reviewWidth": 0.3984375,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1213.5,
+      "filesWidth": 527.640625,
+      "reviewWidth": 0.3515625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1222.2999999970198,
+      "filesWidth": 527.6953125,
+      "reviewWidth": 0.296875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1230.2999999970198,
+      "filesWidth": 527.734375,
+      "reviewWidth": 0.2578125,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1237.0999999940395,
+      "filesWidth": 527.765625,
+      "reviewWidth": 0.2265625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1245.2999999970198,
+      "filesWidth": 527.796875,
+      "reviewWidth": 0.1953125,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1255.7999999970198,
+      "filesWidth": 527.8203125,
+      "reviewWidth": 0.171875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1263.8999999910593,
+      "filesWidth": 527.8515625,
+      "reviewWidth": 0.140625,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1272.2000000029802,
+      "filesWidth": 527.875,
+      "reviewWidth": 0.1171875,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1279.8999999910593,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1288.3999999910593,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1297.5,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1306.0999999940395,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1313.5999999940395,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1323.7999999970198,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1331.3999999910593,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1338.7999999970198,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1348.7999999970198,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1355,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1363.5999999940395,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1371.7999999970198,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1380.0999999940395,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1388.7000000029802,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1396.7000000029802,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1405,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1413.5,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1421.7000000029802,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1430.2000000029802,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1438.7000000029802,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1448.8999999910593,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1455.0999999940395,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1463.2000000029802,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1471.7999999970198,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1480.0999999940395,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1488.3999999910593,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1497.3999999910593,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1505.3999999910593,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1515.8999999910593,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    },
+    {
+      "ms": 1521.7000000029802,
+      "filesWidth": 528,
+      "reviewWidth": 0,
+      "active": 1,
+      "hiddenFocus": false
+    }
+  ],
+  "actions": [
+    {
+      "ms": 4.899999991059303,
+      "target": "review"
+    },
+    {
+      "ms": 71.59999999403954,
+      "target": "files"
+    },
+    {
+      "ms": 138.29999999701977,
+      "target": "review"
+    },
+    {
+      "ms": 204.79999999701977,
+      "target": "files"
+    },
+    {
+      "ms": 271.70000000298023,
+      "target": "review"
+    },
+    {
+      "ms": 336.59999999403954,
+      "target": "files"
+    },
+    {
+      "ms": 396.8999999910593,
+      "target": "review"
+    },
+    {
+      "ms": 463.20000000298023,
+      "target": "files"
+    },
+    {
+      "ms": 530.0999999940395,
+      "target": "review"
+    },
+    {
+      "ms": 595,
+      "target": "files"
+    },
+    {
+      "ms": 655,
+      "target": "review"
+    },
+    {
+      "ms": 721.5999999940395,
+      "target": "files"
+    }
+  ]
+}

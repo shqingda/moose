@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { Popover as PopoverPrimitive } from '@base-ui/react/popover';
 import { cn } from 'cn';
 
@@ -44,37 +43,4 @@ function PopoverContent({
   );
 }
 
-/** 浮层：组织标题区的布局与间距。 */
-function PopoverHeader({ className, ...props }: React.ComponentProps<'div'>) {
-  return (
-    <div
-      data-slot="popover-header"
-      className={cn('flex flex-col gap-0.5 text-sm', className)}
-      {...props}
-    />
-  );
-}
-
-/** 浮层：展示标题并提供对应的语义结构。 */
-function PopoverTitle({ className, ...props }: PopoverPrimitive.Title.Props) {
-  return (
-    <PopoverPrimitive.Title
-      data-slot="popover-title"
-      className={cn('font-medium', className)}
-      {...props}
-    />
-  );
-}
-
-/** 浮层：展示辅助说明文字。 */
-function PopoverDescription({ className, ...props }: PopoverPrimitive.Description.Props) {
-  return (
-    <PopoverPrimitive.Description
-      data-slot="popover-description"
-      className={cn('text-muted-foreground', className)}
-      {...props}
-    />
-  );
-}
-
-export { Popover, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle, PopoverTrigger };
+export { Popover, PopoverContent, PopoverTrigger };

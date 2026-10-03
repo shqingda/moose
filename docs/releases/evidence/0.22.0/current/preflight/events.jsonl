@@ -1,0 +1,75 @@
+{"at":"2026-10-03T01:04:38.968Z","phase":"desktop-launch","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:04:39.146Z","phase":"desktop-launch","kind":"process-start","detail":{"host":"desktop","pid":56537}}
+{"at":"2026-10-03T01:04:39.810Z","phase":"desktop-launch","kind":"process-start","detail":{"host":"web","pid":56556}}
+{"at":"2026-10-03T01:04:40.486Z","phase":"desktop-launch","kind":"process-stderr","detail":{"host":"web","pid":56556,"text":"sandbox_extension_issue_file failed for /Users/shqingda/Projects/moose/node_modules/.pnpm/electron@44.4.5_supports-color@7.2.0/node_modules/electron/dist/Electron.app/Contents/Frameworks/Electron Helper.app/Contents/Resources: 1 (Operation not permitted)\n"}}
+{"at":"2026-10-03T01:04:41.105Z","phase":"stream-and-search","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:04:41.155Z","phase":"files","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:04:41.989Z","phase":"review-and-sidebar","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:04:43.980Z","phase":"terminal","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:04:43.982Z","phase":"minute-sample","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:04:44.068Z","phase":"cycle-idle","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:04:51.105Z","phase":"stream-and-search","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:04:51.141Z","phase":"files","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:04:52.161Z","phase":"review-and-sidebar","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:04:54.130Z","phase":"terminal","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:04:54.133Z","phase":"cycle-idle","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:01.107Z","phase":"stream-and-search","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:01.157Z","phase":"files","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:02.230Z","phase":"review-and-sidebar","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:04.194Z","phase":"terminal","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:04.197Z","phase":"web-reconnect","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:05.304Z","phase":"desktop-reopen","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:05.398Z","phase":"desktop-reopen","kind":"process-stderr","detail":{"host":"desktop","pid":56537,"text":"{\"diagnostic\":\"before-quit\",\"at\":\"2026-10-03T01:05:05.397Z\"}\n"}}
+{"at":"2026-10-03T01:05:05.399Z","phase":"desktop-reopen","kind":"process-stderr","detail":{"host":"desktop","pid":56537,"text":"Debugger ending on ws://127.0.0.1:61750/c0ad6921-89aa-431f-aa14-028b9d3a755c\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"}}
+{"at":"2026-10-03T01:05:05.401Z","phase":"desktop-reopen","kind":"process-stderr","detail":{"host":"desktop","pid":56537,"text":"{\"diagnostic\":\"before-quit\",\"at\":\"2026-10-03T01:05:05.401Z\"}\n"}}
+{"at":"2026-10-03T01:05:05.408Z","phase":"desktop-reopen","kind":"process-stderr","detail":{"host":"desktop","pid":56537,"text":"Error occurred in handler for 'moose:request': h [MooseError]: This operation was aborted\n    at Ce (file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989476767/build/dist-electron/main/main.js:51:9)\n    at file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989476767/build/dist-electron/main/main.js:333:10\n    at async De.request (file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989476767/build/dist-electron/main/main.js:318:11)\n    at async Session.<anonymous> (node:electron/js2c/browser_init:1:118174) {\n  code: 'disconnected'\n}\n"}}
+{"at":"2026-10-03T01:05:05.408Z","phase":"desktop-reopen","kind":"process-stderr","detail":{"host":"desktop","pid":56537,"text":"Error occurred in handler for 'moose:request': h [MooseError]: This operation was aborted\n    at Ce (file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989476767/build/dist-electron/main/main.js:51:9)\n    at file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989476767/build/dist-electron/main/main.js:333:10\n    at async De.request (file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989476767/build/dist-electron/main/main.js:318:11)\n    at async Session.<anonymous> (node:electron/js2c/browser_init:1:118174) {\n  code: 'disconnected'\n}\n"}}
+{"at":"2026-10-03T01:05:05.409Z","phase":"desktop-reopen","kind":"page-close","detail":{"host":"desktop","expected":true}}
+{"at":"2026-10-03T01:05:05.477Z","phase":"desktop-reopen","kind":"process-exit","detail":{"host":"desktop","pid":56537,"code":0,"signal":null,"expected":true}}
+{"at":"2026-10-03T01:05:05.478Z","phase":"desktop-reopen","kind":"app-close","detail":{"host":"desktop","expected":true}}
+{"at":"2026-10-03T01:05:05.645Z","phase":"desktop-reopen","kind":"process-start","detail":{"host":"desktop","pid":56814}}
+{"at":"2026-10-03T01:05:06.021Z","phase":"after-desktop-reopen","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:06.103Z","phase":"cycle-idle","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:11.108Z","phase":"stream-and-search","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:11.163Z","phase":"files","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:12.818Z","phase":"review-and-sidebar","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:14.819Z","phase":"terminal","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:14.823Z","phase":"cycle-idle","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:21.111Z","phase":"stream-and-search","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:21.150Z","phase":"files","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:22.274Z","phase":"review-and-sidebar","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:24.310Z","phase":"terminal","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:24.313Z","phase":"web-reconnect","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:25.420Z","phase":"desktop-reopen","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:25.498Z","phase":"desktop-reopen","kind":"process-stderr","detail":{"host":"desktop","pid":56814,"text":"{\"diagnostic\":\"before-quit\",\"at\":\"2026-10-03T01:05:25.497Z\"}\n"}}
+{"at":"2026-10-03T01:05:25.498Z","phase":"desktop-reopen","kind":"process-stderr","detail":{"host":"desktop","pid":56814,"text":"Debugger ending on ws://127.0.0.1:61897/4d750e6e-19c6-4eca-833f-736e42c533f5\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"}}
+{"at":"2026-10-03T01:05:25.501Z","phase":"desktop-reopen","kind":"process-stderr","detail":{"host":"desktop","pid":56814,"text":"{\"diagnostic\":\"before-quit\",\"at\":\"2026-10-03T01:05:25.501Z\"}\n"}}
+{"at":"2026-10-03T01:05:25.503Z","phase":"desktop-reopen","kind":"process-stderr","detail":{"host":"desktop","pid":56814,"text":"Error occurred in handler for 'moose:request': h [MooseError]: This operation was aborted\n    at Ce (file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989476767/build/dist-electron/main/main.js:51:9)\n    at file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989476767/build/dist-electron/main/main.js:333:10\n    at async De.request (file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989476767/build/dist-electron/main/main.js:318:11)\n    at async Session.<anonymous> (node:electron/js2c/browser_init:1:118174) {\n  code: 'disconnected'\n}\n"}}
+{"at":"2026-10-03T01:05:25.503Z","phase":"desktop-reopen","kind":"process-stderr","detail":{"host":"desktop","pid":56814,"text":"Error occurred in handler for 'moose:request': h [MooseError]: This operation was aborted\n    at Ce (file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989476767/build/dist-electron/main/main.js:51:9)\n    at file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989476767/build/dist-electron/main/main.js:333:10\n    at async De.request (file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989476767/build/dist-electron/main/main.js:318:11)\n    at async Session.<anonymous> (node:electron/js2c/browser_init:1:118174) {\n  code: 'disconnected'\n}\n"}}
+{"at":"2026-10-03T01:05:25.505Z","phase":"desktop-reopen","kind":"page-close","detail":{"host":"desktop","expected":true}}
+{"at":"2026-10-03T01:05:25.539Z","phase":"desktop-reopen","kind":"process-exit","detail":{"host":"desktop","pid":56814,"code":0,"signal":null,"expected":true}}
+{"at":"2026-10-03T01:05:25.540Z","phase":"desktop-reopen","kind":"app-close","detail":{"host":"desktop","expected":true}}
+{"at":"2026-10-03T01:05:25.732Z","phase":"desktop-reopen","kind":"process-start","detail":{"host":"desktop","pid":57078}}
+{"at":"2026-10-03T01:05:26.126Z","phase":"after-desktop-reopen","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:26.258Z","phase":"cycle-idle","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:31.111Z","phase":"stream-and-search","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:31.150Z","phase":"files","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:32.520Z","phase":"review-and-sidebar","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:34.444Z","phase":"terminal","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:34.447Z","phase":"cycle-idle","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:41.105Z","phase":"final-sample","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:41.162Z","phase":"cleanup","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:41.180Z","phase":"cleanup","kind":"process-stderr","detail":{"host":"desktop","pid":57078,"text":"{\"diagnostic\":\"before-quit\",\"at\":\"2026-10-03T01:05:41.180Z\"}\n"}}
+{"at":"2026-10-03T01:05:41.181Z","phase":"cleanup","kind":"process-stderr","detail":{"host":"desktop","pid":57078,"text":"Debugger ending on ws://127.0.0.1:62010/9f2ad87d-ad12-4683-b168-ed18ffd06636\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"}}
+{"at":"2026-10-03T01:05:41.183Z","phase":"cleanup","kind":"process-stderr","detail":{"host":"desktop","pid":57078,"text":"{\"diagnostic\":\"before-quit\",\"at\":\"2026-10-03T01:05:41.183Z\"}\n"}}
+{"at":"2026-10-03T01:05:41.185Z","phase":"cleanup","kind":"process-stderr","detail":{"host":"desktop","pid":57078,"text":"Error occurred in handler for 'moose:request': h [MooseError]: This operation was aborted\n    at Ce (file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989476767/build/dist-electron/main/main.js:51:9)\n    at file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989476767/build/dist-electron/main/main.js:333:10\n    at async De.request (file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989476767/build/dist-electron/main/main.js:318:11)\n    at async Session.<anonymous> (node:electron/js2c/browser_init:1:118174) {\n  code: 'disconnected'\n}\n"}}
+{"at":"2026-10-03T01:05:41.185Z","phase":"cleanup","kind":"process-stderr","detail":{"host":"desktop","pid":57078,"text":"Error occurred in handler for 'moose:request': h [MooseError]: This operation was aborted\n    at Ce (file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989476767/build/dist-electron/main/main.js:51:9)\n    at file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989476767/build/dist-electron/main/main.js:333:10\n    at async De.request (file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989476767/build/dist-electron/main/main.js:318:11)\n    at async Session.<anonymous> (node:electron/js2c/browser_init:1:118174) {\n  code: 'disconnected'\n}\n"}}
+{"at":"2026-10-03T01:05:41.186Z","phase":"cleanup","kind":"page-close","detail":{"host":"desktop","expected":true}}
+{"at":"2026-10-03T01:05:41.214Z","phase":"cleanup","kind":"process-exit","detail":{"host":"desktop","pid":57078,"code":0,"signal":null,"expected":true}}
+{"at":"2026-10-03T01:05:41.214Z","phase":"cleanup","kind":"app-close","detail":{"host":"desktop","expected":true}}
+{"at":"2026-10-03T01:05:41.216Z","phase":"cleanup","kind":"process-stderr","detail":{"host":"web","pid":56556,"text":"{\"diagnostic\":\"before-quit\",\"at\":\"2026-10-03T01:05:41.215Z\"}\n"}}
+{"at":"2026-10-03T01:05:41.216Z","phase":"cleanup","kind":"process-stderr","detail":{"host":"web","pid":56556,"text":"Debugger ending on ws://127.0.0.1:61762/8f1cd7d8-f6ef-4c27-b542-e0e2b1b719cb\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"}}
+{"at":"2026-10-03T01:05:41.218Z","phase":"cleanup","kind":"page-close","detail":{"host":"web","expected":true}}
+{"at":"2026-10-03T01:05:41.244Z","phase":"cleanup","kind":"process-exit","detail":{"host":"web","pid":56556,"code":0,"signal":null,"expected":true}}
+{"at":"2026-10-03T01:05:41.244Z","phase":"cleanup","kind":"app-close","detail":{"host":"web","expected":true}}
+{"at":"2026-10-03T01:05:41.406Z","phase":"cleanup","kind":"cleanup-complete","detail":{"checked":true,"survivors":[]}}

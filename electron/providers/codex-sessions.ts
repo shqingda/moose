@@ -9,7 +9,7 @@ import type { ThreadItemsListResponse } from './generated/codex/v2/ThreadItemsLi
 import type { ThreadListResponse } from './generated/codex/v2/ThreadListResponse';
 import type { ThreadTurnsListResponse } from './generated/codex/v2/ThreadTurnsListResponse';
 
-export function codexThread(thread: Thread): NativeThread {
+function codexThread(thread: Thread): NativeThread {
   const source = record(record(record(thread.source).subagent).thread_spawn);
   return {
     id: thread.id,

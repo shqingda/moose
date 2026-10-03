@@ -97,17 +97,6 @@ function SelectContent({
   );
 }
 
-/** 选择器：展示分组或控件标签。 */
-function SelectLabel({ className, ...props }: SelectPrimitive.GroupLabel.Props) {
-  return (
-    <SelectPrimitive.GroupLabel
-      data-slot="select-label"
-      className={cn('px-1.5 py-1 text-xs text-muted-foreground', className)}
-      {...props}
-    />
-  );
-}
-
 /** 选择器：展示一项内容并透传底层行为。 */
 function SelectItem({ className, children, ...props }: SelectPrimitive.Item.Props) {
   return (
@@ -130,17 +119,6 @@ function SelectItem({ className, children, ...props }: SelectPrimitive.Item.Prop
         <CheckIcon className="pointer-events-none" />
       </SelectPrimitive.ItemIndicator>
     </SelectPrimitive.Item>
-  );
-}
-
-/** 选择器：绘制内容分隔线。 */
-function SelectSeparator({ className, ...props }: SelectPrimitive.Separator.Props) {
-  return (
-    <SelectPrimitive.Separator
-      data-slot="select-separator"
-      className={cn('pointer-events-none -mx-1 my-1 h-px bg-border', className)}
-      {...props}
-    />
   );
 }
 
@@ -182,15 +160,4 @@ function SelectScrollDownButton({
   );
 }
 
-export {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectScrollDownButton,
-  SelectScrollUpButton,
-  SelectSeparator,
-  SelectTrigger,
-  SelectValue,
-};
+export { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue };

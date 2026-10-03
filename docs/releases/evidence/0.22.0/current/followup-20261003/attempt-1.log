@@ -1,0 +1,54 @@
+
+Running 7 tests using 1 worker
+
+(node:2415) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/e2e/experience.spec.ts:885:1 › shares panel width and focus, reverses motion smoothly, and respects accessibility settings (7.5s)
+  ✘  2 tests/e2e/experience.spec.ts:969:3 › desktop keeps rapid auxiliary panel switches bounded and preserves focus, file tabs and draft (9.5s)
+(node:2517) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  3 tests/e2e/experience.spec.ts:969:3 › Web keeps rapid auxiliary panel switches bounded and preserves focus, file tabs and draft (6.9s)
+  ✓  4 tests/e2e/worktrees.spec.ts:73:1 › isolates agent writes and diff, merges reviewed changes, and safely cleans the managed directory (5.2s)
+  ✓  5 tests/e2e/worktrees.spec.ts:118:1 › keeps two isolated conversations running in parallel in the same project (2.2s)
+  ✓  6 tests/e2e/worktrees.spec.ts:152:3 › recovers merge conflicts after desktop restart and can complete through the UI (4.3s)
+  ✓  7 tests/e2e/worktrees.spec.ts:152:3 › recovers merge conflicts after desktop restart and can abort through the UI (4.2s)
+
+
+  1) tests/e2e/experience.spec.ts:969:3 › desktop keeps rapid auxiliary panel switches bounded and preserves focus, file tabs and draft 
+
+    Error: expect(locator).toHaveClass(expected) failed
+
+    Locator: locator('html')
+    Expected pattern: /reduce-motion/
+    Received string:  ""
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toHaveClass" locator('html') with timeout 5000ms
+      - waiting for locator('html')
+        14 × locator resolved to <html lang="en">…</html>
+           - unexpected value ""
+
+
+      987 |         features: [{ name: 'prefers-reduced-motion', value: reduced ? 'reduce' : 'no-preference' }],
+      988 |       });
+    > 989 |       if (reduced) await expect(page.locator('html')).toHaveClass(/reduce-motion/);
+          |                                                       ^
+      990 |       const samples = await page.evaluate(async () => {
+      991 |         const files = document.querySelector<HTMLButtonElement>('button[aria-label="Files"]')!;
+      992 |         const review = document.querySelector<HTMLButtonElement>(
+        at /Users/shqingda/Projects/moose/tests/e2e/experience.spec.ts:989:55
+
+    Error Context: test-results/experience-desktop-keeps-r-30aeb-s-focus-file-tabs-and-draft/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/experience-desktop-keeps-r-30aeb-s-focus-file-tabs-and-draft/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results/experience-desktop-keeps-r-30aeb-s-focus-file-tabs-and-draft/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests/e2e/experience.spec.ts:969:3 › desktop keeps rapid auxiliary panel switches bounded and preserves focus, file tabs and draft 
+  6 passed (41.1s)

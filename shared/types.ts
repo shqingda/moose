@@ -40,7 +40,7 @@ export interface Attachment {
   size: number;
 }
 export type Provider = (typeof providerIds)[number];
-export type Status =
+type Status =
   | 'idle'
   | 'queued'
   | 'running'

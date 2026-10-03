@@ -1,0 +1,384 @@
+{
+  "config": {
+    "argv": [
+      "/opt/homebrew/Cellar/node/26.10.0_1/bin/node",
+      "/Users/shqingda/Projects/moose/node_modules/.pnpm/@playwright+test@1.63.0/node_modules/@playwright/test/cli.js",
+      "test",
+      "--grep",
+      "Grok approval denial|opens a project, approves|preserves failed settings|shares panel width|keeps empty archives|browser login, project",
+      "--reporter=list,json"
+    ],
+    "configFile": "/Users/shqingda/Projects/moose/playwright.config.ts",
+    "rootDir": "/Users/shqingda/Projects/moose/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/shqingda/Projects/moose/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/shqingda/Projects/moose/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "experience.spec.ts",
+      "file": "experience.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "desktop preserves failed settings input and exposes safe recovery actions",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1199,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T01:11:50.596Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "116f6b4a9defd92cdbb9-6fc3a2d8ab538e052a62",
+          "file": "experience.spec.ts",
+          "line": 619,
+          "column": 3
+        },
+        {
+          "title": "Web preserves failed settings input and exposes safe recovery actions",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5504,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T01:11:51.807Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "116f6b4a9defd92cdbb9-a28929daccdeb051b256",
+          "file": "experience.spec.ts",
+          "line": 619,
+          "column": 3
+        },
+        {
+          "title": "shares panel width and focus, reverses motion smoothly, and respects accessibility settings",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9742,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T01:11:57.315Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "panel-reversal-frames",
+                      "contentType": "application/json",
+                      "body": "ewogICJ1bml0IjogIkNTUyBwaXhlbHMiLAogICJ3aWR0aCI6IDU0NCwKICAiZnJhbWVzIjogWwogICAgNTQ0LAogICAgNTQ0LAogICAgNTQ0LAogICAgNTQzLjg5MDYyNSwKICAgIDUzNi41MzkwNjI1LAogICAgNTE5Ljk3NjU2MjUsCiAgICA0OTcuMDA3ODEyNSwKICAgIDQ2OS44MjgxMjUsCiAgICAzODQuNDQ1MzEyNSwKICAgIDM4NC44NzUsCiAgICAzODUuODgyODEyNSwKICAgIDM5MS4xMjUsCiAgICAzOTcuODM1OTM3NSwKICAgIDQwNi44NDM3NSwKICAgIDQxNS42MTcxODc1LAogICAgNDI0LjcxMDkzNzUsCiAgICA0MzQuOTkyMTg3NSwKICAgIDQ0MS43NDIxODc1LAogICAgNDUyLjYwMTU2MjUsCiAgICA0NjAuODM1OTM3NSwKICAgIDQ2OS41MzEyNSwKICAgIDQ3Ni43MTg3NSwKICAgIDQ4My4zODI4MTI1LAogICAgNDkwLjI1LAogICAgNDk1LjgyMDMxMjUsCiAgICA1MDAuOTA2MjUsCiAgICA1MDYuMDYyNSwKICAgIDUxMC4xOTUzMTI1LAogICAgNTEzLjkyMTg3NSwKICAgIDUxNy42NzE4NzUsCiAgICA1MjAuNjQ4NDM3NSwKICAgIDUyMi45OTIxODc1LAogICAgNTI1Ljk2ODc1LAogICAgNTI4LjA2MjUsCiAgICA1MjkuNzAzMTI1LAogICAgNTMxLjc4MTI1LAogICAgNTMzLjIyNjU2MjUsCiAgICA1MzQuNTE1NjI1LAogICAgNTM1Ljc4OTA2MjUsCiAgICA1MzYuNzgxMjUsCiAgICA1MzcuNTU0Njg3NSwKICAgIDUzOC41MjM0Mzc1LAogICAgNTM5LjE5NTMxMjUsCiAgICA1MzkuNzg5MDYyNSwKICAgIDU0MC4yNDIxODc1LAogICAgNTQwLjc2NTYyNSwKICAgIDU0MS4yMTA5Mzc1LAogICAgNTQxLjYwMTU2MjUsCiAgICA1NDEuOTA2MjUsCiAgICA1NDIuMTY0MDYyNSwKICAgIDU0Mi40MjE4NzUsCiAgICA1NDIuNTc4MTI1LAogICAgNTQyLjc5Njg3NSwKICAgIDU0Mi45NTMxMjUsCiAgICA1NDMuMTAxNTYyNSwKICAgIDU0My4yMDMxMjUsCiAgICA1NDMuMzA0Njg3NSwKICAgIDU0My40MTQwNjI1LAogICAgNTQzLjQ5MjE4NzUsCiAgICA1NDMuNTYyNSwKICAgIDU0My42MTcxODc1LAogICAgNTQzLjY2NDA2MjUsCiAgICA1NDMuNzEwOTM3NSwKICAgIDU0My43NSwKICAgIDU0My43ODEyNSwKICAgIDU0My44MTI1LAogICAgNTQzLjgzNTkzNzUsCiAgICA1NDMuODU5Mzc1LAogICAgNTQzLjg3NSwKICAgIDU0NCwKICAgIDU0NCwKICAgIDU0NCwKICAgIDU0NCwKICAgIDU0NCwKICAgIDU0NCwKICAgIDU0NCwKICAgIDU0NCwKICAgIDU0NCwKICAgIDU0NCwKICAgIDU0NCwKICAgIDU0NCwKICAgIDU0NCwKICAgIDU0NCwKICAgIDU0NCwKICAgIDU0NCwKICAgIDU0NCwKICAgIDU0NCwKICAgIDU0NCwKICAgIDU0NCwKICAgIDU0NAogIF0KfQ=="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "116f6b4a9defd92cdbb9-aa58d0b69ef8ecea9156",
+          "file": "experience.spec.ts",
+          "line": 883,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "web.spec.ts",
+      "file": "web.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "browser login, project selection, OpenCode approval and terminal survive page reconnect",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 19170,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T01:12:07.071Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "sidebar-close-frames",
+                      "contentType": "application/json",
+                      "body": "ewogICJ1bml0IjogIkNTUyBwaXhlbHMiLAogICJlbmRwb2ludHMiOiBbCiAgICAyODkuNTkzNzUsCiAgICA1NgogIF0sCiAgInNhbXBsZXMiOiBbCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNDE0MDYyNSwKICAgIDI4OC41NTQ2ODc1LAogICAgMjgxLjM1OTM3NSwKICAgIDI3Mi4wNzgxMjUsCiAgICAyNjAuNzg5MDYyNSwKICAgIDI0OC4yNSwKICAgIDIzMy4zOTA2MjUsCiAgICAyMjAuMDA3ODEyNSwKICAgIDIwNi43ODkwNjI1LAogICAgMTkyLjQwNjI1LAogICAgMTgwLjIyNjU2MjUsCiAgICAxNjguNzI2NTYyNSwKICAgIDE1Ni42NTYyNSwKICAgIDE0Ni43NDIxODc1LAogICAgMTM2LjQ5MjE4NzUsCiAgICAxMzAuMTk1MzEyNSwKICAgIDEyMC42MDkzNzUsCiAgICAxMTMuNzAzMTI1LAogICAgMTA2LjcxODc1LAogICAgMTAxLjE0MDYyNSwKICAgIDk2LjEwOTM3NSwKICAgIDkxLjA2MjUsCiAgICA4Ny4wNzgxMjUsCiAgICA4My41MDc4MTI1LAogICAgNzkuOTQ1MzEyNSwKICAgIDc3LjE0ODQzNzUsCiAgICA3NC42NjQwNjI1LAogICAgNzIuMTg3NSwKICAgIDcwLjI1NzgxMjUsCiAgICA2OC4zNDM3NSwKICAgIDY2Ljg1MTU2MjUsCiAgICA2NS41MzkwNjI1LAogICAgNjQuMzY3MTg3NSwKICAgIDYzLjIyNjU2MjUsCiAgICA2Mi40Mzc1LAogICAgNjEuNDUzMTI1LAogICAgNjAuNzgxMjUsCiAgICA2MC4xODc1LAogICAgNTkuNjU2MjUsCiAgICA1OS4xNDg0Mzc1LAogICAgNTguNzUsCiAgICA1OC4zOTg0Mzc1LAogICAgNTguMDYyNSwKICAgIDU3Ljc5Njg3NSwKICAgIDU3LjU2MjUsCiAgICA1Ny4zNDM3NSwKICAgIDU3LjE3MTg3NSwKICAgIDU3LjAxNTYyNSwKICAgIDU2Ljg3NSwKICAgIDU2Ljc1NzgxMjUsCiAgICA1Ni42NDg0Mzc1LAogICAgNTYuNTYyNSwKICAgIDU2LjQ4NDM3NSwKICAgIDU2LjQxNDA2MjUsCiAgICA1Ni4zNTkzNzUsCiAgICA1Ni4zMTI1LAogICAgNTYuMjY1NjI1LAogICAgNTYuMjM0Mzc1LAogICAgNTYuMTk1MzEyNSwKICAgIDU2LjE3MTg3NSwKICAgIDU2LjE0ODQzNzUsCiAgICA1Ni4xMjUsCiAgICA1Ni4xMDkzNzUsCiAgICA1Ni4wOTM3NSwKICAgIDU2LjA3ODEyNSwKICAgIDU2LjA2MjUsCiAgICA1Ni4wNTQ2ODc1LAogICAgNTYuMDU0Njg3NSwKICAgIDU2LjAzOTA2MjUsCiAgICA1Ni4wMzEyNSwKICAgIDU2LjAzMTI1LAogICAgNTYuMDIzNDM3NSwKICAgIDU2LjAxNTYyNSwKICAgIDU2LjAxNTYyNSwKICAgIDU2LjAwNzgxMjUsCiAgICA1Ni4wMDc4MTI1LAogICAgNTYuMDA3ODEyNSwKICAgIDU2LAogICAgNTYsCiAgICA1NiwKICAgIDU2LAogICAgNTYsCiAgICA1NS45OTIxODc1LAogICAgNTUuOTkyMTg3NSwKICAgIDU1Ljk5MjE4NzUsCiAgICA1NS45OTIxODc1LAogICAgNTUuOTkyMTg3NSwKICAgIDU1Ljk5MjE4NzUsCiAgICA1NS45OTIxODc1LAogICAgNTUuOTkyMTg3NSwKICAgIDU1Ljk5MjE4NzUsCiAgICA1NS45OTIxODc1LAogICAgNTYsCiAgICA1NiwKICAgIDU2LAogICAgNTYsCiAgICA1NiwKICAgIDU2LAogICAgNTYsCiAgICA1NiwKICAgIDU2LAogICAgNTYsCiAgICA1NiwKICAgIDU2LAogICAgNTYsCiAgICA1NiwKICAgIDU2LAogICAgNTYsCiAgICA1NiwKICAgIDU2LAogICAgNTYsCiAgICA1NiwKICAgIDU2LAogICAgNTYsCiAgICA1NgogIF0KfQ=="
+                    },
+                    {
+                      "name": "sidebar-open-frames",
+                      "contentType": "application/json",
+                      "body": "ewogICJ1bml0IjogIkNTUyBwaXhlbHMiLAogICJlbmRwb2ludHMiOiBbCiAgICAyODkuNTkzNzUsCiAgICA1NgogIF0sCiAgInNhbXBsZXMiOiBbCiAgICA1NiwKICAgIDU2LAogICAgNTYuNjY0MDYyNSwKICAgIDU3LjQ2ODc1LAogICAgNTkuMTk1MzEyNSwKICAgIDY3LjQwNjI1LAogICAgNzcuNTQ2ODc1LAogICAgODkuMzgyODEyNSwKICAgIDEwMy44NzUsCiAgICAxMTcuMjEwOTM3NSwKICAgIDEzMC41NjI1LAogICAgMTQ1LjI2NTYyNSwKICAgIDE1Ny44MTI1LAogICAgMTY5Ljc1NzgxMjUsCiAgICAxNzkuNjI1LAogICAgMTkxLjQ4NDM3NSwKICAgIDIwMS4yMDMxMjUsCiAgICAyMTAuMTY0MDYyNSwKICAgIDIyMC4zMjAzMTI1LAogICAgMjI3LjY0MDYyNSwKICAgIDIzNC4yODkwNjI1LAogICAgMjM5LjYwMTU2MjUsCiAgICAyNDYuMzk4NDM3NSwKICAgIDI1MC42NDg0Mzc1LAogICAgMjU2LjA3MDMxMjUsCiAgICAyNTkuODkwNjI1LAogICAgMjYzLjMxMjUsCiAgICAyNjYuMDA3ODEyNSwKICAgIDI2OS40MDYyNSwKICAgIDI3MS41MDc4MTI1LAogICAgMjc0LjE0ODQzNzUsCiAgICAyNzYsCiAgICAyNzcuODIwMzEyNSwKICAgIDI3OS4yNSwKICAgIDI4MC4yMDMxMjUsCiAgICAyODEuNzQyMTg3NSwKICAgIDI4Mi43MTA5Mzc1LAogICAgMjgzLjU1NDY4NzUsCiAgICAyODQuMzkwNjI1LAogICAgMjg1LjAzOTA2MjUsCiAgICAyODUuNDY4NzUsCiAgICAyODYuMDQ2ODc1LAogICAgMjg2LjU5Mzc1LAogICAgMjg2LjkyOTY4NzUsCiAgICAyODcuMjY1NjI1LAogICAgMjg3LjYyNSwKICAgIDI4Ny44NDM3NSwKICAgIDI4OC4wNzAzMTI1LAogICAgMjg4LjI1NzgxMjUsCiAgICAyODguNDUzMTI1LAogICAgMjg4LjYyNSwKICAgIDI4OC43MzQzNzUsCiAgICAyODguODU5Mzc1LAogICAgMjg4Ljk2MDkzNzUsCiAgICAyODkuMDMxMjUsCiAgICAyODkuMTE3MTg3NSwKICAgIDI4OS4xNzk2ODc1LAogICAgMjg5LjI0MjE4NzUsCiAgICAyODkuMjgxMjUsCiAgICAyODkuMzI4MTI1LAogICAgMjg5LjM2NzE4NzUsCiAgICAyODkuMzk4NDM3NSwKICAgIDI4OS40MjE4NzUsCiAgICAyODkuNDQ1MzEyNSwKICAgIDI4OS40NjA5Mzc1LAogICAgMjg5LjQ3NjU2MjUsCiAgICAyODkuNDkyMTg3NSwKICAgIDI4OS41MTU2MjUsCiAgICAyODkuNTE1NjI1LAogICAgMjg5LjUzMTI1LAogICAgMjg5LjUzOTA2MjUsCiAgICAyODkuNTQ2ODc1LAogICAgMjg5LjU1NDY4NzUsCiAgICAyODkuNTYyNSwKICAgIDI4OS41NjI1LAogICAgMjg5LjU3MDMxMjUsCiAgICAyODkuNTcwMzEyNSwKICAgIDI4OS41NzgxMjUsCiAgICAyODkuNTc4MTI1LAogICAgMjg5LjU4NTkzNzUsCiAgICAyODkuNTc4MTI1LAogICAgMjg5LjU3ODEyNSwKICAgIDI4OS41NzgxMjUsCiAgICAyODkuNTc4MTI1LAogICAgMjg5LjU4NTkzNzUsCiAgICAyODkuNTg1OTM3NSwKICAgIDI4OS41ODU5Mzc1LAogICAgMjg5LjU4NTkzNzUsCiAgICAyODkuNTg1OTM3NSwKICAgIDI4OS41ODU5Mzc1LAogICAgMjg5LjU4NTkzNzUsCiAgICAyODkuNTg1OTM3NSwKICAgIDI4OS41ODU5Mzc1LAogICAgMjg5LjU4NTkzNzUsCiAgICAyODkuNTg1OTM3NSwKICAgIDI4OS41OTM3NSwKICAgIDI4OS41OTM3NSwKICAgIDI4OS41OTM3NSwKICAgIDI4OS41OTM3NSwKICAgIDI4OS41OTM3NSwKICAgIDI4OS41OTM3NSwKICAgIDI4OS41OTM3NSwKICAgIDI4OS41OTM3NSwKICAgIDI4OS41OTM3NSwKICAgIDI4OS41OTM3NSwKICAgIDI4OS41OTM3NSwKICAgIDI4OS41OTM3NSwKICAgIDI4OS41OTM3NSwKICAgIDI4OS41OTM3NSwKICAgIDI4OS41OTM3NSwKICAgIDI4OS41OTM3NSwKICAgIDI4OS41OTM3NSwKICAgIDI4OS41OTM3NSwKICAgIDI4OS41OTM3NSwKICAgIDI4OS41OTM3NSwKICAgIDI4OS41OTM3NSwKICAgIDI4OS41OTM3NQogIF0KfQ=="
+                    },
+                    {
+                      "name": "sidebar-reverse-frames",
+                      "contentType": "application/json",
+                      "body": "ewogICJ1bml0IjogIkNTUyBwaXhlbHMiLAogICJlbmRwb2ludHMiOiBbCiAgICAyODkuNTkzNzUsCiAgICA1NgogIF0sCiAgInNhbXBsZXMiOiBbCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuMjEwOTM3NSwKICAgIDI4OC45MjE4NzUsCiAgICAyODUuNjg3NSwKICAgIDI3OS4yNzM0Mzc1LAogICAgMjY4LjAzMTI1LAogICAgMjU0LjY0MDYyNSwKICAgIDI0MC4wNTQ2ODc1LAogICAgMjI2LjcwMzEyNSwKICAgIDIxMS43MTg3NSwKICAgIDE5OC43MjY1NjI1LAogICAgMTg2LjI0MjE4NzUsCiAgICAxNzIuOTUzMTI1LAogICAgMTU5LjI1LAogICAgMTUzLjA3ODEyNSwKICAgIDE0OS4zMzU5Mzc1LAogICAgMTQ5Ljc1NzgxMjUsCiAgICAxNTMuMTE3MTg3NSwKICAgIDE1OS4xNzk2ODc1LAogICAgMTY1LjkyMTg3NSwKICAgIDE3My40Mjk2ODc1LAogICAgMTgyLjM1OTM3NSwKICAgIDE5MC40MTQwNjI1LAogICAgMTk4LjM4MjgxMjUsCiAgICAyMDcuMDU0Njg3NSwKICAgIDIxMi42MDkzNzUsCiAgICAyMjEuMzU5Mzc1LAogICAgMjI4LjY0ODQzNzUsCiAgICAyMzMuOTIxODc1LAogICAgMjQwLjE3MTg3NSwKICAgIDI0NS44NjcxODc1LAogICAgMjUwLjQ1MzEyNSwKICAgIDI1NC42MzI4MTI1LAogICAgMjU4Ljg1OTM3NSwKICAgIDI2MS40MjE4NzUsCiAgICAyNjQuOTE0MDYyNSwKICAgIDI2OC4zMzU5Mzc1LAogICAgMjcwLjQ2ODc1LAogICAgMjczLjE3MTg3NSwKICAgIDI3NS4wNzAzMTI1LAogICAgMjc2Ljc2NTYyNSwKICAgIDI3OC4xMDE1NjI1LAogICAgMjc5LjQ1MzEyNSwKICAgIDI4MC45NDUzMTI1LAogICAgMjgxLjk4NDM3NSwKICAgIDI4Mi44OTg0Mzc1LAogICAgMjgzLjgxMjUsCiAgICAyODQuNTE1NjI1LAogICAgMjg1LjIwMzEyNSwKICAgIDI4NS43NDIxODc1LAogICAgMjg2LjIxODc1LAogICAgMjg2LjY5NTMxMjUsCiAgICAyODcuMDU0Njg3NSwKICAgIDI4Ny4zNjcxODc1LAogICAgMjg3LjY3OTY4NzUsCiAgICAyODcuOTIxODc1LAogICAgMjg4LjEzMjgxMjUsCiAgICAyODguMzM1OTM3NSwKICAgIDI4OC41LAogICAgMjg4LjYzMjgxMjUsCiAgICAyODguNzczNDM3NSwKICAgIDI4OC44NzUsCiAgICAyODguOTY4NzUsCiAgICAyODkuMDU0Njg3NSwKICAgIDI4OS4xMjUsCiAgICAyODkuMTg3NSwKICAgIDI4OS4yNDIxODc1LAogICAgMjg5LjI4OTA2MjUsCiAgICAyODkuMzM1OTM3NSwKICAgIDI4OS4zNTkzNzUsCiAgICAyODkuMzk4NDM3NSwKICAgIDI4OS40MjE4NzUsCiAgICAyODkuNDUzMTI1LAogICAgMjg5LjQ2MDkzNzUsCiAgICAyODkuNDg0Mzc1LAogICAgMjg5LjUsCiAgICAyODkuNTE1NjI1LAogICAgMjg5LjUxNTYyNSwKICAgIDI4OS41MzEyNSwKICAgIDI4OS41MzkwNjI1LAogICAgMjg5LjU0Njg3NSwKICAgIDI4OS41NTQ2ODc1LAogICAgMjg5LjU2MjUsCiAgICAyODkuNTYyNSwKICAgIDI4OS41NzAzMTI1LAogICAgMjg5LjU3MDMxMjUsCiAgICAyODkuNTc4MTI1LAogICAgMjg5LjU3ODEyNSwKICAgIDI4OS41ODU5Mzc1LAogICAgMjg5LjU3ODEyNSwKICAgIDI4OS41NzgxMjUsCiAgICAyODkuNTc4MTI1LAogICAgMjg5LjU3ODEyNSwKICAgIDI4OS41ODU5Mzc1LAogICAgMjg5LjU4NTkzNzUsCiAgICAyODkuNTg1OTM3NSwKICAgIDI4OS41ODU5Mzc1LAogICAgMjg5LjU4NTkzNzUsCiAgICAyODkuNTg1OTM3NSwKICAgIDI4OS41ODU5Mzc1LAogICAgMjg5LjU4NTkzNzUsCiAgICAyODkuNTg1OTM3NSwKICAgIDI4OS41ODU5Mzc1LAogICAgMjg5LjU4NTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUKICBdCn0="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "2948388c6448a8e5345d-c129db0408082b90bcb5",
+          "file": "web.spec.ts",
+          "line": 26,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "workspace.spec.ts",
+      "file": "workspace.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "opens a project, approves a real IPC turn, reviews diff, persists draft and switches themes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5039,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "buffer": ""
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-10-03T01:12:26.256Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b163ed09f68681248ada-d5f898548ca47c9fb319",
+          "file": "workspace.spec.ts",
+          "line": 44,
+          "column": 1
+        },
+        {
+          "title": "Grok approval denial and questions travel through ACP, and cancellation preserves queue",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2311,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "buffer": ""
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-10-03T01:12:31.298Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b163ed09f68681248ada-3ae3dadbab1cc94ff01c",
+          "file": "workspace.spec.ts",
+          "line": 171,
+          "column": 1
+        },
+        {
+          "title": "keeps empty archives conversation-only and presents quiet workspace controls",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4115,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T01:12:33.613Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "sidebar-close-frames",
+                      "contentType": "application/json",
+                      "body": "ewogICJ1bml0IjogIkNTUyBwaXhlbHMiLAogICJlbmRwb2ludHMiOiBbCiAgICAyODkuNTkzNzUsCiAgICAxNTAKICBdLAogICJzYW1wbGVzIjogWwogICAgMjg5LjU5Mzc1LAogICAgMjg5LjU5Mzc1LAogICAgMjg4LjcxMDkzNzUsCiAgICAyODUuMjUsCiAgICAyNzkuODk4NDM3NSwKICAgIDI3My4yNzM0Mzc1LAogICAgMjY1Ljg1MTU2MjUsCiAgICAyNTcuMDA3ODEyNSwKICAgIDI0OS4wMDc4MTI1LAogICAgMjQyLjA3MDMxMjUsCiAgICAyMzMuMzk4NDM3NSwKICAgIDIyNC4yMzQzNzUsCiAgICAyMTcuMzU5Mzc1LAogICAgMjEwLjkyMTg3NSwKICAgIDIwNC45Mzc1LAogICAgMTk5LjQxNDA2MjUsCiAgICAxOTMuNzM0Mzc1LAogICAgMTg5LjE0ODQzNzUsCiAgICAxODQuNDc2NTYyNSwKICAgIDE4MC43NSwKICAgIDE3Ny4zNjcxODc1LAogICAgMTc0LjY5NTMxMjUsCiAgICAxNzEuMjY1NjI1LAogICAgMTY4Ljg1MTU2MjUsCiAgICAxNjYuNjg3NSwKICAgIDE2NC45ODQzNzUsCiAgICAxNjMuMDM5MDYyNSwKICAgIDE2MC44MDQ2ODc1LAogICAgMTU5LjgyODEyNSwKICAgIDE1OC42NTYyNSwKICAgIDE1Ny42MTcxODc1LAogICAgMTU2LjgwNDY4NzUsCiAgICAxNTUuOTg0Mzc1LAogICAgMTU1LjA3ODEyNSwKICAgIDE1NC4zODI4MTI1LAogICAgMTUzLjg0Mzc1LAogICAgMTUzLjM2NzE4NzUsCiAgICAxNTIuOTA2MjUsCiAgICAxNTIuNTM5MDYyNSwKICAgIDE1Mi4yNTc4MTI1LAogICAgMTUxLjkwNjI1LAogICAgMTUxLjcyNjU2MjUsCiAgICAxNTEuNDg0Mzc1LAogICAgMTUxLjI4OTA2MjUsCiAgICAxNTEuMDg1OTM3NSwKICAgIDE1MC45NjA5Mzc1LAogICAgMTUwLjg0Mzc1LAogICAgMTUwLjcxMDkzNzUsCiAgICAxNTAuNjE3MTg3NSwKICAgIDE1MC41MzEyNSwKICAgIDE1MC40NTMxMjUsCiAgICAxNTAuMzk4NDM3NSwKICAgIDE1MC4zMzU5Mzc1LAogICAgMTUwLjMwNDY4NzUsCiAgICAxNTAuMjUsCiAgICAxNTAuMjE4NzUsCiAgICAxNTAuMTg3NSwKICAgIDE1MC4xNjQwNjI1LAogICAgMTUwLjE0MDYyNSwKICAgIDE1MC4xMTcxODc1LAogICAgMTUwLjEwMTU2MjUsCiAgICAxNTAuMDg1OTM3NSwKICAgIDE1MC4wNzAzMTI1LAogICAgMTUwLjA2MjUsCiAgICAxNTAuMDU0Njg3NSwKICAgIDE1MC4wNDY4NzUsCiAgICAxNTAuMDMxMjUsCiAgICAxNTAuMDMxMjUsCiAgICAxNTAuMDMxMjUsCiAgICAxNTAuMDIzNDM3NSwKICAgIDE1MC4wMTU2MjUsCiAgICAxNTAuMDE1NjI1LAogICAgMTUwLjAwNzgxMjUsCiAgICAxNTAuMDA3ODEyNSwKICAgIDE1MC4wMDc4MTI1LAogICAgMTUwLAogICAgMTUwLAogICAgMTUwLjAwNzgxMjUsCiAgICAxNTAsCiAgICAxNTAsCiAgICAxNTAsCiAgICAxNTAsCiAgICAxNTAsCiAgICAxNDkuOTkyMTg3NSwKICAgIDE0OS45OTIxODc1LAogICAgMTQ5Ljk5MjE4NzUsCiAgICAxNDkuOTkyMTg3NSwKICAgIDE0OS45OTIxODc1LAogICAgMTQ5Ljk5MjE4NzUsCiAgICAxNDkuOTkyMTg3NSwKICAgIDE0OS45OTIxODc1LAogICAgMTQ5Ljk5MjE4NzUsCiAgICAxNDkuOTkyMTg3NSwKICAgIDE1MCwKICAgIDE1MCwKICAgIDE1MCwKICAgIDE1MCwKICAgIDE1MCwKICAgIDE1MCwKICAgIDE1MCwKICAgIDE1MCwKICAgIDE1MCwKICAgIDE1MCwKICAgIDE1MCwKICAgIDE1MCwKICAgIDE1MCwKICAgIDE1MCwKICAgIDE1MCwKICAgIDE1MCwKICAgIDE1MCwKICAgIDE1MCwKICAgIDE1MCwKICAgIDE1MCwKICAgIDE1MCwKICAgIDE1MCwKICAgIDE1MAogIF0KfQ=="
+                    },
+                    {
+                      "name": "sidebar-open-frames",
+                      "contentType": "application/json",
+                      "body": "ewogICJ1bml0IjogIkNTUyBwaXhlbHMiLAogICJlbmRwb2ludHMiOiBbCiAgICAyODkuNTkzNzUsCiAgICAxNTAKICBdLAogICJzYW1wbGVzIjogWwogICAgMTUwLAogICAgMTUwLAogICAgMTUwLjg3NSwKICAgIDE1MS41MjM0Mzc1LAogICAgMTU0LjMzNTkzNzUsCiAgICAxNTkuNjg3NSwKICAgIDE2Ni4zMTI1LAogICAgMTc0LjcwMzEyNSwKICAgIDE4Mi41NzgxMjUsCiAgICAxOTIuNTcwMzEyNSwKICAgIDIwMi4zNzUsCiAgICAyMDguMDcwMzEyNSwKICAgIDIxMy41NjI1LAogICAgMjIwLjU0Njg3NSwKICAgIDIyOS40Mzc1LAogICAgMjM0LjY0ODQzNzUsCiAgICAyNDAuODI4MTI1LAogICAgMjQ1Ljg1MTU2MjUsCiAgICAyNDkuODkwNjI1LAogICAgMjU0LjYwOTM3NSwKICAgIDI1OC44MzU5Mzc1LAogICAgMjYxLjgxMjUsCiAgICAyNjUuNjE3MTg3NSwKICAgIDI2OC4zMTI1LAogICAgMjcwLjcyNjU2MjUsCiAgICAyNzMuMTQ4NDM3NSwKICAgIDI3NS4wNTQ2ODc1LAogICAgMjc2Ljk0NTMxMjUsCiAgICAyNzguNDM3NSwKICAgIDI3OS43NTc4MTI1LAogICAgMjgwLjc4OTA2MjUsCiAgICAyODIuMDkzNzUsCiAgICAyODMsCiAgICAyODMuNzk2ODc1LAogICAgMjg0LjU4NTkzNzUsCiAgICAyODUuMTk1MzEyNSwKICAgIDI4NS44MDQ2ODc1LAogICAgMjg2LjE2NDA2MjUsCiAgICAyODYuNjc5Njg3NSwKICAgIDI4Ny4wNDY4NzUsCiAgICAyODcuMzk4NDM3NSwKICAgIDI4Ny42Nzk2ODc1LAogICAgMjg3Ljg5MDYyNSwKICAgIDI4OC4xNDg0Mzc1LAogICAgMjg4LjMzNTkzNzUsCiAgICAyODguNDc2NTYyNSwKICAgIDI4OC42NTYyNSwKICAgIDI4OC43NzM0Mzc1LAogICAgMjg4Ljg5MDYyNSwKICAgIDI4OC45NzY1NjI1LAogICAgMjg5LjA1NDY4NzUsCiAgICAyODkuMTI1LAogICAgMjg5LjE3OTY4NzUsCiAgICAyODkuMjUsCiAgICAyODkuMjg5MDYyNSwKICAgIDI4OS4zMjgxMjUsCiAgICAyODkuMzY3MTg3NSwKICAgIDI4OS4zOTg0Mzc1LAogICAgMjg5LjQyMTg3NSwKICAgIDI4OS40NDUzMTI1LAogICAgMjg5LjQ2ODc1LAogICAgMjg5LjQ4NDM3NSwKICAgIDI4OS41LAogICAgMjg5LjUxNTYyNSwKICAgIDI4OS41MjM0Mzc1LAogICAgMjg5LjUzMTI1LAogICAgMjg5LjUzOTA2MjUsCiAgICAyODkuNTQ2ODc1LAogICAgMjg5LjU1NDY4NzUsCiAgICAyODkuNTYyNSwKICAgIDI4OS41NzAzMTI1LAogICAgMjg5LjU3MDMxMjUsCiAgICAyODkuNTcwMzEyNSwKICAgIDI4OS41NzAzMTI1LAogICAgMjg5LjU3ODEyNSwKICAgIDI4OS41NzgxMjUsCiAgICAyODkuNTg1OTM3NSwKICAgIDI4OS41NzgxMjUsCiAgICAyODkuNTc4MTI1LAogICAgMjg5LjU4NTkzNzUsCiAgICAyODkuNTg1OTM3NSwKICAgIDI4OS41ODU5Mzc1LAogICAgMjg5LjU4NTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTg1OTM3NSwKICAgIDI4OS41ODU5Mzc1LAogICAgMjg5LjU4NTkzNzUsCiAgICAyODkuNTg1OTM3NSwKICAgIDI4OS41ODU5Mzc1LAogICAgMjg5LjU4NTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUKICBdCn0="
+                    },
+                    {
+                      "name": "sidebar-reverse-frames",
+                      "contentType": "application/json",
+                      "body": "ewogICJ1bml0IjogIkNTUyBwaXhlbHMiLAogICJlbmRwb2ludHMiOiBbCiAgICAyODkuNTkzNzUsCiAgICAxNTAKICBdLAogICJzYW1wbGVzIjogWwogICAgMjg5LjU5Mzc1LAogICAgMjg5LjU5Mzc1LAogICAgMjg5LjE4NzUsCiAgICAyODguNDA2MjUsCiAgICAyODUuNzk2ODc1LAogICAgMjc5Ljg5ODQzNzUsCiAgICAyNzEuNDc2NTYyNSwKICAgIDI2My45MTQwNjI1LAogICAgMjU4LAogICAgMjQ3LjAxNTYyNSwKICAgIDIzOS4xNDA2MjUsCiAgICAyMzMuMzk4NDM3NSwKICAgIDIyMy4zNTkzNzUsCiAgICAyMTYuNTMxMjUsCiAgICAyMDcuODY3MTg3NSwKICAgIDIwNC44NDM3NSwKICAgIDIwMi40NDUzMTI1LAogICAgMjAyLjU1NDY4NzUsCiAgICAyMDUuMjgxMjUsCiAgICAyMDcuNzU3ODEyNSwKICAgIDIxMi44OTA2MjUsCiAgICAyMTcuNTU0Njg3NSwKICAgIDIyMi40Njg3NSwKICAgIDIyNi44NDM3NSwKICAgIDIzMy42NDA2MjUsCiAgICAyMzcuODI4MTI1LAogICAgMjQyLjk3NjU2MjUsCiAgICAyNDcuMjg5MDYyNSwKICAgIDI1MC44MzU5Mzc1LAogICAgMjU1LjUzMTI1LAogICAgMjU4Ljk1MzEyNSwKICAgIDI2Mi40NzY1NjI1LAogICAgMjY1LjMyODEyNSwKICAgIDI2Ny4yOTY4NzUsCiAgICAyNzAuNTM5MDYyNSwKICAgIDI3Mi42MzI4MTI1LAogICAgMjc0LjA3MDMxMjUsCiAgICAyNzYuMjE4NzUsCiAgICAyNzcuOTE0MDYyNSwKICAgIDI3OS4yNSwKICAgIDI4MC4zMTI1LAogICAgMjgxLjY0MDYyNSwKICAgIDI4Mi41NzgxMjUsCiAgICAyODMuNSwKICAgIDI4NC4yMzQzNzUsCiAgICAyODQuODc1LAogICAgMjg1LjQzNzUsCiAgICAyODUuODkwNjI1LAogICAgMjg2LjMzNTkzNzUsCiAgICAyODYuODc1LAogICAgMjg3LjEyNSwKICAgIDI4Ny40Mzc1LAogICAgMjg3Ljc5Njg3NSwKICAgIDI4OC4wMTU2MjUsCiAgICAyODguMjE4NzUsCiAgICAyODguMzkwNjI1LAogICAgMjg4LjU1NDY4NzUsCiAgICAyODguNjg3NSwKICAgIDI4OC43OTY4NzUsCiAgICAyODguOTE0MDYyNSwKICAgIDI4OSwKICAgIDI4OS4wNzAzMTI1LAogICAgMjg5LjE0ODQzNzUsCiAgICAyODkuMjAzMTI1LAogICAgMjg5LjI1NzgxMjUsCiAgICAyODkuMzA0Njg3NSwKICAgIDI4OS4zNDM3NSwKICAgIDI4OS4zNzUsCiAgICAyODkuNDA2MjUsCiAgICAyODkuNDI5Njg3NSwKICAgIDI4OS40NDUzMTI1LAogICAgMjg5LjQ2ODc1LAogICAgMjg5LjQ4NDM3NSwKICAgIDI4OS41LAogICAgMjg5LjUxNTYyNSwKICAgIDI4OS41MjM0Mzc1LAogICAgMjg5LjUzMTI1LAogICAgMjg5LjUzOTA2MjUsCiAgICAyODkuNTQ2ODc1LAogICAgMjg5LjU2MjUsCiAgICAyODkuNTYyNSwKICAgIDI4OS41NjI1LAogICAgMjg5LjU3MDMxMjUsCiAgICAyODkuNTcwMzEyNSwKICAgIDI4OS41NzAzMTI1LAogICAgMjg5LjU3ODEyNSwKICAgIDI4OS41NzgxMjUsCiAgICAyODkuNTg1OTM3NSwKICAgIDI4OS41NzgxMjUsCiAgICAyODkuNTc4MTI1LAogICAgMjg5LjU4NTkzNzUsCiAgICAyODkuNTg1OTM3NSwKICAgIDI4OS41ODU5Mzc1LAogICAgMjg5LjU4NTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTkzNzUsCiAgICAyODkuNTg1OTM3NSwKICAgIDI4OS41ODU5Mzc1LAogICAgMjg5LjU4NTkzNzUsCiAgICAyODkuNTg1OTM3NSwKICAgIDI4OS41ODU5Mzc1LAogICAgMjg5LjU5Mzc1LAogICAgMjg5LjU5Mzc1LAogICAgMjg5LjU5Mzc1LAogICAgMjg5LjU5Mzc1LAogICAgMjg5LjU5Mzc1LAogICAgMjg5LjU5Mzc1LAogICAgMjg5LjU5Mzc1LAogICAgMjg5LjU5Mzc1LAogICAgMjg5LjU5Mzc1LAogICAgMjg5LjU5Mzc1LAogICAgMjg5LjU5Mzc1LAogICAgMjg5LjU5Mzc1CiAgXQp9"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b163ed09f68681248ada-ee0879d1edda7a5462e1",
+          "file": "workspace.spec.ts",
+          "line": 943,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-03T01:11:49.626Z",
+    "duration": 48114.649000000005,
+    "expected": 7,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

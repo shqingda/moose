@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 /** Observe the rendered title throughout a toggle, including a mid-flight reversal. */
 export async function verifySidebarMotion(page: Page) {
@@ -36,6 +36,10 @@ export async function verifySidebarMotion(page: Page) {
       }
     }
     await expect(toggle).toHaveAttribute('aria-expanded', mode === 'close' ? 'false' : 'true');
+    await test.info().attach(`sidebar-${mode}-frames`, {
+      body: JSON.stringify({ unit: 'CSS pixels', endpoints, samples }, null, 2),
+      contentType: 'application/json',
+    });
   }
   await expect
     .poll(async () => (await page.locator('.sidebar-frame').boundingBox())!.width)

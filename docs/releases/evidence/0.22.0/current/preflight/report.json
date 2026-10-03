@@ -1,0 +1,301 @@
+{
+  "schemaVersion": 2,
+  "root": "/Users/shqingda/Projects/moose/.moose-test/stability-1790989476767",
+  "host": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "release": "27.0.0",
+    "node": "v26.10.0"
+  },
+  "source": {
+    "commit": "6e0162d49b235d3ade5af3be438eb20a74e4d905",
+    "dirty": [
+      "M docs/TODO-0.22.0.md",
+      " M docs/releases/0.22.0-validation.md",
+      " M docs/testing.md",
+      " M electron/context-catalog.ts",
+      " M electron/git-actions.ts",
+      " M electron/providers/codex-sessions.ts",
+      " M electron/pull-requests.ts",
+      " M scripts/stability.ts",
+      " M shared/git-actions.ts",
+      " M shared/types.ts",
+      " M shared/validation.ts",
+      " M src/components/schedule-timing.tsx",
+      " M src/components/ui/alert-dialog.tsx",
+      " M src/components/ui/alert.tsx",
+      " M src/components/ui/badge.tsx",
+      " M src/components/ui/bubble.tsx",
+      " M src/components/ui/button.tsx",
+      " M src/components/ui/dialog.tsx",
+      " M src/components/ui/dropdown-menu.tsx",
+      " M src/components/ui/empty.tsx",
+      " M src/components/ui/input-group.tsx",
+      " M src/components/ui/marker.tsx",
+      " M src/components/ui/message-scroller.tsx",
+      " M src/components/ui/message.tsx",
+      " M src/components/ui/popover.tsx",
+      " M src/components/ui/select.tsx",
+      " M src/components/ui/tabs.tsx",
+      " M src/lib/i18n.tsx",
+      " M src/lib/workspace.ts",
+      "?? docs/releases/evidence/"
+    ],
+    "diffHash": "e22149f6fc5c194469be2344f46263a3efb63200a5c4a2374ba3b7c532a33139",
+    "harnessHash": "b448930b690487124e7baec047f316e2ee92ab50b5c845a81824364d32df1318",
+    "buildManifestHash": "fd26509b39c7c05bd9f189934d1b0bed7ed475420e397647a497220cefb51105"
+  },
+  "profile": "diagnostic",
+  "intervals": {
+    "reopenSeconds": 20,
+    "reconnectSeconds": 20
+  },
+  "fault": null,
+  "version": "0.22.0",
+  "rendererEntryHash": "a5ec195de933ae96c015d57bfc5d096d2e75c57d60997a37380c865c991bf468",
+  "started": "2026-10-03T01:04:38.967Z",
+  "minutes": 1,
+  "finished": "2026-10-03T01:05:41.406Z",
+  "elapsedSeconds": 60,
+  "status": "workload-passed-memory-review-required",
+  "buildHash": "907d850f1f69f8262be715c3b62320336f43701d86af7047380da5b448376e8f",
+  "conditions": "Hidden desktop + Web; isolated shared service; 10,000 historical events; 4 Hz streamed turns; 2 Hz PTY; 10-second panel/search cycle; minute reconnects; desktop reopen every 10 minutes; version mismatch writes rejected",
+  "cycles": 6,
+  "streamedTurns": 2,
+  "reconnects": 2,
+  "reopenings": 2,
+  "errors": [],
+  "failurePhase": "",
+  "cleanup": {
+    "checked": true,
+    "survivors": []
+  },
+  "samples": [
+    {
+      "phase": "minute-sample",
+      "reopenings": 0,
+      "reconnects": 0,
+      "seconds": 3,
+      "desktopMiB": 708,
+      "webMiB": 486,
+      "serviceMiB": 228,
+      "desktopHeapMiB": 34.4,
+      "webHeapMiB": 14.3,
+      "processes": 15,
+      "serviceTcp": 17,
+      "terminalBytes": 1118,
+      "pids": {
+        "desktop": [
+          56537,
+          56538,
+          56539,
+          56545
+        ],
+        "web": [
+          56556,
+          56566,
+          56567,
+          56568
+        ],
+        "service": [
+          56547,
+          56574,
+          56577,
+          56575,
+          56620,
+          56586,
+          56598
+        ]
+      }
+    },
+    {
+      "phase": "desktop-reopen",
+      "reopenings": 0,
+      "reconnects": 1,
+      "seconds": 23,
+      "desktopMiB": 712,
+      "webMiB": 501,
+      "serviceMiB": 195,
+      "desktopHeapMiB": 19.3,
+      "webHeapMiB": 18.5,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 1475,
+      "pids": {
+        "desktop": [
+          56537,
+          56538,
+          56539,
+          56545
+        ],
+        "web": [
+          56556,
+          56566,
+          56567,
+          56568
+        ],
+        "service": [
+          56547,
+          56574,
+          56577,
+          56575,
+          56810,
+          56586,
+          56598
+        ]
+      }
+    },
+    {
+      "phase": "after-desktop-reopen",
+      "reopenings": 1,
+      "reconnects": 1,
+      "seconds": 25,
+      "desktopMiB": 562,
+      "webMiB": 504,
+      "serviceMiB": 271,
+      "desktopHeapMiB": 38,
+      "webHeapMiB": 12.5,
+      "processes": 17,
+      "serviceTcp": 16,
+      "terminalBytes": 1475,
+      "pids": {
+        "desktop": [
+          56814,
+          56815,
+          56816,
+          56817
+        ],
+        "web": [
+          56556,
+          56566,
+          56567,
+          56568
+        ],
+        "service": [
+          56547,
+          56574,
+          56577,
+          56821,
+          56825,
+          56575,
+          56818,
+          56586,
+          56598
+        ]
+      }
+    },
+    {
+      "phase": "desktop-reopen",
+      "reopenings": 1,
+      "reconnects": 2,
+      "seconds": 43,
+      "desktopMiB": 700,
+      "webMiB": 482,
+      "serviceMiB": 203,
+      "desktopHeapMiB": 18.8,
+      "webHeapMiB": 16.6,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 1826,
+      "pids": {
+        "desktop": [
+          56814,
+          56815,
+          56816,
+          56817
+        ],
+        "web": [
+          56556,
+          56566,
+          56567,
+          56568
+        ],
+        "service": [
+          56547,
+          56574,
+          57050,
+          56575,
+          57073,
+          56586,
+          56598
+        ]
+      }
+    },
+    {
+      "phase": "after-desktop-reopen",
+      "reopenings": 2,
+      "reconnects": 2,
+      "seconds": 45,
+      "desktopMiB": 523,
+      "webMiB": 484,
+      "serviceMiB": 263,
+      "desktopHeapMiB": 30.3,
+      "webHeapMiB": 15.4,
+      "processes": 17,
+      "serviceTcp": 16,
+      "terminalBytes": 1826,
+      "pids": {
+        "desktop": [
+          57078,
+          57080,
+          57081,
+          57082
+        ],
+        "web": [
+          56556,
+          56566,
+          56567,
+          56568
+        ],
+        "service": [
+          56547,
+          56574,
+          57050,
+          57087,
+          57091,
+          56575,
+          57090,
+          56586,
+          56598
+        ]
+      }
+    },
+    {
+      "phase": "final-sample",
+      "reopenings": 2,
+      "reconnects": 2,
+      "seconds": 60,
+      "desktopMiB": 747,
+      "webMiB": 494,
+      "serviceMiB": 203,
+      "desktopHeapMiB": 16.8,
+      "webHeapMiB": 14.4,
+      "processes": 15,
+      "serviceTcp": 6,
+      "terminalBytes": 2012,
+      "pids": {
+        "desktop": [
+          57078,
+          57080,
+          57081,
+          57082
+        ],
+        "web": [
+          56556,
+          56566,
+          56567,
+          56568
+        ],
+        "service": [
+          56547,
+          56574,
+          57050,
+          56575,
+          57471,
+          56586,
+          56598
+        ]
+      }
+    }
+  ]
+}

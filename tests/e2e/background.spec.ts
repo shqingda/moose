@@ -475,7 +475,12 @@ test('moves the same terminal between window, bottom and right without stopping 
   expect(
     await page.evaluate((scope) => window.moose.request('terminalList', scope), scope),
   ).toHaveLength(1);
-  await page.screenshot({ path: 'test-results/terminal-right.png', animations: 'disabled' });
+  await page.screenshot({
+    path: 'test-results/terminal-right.png',
+    animations: 'disabled',
+    mask: [page.locator('.terminal-session-tab [data-slot="tabs-trigger"] span')],
+    maskColor: '#cccccc',
+  });
   await page.getByRole('button', { name: 'Review changes', exact: true }).click();
   await expect(page.locator('.workspace-stage')).toHaveAttribute('data-dock', 'bottom');
   await page.locator('.review-panel').getByRole('button', { name: 'Close', exact: true }).click();

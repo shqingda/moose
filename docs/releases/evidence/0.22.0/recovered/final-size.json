@@ -1,0 +1,1139 @@
+{
+  "version": "0.22.0",
+  "definition": "sum of regular file lengths; gzip per JS resource; entry is static import graph (not a network waterfall)",
+  "totalBytes": 11429068,
+  "files": [
+    {
+      "path": "dist/assets/DialogTitle-C_e7-mek.js",
+      "bytes": 6836
+    },
+    {
+      "path": "dist/assets/abap-CLvhMVsD.js",
+      "bytes": 15845
+    },
+    {
+      "path": "dist/assets/actionscript-3-Cs6JJXT5.js",
+      "bytes": 15534
+    },
+    {
+      "path": "dist/assets/ada-C5qYipkI.js",
+      "bytes": 48075
+    },
+    {
+      "path": "dist/assets/addon-fit-DIOBYJe3.js",
+      "bytes": 1205
+    },
+    {
+      "path": "dist/assets/ahk-CA9gdOdF.js",
+      "bytes": 31432
+    },
+    {
+      "path": "dist/assets/ahk2-_6rzW9BS.js",
+      "bytes": 45058
+    },
+    {
+      "path": "dist/assets/angular-html-B8mrqUL5.js",
+      "bytes": 24249
+    },
+    {
+      "path": "dist/assets/angular-ts-Bzix210W.js",
+      "bytes": 183731
+    },
+    {
+      "path": "dist/assets/apache-U0d_L8uA.js",
+      "bytes": 12449
+    },
+    {
+      "path": "dist/assets/apex-KFGFyKwG.js",
+      "bytes": 47883
+    },
+    {
+      "path": "dist/assets/apl-Dhin1L29.js",
+      "bytes": 24029
+    },
+    {
+      "path": "dist/assets/applescript-CCn79oCD.js",
+      "bytes": 29564
+    },
+    {
+      "path": "dist/assets/ara-4CJ0cIlV.js",
+      "bytes": 6355
+    },
+    {
+      "path": "dist/assets/arrow-down-CUfxDWks.js",
+      "bytes": 195
+    },
+    {
+      "path": "dist/assets/asciidoc-SCjQUq34.js",
+      "bytes": 136044
+    },
+    {
+      "path": "dist/assets/asm-Cmm7eHzH.js",
+      "bytes": 40710
+    },
+    {
+      "path": "dist/assets/astro-B-4NNgOP.js",
+      "bytes": 24025
+    },
+    {
+      "path": "dist/assets/auxiliary-panel-BXQTjMh6.js",
+      "bytes": 2157
+    },
+    {
+      "path": "dist/assets/awk-BWXHIvNe.js",
+      "bytes": 5454
+    },
+    {
+      "path": "dist/assets/ballerina-B7ZEbQpA.js",
+      "bytes": 58686
+    },
+    {
+      "path": "dist/assets/bat-qdxAdBWQ.js",
+      "bytes": 12887
+    },
+    {
+      "path": "dist/assets/beancount-D-usSTwE.js",
+      "bytes": 10366
+    },
+    {
+      "path": "dist/assets/berry-DKpUyyne.js",
+      "bytes": 2998
+    },
+    {
+      "path": "dist/assets/bibtex-Ci_nEsc7.js",
+      "bytes": 4788
+    },
+    {
+      "path": "dist/assets/bicep-CUHmPFLl.js",
+      "bytes": 5375
+    },
+    {
+      "path": "dist/assets/bird2-CYIUgYqB.js",
+      "bytes": 38674
+    },
+    {
+      "path": "dist/assets/blade-C6Gedziy.js",
+      "bytes": 104976
+    },
+    {
+      "path": "dist/assets/bsl-_VjlB9mv.js",
+      "bytes": 33949
+    },
+    {
+      "path": "dist/assets/button-Da5Z6LvX.js",
+      "bytes": 87564
+    },
+    {
+      "path": "dist/assets/c-iCihek07.js",
+      "bytes": 72179
+    },
+    {
+      "path": "dist/assets/c3-D0apG41V.js",
+      "bytes": 26379
+    },
+    {
+      "path": "dist/assets/cadence-CQ2zXKGN.js",
+      "bytes": 23662
+    },
+    {
+      "path": "dist/assets/cairo-DLTphjLi.js",
+      "bytes": 2933
+    },
+    {
+      "path": "dist/assets/chapel-DmtgEXO_.js",
+      "bytes": 6625
+    },
+    {
+      "path": "dist/assets/clarity-CtfBBspg.js",
+      "bytes": 14355
+    },
+    {
+      "path": "dist/assets/clojure-DqKBuwfJ.js",
+      "bytes": 6406
+    },
+    {
+      "path": "dist/assets/cmake-Bj61d0ZC.js",
+      "bytes": 9848
+    },
+    {
+      "path": "dist/assets/cobol-Cw2-KvLW.js",
+      "bytes": 39072
+    },
+    {
+      "path": "dist/assets/code-preview-DcMSaX0F.js",
+      "bytes": 568110
+    },
+    {
+      "path": "dist/assets/codeowners-C8r90Shi.js",
+      "bytes": 540
+    },
+    {
+      "path": "dist/assets/codeql-oeQT6MSM.js",
+      "bytes": 26876
+    },
+    {
+      "path": "dist/assets/coffee-CiiSLhB6.js",
+      "bytes": 27424
+    },
+    {
+      "path": "dist/assets/common-fnfnYHEP.js",
+      "bytes": 102461
+    },
+    {
+      "path": "dist/assets/common-lisp-Cv5bFMCO.js",
+      "bytes": 22574
+    },
+    {
+      "path": "dist/assets/coq-DuBRPxYg.js",
+      "bytes": 6031
+    },
+    {
+      "path": "dist/assets/cpp-71xkOQct.js",
+      "bytes": 785541
+    },
+    {
+      "path": "dist/assets/crystal-DGPAtLeY.js",
+      "bytes": 29410
+    },
+    {
+      "path": "dist/assets/csharp-oqKa8noW.js",
+      "bytes": 90182
+    },
+    {
+      "path": "dist/assets/css-CNuuLpMC.js",
+      "bytes": 49107
+    },
+    {
+      "path": "dist/assets/csv-Dx-8-gkx.js",
+      "bytes": 1136
+    },
+    {
+      "path": "dist/assets/cue-CE9AQfxI.js",
+      "bytes": 16197
+    },
+    {
+      "path": "dist/assets/cypher-ClKdZ_lG.js",
+      "bytes": 5949
+    },
+    {
+      "path": "dist/assets/d-qD-0Kul2.js",
+      "bytes": 43788
+    },
+    {
+      "path": "dist/assets/dart-CnvKMtbv.js",
+      "bytes": 8616
+    },
+    {
+      "path": "dist/assets/dax-BkyTk9wS.js",
+      "bytes": 5358
+    },
+    {
+      "path": "dist/assets/desktop-Dlh5hvp9.js",
+      "bytes": 1826
+    },
+    {
+      "path": "dist/assets/diff-woXpYk--.js",
+      "bytes": 2562
+    },
+    {
+      "path": "dist/assets/docker-IyjqRm3v.js",
+      "bytes": 1734
+    },
+    {
+      "path": "dist/assets/dotenv-_5a1GRtc.js",
+      "bytes": 1415
+    },
+    {
+      "path": "dist/assets/dream-maker-DW3nJb8Q.js",
+      "bytes": 10462
+    },
+    {
+      "path": "dist/assets/edge-DCY0a-ow.js",
+      "bytes": 2306
+    },
+    {
+      "path": "dist/assets/elixir-DP304Xio.js",
+      "bytes": 16264
+    },
+    {
+      "path": "dist/assets/elm-o4NJxfws.js",
+      "bytes": 10946
+    },
+    {
+      "path": "dist/assets/emacs-lisp-c_oH4hRZ.js",
+      "bytes": 790000
+    },
+    {
+      "path": "dist/assets/erb-C7MPl934.js",
+      "bytes": 2136
+    },
+    {
+      "path": "dist/assets/erlang-Cphh6RMH.js",
+      "bytes": 37477
+    },
+    {
+      "path": "dist/assets/errors-B2AbE7tV.js",
+      "bytes": 936
+    },
+    {
+      "path": "dist/assets/fennel-DQxkIbk2.js",
+      "bytes": 4761
+    },
+    {
+      "path": "dist/assets/files-panel-DJo0Wv4b.js",
+      "bytes": 13435
+    },
+    {
+      "path": "dist/assets/fish-BJitypiv.js",
+      "bytes": 13031
+    },
+    {
+      "path": "dist/assets/fluent-C03EYrpw.js",
+      "bytes": 3603
+    },
+    {
+      "path": "dist/assets/fortran-fixed-form-DEKoE2YW.js",
+      "bytes": 1662
+    },
+    {
+      "path": "dist/assets/fortran-free-form-CYNrtFtB.js",
+      "bytes": 88962
+    },
+    {
+      "path": "dist/assets/fsharp-D13ZGOAj.js",
+      "bytes": 25302
+    },
+    {
+      "path": "dist/assets/gdresource-xMC7jr7x.js",
+      "bytes": 5282
+    },
+    {
+      "path": "dist/assets/gdscript-DYvRD3hg.js",
+      "bytes": 19081
+    },
+    {
+      "path": "dist/assets/gdshader-CBce3t8t.js",
+      "bytes": 6319
+    },
+    {
+      "path": "dist/assets/genie-CV2tkWYe.js",
+      "bytes": 3349
+    },
+    {
+      "path": "dist/assets/gherkin-DExj1W_8.js",
+      "bytes": 11939
+    },
+    {
+      "path": "dist/assets/git-commit-BSykSTBG.js",
+      "bytes": 1227
+    },
+    {
+      "path": "dist/assets/git-rebase-BDPpS8w6.js",
+      "bytes": 985
+    },
+    {
+      "path": "dist/assets/github-dark-C-LZuMrd.js",
+      "bytes": 11402
+    },
+    {
+      "path": "dist/assets/github-light-EUqPIrTm.js",
+      "bytes": 11181
+    },
+    {
+      "path": "dist/assets/gleam-CSRkHgEL.js",
+      "bytes": 2570
+    },
+    {
+      "path": "dist/assets/glimmer-js-BONyzAsu.js",
+      "bytes": 20083
+    },
+    {
+      "path": "dist/assets/glimmer-ts-f9c0GCOe.js",
+      "bytes": 20083
+    },
+    {
+      "path": "dist/assets/glsl-D5MA2a_X.js",
+      "bytes": 3699
+    },
+    {
+      "path": "dist/assets/gn-ilITqXS6.js",
+      "bytes": 3995
+    },
+    {
+      "path": "dist/assets/gnuplot-7GGW24-e.js",
+      "bytes": 14776
+    },
+    {
+      "path": "dist/assets/go-rLFTqkRN.js",
+      "bytes": 46811
+    },
+    {
+      "path": "dist/assets/graphql-Ctjuxyvl.js",
+      "bytes": 18087
+    },
+    {
+      "path": "dist/assets/groovy-CacY0gHj.js",
+      "bytes": 19172
+    },
+    {
+      "path": "dist/assets/hack-Dh_ZLRbs.js",
+      "bytes": 81074
+    },
+    {
+      "path": "dist/assets/haml-CwEpbK1d.js",
+      "bytes": 8338
+    },
+    {
+      "path": "dist/assets/handlebars-ryMP1rBR.js",
+      "bytes": 12162
+    },
+    {
+      "path": "dist/assets/haskell-D8IpX4py.js",
+      "bytes": 41483
+    },
+    {
+      "path": "dist/assets/haxe-C8oCnwJJ.js",
+      "bytes": 35946
+    },
+    {
+      "path": "dist/assets/hcl-Dh228itO.js",
+      "bytes": 10046
+    },
+    {
+      "path": "dist/assets/hjson-CxZEssPk.js",
+      "bytes": 12046
+    },
+    {
+      "path": "dist/assets/hlsl-Cvrh5tZx.js",
+      "bytes": 7257
+    },
+    {
+      "path": "dist/assets/html-XwrE-1r6.js",
+      "bytes": 57322
+    },
+    {
+      "path": "dist/assets/html-derivative-i4STDFnl.js",
+      "bytes": 843
+    },
+    {
+      "path": "dist/assets/http-kmH8AyfE.js",
+      "bytes": 4416
+    },
+    {
+      "path": "dist/assets/hurl-DCZHXKU4.js",
+      "bytes": 3514
+    },
+    {
+      "path": "dist/assets/hxml-Dcm88srW.js",
+      "bytes": 1891
+    },
+    {
+      "path": "dist/assets/hy-CZbG8q4J.js",
+      "bytes": 2641
+    },
+    {
+      "path": "dist/assets/imba-DsUTQ-LC.js",
+      "bytes": 49923
+    },
+    {
+      "path": "dist/assets/index-BHtX9I7L.js",
+      "bytes": 477133
+    },
+    {
+      "path": "dist/assets/index-S59p7d_Y.css",
+      "bytes": 153826
+    },
+    {
+      "path": "dist/assets/ini-B5eOa1yu.js",
+      "bytes": 1518
+    },
+    {
+      "path": "dist/assets/java-DdHNQ9hk.js",
+      "bytes": 27285
+    },
+    {
+      "path": "dist/assets/javascript-obGGvMPs.js",
+      "bytes": 174893
+    },
+    {
+      "path": "dist/assets/jinja-B-tLrNsM.js",
+      "bytes": 5628
+    },
+    {
+      "path": "dist/assets/jison-CBjhYtSs.js",
+      "bytes": 9692
+    },
+    {
+      "path": "dist/assets/json-DAgxKhMr.js",
+      "bytes": 2890
+    },
+    {
+      "path": "dist/assets/json5-BR5RXkoi.js",
+      "bytes": 3247
+    },
+    {
+      "path": "dist/assets/jsonc-CYpm1nAK.js",
+      "bytes": 3102
+    },
+    {
+      "path": "dist/assets/jsonl-CmCQp5Yx.js",
+      "bytes": 3004
+    },
+    {
+      "path": "dist/assets/jsonnet-CJTPZ8u_.js",
+      "bytes": 3611
+    },
+    {
+      "path": "dist/assets/jssm-DXw9l8Rf.js",
+      "bytes": 2231
+    },
+    {
+      "path": "dist/assets/jsx-gTgmArGx.js",
+      "bytes": 177858
+    },
+    {
+      "path": "dist/assets/julia-CXJVy74_.js",
+      "bytes": 31008
+    },
+    {
+      "path": "dist/assets/just-B9Xn_Dp4.js",
+      "bytes": 10840
+    },
+    {
+      "path": "dist/assets/kdl-CsD5j6eV.js",
+      "bytes": 3622
+    },
+    {
+      "path": "dist/assets/kotlin-DhhofPvG.js",
+      "bytes": 8778
+    },
+    {
+      "path": "dist/assets/kusto-C7mF5XQf.js",
+      "bytes": 15166
+    },
+    {
+      "path": "dist/assets/latex-o9DRzaEe.js",
+      "bytes": 72880
+    },
+    {
+      "path": "dist/assets/lean-CewbzKMR.js",
+      "bytes": 5777
+    },
+    {
+      "path": "dist/assets/less-DVTAwKKz.js",
+      "bytes": 97626
+    },
+    {
+      "path": "dist/assets/liquid-G0MH4h_m.js",
+      "bytes": 18101
+    },
+    {
+      "path": "dist/assets/llvm-DqHOMS-s.js",
+      "bytes": 5033
+    },
+    {
+      "path": "dist/assets/log-BNLmms1o.js",
+      "bytes": 2845
+    },
+    {
+      "path": "dist/assets/logo-Cluzi2Zq.js",
+      "bytes": 3120
+    },
+    {
+      "path": "dist/assets/lua-FONpmTUP.js",
+      "bytes": 15600
+    },
+    {
+      "path": "dist/assets/luau-C2pBCSgt.js",
+      "bytes": 16131
+    },
+    {
+      "path": "dist/assets/make-Dixweg8N.js",
+      "bytes": 8954
+    },
+    {
+      "path": "dist/assets/markdown-BYOwaDjH.js",
+      "bytes": 59328
+    },
+    {
+      "path": "dist/assets/markdown-CqJE289f.js",
+      "bytes": 325463
+    },
+    {
+      "path": "dist/assets/marko-DV5GrDmo.js",
+      "bytes": 25486
+    },
+    {
+      "path": "dist/assets/matlab-D7qyCx1q.js",
+      "bytes": 16079
+    },
+    {
+      "path": "dist/assets/mcp-registration-qtWrRb23.js",
+      "bytes": 86706
+    },
+    {
+      "path": "dist/assets/mdc-BKfPFPZw.js",
+      "bytes": 20086
+    },
+    {
+      "path": "dist/assets/mdx-DQZ5AkYe.js",
+      "bytes": 136107
+    },
+    {
+      "path": "dist/assets/mermaid-BxpfTIzt.js",
+      "bytes": 54807
+    },
+    {
+      "path": "dist/assets/mipsasm-BMqwQI7S.js",
+      "bytes": 3252
+    },
+    {
+      "path": "dist/assets/mojo-fg40_ntQ.js",
+      "bytes": 69510
+    },
+    {
+      "path": "dist/assets/moonbit-DgjMoLWr.js",
+      "bytes": 24932
+    },
+    {
+      "path": "dist/assets/moose-logo-transparent-CUJ-8Lh7.png",
+      "bytes": 926074
+    },
+    {
+      "path": "dist/assets/move-BYnGhZoM.js",
+      "bytes": 17650
+    },
+    {
+      "path": "dist/assets/narrat-_X_XdTYD.js",
+      "bytes": 3665
+    },
+    {
+      "path": "dist/assets/native-preview-DOyOAklY.js",
+      "bytes": 775
+    },
+    {
+      "path": "dist/assets/native-tools-A56TKK3i.js",
+      "bytes": 4451
+    },
+    {
+      "path": "dist/assets/nextflow-BJtWHP5T.js",
+      "bytes": 4507
+    },
+    {
+      "path": "dist/assets/nextflow-groovy-DJMQeKeT.js",
+      "bytes": 10431
+    },
+    {
+      "path": "dist/assets/nginx-BTMw9COX.js",
+      "bytes": 35352
+    },
+    {
+      "path": "dist/assets/nim-B6yJ_yaC.js",
+      "bytes": 22455
+    },
+    {
+      "path": "dist/assets/nix-IvuFDN5E.js",
+      "bytes": 15504
+    },
+    {
+      "path": "dist/assets/nsis-CjNLYCLg.js",
+      "bytes": 13119
+    },
+    {
+      "path": "dist/assets/nushell-DHYfO66s.js",
+      "bytes": 20875
+    },
+    {
+      "path": "dist/assets/objective-c-D1A_Heim.js",
+      "bytes": 105406
+    },
+    {
+      "path": "dist/assets/objective-cpp-BsSzOQcm.js",
+      "bytes": 171965
+    },
+    {
+      "path": "dist/assets/ocaml-O90oeIOV.js",
+      "bytes": 62442
+    },
+    {
+      "path": "dist/assets/odin-B1RWQWA5.js",
+      "bytes": 16506
+    },
+    {
+      "path": "dist/assets/openscad-BUDT5pXO.js",
+      "bytes": 2817
+    },
+    {
+      "path": "dist/assets/org-Ddi8Gs6E.js",
+      "bytes": 36262
+    },
+    {
+      "path": "dist/assets/pascal-4ZHwLPI5.js",
+      "bytes": 4143
+    },
+    {
+      "path": "dist/assets/perl-DEgXgjuC.js",
+      "bytes": 43146
+    },
+    {
+      "path": "dist/assets/php-B9UPq-vz.js",
+      "bytes": 113085
+    },
+    {
+      "path": "dist/assets/pkl-ot-7Btpt.js",
+      "bytes": 10365
+    },
+    {
+      "path": "dist/assets/plsql-DGHpHOYJ.js",
+      "bytes": 8505
+    },
+    {
+      "path": "dist/assets/po-BiJDBrnU.js",
+      "bytes": 3232
+    },
+    {
+      "path": "dist/assets/polar-C7UOKdEL.js",
+      "bytes": 4664
+    },
+    {
+      "path": "dist/assets/postcss-BXeXVLqQ.js",
+      "bytes": 6410
+    },
+    {
+      "path": "dist/assets/powerquery-DNMTfnFr.js",
+      "bytes": 5896
+    },
+    {
+      "path": "dist/assets/powershell-CCSX75yM.js",
+      "bytes": 20151
+    },
+    {
+      "path": "dist/assets/prisma-DMgNhnYS.js",
+      "bytes": 7737
+    },
+    {
+      "path": "dist/assets/prolog-iXnhIJG7.js",
+      "bytes": 11349
+    },
+    {
+      "path": "dist/assets/proto-DB4EqR-F.js",
+      "bytes": 6541
+    },
+    {
+      "path": "dist/assets/pug-DkgDHZci.js",
+      "bytes": 13849
+    },
+    {
+      "path": "dist/assets/puppet-CDv2pdJW.js",
+      "bytes": 11430
+    },
+    {
+      "path": "dist/assets/purescript-9MfHhQsQ.js",
+      "bytes": 24679
+    },
+    {
+      "path": "dist/assets/python-gzcpVVnB.js",
+      "bytes": 69945
+    },
+    {
+      "path": "dist/assets/qml-_a-QhfPD.js",
+      "bytes": 5338
+    },
+    {
+      "path": "dist/assets/qmldir-DCQb3MpD.js",
+      "bytes": 995
+    },
+    {
+      "path": "dist/assets/qss-Fe1Jh2GI.js",
+      "bytes": 7465
+    },
+    {
+      "path": "dist/assets/r-BHcO8Vjq.js",
+      "bytes": 6801
+    },
+    {
+      "path": "dist/assets/racket-DcIDlBhZ.js",
+      "bytes": 92382
+    },
+    {
+      "path": "dist/assets/raku-B3gFvitq.js",
+      "bytes": 10465
+    },
+    {
+      "path": "dist/assets/razor-BMJ0eI3p.js",
+      "bytes": 27453
+    },
+    {
+      "path": "dist/assets/rbs-C0MpOrj4.js",
+      "bytes": 3304
+    },
+    {
+      "path": "dist/assets/refresh-cw-DchpOVf1.js",
+      "bytes": 351
+    },
+    {
+      "path": "dist/assets/reg-CRGYupPL.js",
+      "bytes": 2338
+    },
+    {
+      "path": "dist/assets/regexp-DR20uMnK.js",
+      "bytes": 8054
+    },
+    {
+      "path": "dist/assets/rel-BtDbiS_P.js",
+      "bytes": 3361
+    },
+    {
+      "path": "dist/assets/review-panel-98BynYdc.js",
+      "bytes": 13927
+    },
+    {
+      "path": "dist/assets/riscv-Ckw8ddFX.js",
+      "bytes": 6907
+    },
+    {
+      "path": "dist/assets/rolldown-runtime-hePW80VL.js",
+      "bytes": 716
+    },
+    {
+      "path": "dist/assets/ron-VUp2lXgN.js",
+      "bytes": 3907
+    },
+    {
+      "path": "dist/assets/rosmsg-CAekHB0j.js",
+      "bytes": 4516
+    },
+    {
+      "path": "dist/assets/rst-BQCbfb9V.js",
+      "bytes": 10310
+    },
+    {
+      "path": "dist/assets/ruby-B8JcIHv0.js",
+      "bytes": 46603
+    },
+    {
+      "path": "dist/assets/rust-Cfkwpbl8.js",
+      "bytes": 15062
+    },
+    {
+      "path": "dist/assets/sas-CBpMWA2M.js",
+      "bytes": 9064
+    },
+    {
+      "path": "dist/assets/sass-DXrisJhu.js",
+      "bytes": 9282
+    },
+    {
+      "path": "dist/assets/scala-BiFt_7mu.js",
+      "bytes": 28882
+    },
+    {
+      "path": "dist/assets/schedule-panel-DcclB7LK.js",
+      "bytes": 169212
+    },
+    {
+      "path": "dist/assets/scheme-DQCgrYNe.js",
+      "bytes": 7162
+    },
+    {
+      "path": "dist/assets/scss-YesllqfO.js",
+      "bytes": 27269
+    },
+    {
+      "path": "dist/assets/sdbl-bTVj8UrX.js",
+      "bytes": 4695
+    },
+    {
+      "path": "dist/assets/settings-dialog-eiC5Uncc.js",
+      "bytes": 28762
+    },
+    {
+      "path": "dist/assets/shaderlab-TOUzSsQk.js",
+      "bytes": 5919
+    },
+    {
+      "path": "dist/assets/shellscript-Da78Ox-3.js",
+      "bytes": 41545
+    },
+    {
+      "path": "dist/assets/shellsession-CVsQGYfZ.js",
+      "bytes": 713
+    },
+    {
+      "path": "dist/assets/smalltalk-BHpQb5nM.js",
+      "bytes": 14119
+    },
+    {
+      "path": "dist/assets/smithy-Dgaz7aur.js",
+      "bytes": 9127
+    },
+    {
+      "path": "dist/assets/solidity-Bj7E1mRn.js",
+      "bytes": 16400
+    },
+    {
+      "path": "dist/assets/soy-DEd-qcad.js",
+      "bytes": 6924
+    },
+    {
+      "path": "dist/assets/sparql-D_iOobhT.js",
+      "bytes": 1477
+    },
+    {
+      "path": "dist/assets/splunk-BC2Px7Mm.js",
+      "bytes": 3429
+    },
+    {
+      "path": "dist/assets/sql-DdD7vxS4.js",
+      "bytes": 23494
+    },
+    {
+      "path": "dist/assets/ssh-config-BgfXC-Er.js",
+      "bytes": 3610
+    },
+    {
+      "path": "dist/assets/stata-CMv7m7Gi.js",
+      "bytes": 56993
+    },
+    {
+      "path": "dist/assets/stylus-B6D30XZt.js",
+      "bytes": 31067
+    },
+    {
+      "path": "dist/assets/surrealql-BZoq2lXR.js",
+      "bytes": 12061
+    },
+    {
+      "path": "dist/assets/svelte-Bj3Hmc9F.js",
+      "bytes": 18249
+    },
+    {
+      "path": "dist/assets/swift-CyEgAFGc.js",
+      "bytes": 87224
+    },
+    {
+      "path": "dist/assets/system-verilog-Dh5ihWbf.js",
+      "bytes": 26549
+    },
+    {
+      "path": "dist/assets/systemd-BxMlprV5.js",
+      "bytes": 7862
+    },
+    {
+      "path": "dist/assets/talonscript-CohzipZa.js",
+      "bytes": 6750
+    },
+    {
+      "path": "dist/assets/tasl-DMoTqEGO.js",
+      "bytes": 3281
+    },
+    {
+      "path": "dist/assets/tcl-CZd0xW_V.js",
+      "bytes": 4422
+    },
+    {
+      "path": "dist/assets/templ-TjxbArHn.js",
+      "bytes": 24066
+    },
+    {
+      "path": "dist/assets/terraform-DswuEJGm.js",
+      "bytes": 11382
+    },
+    {
+      "path": "dist/assets/tex-BK-H2Wn4.js",
+      "bytes": 9734
+    },
+    {
+      "path": "dist/assets/toml-CcmNWLt0.js",
+      "bytes": 6419
+    },
+    {
+      "path": "dist/assets/transcript-D8o5w2O9.js",
+      "bytes": 40373
+    },
+    {
+      "path": "dist/assets/ts-tags-Cc5do7zu.js",
+      "bytes": 16547
+    },
+    {
+      "path": "dist/assets/tsv-sltzmVWM.js",
+      "bytes": 732
+    },
+    {
+      "path": "dist/assets/tsx-CUOciP0b.js",
+      "bytes": 175602
+    },
+    {
+      "path": "dist/assets/turtle-ByJddavk.js",
+      "bytes": 3693
+    },
+    {
+      "path": "dist/assets/twig-BVSnuTf-.js",
+      "bytes": 21515
+    },
+    {
+      "path": "dist/assets/typescript-BydbNFcO.js",
+      "bytes": 181146
+    },
+    {
+      "path": "dist/assets/typespec-BRdr0IET.js",
+      "bytes": 25038
+    },
+    {
+      "path": "dist/assets/typst-C40W_gC6.js",
+      "bytes": 163488
+    },
+    {
+      "path": "dist/assets/useRegisterFieldControl-jX4J8PkI.js",
+      "bytes": 54955
+    },
+    {
+      "path": "dist/assets/v-DBj4K9d_.js",
+      "bytes": 13323
+    },
+    {
+      "path": "dist/assets/vala-zf12oZj6.js",
+      "bytes": 3363
+    },
+    {
+      "path": "dist/assets/vb-DOwzaHZ0.js",
+      "bytes": 6068
+    },
+    {
+      "path": "dist/assets/verilog-B2gwz-sJ.js",
+      "bytes": 6400
+    },
+    {
+      "path": "dist/assets/vhdl-BroJfC0k.js",
+      "bytes": 24257
+    },
+    {
+      "path": "dist/assets/viml-DvXPmvsu.js",
+      "bytes": 20358
+    },
+    {
+      "path": "dist/assets/vue-BNQF7r6F.js",
+      "bytes": 24961
+    },
+    {
+      "path": "dist/assets/vue-html-DkKkQnZL.js",
+      "bytes": 8474
+    },
+    {
+      "path": "dist/assets/vue-vine-DFaKYU4X.js",
+      "bytes": 190058
+    },
+    {
+      "path": "dist/assets/vyper-CgoNMtux.js",
+      "bytes": 74641
+    },
+    {
+      "path": "dist/assets/wasm-ByWQv1Qj.js",
+      "bytes": 12000
+    },
+    {
+      "path": "dist/assets/web-host-DgzyhIyc.js",
+      "bytes": 10237
+    },
+    {
+      "path": "dist/assets/web-shortcuts-D5i4fY8P.js",
+      "bytes": 1009
+    },
+    {
+      "path": "dist/assets/wenyan-C8pVoKbM.js",
+      "bytes": 2150
+    },
+    {
+      "path": "dist/assets/wgsl-BsKzXJz4.js",
+      "bytes": 5137
+    },
+    {
+      "path": "dist/assets/wikitext-ClFFjSW2.js",
+      "bytes": 55878
+    },
+    {
+      "path": "dist/assets/wit-DdvCle-K.js",
+      "bytes": 21460
+    },
+    {
+      "path": "dist/assets/wolfram-DLL8P-h_.js",
+      "bytes": 262384
+    },
+    {
+      "path": "dist/assets/worktree-tools-CmbL-KIQ.js",
+      "bytes": 5449
+    },
+    {
+      "path": "dist/assets/x-Cw4xWilw.js",
+      "bytes": 184
+    },
+    {
+      "path": "dist/assets/xml-BlnrEAEy.js",
+      "bytes": 5449
+    },
+    {
+      "path": "dist/assets/xsl-BOPS8gLt.js",
+      "bytes": 1360
+    },
+    {
+      "path": "dist/assets/xterm-ScmBfeDI.js",
+      "bytes": 331178
+    },
+    {
+      "path": "dist/assets/yaml-Du_6cdrH.js",
+      "bytes": 10572
+    },
+    {
+      "path": "dist/assets/zenscript-BnlCZFoB.js",
+      "bytes": 3905
+    },
+    {
+      "path": "dist/assets/zig-CMLA9XwU.js",
+      "bytes": 5333
+    },
+    {
+      "path": "dist/favicon-light.svg",
+      "bytes": 646
+    },
+    {
+      "path": "dist/favicon.svg",
+      "bytes": 646
+    },
+    {
+      "path": "dist/index.html",
+      "bytes": 1234
+    },
+    {
+      "path": "dist/licenses/catppuccin.txt",
+      "bytes": 1067
+    },
+    {
+      "path": "dist/licenses/iterm2-color-schemes.txt",
+      "bytes": 1246
+    }
+  ],
+  "entry": {
+    "bytes": 730785,
+    "gzipBytes": 239889,
+    "files": [
+      "dist/assets/DialogTitle-C_e7-mek.js",
+      "dist/assets/button-Da5Z6LvX.js",
+      "dist/assets/common-fnfnYHEP.js",
+      "dist/assets/errors-B2AbE7tV.js",
+      "dist/assets/index-BHtX9I7L.js",
+      "dist/assets/rolldown-runtime-hePW80VL.js",
+      "dist/assets/useRegisterFieldControl-jX4J8PkI.js",
+      "dist/assets/x-Cw4xWilw.js"
+    ]
+  },
+  "lazy": {
+    "bytes": 9613544,
+    "gzipBytes": 1807191,
+    "count": 262
+  },
+  "packages": {
+    "desktopApp": 268974680,
+    "dmg": 122318587,
+    "web": 43499833
+  }
+}

@@ -648,6 +648,12 @@ for (const web of [false, true]) {
       row.getByText('Could not save. Your input is kept.', { exact: true }),
     ).toBeVisible();
     await expect(row.locator('#codexPath')).toHaveValue('/missing/keep-my-path');
+    await page.screenshot({
+      path: `test-results/settings-error-${web ? 'web' : 'desktop'}.png`,
+      animations: 'disabled',
+      mask: [page.locator('.provider-resolved-path')],
+      maskColor: '#cccccc',
+    });
     await page.getByRole('button', { name: 'Back', exact: true }).click();
     const error = page.locator('.workspace > .experience-error');
     await expect(
@@ -927,6 +933,10 @@ test('shares panel width and focus, reverses motion smoothly, and respects acces
   expect(Math.abs(frames.at(-1)! - (initial + 16))).toBeLessThan(1);
   for (let i = 1; i < frames.length; i++)
     expect(Math.abs(frames[i] - frames[i - 1])).toBeLessThan((initial + 16) * 0.4);
+  await test.info().attach('panel-reversal-frames', {
+    body: JSON.stringify({ unit: 'CSS pixels', width: initial + 16, frames }, null, 2),
+    contentType: 'application/json',
+  });
   await page.locator('.files-panel').getByRole('button', { name: 'Close', exact: true }).click();
   const accessibility = await page.context().newCDPSession(page);
   await accessibility.send('Emulation.setEmulatedMedia', {
@@ -938,6 +948,7 @@ test('shares panel width and focus, reverses motion smoothly, and respects acces
   });
   await page.evaluate(() => window.moose.request('settings', { fontScale: 1.2 }));
   await expect(page.locator('html')).toHaveClass(/reduce-motion/);
+  await expect(page.locator('.files-frame')).toHaveCSS('transition-duration', '1e-05s');
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   await expect(page.locator('[data-slot="dialog-overlay"]')).toHaveCSS('backdrop-filter', 'none');
   await page.getByRole('button', { name: 'Back', exact: true }).click();
@@ -953,3 +964,119 @@ test('shares panel width and focus, reverses motion smoothly, and respects acces
   await expect(trigger).toBeFocused();
   await expect(page.locator('#composer')).toHaveValue('preserved draft');
 });
+
+for (const web of [false, true])
+  test(`${web ? 'Web' : 'desktop'} keeps rapid auxiliary panel switches bounded and preserves focus, file tabs and draft`, async () => {
+    const { page } = await launch(web, 20);
+    const errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    await page.locator('.session-row').filter({ hasText: 'UX history' }).click();
+    const files = page.getByRole('button', { name: 'Files', exact: true });
+    await files.click();
+    await page.getByRole('treeitem', { name: 'result.txt', exact: true }).click();
+    await expect(page.locator('.files-panel [data-code]')).toContainText('preview verified');
+    const width = Number(
+      await page.locator('.files-panel').getByRole('separator').getAttribute('aria-valuenow'),
+    );
+    await expect
+      .poll(async () => (await page.locator('.files-frame').boundingBox())!.width)
+      .toBeCloseTo(width, 0);
+    const accessibility = await page.context().newCDPSession(page);
+    for (const reduced of [false, true]) {
+      if (!web)
+        await app!.evaluate(({ systemPreferences, nativeTheme }, reduced) => {
+          // Override only this isolated process's native preference reader, never macOS settings.
+          const settings = systemPreferences.getAnimationSettings();
+          systemPreferences.getAnimationSettings = () => ({
+            ...settings,
+            prefersReducedMotion: reduced,
+          });
+          nativeTheme.emit('updated');
+        }, reduced);
+      await accessibility.send('Emulation.setEmulatedMedia', {
+        features: [{ name: 'prefers-reduced-motion', value: reduced ? 'reduce' : 'no-preference' }],
+      });
+      if (reduced) await expect(page.locator('html')).toHaveClass(/reduce-motion/);
+      else await expect(page.locator('html')).not.toHaveClass(/reduce-motion/);
+      const samples = await page.evaluate(async () => {
+        const files = document.querySelector<HTMLButtonElement>('button[aria-label="Files"]')!;
+        const review = document.querySelector<HTMLButtonElement>(
+          'button[aria-label="Review changes"]',
+        )!;
+        const filesFrame = document.querySelector<HTMLElement>('.files-frame')!;
+        const reviewFrame = document.querySelector<HTMLElement>('.review-frame:not(.files-frame)')!;
+        const points = [];
+        const actions = [];
+        const start = performance.now();
+        let switches = 0;
+        let lastSwitch = start - 60;
+        while (switches < 12 || performance.now() - lastSwitch < 800) {
+          await new Promise(requestAnimationFrame);
+          const now = performance.now();
+          points.push({
+            ms: now - start,
+            filesWidth: filesFrame.getBoundingClientRect().width,
+            reviewWidth: reviewFrame.getBoundingClientRect().width,
+            active: [filesFrame, reviewFrame].filter(
+              (frame) => frame.getAttribute('aria-hidden') === 'false',
+            ).length,
+            hiddenFocus: !!document.activeElement?.closest('[inert], [aria-hidden="true"]'),
+          });
+          if (switches < 12 && now - lastSwitch >= 60) {
+            const target = switches % 2 === 0 ? review : files;
+            // DOM focus/click bypass Playwright's stability wait so transitions overlap.
+            target.focus();
+            target.click();
+            actions.push({ ms: now - start, target: switches % 2 === 0 ? 'review' : 'files' });
+            switches++;
+            lastSwitch = now;
+          }
+        }
+        return { points, actions };
+      });
+      await test.info().attach(`rapid-panel-switches-${reduced ? 'reduced' : 'normal'}`, {
+        body: JSON.stringify(
+          { host: web ? 'web' : 'desktop', width, reduced, ...samples },
+          null,
+          2,
+        ),
+        contentType: 'application/json',
+      });
+      expect(samples.actions).toHaveLength(12);
+      for (const sample of samples.points) {
+        expect(sample.active).toBe(1);
+        expect(sample.hiddenFocus).toBe(false);
+        expect(sample.filesWidth).toBeGreaterThanOrEqual(0);
+        expect(sample.reviewWidth).toBeGreaterThanOrEqual(0);
+        expect(sample.filesWidth).toBeLessThanOrEqual(width + 1);
+        expect(sample.reviewWidth).toBeLessThanOrEqual(width + 1);
+      }
+      expect(samples.points.at(-1)!.filesWidth).toBeCloseTo(width, 0);
+      expect(samples.points.at(-1)!.reviewWidth).toBeLessThan(1);
+      if (reduced) {
+        for (const action of samples.actions) {
+          // Allow the React commit and following animation frame, then require the endpoint.
+          const settled = samples.points.filter((sample) => sample.ms > action.ms).slice(2, 3)[0]!;
+          expect(settled.filesWidth).toBeCloseTo(action.target === 'files' ? width : 0, 0);
+          expect(settled.reviewWidth).toBeCloseTo(action.target === 'review' ? width : 0, 0);
+        }
+      }
+      await expect(page.locator('.files-panel')).toBeFocused();
+      await expect(files).toHaveAttribute('aria-pressed', 'true');
+      await expect(
+        page.getByRole('button', { name: 'Review changes', exact: true }),
+      ).toHaveAttribute('aria-pressed', 'false');
+      await expect(page.locator('.files-panel [role="tab"]')).toHaveCount(1);
+      await expect(page.locator('.files-panel [data-code]')).toContainText('preview verified');
+      await page.locator('.files-panel').press('Escape');
+      await expect(files).toBeFocused();
+      await expect(page.locator('#composer')).toHaveValue('preserved draft');
+      if (!reduced) {
+        await files.press('Enter');
+        await expect
+          .poll(async () => (await page.locator('.files-frame').boundingBox())!.width)
+          .toBeCloseTo(width, 0);
+      }
+    }
+    expect(errors).toEqual([]);
+  });

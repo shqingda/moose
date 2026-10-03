@@ -21,7 +21,7 @@ const pullRequests = z.array(
   }),
 );
 export type GitHub = (cwd: string, args: string[]) => Promise<string>;
-export const github: GitHub = async (cwd, args) =>
+const github: GitHub = async (cwd, args) =>
   (
     await execute(await discover('gh', ''), args, {
       cwd,

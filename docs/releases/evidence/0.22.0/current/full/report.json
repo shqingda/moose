@@ -1,0 +1,5412 @@
+{
+  "schemaVersion": 2,
+  "root": "/Users/shqingda/Projects/moose/.moose-test/stability-1790989782264",
+  "host": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "release": "27.0.0",
+    "node": "v26.10.0"
+  },
+  "source": {
+    "commit": "6e0162d49b235d3ade5af3be438eb20a74e4d905",
+    "dirty": [
+      "M docs/TODO-0.22.0.md",
+      " M docs/releases/0.22.0-validation.md",
+      " M docs/testing.md",
+      " M electron/context-catalog.ts",
+      " M electron/git-actions.ts",
+      " M electron/providers/codex-sessions.ts",
+      " M electron/pull-requests.ts",
+      " M scripts/stability.ts",
+      " M shared/git-actions.ts",
+      " M shared/types.ts",
+      " M shared/validation.ts",
+      " M src/components/schedule-timing.tsx",
+      " M src/components/ui/alert-dialog.tsx",
+      " M src/components/ui/alert.tsx",
+      " M src/components/ui/badge.tsx",
+      " M src/components/ui/bubble.tsx",
+      " M src/components/ui/button.tsx",
+      " M src/components/ui/dialog.tsx",
+      " M src/components/ui/dropdown-menu.tsx",
+      " M src/components/ui/empty.tsx",
+      " M src/components/ui/input-group.tsx",
+      " M src/components/ui/marker.tsx",
+      " M src/components/ui/message-scroller.tsx",
+      " M src/components/ui/message.tsx",
+      " M src/components/ui/popover.tsx",
+      " M src/components/ui/select.tsx",
+      " M src/components/ui/tabs.tsx",
+      " M src/lib/i18n.tsx",
+      " M src/lib/workspace.ts",
+      "?? docs/releases/0.22.0-evidence.md",
+      "?? docs/releases/evidence/"
+    ],
+    "diffHash": "6c652cd5008a7f3630b171860e4baab00bdba590bd413a8e372b298bfa3d982c",
+    "harnessHash": "199e146a5eba1eec62932a0c78cd6ff9603c37b90a5a9e68cff1aef949a0a9e2",
+    "buildManifestHash": "fd26509b39c7c05bd9f189934d1b0bed7ed475420e397647a497220cefb51105"
+  },
+  "profile": "full",
+  "intervals": {
+    "reopenSeconds": 600,
+    "reconnectSeconds": 60
+  },
+  "fault": null,
+  "version": "0.22.0",
+  "rendererEntryHash": "a5ec195de933ae96c015d57bfc5d096d2e75c57d60997a37380c865c991bf468",
+  "started": "2026-10-03T01:09:44.253Z",
+  "minutes": 120,
+  "finished": "2026-10-03T03:09:47.010Z",
+  "elapsedSeconds": 7200,
+  "status": "workload-passed-memory-review-required",
+  "buildHash": "907d850f1f69f8262be715c3b62320336f43701d86af7047380da5b448376e8f",
+  "conditions": "Hidden desktop + Web; isolated shared service; 10,000 historical events; 4 Hz streamed turns; 2 Hz PTY; 10-second panel/search cycle; minute reconnects; desktop reopen every 10 minutes; version mismatch writes rejected",
+  "cycles": 720,
+  "streamedTurns": 180,
+  "reconnects": 119,
+  "reopenings": 11,
+  "errors": [],
+  "failurePhase": "",
+  "cleanup": {
+    "checked": true,
+    "survivors": []
+  },
+  "samples": [
+    {
+      "phase": "minute-sample",
+      "reopenings": 0,
+      "reconnects": 0,
+      "seconds": 3,
+      "desktopMiB": 721,
+      "webMiB": 487,
+      "serviceMiB": 228,
+      "desktopHeapMiB": 45.1,
+      "webHeapMiB": 16.9,
+      "processes": 15,
+      "serviceTcp": 17,
+      "terminalBytes": 1118,
+      "pids": {
+        "desktop": [
+          60276,
+          60278,
+          60279,
+          60280
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          60322,
+          60320,
+          60360,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 0,
+      "reconnects": 1,
+      "seconds": 63,
+      "desktopMiB": 826,
+      "webMiB": 539,
+      "serviceMiB": 226,
+      "desktopHeapMiB": 20.5,
+      "webHeapMiB": 13.6,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 2192,
+      "pids": {
+        "desktop": [
+          60276,
+          60278,
+          60279,
+          60280
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          60543,
+          60320,
+          60645,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 0,
+      "reconnects": 2,
+      "seconds": 123,
+      "desktopMiB": 892,
+      "webMiB": 540,
+      "serviceMiB": 229,
+      "desktopHeapMiB": 21,
+      "webHeapMiB": 15.1,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 3372,
+      "pids": {
+        "desktop": [
+          60276,
+          60278,
+          60279,
+          60280
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          60839,
+          60320,
+          60968,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 0,
+      "reconnects": 3,
+      "seconds": 183,
+      "desktopMiB": 767,
+      "webMiB": 540,
+      "serviceMiB": 221,
+      "desktopHeapMiB": 21.1,
+      "webHeapMiB": 18,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 4542,
+      "pids": {
+        "desktop": [
+          60276,
+          60278,
+          60279,
+          60280
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          61336,
+          60320,
+          61531,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 0,
+      "reconnects": 4,
+      "seconds": 243,
+      "desktopMiB": 807,
+      "webMiB": 535,
+      "serviceMiB": 227,
+      "desktopHeapMiB": 53.1,
+      "webHeapMiB": 17.3,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 5722,
+      "pids": {
+        "desktop": [
+          60276,
+          60278,
+          60279,
+          60280
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          61726,
+          60320,
+          61752,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 0,
+      "reconnects": 5,
+      "seconds": 303,
+      "desktopMiB": 778,
+      "webMiB": 536,
+      "serviceMiB": 227,
+      "desktopHeapMiB": 21.2,
+      "webHeapMiB": 23.8,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 6882,
+      "pids": {
+        "desktop": [
+          60276,
+          60278,
+          60279,
+          60280
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          61989,
+          60320,
+          62200,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 0,
+      "reconnects": 6,
+      "seconds": 363,
+      "desktopMiB": 851,
+      "webMiB": 540,
+      "serviceMiB": 230,
+      "desktopHeapMiB": 47.3,
+      "webHeapMiB": 19.5,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 8062,
+      "pids": {
+        "desktop": [
+          60276,
+          60278,
+          60279,
+          60280
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          62577,
+          60320,
+          62603,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 0,
+      "reconnects": 7,
+      "seconds": 423,
+      "desktopMiB": 784,
+      "webMiB": 552,
+      "serviceMiB": 230,
+      "desktopHeapMiB": 21.6,
+      "webHeapMiB": 12.5,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 9232,
+      "pids": {
+        "desktop": [
+          60276,
+          60278,
+          60279,
+          60280
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          62731,
+          60320,
+          62811,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 0,
+      "reconnects": 8,
+      "seconds": 483,
+      "desktopMiB": 839,
+      "webMiB": 549,
+      "serviceMiB": 231,
+      "desktopHeapMiB": 38,
+      "webHeapMiB": 21.6,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 10402,
+      "pids": {
+        "desktop": [
+          60276,
+          60278,
+          60279,
+          60280
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          63018,
+          60320,
+          63042,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 0,
+      "reconnects": 9,
+      "seconds": 543,
+      "desktopMiB": 918,
+      "webMiB": 548,
+      "serviceMiB": 231,
+      "desktopHeapMiB": 21.8,
+      "webHeapMiB": 25.5,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 11623,
+      "pids": {
+        "desktop": [
+          60276,
+          60278,
+          60279,
+          60280
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          63141,
+          60320,
+          63230,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "desktop-reopen",
+      "reopenings": 0,
+      "reconnects": 10,
+      "seconds": 603,
+      "desktopMiB": 974,
+      "webMiB": 553,
+      "serviceMiB": 231,
+      "desktopHeapMiB": 21.8,
+      "webHeapMiB": 22.3,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 12910,
+      "pids": {
+        "desktop": [
+          60276,
+          60278,
+          60279,
+          60280
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          63522,
+          60320,
+          63541,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "after-desktop-reopen",
+      "reopenings": 1,
+      "reconnects": 10,
+      "seconds": 605,
+      "desktopMiB": 561,
+      "webMiB": 554,
+      "serviceMiB": 307,
+      "desktopHeapMiB": 38,
+      "webHeapMiB": 24.5,
+      "processes": 17,
+      "serviceTcp": 16,
+      "terminalBytes": 12910,
+      "pids": {
+        "desktop": [
+          63555,
+          63557,
+          63558,
+          63559
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          63522,
+          63563,
+          63567,
+          60320,
+          63566,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 1,
+      "reconnects": 10,
+      "seconds": 603,
+      "desktopMiB": 563,
+      "webMiB": 554,
+      "serviceMiB": 278,
+      "desktopHeapMiB": 54.6,
+      "webHeapMiB": 24.5,
+      "processes": 16,
+      "serviceTcp": 16,
+      "terminalBytes": 12910,
+      "pids": {
+        "desktop": [
+          63555,
+          63557,
+          63558,
+          63559
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          63522,
+          63567,
+          60320,
+          63566,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 1,
+      "reconnects": 11,
+      "seconds": 663,
+      "desktopMiB": 829,
+      "webMiB": 557,
+      "serviceMiB": 232,
+      "desktopHeapMiB": 19.7,
+      "webHeapMiB": 37.6,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 14197,
+      "pids": {
+        "desktop": [
+          63555,
+          63557,
+          63558,
+          63559
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          63677,
+          60320,
+          63744,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 1,
+      "reconnects": 12,
+      "seconds": 723,
+      "desktopMiB": 843,
+      "webMiB": 555,
+      "serviceMiB": 232,
+      "desktopHeapMiB": 20.3,
+      "webHeapMiB": 13.3,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 15484,
+      "pids": {
+        "desktop": [
+          63555,
+          63557,
+          63558,
+          63559
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          63926,
+          60320,
+          63950,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 1,
+      "reconnects": 13,
+      "seconds": 783,
+      "desktopMiB": 805,
+      "webMiB": 556,
+      "serviceMiB": 232,
+      "desktopHeapMiB": 20.5,
+      "webHeapMiB": 29,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 16760,
+      "pids": {
+        "desktop": [
+          63555,
+          63557,
+          63558,
+          63559
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          64045,
+          60320,
+          64118,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 1,
+      "reconnects": 14,
+      "seconds": 843,
+      "desktopMiB": 835,
+      "webMiB": 555,
+      "serviceMiB": 234,
+      "desktopHeapMiB": 20.3,
+      "webHeapMiB": 27,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 18047,
+      "pids": {
+        "desktop": [
+          63555,
+          63557,
+          63558,
+          63559
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          64271,
+          60320,
+          64287,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 1,
+      "reconnects": 15,
+      "seconds": 903,
+      "desktopMiB": 816,
+      "webMiB": 569,
+      "serviceMiB": 233,
+      "desktopHeapMiB": 20.4,
+      "webHeapMiB": 25.3,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 19334,
+      "pids": {
+        "desktop": [
+          63555,
+          63557,
+          63558,
+          63559
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          64391,
+          60320,
+          64462,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 1,
+      "reconnects": 16,
+      "seconds": 963,
+      "desktopMiB": 862,
+      "webMiB": 561,
+      "serviceMiB": 235,
+      "desktopHeapMiB": 21.1,
+      "webHeapMiB": 28.9,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 20621,
+      "pids": {
+        "desktop": [
+          63555,
+          63557,
+          63558,
+          63559
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          64617,
+          60320,
+          64640,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 1,
+      "reconnects": 17,
+      "seconds": 1023,
+      "desktopMiB": 818,
+      "webMiB": 600,
+      "serviceMiB": 234,
+      "desktopHeapMiB": 21.1,
+      "webHeapMiB": 14.2,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 21908,
+      "pids": {
+        "desktop": [
+          63555,
+          63557,
+          63558,
+          63559
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          64736,
+          60320,
+          64807,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 1,
+      "reconnects": 18,
+      "seconds": 1083,
+      "desktopMiB": 863,
+      "webMiB": 574,
+      "serviceMiB": 234,
+      "desktopHeapMiB": 21.3,
+      "webHeapMiB": 26.2,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 23184,
+      "pids": {
+        "desktop": [
+          63555,
+          63557,
+          63558,
+          63559
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          64960,
+          60320,
+          64985,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 1,
+      "reconnects": 19,
+      "seconds": 1143,
+      "desktopMiB": 822,
+      "webMiB": 618,
+      "serviceMiB": 235,
+      "desktopHeapMiB": 21.3,
+      "webHeapMiB": 14.5,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 24471,
+      "pids": {
+        "desktop": [
+          63555,
+          63557,
+          63558,
+          63559
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          65082,
+          60320,
+          65143,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "desktop-reopen",
+      "reopenings": 1,
+      "reconnects": 20,
+      "seconds": 1203,
+      "desktopMiB": 865,
+      "webMiB": 603,
+      "serviceMiB": 237,
+      "desktopHeapMiB": 21.8,
+      "webHeapMiB": 14.6,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 25758,
+      "pids": {
+        "desktop": [
+          63555,
+          63557,
+          63558,
+          63559
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          65311,
+          60320,
+          65330,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "after-desktop-reopen",
+      "reopenings": 2,
+      "reconnects": 20,
+      "seconds": 1205,
+      "desktopMiB": 537,
+      "webMiB": 603,
+      "serviceMiB": 309,
+      "desktopHeapMiB": 9.3,
+      "webHeapMiB": 16.3,
+      "processes": 17,
+      "serviceTcp": 16,
+      "terminalBytes": 25758,
+      "pids": {
+        "desktop": [
+          65343,
+          65345,
+          65346,
+          65347
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          65311,
+          65351,
+          65354,
+          60320,
+          65356,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 2,
+      "reconnects": 20,
+      "seconds": 1203,
+      "desktopMiB": 541,
+      "webMiB": 603,
+      "serviceMiB": 357,
+      "desktopHeapMiB": 26.4,
+      "webHeapMiB": 16.3,
+      "processes": 17,
+      "serviceTcp": 16,
+      "terminalBytes": 25758,
+      "pids": {
+        "desktop": [
+          65343,
+          65345,
+          65346,
+          65347
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          65311,
+          65351,
+          65354,
+          60320,
+          65356,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 2,
+      "reconnects": 21,
+      "seconds": 1263,
+      "desktopMiB": 791,
+      "webMiB": 619,
+      "serviceMiB": 235,
+      "desktopHeapMiB": 19.8,
+      "webHeapMiB": 14.8,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 27045,
+      "pids": {
+        "desktop": [
+          65343,
+          65345,
+          65346,
+          65347
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          65456,
+          60320,
+          65519,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 2,
+      "reconnects": 22,
+      "seconds": 1323,
+      "desktopMiB": 843,
+      "webMiB": 613,
+      "serviceMiB": 236,
+      "desktopHeapMiB": 46.5,
+      "webHeapMiB": 15,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 28332,
+      "pids": {
+        "desktop": [
+          65343,
+          65345,
+          65346,
+          65347
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          65681,
+          60320,
+          65699,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 2,
+      "reconnects": 23,
+      "seconds": 1383,
+      "desktopMiB": 826,
+      "webMiB": 608,
+      "serviceMiB": 236,
+      "desktopHeapMiB": 20.8,
+      "webHeapMiB": 36.9,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 29619,
+      "pids": {
+        "desktop": [
+          65343,
+          65345,
+          65346,
+          65347
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          65803,
+          60320,
+          65874,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 2,
+      "reconnects": 24,
+      "seconds": 1443,
+      "desktopMiB": 837,
+      "webMiB": 618,
+      "serviceMiB": 235,
+      "desktopHeapMiB": 20.6,
+      "webHeapMiB": 43.7,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 30895,
+      "pids": {
+        "desktop": [
+          65343,
+          65345,
+          65346,
+          65347
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          66032,
+          60320,
+          66057,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 2,
+      "reconnects": 25,
+      "seconds": 1503,
+      "desktopMiB": 824,
+      "webMiB": 614,
+      "serviceMiB": 235,
+      "desktopHeapMiB": 20.6,
+      "webHeapMiB": 40.6,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 32182,
+      "pids": {
+        "desktop": [
+          65343,
+          65345,
+          65346,
+          65347
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          66155,
+          60320,
+          66227,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 2,
+      "reconnects": 26,
+      "seconds": 1563,
+      "desktopMiB": 884,
+      "webMiB": 614,
+      "serviceMiB": 236,
+      "desktopHeapMiB": 21.4,
+      "webHeapMiB": 38.9,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 33469,
+      "pids": {
+        "desktop": [
+          65343,
+          65345,
+          65346,
+          65347
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          66381,
+          60320,
+          66406,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 2,
+      "reconnects": 27,
+      "seconds": 1623,
+      "desktopMiB": 846,
+      "webMiB": 624,
+      "serviceMiB": 236,
+      "desktopHeapMiB": 21.4,
+      "webHeapMiB": 24.8,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 34756,
+      "pids": {
+        "desktop": [
+          65343,
+          65345,
+          65346,
+          65347
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          66501,
+          60320,
+          66565,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 2,
+      "reconnects": 28,
+      "seconds": 1684,
+      "desktopMiB": 853,
+      "webMiB": 619,
+      "serviceMiB": 237,
+      "desktopHeapMiB": 21.7,
+      "webHeapMiB": 38.2,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 36043,
+      "pids": {
+        "desktop": [
+          65343,
+          65345,
+          65346,
+          65347
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          66718,
+          60320,
+          66741,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 2,
+      "reconnects": 29,
+      "seconds": 1743,
+      "desktopMiB": 845,
+      "webMiB": 623,
+      "serviceMiB": 237,
+      "desktopHeapMiB": 21.7,
+      "webHeapMiB": 24.7,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 37330,
+      "pids": {
+        "desktop": [
+          65343,
+          65345,
+          65346,
+          65347
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          66841,
+          60320,
+          66914,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "desktop-reopen",
+      "reopenings": 2,
+      "reconnects": 30,
+      "seconds": 1804,
+      "desktopMiB": 895,
+      "webMiB": 620,
+      "serviceMiB": 236,
+      "desktopHeapMiB": 47.8,
+      "webHeapMiB": 39,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 38617,
+      "pids": {
+        "desktop": [
+          65343,
+          65345,
+          65346,
+          65347
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          67067,
+          60320,
+          67094,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "after-desktop-reopen",
+      "reopenings": 3,
+      "reconnects": 30,
+      "seconds": 1805,
+      "desktopMiB": 514,
+      "webMiB": 618,
+      "serviceMiB": 298,
+      "desktopHeapMiB": 9.1,
+      "webHeapMiB": 40.6,
+      "processes": 17,
+      "serviceTcp": 16,
+      "terminalBytes": 38617,
+      "pids": {
+        "desktop": [
+          67098,
+          67100,
+          67101,
+          67102
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          67067,
+          67105,
+          67107,
+          60320,
+          67103,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 3,
+      "reconnects": 30,
+      "seconds": 1804,
+      "desktopMiB": 520,
+      "webMiB": 618,
+      "serviceMiB": 323,
+      "desktopHeapMiB": 30.2,
+      "webHeapMiB": 40.6,
+      "processes": 17,
+      "serviceTcp": 16,
+      "terminalBytes": 38617,
+      "pids": {
+        "desktop": [
+          67098,
+          67100,
+          67101,
+          67102
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          67067,
+          67107,
+          67111,
+          60320,
+          67103,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 3,
+      "reconnects": 31,
+      "seconds": 1864,
+      "desktopMiB": 821,
+      "webMiB": 628,
+      "serviceMiB": 236,
+      "desktopHeapMiB": 45.5,
+      "webHeapMiB": 41.4,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 39904,
+      "pids": {
+        "desktop": [
+          67098,
+          67100,
+          67101,
+          67102
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          67210,
+          60320,
+          67280,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 3,
+      "reconnects": 32,
+      "seconds": 1924,
+      "desktopMiB": 848,
+      "webMiB": 622,
+      "serviceMiB": 236,
+      "desktopHeapMiB": 20.9,
+      "webHeapMiB": 47.8,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 41180,
+      "pids": {
+        "desktop": [
+          67098,
+          67100,
+          67101,
+          67102
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          67433,
+          60320,
+          67459,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 3,
+      "reconnects": 33,
+      "seconds": 1984,
+      "desktopMiB": 820,
+      "webMiB": 627,
+      "serviceMiB": 238,
+      "desktopHeapMiB": 20.8,
+      "webHeapMiB": 40.1,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 42467,
+      "pids": {
+        "desktop": [
+          67098,
+          67100,
+          67101,
+          67102
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          67556,
+          60320,
+          67618,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 3,
+      "reconnects": 34,
+      "seconds": 2044,
+      "desktopMiB": 840,
+      "webMiB": 661,
+      "serviceMiB": 239,
+      "desktopHeapMiB": 20.8,
+      "webHeapMiB": 15.6,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 43754,
+      "pids": {
+        "desktop": [
+          67098,
+          67100,
+          67101,
+          67102
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          67783,
+          60320,
+          67800,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 3,
+      "reconnects": 35,
+      "seconds": 2104,
+      "desktopMiB": 827,
+      "webMiB": 619,
+      "serviceMiB": 237,
+      "desktopHeapMiB": 20.8,
+      "webHeapMiB": 41.8,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 45041,
+      "pids": {
+        "desktop": [
+          67098,
+          67100,
+          67101,
+          67102
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          67905,
+          60320,
+          67970,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 3,
+      "reconnects": 36,
+      "seconds": 2164,
+      "desktopMiB": 846,
+      "webMiB": 618,
+      "serviceMiB": 237,
+      "desktopHeapMiB": 21.3,
+      "webHeapMiB": 39,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 46328,
+      "pids": {
+        "desktop": [
+          67098,
+          67100,
+          67101,
+          67102
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          68131,
+          60320,
+          68149,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 3,
+      "reconnects": 37,
+      "seconds": 2224,
+      "desktopMiB": 833,
+      "webMiB": 615,
+      "serviceMiB": 239,
+      "desktopHeapMiB": 21.3,
+      "webHeapMiB": 24.7,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 47615,
+      "pids": {
+        "desktop": [
+          67098,
+          67100,
+          67101,
+          67102
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          68253,
+          60320,
+          68326,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 3,
+      "reconnects": 38,
+      "seconds": 2284,
+      "desktopMiB": 890,
+      "webMiB": 617,
+      "serviceMiB": 240,
+      "desktopHeapMiB": 21.5,
+      "webHeapMiB": 38.2,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 48891,
+      "pids": {
+        "desktop": [
+          67098,
+          67100,
+          67101,
+          67102
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          68479,
+          60320,
+          68506,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 3,
+      "reconnects": 39,
+      "seconds": 2344,
+      "desktopMiB": 844,
+      "webMiB": 627,
+      "serviceMiB": 238,
+      "desktopHeapMiB": 21.6,
+      "webHeapMiB": 24.7,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 50178,
+      "pids": {
+        "desktop": [
+          67098,
+          67100,
+          67101,
+          67102
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          68604,
+          60320,
+          68675,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "desktop-reopen",
+      "reopenings": 3,
+      "reconnects": 40,
+      "seconds": 2404,
+      "desktopMiB": 898,
+      "webMiB": 625,
+      "serviceMiB": 240,
+      "desktopHeapMiB": 22,
+      "webHeapMiB": 38.2,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 51465,
+      "pids": {
+        "desktop": [
+          67098,
+          67100,
+          67101,
+          67102
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          68827,
+          60320,
+          68845,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "after-desktop-reopen",
+      "reopenings": 4,
+      "reconnects": 40,
+      "seconds": 2405,
+      "desktopMiB": 551,
+      "webMiB": 623,
+      "serviceMiB": 308,
+      "desktopHeapMiB": 9.5,
+      "webHeapMiB": 40.6,
+      "processes": 17,
+      "serviceTcp": 16,
+      "terminalBytes": 51465,
+      "pids": {
+        "desktop": [
+          68858,
+          68860,
+          68861,
+          68862
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          68827,
+          68866,
+          68870,
+          60320,
+          68869,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 4,
+      "reconnects": 40,
+      "seconds": 2404,
+      "desktopMiB": 554,
+      "webMiB": 623,
+      "serviceMiB": 352,
+      "desktopHeapMiB": 26.4,
+      "webHeapMiB": 40.6,
+      "processes": 17,
+      "serviceTcp": 16,
+      "terminalBytes": 51465,
+      "pids": {
+        "desktop": [
+          68858,
+          68860,
+          68861,
+          68862
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          68827,
+          68866,
+          68870,
+          60320,
+          68869,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 4,
+      "reconnects": 41,
+      "seconds": 2464,
+      "desktopMiB": 826,
+      "webMiB": 630,
+      "serviceMiB": 239,
+      "desktopHeapMiB": 19.4,
+      "webHeapMiB": 24.8,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 52752,
+      "pids": {
+        "desktop": [
+          68858,
+          68860,
+          68861,
+          68862
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          68967,
+          60320,
+          69030,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 4,
+      "reconnects": 42,
+      "seconds": 2524,
+      "desktopMiB": 819,
+      "webMiB": 626,
+      "serviceMiB": 238,
+      "desktopHeapMiB": 20.4,
+      "webHeapMiB": 38.2,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 54039,
+      "pids": {
+        "desktop": [
+          68858,
+          68860,
+          68861,
+          68862
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          69190,
+          60320,
+          69208,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 4,
+      "reconnects": 43,
+      "seconds": 2584,
+      "desktopMiB": 815,
+      "webMiB": 629,
+      "serviceMiB": 237,
+      "desktopHeapMiB": 20.6,
+      "webHeapMiB": 24.8,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 55326,
+      "pids": {
+        "desktop": [
+          68858,
+          68860,
+          68861,
+          68862
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          69312,
+          60320,
+          69383,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 4,
+      "reconnects": 44,
+      "seconds": 2644,
+      "desktopMiB": 843,
+      "webMiB": 625,
+      "serviceMiB": 238,
+      "desktopHeapMiB": 20.5,
+      "webHeapMiB": 38.2,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 56613,
+      "pids": {
+        "desktop": [
+          68858,
+          68860,
+          68861,
+          68862
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          69539,
+          60320,
+          69565,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 4,
+      "reconnects": 45,
+      "seconds": 2704,
+      "desktopMiB": 819,
+      "webMiB": 628,
+      "serviceMiB": 239,
+      "desktopHeapMiB": 20.5,
+      "webHeapMiB": 24.7,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 57889,
+      "pids": {
+        "desktop": [
+          68858,
+          68860,
+          68861,
+          68862
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          69661,
+          60320,
+          69732,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 4,
+      "reconnects": 46,
+      "seconds": 2764,
+      "desktopMiB": 836,
+      "webMiB": 626,
+      "serviceMiB": 240,
+      "desktopHeapMiB": 21.1,
+      "webHeapMiB": 38.2,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 59176,
+      "pids": {
+        "desktop": [
+          68858,
+          68860,
+          68861,
+          68862
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          69885,
+          60320,
+          69911,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 4,
+      "reconnects": 47,
+      "seconds": 2824,
+      "desktopMiB": 826,
+      "webMiB": 616,
+      "serviceMiB": 241,
+      "desktopHeapMiB": 21.1,
+      "webHeapMiB": 40.1,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 60463,
+      "pids": {
+        "desktop": [
+          68858,
+          68860,
+          68861,
+          68862
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          70007,
+          60320,
+          70070,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 4,
+      "reconnects": 48,
+      "seconds": 2884,
+      "desktopMiB": 838,
+      "webMiB": 626,
+      "serviceMiB": 238,
+      "desktopHeapMiB": 21.2,
+      "webHeapMiB": 39.1,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 61750,
+      "pids": {
+        "desktop": [
+          68858,
+          68860,
+          68861,
+          68862
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          70230,
+          60320,
+          70249,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 4,
+      "reconnects": 49,
+      "seconds": 2944,
+      "desktopMiB": 826,
+      "webMiB": 604,
+      "serviceMiB": 235,
+      "desktopHeapMiB": 21.6,
+      "webHeapMiB": 40.1,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 63037,
+      "pids": {
+        "desktop": [
+          68858,
+          68860,
+          68861,
+          68862
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          70374,
+          60320,
+          70486,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "desktop-reopen",
+      "reopenings": 4,
+      "reconnects": 50,
+      "seconds": 3004,
+      "desktopMiB": 845,
+      "webMiB": 609,
+      "serviceMiB": 237,
+      "desktopHeapMiB": 22,
+      "webHeapMiB": 38.8,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 64346,
+      "pids": {
+        "desktop": [
+          68858,
+          68860,
+          68861,
+          68862
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          70773,
+          60320,
+          70799,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "after-desktop-reopen",
+      "reopenings": 5,
+      "reconnects": 50,
+      "seconds": 3006,
+      "desktopMiB": 525,
+      "webMiB": 607,
+      "serviceMiB": 297,
+      "desktopHeapMiB": 30.3,
+      "webHeapMiB": 40.3,
+      "processes": 17,
+      "serviceTcp": 16,
+      "terminalBytes": 64346,
+      "pids": {
+        "desktop": [
+          70811,
+          70818,
+          70819,
+          70820
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          70773,
+          70825,
+          70828,
+          60320,
+          70821,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 5,
+      "reconnects": 50,
+      "seconds": 3004,
+      "desktopMiB": 526,
+      "webMiB": 607,
+      "serviceMiB": 328,
+      "desktopHeapMiB": 9.5,
+      "webHeapMiB": 41.1,
+      "processes": 17,
+      "serviceTcp": 16,
+      "terminalBytes": 64346,
+      "pids": {
+        "desktop": [
+          70811,
+          70818,
+          70819,
+          70820
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          70773,
+          70825,
+          70828,
+          60320,
+          70821,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 5,
+      "reconnects": 51,
+      "seconds": 3064,
+      "desktopMiB": 796,
+      "webMiB": 594,
+      "serviceMiB": 228,
+      "desktopHeapMiB": 19.9,
+      "webHeapMiB": 38.4,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 65633,
+      "pids": {
+        "desktop": [
+          70811,
+          70818,
+          70819,
+          70820
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          71036,
+          60320,
+          71119,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 5,
+      "reconnects": 52,
+      "seconds": 3124,
+      "desktopMiB": 822,
+      "webMiB": 596,
+      "serviceMiB": 229,
+      "desktopHeapMiB": 20.5,
+      "webHeapMiB": 38.2,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 66931,
+      "pids": {
+        "desktop": [
+          70811,
+          70818,
+          70819,
+          70820
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          71278,
+          60320,
+          71305,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 5,
+      "reconnects": 53,
+      "seconds": 3184,
+      "desktopMiB": 813,
+      "webMiB": 615,
+      "serviceMiB": 220,
+      "desktopHeapMiB": 20.7,
+      "webHeapMiB": 40.1,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 68218,
+      "pids": {
+        "desktop": [
+          70811,
+          70818,
+          70819,
+          70820
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          71405,
+          60320,
+          71470,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 5,
+      "reconnects": 54,
+      "seconds": 3244,
+      "desktopMiB": 826,
+      "webMiB": 606,
+      "serviceMiB": 220,
+      "desktopHeapMiB": 20.4,
+      "webHeapMiB": 38.2,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 69516,
+      "pids": {
+        "desktop": [
+          70811,
+          70818,
+          70819,
+          70820
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          71642,
+          60320,
+          71667,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 5,
+      "reconnects": 55,
+      "seconds": 3304,
+      "desktopMiB": 822,
+      "webMiB": 610,
+      "serviceMiB": 220,
+      "desktopHeapMiB": 20.5,
+      "webHeapMiB": 40.1,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 70814,
+      "pids": {
+        "desktop": [
+          70811,
+          70818,
+          70819,
+          70820
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          71771,
+          60320,
+          71844,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 5,
+      "reconnects": 56,
+      "seconds": 3364,
+      "desktopMiB": 849,
+      "webMiB": 608,
+      "serviceMiB": 227,
+      "desktopHeapMiB": 21.1,
+      "webHeapMiB": 39,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 72101,
+      "pids": {
+        "desktop": [
+          70811,
+          70818,
+          70819,
+          70820
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          72004,
+          60320,
+          72021,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 5,
+      "reconnects": 57,
+      "seconds": 3424,
+      "desktopMiB": 825,
+      "webMiB": 614,
+      "serviceMiB": 224,
+      "desktopHeapMiB": 21.2,
+      "webHeapMiB": 41.4,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 73388,
+      "pids": {
+        "desktop": [
+          70811,
+          70818,
+          70819,
+          70820
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          72131,
+          60320,
+          72196,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 5,
+      "reconnects": 58,
+      "seconds": 3484,
+      "desktopMiB": 837,
+      "webMiB": 608,
+      "serviceMiB": 224,
+      "desktopHeapMiB": 20.8,
+      "webHeapMiB": 39,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 74675,
+      "pids": {
+        "desktop": [
+          70811,
+          70818,
+          70819,
+          70820
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          72358,
+          60320,
+          72374,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 5,
+      "reconnects": 59,
+      "seconds": 3544,
+      "desktopMiB": 828,
+      "webMiB": 589,
+      "serviceMiB": 221,
+      "desktopHeapMiB": 21.4,
+      "webHeapMiB": 24.7,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 75962,
+      "pids": {
+        "desktop": [
+          70811,
+          70818,
+          70819,
+          70820
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          72486,
+          60320,
+          72550,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "desktop-reopen",
+      "reopenings": 5,
+      "reconnects": 60,
+      "seconds": 3604,
+      "desktopMiB": 911,
+      "webMiB": 582,
+      "serviceMiB": 213,
+      "desktopHeapMiB": 22,
+      "webHeapMiB": 38.4,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 77249,
+      "pids": {
+        "desktop": [
+          70811,
+          70818,
+          70819,
+          70820
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          72719,
+          60320,
+          72735,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "after-desktop-reopen",
+      "reopenings": 6,
+      "reconnects": 60,
+      "seconds": 3606,
+      "desktopMiB": 563,
+      "webMiB": 582,
+      "serviceMiB": 289,
+      "desktopHeapMiB": 37.8,
+      "webHeapMiB": 40.8,
+      "processes": 17,
+      "serviceTcp": 16,
+      "terminalBytes": 77249,
+      "pids": {
+        "desktop": [
+          72748,
+          72750,
+          72751,
+          72752
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          72719,
+          72756,
+          72760,
+          60320,
+          72759,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 6,
+      "reconnects": 60,
+      "seconds": 3604,
+      "desktopMiB": 564,
+      "webMiB": 582,
+      "serviceMiB": 214,
+      "desktopHeapMiB": 54.4,
+      "webHeapMiB": 32,
+      "processes": 15,
+      "serviceTcp": 16,
+      "terminalBytes": 77249,
+      "pids": {
+        "desktop": [
+          72748,
+          72750,
+          72751,
+          72752
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          72719,
+          60320,
+          72759,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 6,
+      "reconnects": 61,
+      "seconds": 3664,
+      "desktopMiB": 830,
+      "webMiB": 579,
+      "serviceMiB": 212,
+      "desktopHeapMiB": 19.8,
+      "webHeapMiB": 24.8,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 78536,
+      "pids": {
+        "desktop": [
+          72748,
+          72750,
+          72751,
+          72752
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          72866,
+          60320,
+          72931,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 6,
+      "reconnects": 62,
+      "seconds": 3724,
+      "desktopMiB": 816,
+      "webMiB": 575,
+      "serviceMiB": 213,
+      "desktopHeapMiB": 20.3,
+      "webHeapMiB": 38.2,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 79823,
+      "pids": {
+        "desktop": [
+          72748,
+          72750,
+          72751,
+          72752
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          73095,
+          60320,
+          73112,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 6,
+      "reconnects": 63,
+      "seconds": 3784,
+      "desktopMiB": 696,
+      "webMiB": 556,
+      "serviceMiB": 201,
+      "desktopHeapMiB": 20.6,
+      "webHeapMiB": 40.1,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 81110,
+      "pids": {
+        "desktop": [
+          72748,
+          72750,
+          72751,
+          72752
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          73218,
+          60320,
+          73314,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 6,
+      "reconnects": 64,
+      "seconds": 3844,
+      "desktopMiB": 694,
+      "webMiB": 506,
+      "serviceMiB": 187,
+      "desktopHeapMiB": 19.9,
+      "webHeapMiB": 38.2,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 82397,
+      "pids": {
+        "desktop": [
+          72748,
+          72750,
+          72751,
+          72752
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          73849,
+          60320,
+          73867,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 6,
+      "reconnects": 65,
+      "seconds": 3904,
+      "desktopMiB": 650,
+      "webMiB": 481,
+      "serviceMiB": 183,
+      "desktopHeapMiB": 20.6,
+      "webHeapMiB": 24.7,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 83695,
+      "pids": {
+        "desktop": [
+          72748,
+          72750,
+          72751,
+          72752
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          74049,
+          60320,
+          74167,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 6,
+      "reconnects": 66,
+      "seconds": 3964,
+      "desktopMiB": 703,
+      "webMiB": 493,
+      "serviceMiB": 187,
+      "desktopHeapMiB": 21.2,
+      "webHeapMiB": 38.2,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 84993,
+      "pids": {
+        "desktop": [
+          72748,
+          72750,
+          72751,
+          72752
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          74500,
+          60320,
+          74531,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 6,
+      "reconnects": 67,
+      "seconds": 4024,
+      "desktopMiB": 641,
+      "webMiB": 486,
+      "serviceMiB": 184,
+      "desktopHeapMiB": 21.2,
+      "webHeapMiB": 40.1,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 86280,
+      "pids": {
+        "desktop": [
+          72748,
+          72750,
+          72751,
+          72752
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          74676,
+          60320,
+          74769,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 6,
+      "reconnects": 68,
+      "seconds": 4084,
+      "desktopMiB": 687,
+      "webMiB": 493,
+      "serviceMiB": 187,
+      "desktopHeapMiB": 49.9,
+      "webHeapMiB": 39,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 87578,
+      "pids": {
+        "desktop": [
+          72748,
+          72750,
+          72751,
+          72752
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          74985,
+          60320,
+          75014,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 6,
+      "reconnects": 69,
+      "seconds": 4144,
+      "desktopMiB": 659,
+      "webMiB": 507,
+      "serviceMiB": 185,
+      "desktopHeapMiB": 21.3,
+      "webHeapMiB": 40.1,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 88865,
+      "pids": {
+        "desktop": [
+          72748,
+          72750,
+          72751,
+          72752
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          75134,
+          60320,
+          75224,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "desktop-reopen",
+      "reopenings": 6,
+      "reconnects": 70,
+      "seconds": 4204,
+      "desktopMiB": 712,
+      "webMiB": 544,
+      "serviceMiB": 186,
+      "desktopHeapMiB": 21.9,
+      "webHeapMiB": 15.7,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 90152,
+      "pids": {
+        "desktop": [
+          72748,
+          72750,
+          72751,
+          72752
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          75587,
+          60320,
+          75652,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "after-desktop-reopen",
+      "reopenings": 7,
+      "reconnects": 70,
+      "seconds": 4206,
+      "desktopMiB": 562,
+      "webMiB": 545,
+      "serviceMiB": 262,
+      "desktopHeapMiB": 38.2,
+      "webHeapMiB": 19,
+      "processes": 17,
+      "serviceTcp": 16,
+      "terminalBytes": 90152,
+      "pids": {
+        "desktop": [
+          75657,
+          75660,
+          75661,
+          75662
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          75587,
+          75666,
+          75671,
+          60320,
+          75670,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 7,
+      "reconnects": 70,
+      "seconds": 4204,
+      "desktopMiB": 563,
+      "webMiB": 545,
+      "serviceMiB": 187,
+      "desktopHeapMiB": 54.8,
+      "webHeapMiB": 19,
+      "processes": 16,
+      "serviceTcp": 16,
+      "terminalBytes": 90152,
+      "pids": {
+        "desktop": [
+          75657,
+          75660,
+          75661,
+          75662
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          75587,
+          75666,
+          60320,
+          75670,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 7,
+      "reconnects": 71,
+      "seconds": 4264,
+      "desktopMiB": 787,
+      "webMiB": 516,
+      "serviceMiB": 191,
+      "desktopHeapMiB": 19.7,
+      "webHeapMiB": 40.1,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 91439,
+      "pids": {
+        "desktop": [
+          75657,
+          75660,
+          75661,
+          75662
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          75808,
+          60320,
+          75893,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 7,
+      "reconnects": 72,
+      "seconds": 4324,
+      "desktopMiB": 812,
+      "webMiB": 509,
+      "serviceMiB": 194,
+      "desktopHeapMiB": 20,
+      "webHeapMiB": 38.2,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 92726,
+      "pids": {
+        "desktop": [
+          75657,
+          75660,
+          75661,
+          75662
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          76088,
+          60320,
+          76115,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 7,
+      "reconnects": 73,
+      "seconds": 4384,
+      "desktopMiB": 751,
+      "webMiB": 489,
+      "serviceMiB": 193,
+      "desktopHeapMiB": 20.5,
+      "webHeapMiB": 40.1,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 94024,
+      "pids": {
+        "desktop": [
+          75657,
+          75660,
+          75661,
+          75662
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          76341,
+          60320,
+          76424,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 7,
+      "reconnects": 74,
+      "seconds": 4444,
+      "desktopMiB": 807,
+      "webMiB": 499,
+      "serviceMiB": 189,
+      "desktopHeapMiB": 20.3,
+      "webHeapMiB": 38.2,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 95311,
+      "pids": {
+        "desktop": [
+          75657,
+          75660,
+          75661,
+          75662
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          76612,
+          60320,
+          76637,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 7,
+      "reconnects": 75,
+      "seconds": 4504,
+      "desktopMiB": 777,
+      "webMiB": 500,
+      "serviceMiB": 192,
+      "desktopHeapMiB": 20.8,
+      "webHeapMiB": 40.1,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 96609,
+      "pids": {
+        "desktop": [
+          75657,
+          75660,
+          75661,
+          75662
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          76865,
+          60320,
+          76950,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 7,
+      "reconnects": 76,
+      "seconds": 4564,
+      "desktopMiB": 752,
+      "webMiB": 489,
+      "serviceMiB": 286,
+      "desktopHeapMiB": 21.1,
+      "webHeapMiB": 39.3,
+      "processes": 16,
+      "serviceTcp": 11,
+      "terminalBytes": 97896,
+      "pids": {
+        "desktop": [
+          75657,
+          75660,
+          75661,
+          75662
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          77153,
+          77216,
+          60320,
+          77219,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 7,
+      "reconnects": 77,
+      "seconds": 4624,
+      "desktopMiB": 719,
+      "webMiB": 502,
+      "serviceMiB": 190,
+      "desktopHeapMiB": 21.1,
+      "webHeapMiB": 40.1,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 99183,
+      "pids": {
+        "desktop": [
+          75657,
+          75660,
+          75661,
+          75662
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          77349,
+          60320,
+          77424,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 7,
+      "reconnects": 78,
+      "seconds": 4684,
+      "desktopMiB": 740,
+      "webMiB": 503,
+      "serviceMiB": 189,
+      "desktopHeapMiB": 20.8,
+      "webHeapMiB": 39,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 100470,
+      "pids": {
+        "desktop": [
+          75657,
+          75660,
+          75661,
+          75662
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          77616,
+          60320,
+          77636,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 7,
+      "reconnects": 79,
+      "seconds": 4744,
+      "desktopMiB": 733,
+      "webMiB": 502,
+      "serviceMiB": 190,
+      "desktopHeapMiB": 21.4,
+      "webHeapMiB": 40.1,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 101757,
+      "pids": {
+        "desktop": [
+          75657,
+          75660,
+          75661,
+          75662
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          77796,
+          60320,
+          77968,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "desktop-reopen",
+      "reopenings": 7,
+      "reconnects": 80,
+      "seconds": 4804,
+      "desktopMiB": 775,
+      "webMiB": 506,
+      "serviceMiB": 189,
+      "desktopHeapMiB": 54,
+      "webHeapMiB": 39,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 103044,
+      "pids": {
+        "desktop": [
+          75657,
+          75660,
+          75661,
+          75662
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          78181,
+          60320,
+          78200,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "after-desktop-reopen",
+      "reopenings": 8,
+      "reconnects": 80,
+      "seconds": 4806,
+      "desktopMiB": 563,
+      "webMiB": 504,
+      "serviceMiB": 264,
+      "desktopHeapMiB": 37.7,
+      "webHeapMiB": 41.4,
+      "processes": 17,
+      "serviceTcp": 16,
+      "terminalBytes": 103044,
+      "pids": {
+        "desktop": [
+          78212,
+          78213,
+          78214,
+          78215
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          78181,
+          78219,
+          78223,
+          60320,
+          78222,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 8,
+      "reconnects": 80,
+      "seconds": 4804,
+      "desktopMiB": 564,
+      "webMiB": 504,
+      "serviceMiB": 190,
+      "desktopHeapMiB": 54.3,
+      "webHeapMiB": 41.4,
+      "processes": 16,
+      "serviceTcp": 16,
+      "terminalBytes": 103044,
+      "pids": {
+        "desktop": [
+          78212,
+          78213,
+          78214,
+          78215
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          78181,
+          78219,
+          60320,
+          78222,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 8,
+      "reconnects": 81,
+      "seconds": 4864,
+      "desktopMiB": 789,
+      "webMiB": 522,
+      "serviceMiB": 195,
+      "desktopHeapMiB": 19.9,
+      "webHeapMiB": 40.1,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 104320,
+      "pids": {
+        "desktop": [
+          78212,
+          78213,
+          78214,
+          78215
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          78409,
+          60320,
+          78492,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 8,
+      "reconnects": 82,
+      "seconds": 4924,
+      "desktopMiB": 818,
+      "webMiB": 515,
+      "serviceMiB": 193,
+      "desktopHeapMiB": 20.4,
+      "webHeapMiB": 38.2,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 105607,
+      "pids": {
+        "desktop": [
+          78212,
+          78213,
+          78214,
+          78215
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          78682,
+          60320,
+          78702,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 8,
+      "reconnects": 83,
+      "seconds": 4984,
+      "desktopMiB": 802,
+      "webMiB": 519,
+      "serviceMiB": 197,
+      "desktopHeapMiB": 20.7,
+      "webHeapMiB": 40.1,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 106883,
+      "pids": {
+        "desktop": [
+          78212,
+          78213,
+          78214,
+          78215
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          78848,
+          60320,
+          78936,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 8,
+      "reconnects": 84,
+      "seconds": 5044,
+      "desktopMiB": 831,
+      "webMiB": 556,
+      "serviceMiB": 193,
+      "desktopHeapMiB": 20.5,
+      "webHeapMiB": 16.5,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 108170,
+      "pids": {
+        "desktop": [
+          78212,
+          78213,
+          78214,
+          78215
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          79127,
+          60320,
+          79153,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 8,
+      "reconnects": 85,
+      "seconds": 5104,
+      "desktopMiB": 813,
+      "webMiB": 525,
+      "serviceMiB": 198,
+      "desktopHeapMiB": 20.8,
+      "webHeapMiB": 40.1,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 109446,
+      "pids": {
+        "desktop": [
+          78212,
+          78213,
+          78214,
+          78215
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          79284,
+          60320,
+          79365,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 8,
+      "reconnects": 86,
+      "seconds": 5164,
+      "desktopMiB": 846,
+      "webMiB": 551,
+      "serviceMiB": 193,
+      "desktopHeapMiB": 21.4,
+      "webHeapMiB": 16.5,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 110792,
+      "pids": {
+        "desktop": [
+          78212,
+          78213,
+          78214,
+          78215
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          79640,
+          60320,
+          79660,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 8,
+      "reconnects": 87,
+      "seconds": 5224,
+      "desktopMiB": 802,
+      "webMiB": 508,
+      "serviceMiB": 197,
+      "desktopHeapMiB": 21.2,
+      "webHeapMiB": 24.7,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 112184,
+      "pids": {
+        "desktop": [
+          78212,
+          78213,
+          78214,
+          78215
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          79792,
+          60320,
+          79898,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 8,
+      "reconnects": 88,
+      "seconds": 5284,
+      "desktopMiB": 847,
+      "webMiB": 508,
+      "serviceMiB": 195,
+      "desktopHeapMiB": 21.6,
+      "webHeapMiB": 38.2,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 113576,
+      "pids": {
+        "desktop": [
+          78212,
+          78213,
+          78214,
+          78215
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          80220,
+          60320,
+          80247,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 8,
+      "reconnects": 89,
+      "seconds": 5344,
+      "desktopMiB": 707,
+      "webMiB": 522,
+      "serviceMiB": 196,
+      "desktopHeapMiB": 21.5,
+      "webHeapMiB": 38.6,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 114980,
+      "pids": {
+        "desktop": [
+          78212,
+          78213,
+          78214,
+          78215
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          80367,
+          60320,
+          80474,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "desktop-reopen",
+      "reopenings": 8,
+      "reconnects": 90,
+      "seconds": 5404,
+      "desktopMiB": 774,
+      "webMiB": 508,
+      "serviceMiB": 193,
+      "desktopHeapMiB": 22.1,
+      "webHeapMiB": 39.5,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 116396,
+      "pids": {
+        "desktop": [
+          78212,
+          78213,
+          78214,
+          78215
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          80698,
+          60320,
+          80717,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "after-desktop-reopen",
+      "reopenings": 9,
+      "reconnects": 90,
+      "seconds": 5406,
+      "desktopMiB": 525,
+      "webMiB": 515,
+      "serviceMiB": 260,
+      "desktopHeapMiB": 30.3,
+      "webHeapMiB": 17.3,
+      "processes": 17,
+      "serviceTcp": 16,
+      "terminalBytes": 116396,
+      "pids": {
+        "desktop": [
+          80721,
+          80732,
+          80733,
+          80734
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          80698,
+          80737,
+          80738,
+          60320,
+          80743,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 9,
+      "reconnects": 90,
+      "seconds": 5404,
+      "desktopMiB": 525,
+      "webMiB": 515,
+      "serviceMiB": 281,
+      "desktopHeapMiB": 9.5,
+      "webHeapMiB": 17.3,
+      "processes": 17,
+      "serviceTcp": 16,
+      "terminalBytes": 116396,
+      "pids": {
+        "desktop": [
+          80721,
+          80732,
+          80733,
+          80734
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          80698,
+          80738,
+          80745,
+          60320,
+          80743,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 9,
+      "reconnects": 91,
+      "seconds": 5464,
+      "desktopMiB": 790,
+      "webMiB": 501,
+      "serviceMiB": 197,
+      "desktopHeapMiB": 19.9,
+      "webHeapMiB": 40.1,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 117812,
+      "pids": {
+        "desktop": [
+          80721,
+          80732,
+          80733,
+          80734
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          80862,
+          60320,
+          80943,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 9,
+      "reconnects": 92,
+      "seconds": 5525,
+      "desktopMiB": 833,
+      "webMiB": 504,
+      "serviceMiB": 197,
+      "desktopHeapMiB": 20,
+      "webHeapMiB": 38.2,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 119216,
+      "pids": {
+        "desktop": [
+          80721,
+          80732,
+          80733,
+          80734
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          81211,
+          60320,
+          81241,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 9,
+      "reconnects": 93,
+      "seconds": 5585,
+      "desktopMiB": 646,
+      "webMiB": 449,
+      "serviceMiB": 184,
+      "desktopHeapMiB": 20.7,
+      "webHeapMiB": 17.4,
+      "processes": 18,
+      "serviceTcp": 11,
+      "terminalBytes": 120584,
+      "pids": {
+        "desktop": [
+          80721,
+          80732,
+          80733,
+          80734
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          81846,
+          82074,
+          82081,
+          82082,
+          60320,
+          82073,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 9,
+      "reconnects": 94,
+      "seconds": 5645,
+      "desktopMiB": 611,
+      "webMiB": 439,
+      "serviceMiB": 173,
+      "desktopHeapMiB": 20,
+      "webHeapMiB": 15.7,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 121976,
+      "pids": {
+        "desktop": [
+          80721,
+          80732,
+          80733,
+          80734
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          82458,
+          60320,
+          82505,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 9,
+      "reconnects": 95,
+      "seconds": 5704,
+      "desktopMiB": 546,
+      "webMiB": 402,
+      "serviceMiB": 144,
+      "desktopHeapMiB": 21.1,
+      "webHeapMiB": 40.1,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 123368,
+      "pids": {
+        "desktop": [
+          80721,
+          80732,
+          80733,
+          80734
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          82733,
+          60320,
+          82879,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 9,
+      "reconnects": 96,
+      "seconds": 5765,
+      "desktopMiB": 556,
+      "webMiB": 415,
+      "serviceMiB": 162,
+      "desktopHeapMiB": 21.5,
+      "webHeapMiB": 38.2,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 124784,
+      "pids": {
+        "desktop": [
+          80721,
+          80732,
+          80733,
+          80734
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          83326,
+          60320,
+          83341,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 9,
+      "reconnects": 97,
+      "seconds": 5825,
+      "desktopMiB": 531,
+      "webMiB": 423,
+      "serviceMiB": 170,
+      "desktopHeapMiB": 21.4,
+      "webHeapMiB": 40.1,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 126188,
+      "pids": {
+        "desktop": [
+          80721,
+          80732,
+          80733,
+          80734
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          83553,
+          60320,
+          83648,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 9,
+      "reconnects": 98,
+      "seconds": 5885,
+      "desktopMiB": 544,
+      "webMiB": 403,
+      "serviceMiB": 249,
+      "desktopHeapMiB": 35.7,
+      "webHeapMiB": 15.7,
+      "processes": 16,
+      "serviceTcp": 11,
+      "terminalBytes": 127604,
+      "pids": {
+        "desktop": [
+          80721,
+          80732,
+          80733,
+          80734
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          83988,
+          84007,
+          60320,
+          84011,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 9,
+      "reconnects": 99,
+      "seconds": 5945,
+      "desktopMiB": 510,
+      "webMiB": 392,
+      "serviceMiB": 122,
+      "desktopHeapMiB": 21.7,
+      "webHeapMiB": 40.1,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 129008,
+      "pids": {
+        "desktop": [
+          80721,
+          80732,
+          80733,
+          80734
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          84286,
+          60320,
+          84483,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "desktop-reopen",
+      "reopenings": 9,
+      "reconnects": 100,
+      "seconds": 6005,
+      "desktopMiB": 597,
+      "webMiB": 401,
+      "serviceMiB": 147,
+      "desktopHeapMiB": 22,
+      "webHeapMiB": 38.2,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 130424,
+      "pids": {
+        "desktop": [
+          80721,
+          80732,
+          80733,
+          80734
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          84946,
+          60320,
+          84965,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "after-desktop-reopen",
+      "reopenings": 10,
+      "reconnects": 100,
+      "seconds": 6007,
+      "desktopMiB": 523,
+      "webMiB": 401,
+      "serviceMiB": 222,
+      "desktopHeapMiB": 30.1,
+      "webHeapMiB": 41.5,
+      "processes": 17,
+      "serviceTcp": 16,
+      "terminalBytes": 130424,
+      "pids": {
+        "desktop": [
+          84976,
+          84978,
+          84979,
+          84981
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          84946,
+          84985,
+          84989,
+          60320,
+          84982,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 10,
+      "reconnects": 100,
+      "seconds": 6005,
+      "desktopMiB": 524,
+      "webMiB": 401,
+      "serviceMiB": 297,
+      "desktopHeapMiB": 9.6,
+      "webHeapMiB": 41.5,
+      "processes": 17,
+      "serviceTcp": 16,
+      "terminalBytes": 130424,
+      "pids": {
+        "desktop": [
+          84976,
+          84978,
+          84979,
+          84981
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          84946,
+          84985,
+          84989,
+          60320,
+          84991,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 10,
+      "reconnects": 101,
+      "seconds": 6064,
+      "desktopMiB": 593,
+      "webMiB": 388,
+      "serviceMiB": 137,
+      "desktopHeapMiB": 20.1,
+      "webHeapMiB": 40.1,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 131828,
+      "pids": {
+        "desktop": [
+          84976,
+          84978,
+          84979,
+          84981
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          85239,
+          60320,
+          85390,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 10,
+      "reconnects": 102,
+      "seconds": 6125,
+      "desktopMiB": 634,
+      "webMiB": 401,
+      "serviceMiB": 149,
+      "desktopHeapMiB": 49.1,
+      "webHeapMiB": 39,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 133244,
+      "pids": {
+        "desktop": [
+          84976,
+          84978,
+          84979,
+          84981
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          85674,
+          60320,
+          85701,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 10,
+      "reconnects": 103,
+      "seconds": 6184,
+      "desktopMiB": 577,
+      "webMiB": 409,
+      "serviceMiB": 136,
+      "desktopHeapMiB": 21,
+      "webHeapMiB": 32.4,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 134648,
+      "pids": {
+        "desktop": [
+          84976,
+          84978,
+          84979,
+          84981
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          85854,
+          60320,
+          85940,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 10,
+      "reconnects": 104,
+      "seconds": 6245,
+      "desktopMiB": 567,
+      "webMiB": 389,
+      "serviceMiB": 133,
+      "desktopHeapMiB": 20.9,
+      "webHeapMiB": 37.3,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 136076,
+      "pids": {
+        "desktop": [
+          84976,
+          84978,
+          84979,
+          84981
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          86439,
+          60320,
+          86472,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 10,
+      "reconnects": 105,
+      "seconds": 6305,
+      "desktopMiB": 561,
+      "webMiB": 386,
+      "serviceMiB": 138,
+      "desktopHeapMiB": 21.1,
+      "webHeapMiB": 40.1,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 137480,
+      "pids": {
+        "desktop": [
+          84976,
+          84978,
+          84979,
+          84981
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          86656,
+          60320,
+          86784,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 10,
+      "reconnects": 106,
+      "seconds": 6365,
+      "desktopMiB": 511,
+      "webMiB": 389,
+      "serviceMiB": 133,
+      "desktopHeapMiB": 21.3,
+      "webHeapMiB": 38.2,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 138896,
+      "pids": {
+        "desktop": [
+          84976,
+          84978,
+          84979,
+          84981
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          87204,
+          60320,
+          87268,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 10,
+      "reconnects": 107,
+      "seconds": 6425,
+      "desktopMiB": 555,
+      "webMiB": 387,
+      "serviceMiB": 132,
+      "desktopHeapMiB": 21.4,
+      "webHeapMiB": 40.1,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 140300,
+      "pids": {
+        "desktop": [
+          84976,
+          84978,
+          84979,
+          84981
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          87530,
+          60320,
+          87661,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 10,
+      "reconnects": 108,
+      "seconds": 6485,
+      "desktopMiB": 569,
+      "webMiB": 361,
+      "serviceMiB": 230,
+      "desktopHeapMiB": 21.3,
+      "webHeapMiB": 15.6,
+      "processes": 16,
+      "serviceTcp": 11,
+      "terminalBytes": 141728,
+      "pids": {
+        "desktop": [
+          84976,
+          84978,
+          84979,
+          84981
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          87980,
+          88030,
+          60320,
+          88034,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 10,
+      "reconnects": 109,
+      "seconds": 6545,
+      "desktopMiB": 551,
+      "webMiB": 384,
+      "serviceMiB": 135,
+      "desktopHeapMiB": 21.8,
+      "webHeapMiB": 38.2,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 143132,
+      "pids": {
+        "desktop": [
+          84976,
+          84978,
+          84979,
+          84981
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          88271,
+          60320,
+          88425,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "desktop-reopen",
+      "reopenings": 10,
+      "reconnects": 110,
+      "seconds": 6605,
+      "desktopMiB": 606,
+      "webMiB": 405,
+      "serviceMiB": 140,
+      "desktopHeapMiB": 54.9,
+      "webHeapMiB": 39.2,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 144548,
+      "pids": {
+        "desktop": [
+          84976,
+          84978,
+          84979,
+          84981
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          88689,
+          60320,
+          88721,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "after-desktop-reopen",
+      "reopenings": 11,
+      "reconnects": 110,
+      "seconds": 6607,
+      "desktopMiB": 564,
+      "webMiB": 406,
+      "serviceMiB": 216,
+      "desktopHeapMiB": 54.2,
+      "webHeapMiB": 33.5,
+      "processes": 17,
+      "serviceTcp": 16,
+      "terminalBytes": 144548,
+      "pids": {
+        "desktop": [
+          88727,
+          88728,
+          88729,
+          88731
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          88689,
+          88736,
+          88740,
+          60320,
+          88739,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 11,
+      "reconnects": 110,
+      "seconds": 6605,
+      "desktopMiB": 591,
+      "webMiB": 407,
+      "serviceMiB": 140,
+      "desktopHeapMiB": 54.2,
+      "webHeapMiB": 33.5,
+      "processes": 15,
+      "serviceTcp": 16,
+      "terminalBytes": 144548,
+      "pids": {
+        "desktop": [
+          88727,
+          88728,
+          88729,
+          88731
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          88689,
+          60320,
+          88739,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 11,
+      "reconnects": 111,
+      "seconds": 6665,
+      "desktopMiB": 672,
+      "webMiB": 406,
+      "serviceMiB": 134,
+      "desktopHeapMiB": 19.7,
+      "webHeapMiB": 34.1,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 145964,
+      "pids": {
+        "desktop": [
+          88727,
+          88728,
+          88729,
+          88731
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          88873,
+          60320,
+          89019,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 11,
+      "reconnects": 112,
+      "seconds": 6725,
+      "desktopMiB": 538,
+      "webMiB": 385,
+      "serviceMiB": 164,
+      "desktopHeapMiB": 20,
+      "webHeapMiB": 16.4,
+      "processes": 18,
+      "serviceTcp": 11,
+      "terminalBytes": 147392,
+      "pids": {
+        "desktop": [
+          88727,
+          88728,
+          88729,
+          88731
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          89327,
+          89350,
+          89352,
+          89353,
+          60320,
+          89355,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 11,
+      "reconnects": 113,
+      "seconds": 6785,
+      "desktopMiB": 561,
+      "webMiB": 388,
+      "serviceMiB": 133,
+      "desktopHeapMiB": 20.4,
+      "webHeapMiB": 38.4,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 148784,
+      "pids": {
+        "desktop": [
+          88727,
+          88728,
+          88729,
+          88731
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          89571,
+          60320,
+          89706,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 11,
+      "reconnects": 114,
+      "seconds": 6845,
+      "desktopMiB": 593,
+      "webMiB": 400,
+      "serviceMiB": 131,
+      "desktopHeapMiB": 46.8,
+      "webHeapMiB": 46.2,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 150200,
+      "pids": {
+        "desktop": [
+          88727,
+          88728,
+          88729,
+          88731
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          90000,
+          60320,
+          90030,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 11,
+      "reconnects": 115,
+      "seconds": 6905,
+      "desktopMiB": 529,
+      "webMiB": 386,
+      "serviceMiB": 122,
+      "desktopHeapMiB": 20.7,
+      "webHeapMiB": 40,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 151616,
+      "pids": {
+        "desktop": [
+          88727,
+          88728,
+          88729,
+          88731
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          90279,
+          60320,
+          90445,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 11,
+      "reconnects": 116,
+      "seconds": 6965,
+      "desktopMiB": 562,
+      "webMiB": 434,
+      "serviceMiB": 131,
+      "desktopHeapMiB": 21,
+      "webHeapMiB": 15.6,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 153032,
+      "pids": {
+        "desktop": [
+          88727,
+          88728,
+          88729,
+          88731
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          90767,
+          60320,
+          90825,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 11,
+      "reconnects": 117,
+      "seconds": 7025,
+      "desktopMiB": 540,
+      "webMiB": 388,
+      "serviceMiB": 122,
+      "desktopHeapMiB": 21.1,
+      "webHeapMiB": 32.7,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 154436,
+      "pids": {
+        "desktop": [
+          88727,
+          88728,
+          88729,
+          88731
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          91066,
+          60320,
+          91281,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 11,
+      "reconnects": 118,
+      "seconds": 7085,
+      "desktopMiB": 692,
+      "webMiB": 406,
+      "serviceMiB": 133,
+      "desktopHeapMiB": 20.9,
+      "webHeapMiB": 39.4,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 155852,
+      "pids": {
+        "desktop": [
+          88727,
+          88728,
+          88729,
+          88731
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          91583,
+          60320,
+          91618,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "minute-sample",
+      "reopenings": 11,
+      "reconnects": 119,
+      "seconds": 7145,
+      "desktopMiB": 582,
+      "webMiB": 382,
+      "serviceMiB": 123,
+      "desktopHeapMiB": 21.5,
+      "webHeapMiB": 40.1,
+      "processes": 15,
+      "serviceTcp": 11,
+      "terminalBytes": 157256,
+      "pids": {
+        "desktop": [
+          88727,
+          88728,
+          88729,
+          88731
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          91753,
+          60320,
+          91889,
+          60336,
+          60348
+        ]
+      }
+    },
+    {
+      "phase": "final-sample",
+      "reopenings": 11,
+      "reconnects": 119,
+      "seconds": 7200,
+      "desktopMiB": 620,
+      "webMiB": 394,
+      "serviceMiB": 91,
+      "desktopHeapMiB": 22.1,
+      "webHeapMiB": 15.9,
+      "processes": 14,
+      "serviceTcp": 4,
+      "terminalBytes": 158420,
+      "pids": {
+        "desktop": [
+          88727,
+          88728,
+          88729,
+          88731
+        ],
+        "web": [
+          60292,
+          60300,
+          60301,
+          60302
+        ],
+        "service": [
+          60282,
+          60319,
+          60320,
+          92087,
+          60336,
+          60348
+        ]
+      }
+    }
+  ]
+}

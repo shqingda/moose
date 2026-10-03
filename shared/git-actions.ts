@@ -10,7 +10,7 @@ export interface CommitPreview {
   diff: string;
   truncated: boolean;
 }
-export interface PullRequestInfo {
+interface PullRequestInfo {
   url: string;
   number: number;
   title: string;

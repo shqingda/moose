@@ -1,0 +1,5 @@
+Desktop connection: /Users/shqingda/Projects/moose/.moose-test/stability-1790989782264/data/connection.json
+Moose Web: http://127.0.0.1:62684/#token=[REDACTED]
+Moose Web (localhost): http://localhost:62684/#token=[REDACTED]
+Data: /Users/shqingda/Projects/moose/.moose-test/stability-1790989782264/data
+Closing a browser does not stop tasks. Ctrl+C stops this service and its tasks.

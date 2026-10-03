@@ -77,7 +77,7 @@ const fileReference = z.union([
       .refine((p) => !p.includes('\0')),
   }),
 ]);
-export const schemas = {
+const schemas = {
   sessionActivity: z.strictObject({ sessionId: id }),
   searchMessages: z.strictObject({
     query: z.string().max(300),

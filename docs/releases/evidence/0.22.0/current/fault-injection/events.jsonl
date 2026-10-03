@@ -1,0 +1,28 @@
+{"at":"2026-10-03T01:06:58.045Z","phase":"desktop-launch","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:06:58.217Z","phase":"desktop-launch","kind":"process-start","detail":{"host":"desktop","pid":58972}}
+{"at":"2026-10-03T01:06:58.858Z","phase":"desktop-launch","kind":"process-start","detail":{"host":"web","pid":59010}}
+{"at":"2026-10-03T01:07:00.096Z","phase":"stream-and-search","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:07:00.148Z","phase":"files","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:07:00.950Z","phase":"review-and-sidebar","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:07:02.892Z","phase":"terminal","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:07:02.895Z","phase":"minute-sample","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:07:03.022Z","phase":"cycle-idle","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:07:10.096Z","phase":"stream-and-search","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:07:10.144Z","phase":"files","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:07:10.145Z","phase":"files","kind":"fault-injected","detail":{"fault":"desktop-exit"}}
+{"at":"2026-10-03T01:07:10.146Z","phase":"files","kind":"process-stderr","detail":{"host":"desktop","pid":58972,"text":"{\"diagnostic\":\"before-quit\",\"at\":\"2026-10-03T01:07:10.145Z\"}\n"}}
+{"at":"2026-10-03T01:07:10.149Z","phase":"files","kind":"process-stderr","detail":{"host":"desktop","pid":58972,"text":"{\"diagnostic\":\"before-quit\",\"at\":\"2026-10-03T01:07:10.149Z\"}\n"}}
+{"at":"2026-10-03T01:07:10.151Z","phase":"files","kind":"process-stderr","detail":{"host":"desktop","pid":58972,"text":"Error occurred in handler for 'moose:request': h [MooseError]: This operation was aborted\n    at Ce (file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989615855/build/dist-electron/main/main.js:51:9)\n    at file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989615855/build/dist-electron/main/main.js:333:10\n    at async De.request (file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989615855/build/dist-electron/main/main.js:318:11)\n    at async Session.<anonymous> (node:electron/js2c/browser_init:1:118174) {\n  code: 'disconnected'\n}\n"}}
+{"at":"2026-10-03T01:07:10.151Z","phase":"files","kind":"process-stderr","detail":{"host":"desktop","pid":58972,"text":"Error occurred in handler for 'moose:request': h [MooseError]: This operation was aborted\n    at Ce (file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989615855/build/dist-electron/main/main.js:51:9)\n    at file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989615855/build/dist-electron/main/main.js:333:10\n    at async De.request (file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989615855/build/dist-electron/main/main.js:318:11)\n    at async Session.<anonymous> (node:electron/js2c/browser_init:1:118174) {\n  code: 'disconnected'\n}\n"}}
+{"at":"2026-10-03T01:07:10.153Z","phase":"files","kind":"page-close","detail":{"host":"desktop","expected":false}}
+{"at":"2026-10-03T01:07:10.169Z","phase":"files","kind":"process-stderr","detail":{"host":"desktop","pid":58972,"text":"Waiting for the debugger to disconnect...\n"}}
+{"at":"2026-10-03T01:07:10.201Z","phase":"files","kind":"process-exit","detail":{"host":"desktop","pid":58972,"code":0,"signal":null,"expected":false}}
+{"at":"2026-10-03T01:07:10.202Z","phase":"files","kind":"app-close","detail":{"host":"desktop","expected":false}}
+{"at":"2026-10-03T01:07:10.647Z","phase":"files","kind":"failure","detail":{"error":"locator.click: Target page, context or browser has been closed\n    at <anonymous> (/Users/shqingda/Projects/moose/scripts/stability.ts:427:75)"}}
+{"at":"2026-10-03T01:07:10.648Z","phase":"cleanup","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:07:10.678Z","phase":"cleanup","kind":"process-stderr","detail":{"host":"web","pid":59010,"text":"{\"diagnostic\":\"before-quit\",\"at\":\"2026-10-03T01:07:10.676Z\"}\n"}}
+{"at":"2026-10-03T01:07:10.679Z","phase":"cleanup","kind":"process-stderr","detail":{"host":"web","pid":59010,"text":"Debugger ending on ws://127.0.0.1:62369/7a0b4d96-9480-4732-b7d2-54559e5cb7a6\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"}}
+{"at":"2026-10-03T01:07:10.682Z","phase":"cleanup","kind":"page-close","detail":{"host":"web","expected":true}}
+{"at":"2026-10-03T01:07:10.720Z","phase":"cleanup","kind":"process-exit","detail":{"host":"web","pid":59010,"code":0,"signal":null,"expected":true}}
+{"at":"2026-10-03T01:07:10.721Z","phase":"cleanup","kind":"app-close","detail":{"host":"web","expected":true}}
+{"at":"2026-10-03T01:07:10.896Z","phase":"cleanup","kind":"cleanup-complete","detail":{"checked":true,"survivors":[]}}

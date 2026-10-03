@@ -1,0 +1,22 @@
+{"at":"2026-10-03T01:05:55.163Z","phase":"desktop-launch","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:55.358Z","phase":"desktop-launch","kind":"process-start","detail":{"host":"desktop","pid":57878}}
+{"at":"2026-10-03T01:05:56.057Z","phase":"desktop-launch","kind":"process-start","detail":{"host":"web","pid":57916}}
+{"at":"2026-10-03T01:05:57.450Z","phase":"stream-and-search","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:57.544Z","phase":"files","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:05:58.377Z","phase":"review-and-sidebar","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:06:00.316Z","phase":"terminal","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:06:00.317Z","phase":"minute-sample","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:06:00.422Z","phase":"cycle-idle","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:06:07.451Z","phase":"stream-and-search","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:06:07.486Z","phase":"files","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:06:07.486Z","phase":"files","kind":"fault-injected","detail":{"fault":"desktop-exit"}}
+{"at":"2026-10-03T01:06:07.487Z","phase":"files","kind":"process-stderr","detail":{"host":"desktop","pid":57878,"text":"{\"diagnostic\":\"before-quit\",\"at\":\"2026-10-03T01:06:07.486Z\"}\n"}}
+{"at":"2026-10-03T01:06:07.489Z","phase":"files","kind":"process-stderr","detail":{"host":"desktop","pid":57878,"text":"{\"diagnostic\":\"before-quit\",\"at\":\"2026-10-03T01:06:07.489Z\"}\n"}}
+{"at":"2026-10-03T01:06:07.490Z","phase":"files","kind":"process-stderr","detail":{"host":"desktop","pid":57878,"text":"Error occurred in handler for 'moose:request': h [MooseError]: This operation was aborted\n    at Ce (file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989552849/build/dist-electron/main/main.js:51:9)\n    at file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989552849/build/dist-electron/main/main.js:333:10\n    at async De.request (file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989552849/build/dist-electron/main/main.js:318:11)\n    at async Session.<anonymous> (node:electron/js2c/browser_init:1:118174) {\n  code: 'disconnected'\n}\n"}}
+{"at":"2026-10-03T01:06:07.491Z","phase":"files","kind":"process-stderr","detail":{"host":"desktop","pid":57878,"text":"Error occurred in handler for 'moose:request': h [MooseError]: This operation was aborted\n    at Ce (file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989552849/build/dist-electron/main/main.js:51:9)\n    at file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989552849/build/dist-electron/main/main.js:333:10\n    at async De.request (file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989552849/build/dist-electron/main/main.js:318:11)\n    at async Session.<anonymous> (node:electron/js2c/browser_init:1:118174) {\n  code: 'disconnected'\n}\n"}}
+{"at":"2026-10-03T01:06:07.492Z","phase":"files","kind":"page-close","detail":{"host":"desktop","expected":false}}
+{"at":"2026-10-03T01:06:07.503Z","phase":"files","kind":"process-stderr","detail":{"host":"desktop","pid":57878,"text":"Waiting for the debugger to disconnect...\n"}}
+{"at":"2026-10-03T01:06:07.520Z","phase":"files","kind":"process-exit","detail":{"host":"desktop","pid":57878,"code":0,"signal":null,"expected":false}}
+{"at":"2026-10-03T01:06:07.521Z","phase":"files","kind":"app-close","detail":{"host":"desktop","expected":false}}
+{"at":"2026-10-03T01:06:07.987Z","phase":"files","kind":"failure","detail":{"error":"locator.click: Target page, context or browser has been closed\n    at <anonymous> (/Users/shqingda/Projects/moose/scripts/stability.ts:425:75)"}}
+{"at":"2026-10-03T01:06:07.988Z","phase":"cleanup","kind":"stage","detail":{}}

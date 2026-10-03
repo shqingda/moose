@@ -1,0 +1,9 @@
+
+Running 2 tests using 1 worker
+
+(node:3287) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/e2e/experience.spec.ts:969:3 › desktop keeps rapid auxiliary panel switches bounded and preserves focus, file tabs and draft (6.3s)
+  ✓  2 tests/e2e/experience.spec.ts:969:3 › Web keeps rapid auxiliary panel switches bounded and preserves focus, file tabs and draft (7.7s)
+
+  2 passed (14.8s)

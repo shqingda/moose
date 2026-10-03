@@ -11,11 +11,6 @@ function AlertDialog({ ...props }: AlertDialogPrimitive.Root.Props) {
   return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />;
 }
 
-/** 确认对话框：触发打开或切换，交互细节交由底层 primitive 处理。 */
-function AlertDialogTrigger({ ...props }: AlertDialogPrimitive.Trigger.Props) {
-  return <AlertDialogPrimitive.Trigger data-slot="alert-dialog-trigger" {...props} />;
-}
-
 /** 确认对话框：将浮层渲染到独立容器，避免被父元素裁切。 */
 function AlertDialogPortal({ ...props }: AlertDialogPrimitive.Portal.Props) {
   return <AlertDialogPrimitive.Portal data-slot="alert-dialog-portal" {...props} />;
@@ -87,20 +82,6 @@ function AlertDialogFooter({ className, ...props }: React.ComponentProps<'div'>)
   );
 }
 
-/** 确认对话框：放置图形内容并统一尺寸。 */
-function AlertDialogMedia({ className, ...props }: React.ComponentProps<'div'>) {
-  return (
-    <div
-      data-slot="alert-dialog-media"
-      className={cn(
-        "mb-2 inline-flex size-10 items-center justify-center rounded-md bg-muted sm:group-data-[size=default]/alert-dialog-content:row-span-2 *:[svg:not([class*='size-'])]:size-6",
-        className,
-      )}
-      {...props}
-    />
-  );
-}
-
 /** 确认对话框：展示标题并提供对应的语义结构。 */
 function AlertDialogTitle({
   className,
@@ -135,11 +116,6 @@ function AlertDialogDescription({
   );
 }
 
-/** 确认对话框：放置主要操作按钮或操作区域。 */
-function AlertDialogAction({ className, ...props }: React.ComponentProps<typeof Button>) {
-  return <Button data-slot="alert-dialog-action" className={cn(className)} {...props} />;
-}
-
 /** 确认对话框：提供取消或关闭入口。 */
 function AlertDialogCancel({
   className,
@@ -160,15 +136,10 @@ function AlertDialogCancel({
 
 export {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogMedia,
-  AlertDialogOverlay,
-  AlertDialogPortal,
   AlertDialogTitle,
-  AlertDialogTrigger,
 };

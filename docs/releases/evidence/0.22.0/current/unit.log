@@ -1,0 +1,10 @@
+$ vitest run
+
+ RUN  v5.0.2 /Users/shqingda/Projects/moose
+
+
+ Test Files  32 passed (32)
+      Tests  192 passed (192)
+   Start at  09:03:16
+   Duration  12.40s (tests 83%, import 13%, transform 4%)
+

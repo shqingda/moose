@@ -8,7 +8,7 @@ Moose 负责交互、协议适配、任务调度和历史存储；模型推理�
 
 [下载最新版本](https://github.com/shqingda/moose/releases/latest) · [使用指南](docs/usage.md) · [文档目录](docs/README.md)
 
-当前源码版本为 **0.22.0**：统一侧栏、对话输入与辅助面板，保留全部已有入口，补齐 Pi 历史与原生插话、OpenCode 历史。见[本版说明](docs/releases/0.22.0.md)与[验收进度](docs/releases/0.22.0-validation.md)；桌面与独立 Web 按同一版本联合发布。
+当前源码版本为 **0.22.1**：精简设置导航文字，清理未使用代码，补强合并冲突、队列与面板切换回归。见[本版说明](docs/releases/0.22.1.md)与[发布验收](docs/releases/0.22.1-validation.md)；桌面与独立 Web 按同一版本联合发布。
 
 ## 开始使用
 

@@ -14,7 +14,7 @@ const ignored = new Set([
   '.cache',
 ]);
 /** 按连续字符和词边界给路径打分，返回负数表示不匹配。 */
-export function fuzzyScore(query: string, value: string): number {
+function fuzzyScore(query: string, value: string): number {
   const q = query.toLocaleLowerCase(),
     v = value.toLocaleLowerCase();
   if (!q) return 1;

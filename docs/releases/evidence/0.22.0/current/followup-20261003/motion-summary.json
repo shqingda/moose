@@ -1,0 +1,58 @@
+[
+  {
+    "file": "desktop-normal-frames.json",
+    "host": "desktop",
+    "reduced": false,
+    "width": 563.2,
+    "frames": 169,
+    "switches": 12,
+    "minFiles": 219.28125,
+    "maxFiles": 563.1953125,
+    "minReview": 0,
+    "maxReview": 343.9140625,
+    "invalidActive": 0,
+    "hiddenFocus": 0
+  },
+  {
+    "file": "desktop-reduced-frames.json",
+    "host": "desktop",
+    "reduced": true,
+    "width": 563.2,
+    "frames": 165,
+    "switches": 12,
+    "minFiles": 0,
+    "maxFiles": 563.1953125,
+    "minReview": 0,
+    "maxReview": 563.1953125,
+    "invalidActive": 0,
+    "hiddenFocus": 0
+  },
+  {
+    "file": "web-normal-frames.json",
+    "host": "web",
+    "reduced": false,
+    "width": 528,
+    "frames": 170,
+    "switches": 12,
+    "minFiles": 205.8515625,
+    "maxFiles": 528,
+    "minReview": 0,
+    "maxReview": 322.140625,
+    "invalidActive": 0,
+    "hiddenFocus": 0
+  },
+  {
+    "file": "web-reduced-frames.json",
+    "host": "web",
+    "reduced": true,
+    "width": 528,
+    "frames": 159,
+    "switches": 12,
+    "minFiles": 0,
+    "maxFiles": 528,
+    "minReview": 0,
+    "maxReview": 528,
+    "invalidActive": 0,
+    "hiddenFocus": 0
+  }
+]

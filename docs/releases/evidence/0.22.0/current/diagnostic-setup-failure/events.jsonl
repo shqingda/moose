@@ -1,0 +1,8 @@
+{"at":"2026-10-03T01:03:19.607Z","phase":"desktop-launch","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:03:20.209Z","phase":"desktop-launch","kind":"process-start","detail":{"host":"desktop","pid":53855}}
+{"at":"2026-10-03T01:03:20.246Z","phase":"desktop-launch","kind":"failure","detail":{"error":"electronApplication.evaluate: ReferenceError: __name is not defined\n    at eval (eval at evaluate (:311:30), <anonymous>:1:40)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at Protocol.handle (node:electron/js2c/browser_init:1:66001)\n    at Object.handle (node:electron/js2c/browser_init:1:69537)\n    at file:///Users/shqingda/Projects/moose/.moose-test/stability-1790989395651/build/dist-electron/main/main.js:5495:32\n    at observeApp (/Users/shqingda/Projects/moose/scripts/stability.ts:245:13)\n    at launchDesktop (/Users/shqingda/Projects/moose/scripts/stability.ts:264:9)\n    at async <anonymous> (/Users/shqingda/Projects/moose/scripts/stability.ts:345:3)"}}
+{"at":"2026-10-03T01:03:20.247Z","phase":"cleanup","kind":"stage","detail":{}}
+{"at":"2026-10-03T01:03:20.376Z","phase":"cleanup","kind":"process-stderr","detail":{"host":"desktop","pid":53855,"text":"Debugger ending on ws://127.0.0.1:61365/f710a594-c764-464b-9fc4-1c00fa6b69dc\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"}}
+{"at":"2026-10-03T01:03:20.917Z","phase":"cleanup","kind":"process-exit","detail":{"host":"desktop","pid":53855,"code":0,"signal":null,"expected":true}}
+{"at":"2026-10-03T01:03:20.922Z","phase":"cleanup","kind":"app-close","detail":{"host":"desktop","expected":true}}
+{"at":"2026-10-03T01:03:25.814Z","phase":"cleanup","kind":"cleanup-complete","detail":{"checked":true,"survivors":[]}}

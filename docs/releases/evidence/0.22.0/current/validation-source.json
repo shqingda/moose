@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-03",
+  "note": "Supplementary test sources after full-suite run; their targeted results are recorded separately. Product bundles were not rebuilt after the initial build.",
+  "files": [
+    {
+      "path": "scripts/stability.ts",
+      "sha256": "199e146a5eba1eec62932a0c78cd6ff9603c37b90a5a9e68cff1aef949a0a9e2"
+    },
+    {
+      "path": "tests/e2e/workspace.spec.ts",
+      "sha256": "6b7aee9ee85364d665e82ee93576b8477cafdff738c5c369bb2f1d08c6d03a0d"
+    },
+    {
+      "path": "tests/e2e/experience.spec.ts",
+      "sha256": "6f540bfa6ba8f880c9365a8d49611a78cd173dd4cff4897a3e923c61ea37e41b"
+    },
+    {
+      "path": "tests/e2e/sidebar-motion.ts",
+      "sha256": "44c68085b4a1515a01811d889289a979a9007627a4a332b3de60db3f47ea05cf"
+    },
+    {
+      "path": "tests/e2e/background.spec.ts",
+      "sha256": "896799cdad787150e16eae660239970b0647c6ef79bd8d4b98dbdf66843e06a1"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "sha256": "dbdb8940b1e91ba88feed47a1d75bf94a53bc8e77599de717add2c8ac41f2efe"
+    }
+  ]
+}

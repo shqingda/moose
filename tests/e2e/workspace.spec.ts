@@ -61,6 +61,8 @@ test('opens a project, approves a real IPC turn, reviews diff, persists draft an
   await expect(page.locator('.project-heading')).toContainText('project');
   await page.locator('#composer').fill('Implement a focused change');
   await page.locator('#composer').press('Enter');
+  await expect(page.getByRole('button', { name: 'Allow once', exact: true })).toBeVisible();
+  await page.screenshot({ path: 'test-results/approval-desktop.png', animations: 'disabled' });
   await page.getByRole('button', { name: 'Allow once', exact: true }).click();
   await expect(page.locator('.markdown')).toContainText('Implemented the change.');
   expect(await readFile(join(projectDir, 'approved.txt'), 'utf8')).toBe('moose-approved\n');
@@ -195,12 +197,35 @@ test('Grok approval denial and questions travel through ACP, and cancellation pr
   await expect(page.getByRole('button', { name: 'Stop task' })).toBeVisible();
   await page.locator('#composer').fill('queued followup');
   await page.locator('#composer').press('Enter');
+  await page.locator('#composer').fill('keep and edit this followup');
+  await page.locator('#composer').press('Enter');
   await page.getByRole('button', { name: 'Stop task' }).click();
   await page.locator('.queue-panel summary').click();
   await expect(page.locator('.queue-panel')).toContainText('queued followup');
   await expect(page.getByRole('button', { name: 'Resume queue' })).toBeVisible();
-  await page.getByRole('button', { name: 'Remove', exact: true }).click();
+  await page
+    .locator('.queue-item')
+    .filter({ hasText: 'queued followup' })
+    .getByRole('button', { name: 'Remove', exact: true })
+    .click();
+  await expect(page.locator('.queue-item')).toHaveCount(1);
+  await page.locator('.queue-item').getByRole('button', { name: 'Edit', exact: true }).click();
+  await page
+    .locator('.queue-edit')
+    .getByRole('textbox', { name: 'Edit', exact: true })
+    .fill('inspect-input edited queue');
+  await page.locator('.queue-edit').getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.locator('.queue-item')).toContainText('inspect-input edited queue');
+  await page.reload();
+  await page.locator('.queue-panel summary').click();
+  await expect(page.locator('.queue-item')).toHaveCount(1);
+  await expect(page.locator('.queue-item')).toContainText('inspect-input edited queue');
+  await page.getByRole('button', { name: 'Resume queue', exact: true }).click();
   await expect(page.locator('.queue-panel')).toHaveCount(0);
+  await expect(page.locator('.markdown').last()).toContainText('inspect-input edited queue');
+  await expect(
+    page.locator('.user-text').filter({ hasText: 'inspect-input edited queue' }),
+  ).toHaveCount(1);
 });
 
 test('imports image and text attachments, persists permissions, copies and edits messages, and collapses sidebar', async () => {

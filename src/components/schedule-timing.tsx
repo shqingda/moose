@@ -3,7 +3,7 @@ import { useI18n } from '../lib/i18n';
 import { Picker } from './common';
 import { Field, FieldGroup, FieldLabel, FieldSet, FieldLegend } from './ui/field';
 import { Input } from './ui/input';
-export type ScheduleFrequency = 'once' | 'interval' | 'daily' | 'weekly';
+type ScheduleFrequency = 'once' | 'interval' | 'daily' | 'weekly';
 export interface TimingDraft {
   frequency: ScheduleFrequency;
   time: string;

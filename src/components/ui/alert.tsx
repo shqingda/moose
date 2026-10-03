@@ -34,20 +34,6 @@ function Alert({
   );
 }
 
-/** 状态提示：展示标题并提供对应的语义结构。 */
-function AlertTitle({ className, ...props }: React.ComponentProps<'div'>) {
-  return (
-    <div
-      data-slot="alert-title"
-      className={cn(
-        'font-medium group-has-[>svg]/alert:col-start-2 [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover:text-foreground',
-        className,
-      )}
-      {...props}
-    />
-  );
-}
-
 /** 状态提示：展示辅助说明文字。 */
 function AlertDescription({ className, ...props }: React.ComponentProps<'div'>) {
   return (
@@ -62,11 +48,4 @@ function AlertDescription({ className, ...props }: React.ComponentProps<'div'>) 
   );
 }
 
-/** 状态提示：放置主要操作按钮或操作区域。 */
-function AlertAction({ className, ...props }: React.ComponentProps<'div'>) {
-  return (
-    <div data-slot="alert-action" className={cn('absolute top-2 right-2', className)} {...props} />
-  );
-}
-
-export { Alert, AlertTitle, AlertDescription, AlertAction };
+export { Alert, AlertDescription };

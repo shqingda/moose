@@ -59,7 +59,7 @@ export function useWorkspace() {
   return { snapshot, error, failure, connection, setError, refresh, perform };
 }
 /** 按 ID 和 seq 合并消息版本，再按 position 恢复稳定时间线顺序。 */
-export function mergeMessages(previous: Message[], incoming: Message[]) {
+function mergeMessages(previous: Message[], incoming: Message[]) {
   const rows = new Map(previous.map((row) => [row.id, row]));
   for (const row of incoming) {
     const old = rows.get(row.id);

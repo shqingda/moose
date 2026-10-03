@@ -41,18 +41,6 @@ function Marker({
   });
 }
 
-/** 行内标记：放置图标并统一对齐。 */
-function MarkerIcon({ className, ...props }: React.ComponentProps<'span'>) {
-  return (
-    <span
-      data-slot="marker-icon"
-      aria-hidden="true"
-      className={cn("size-4 shrink-0 [&_svg:not([class*='size-'])]:size-4", className)}
-      {...props}
-    />
-  );
-}
-
 /** 行内标记：承载主体内容并合并调用方样式。 */
 function MarkerContent({ className, ...props }: React.ComponentProps<'span'>) {
   return (
@@ -67,4 +55,4 @@ function MarkerContent({ className, ...props }: React.ComponentProps<'span'>) {
   );
 }
 
-export { Marker, MarkerIcon, MarkerContent, markerVariants };
+export { Marker, MarkerContent };

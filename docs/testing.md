@@ -1,6 +1,6 @@
 # 测试与验证
 
-当前方法适用于 Moose 0.21.4。历史实测数据集中在[专项验证记录](releases/runtime-validation-history.md)，发布验收见各版[发布说明](releases/)。
+当前方法适用于 Moose 0.22.1。历史实测数据集中在[专项验证记录](releases/runtime-validation-history.md)，发布验收见各版[发布说明](releases/)。
 
 ## 怎么选择测试
 
@@ -17,6 +17,8 @@ pnpm perf:measure          # 已打包应用的空工作区热启动测量
 ```
 
 定向 E2E 可在 `pnpm build` 后运行 `pnpm exec playwright test --grep '用例名称'`。涉及原生模块时，遵循[开发与打包](development.md)的重建流程。
+
+合并冲突与连续切换可定向运行 `pnpm exec playwright test --grep 'recovers merge conflicts|keeps rapid auxiliary'`。冲突测试只操作临时 Git 仓库，文件修改模拟外部编辑器，暂存／完成／中止通过真实界面。快速切换用帧采样绕过普通点击的动画稳定等待；桌面原生辅助偏好仅在隔离进程内模拟，并同时模拟浏览器媒体查询，不会切换 macOS 设置，也不替代前台人工观察。
 
 ## 文档修改
 
@@ -130,10 +132,21 @@ MOOSE_TEST_BACKGROUND=0 pnpm exec tsx scripts/package-smoke.ts
 
 ## 0.22.0 长运行与测量
 
-构建后执行 `pnpm test:stability`，默认运行 120 分钟。先用 `MOOSE_STABILITY_MINUTES=1 pnpm test:stability` 核对环境只能算短时检查。脚本复制当前构建与测试夹具，在 `.moose-test/stability-<时间>/` 使用独立数据库；不修改用户工作区，不调用模型，也不触发系统休眠。
+构建后执行 `pnpm test:stability`，默认运行 120 分钟。发布后证据索引与具体功能断言见 [0.22.0 证据](releases/0.22.0-evidence.md)。先用 `MOOSE_STABILITY_MINUTES=1 pnpm test:stability` 核对环境只能算短时检查。脚本复制当前构建与测试夹具，在 `.moose-test/stability-<时间>/` 使用独立数据库；不修改用户工作区，不调用模型，也不触发系统休眠。
 
 固定负载包括：10,000 条历史、每秒四次代理流式事件、每秒两次 PTY 输出、十秒一次检索与文件／审阅／侧栏切换、一分钟一次 Web 断连与刷新、十分钟一次桌面退出再打开，并检查旧版本后台拒绝写入、草稿和原 PTY 保留。每分钟记录三个互不重复的进程组 RSS、两个界面 JS 堆、进程与 TCP 连接数。使用构建摘要确认被测代码；后续构建不会改变正在运行的副本。
 
+诊断短测可用下面两条命令；加速间隔或故障注入均标记为 `profile: diagnostic`，不能算两小时验收：
+
+```sh
+MOOSE_STABILITY_MINUTES=1 MOOSE_STABILITY_REOPEN_SECONDS=20 MOOSE_STABILITY_RECONNECT_SECONDS=20 pnpm test:stability
+MOOSE_STABILITY_MINUTES=1 MOOSE_STABILITY_FAULT=desktop-exit pnpm test:stability
+```
+
+第二条预期非零退出：仅向本次隔离桌面发送 SIGTERM，核对 `failurePhase`、`events.jsonl` 中的异常页面／进程退出及 `cleanup.survivors` 为空。事件逐条带 UTC 时间与操作阶段，预期桌面重开和清理会单独标记；后台完整日志保留在运行目录，可提交副本为 `runtime.redacted.log`。不要公开 `connection.json`、数据库或含访问令牌的原始日志。
+
+报告附带源提交、工作区差异摘要、脚本摘要与完整构建文件摘要。每分钟样本记录具体 PID，并在每次桌面重开前后额外采样。清理检查同时核对锁文件和已观测进程的 PID／启动时间，不能仅凭锁文件消失认定子进程退出。原生客户端异常退出后，脚本使用启动时保存的 PID，避免 Playwright 已销毁的对象令清理中断。
+
 最终报告中的 `workload-passed-memory-review-required` 表示固定操作成功，仍要检查趋势、周期性重连及进程结束结果；它不是自动判定“没有泄漏”。不同输入长度、模型、扩展和机器下的内存不能直接等同。结果、前后体积和发布门槛统一记录在 [0.22.0 验收](releases/0.22.0-validation.md)。
 
-人工验收只在不影响现有任务的时段完成：真实休眠／唤醒、系统通知授权与实际展示、通知点击返回，以及 VoiceOver 的导航、审批、输入、面板和设置操作。模拟媒体偏好、受控通知 API 和隐藏窗口不代替这些结果；未完成项目不得标为通过或公开发布。
+人工验收只在不影响现有任务的时段完成：真实休眠／唤醒、系统通知授权与实际展示、通知点击返回，以及 VoiceOver 的导航、审批、输入、面板和设置操作。模拟媒体偏好、受控通知 API 和隐藏窗口不代替这些结果；未完成项目不得标为通过。0.22.0 经用户明确要求，在剩余验收未完成时联合发布，该例外及待补证据见 [验收记录](releases/0.22.0-validation.md)。0.22.1 维护版也已获用户授权先发版、人工另约，执行状态见 [本版验收](releases/0.22.1-validation.md)；这不将人工项目记为通过，也不自动豁免后续版本。

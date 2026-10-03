@@ -1,0 +1,21 @@
+$ tsx scripts/measure-performance.ts
+{
+  "scenario": "packaged-shared-empty-hidden-warm-cache-service-restarted",
+  "samples": [
+    {
+      "readyMs": 625,
+      "residentMiB": 571,
+      "jsHeapMiB": 6.2
+    },
+    {
+      "readyMs": 609,
+      "residentMiB": 563,
+      "jsHeapMiB": 5.3
+    },
+    {
+      "readyMs": 658,
+      "residentMiB": 564,
+      "jsHeapMiB": 5.2
+    }
+  ]
+}

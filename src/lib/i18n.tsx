@@ -1,6 +1,6 @@
 import { experienceEn, experienceZh } from './experience-i18n';
 import { createContext, useContext } from 'react';
-export const en = {
+const en = {
   ...experienceEn,
   mcpUnauthenticated: 'Not signed in',
   mcpAuthenticated: 'Signed in',
@@ -447,7 +447,7 @@ export const en = {
   dismiss: 'Dismiss',
 };
 export type TranslationKey = keyof typeof en;
-export const zh: Record<TranslationKey, string> = {
+const zh: Record<TranslationKey, string> = {
   ...experienceZh,
   mcpUnauthenticated: '未认证',
   mcpAuthenticated: '已认证',

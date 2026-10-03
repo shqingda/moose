@@ -11,19 +11,9 @@ function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
 }
 
-/** 对话框：触发打开或切换，交互细节交由底层 primitive 处理。 */
-function DialogTrigger({ ...props }: DialogPrimitive.Trigger.Props) {
-  return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />;
-}
-
 /** 对话框：将浮层渲染到独立容器，避免被父元素裁切。 */
 function DialogPortal({ ...props }: DialogPrimitive.Portal.Props) {
   return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />;
-}
-
-/** 对话框：封装底层元素，统一外观并透传属性。 */
-function DialogClose({ ...props }: DialogPrimitive.Close.Props) {
-  return <DialogPrimitive.Close data-slot="dialog-close" {...props} />;
 }
 
 /** 对话框：绘制遮罩，区分弹层与背景内容。 */
@@ -83,35 +73,6 @@ function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
   );
 }
 
-/** 对话框：组织底部操作区的布局与间距。 */
-function DialogFooter({
-  className,
-  showCloseButton = false,
-  children,
-  ...props
-}: React.ComponentProps<'div'> & {
-  showCloseButton?: boolean;
-}) {
-  const t = useI18n();
-  return (
-    <div
-      data-slot="dialog-footer"
-      className={cn(
-        '-mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl border-t bg-muted/50 p-4 sm:flex-row sm:justify-end',
-        className,
-      )}
-      {...props}
-    >
-      {children}
-      {showCloseButton && (
-        <DialogPrimitive.Close render={<Button variant="outline" />}>
-          {t('close')}
-        </DialogPrimitive.Close>
-      )}
-    </div>
-  );
-}
-
 /** 对话框：展示标题并提供对应的语义结构。 */
 function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
   return (
@@ -137,15 +98,4 @@ function DialogDescription({ className, ...props }: DialogPrimitive.Description.
   );
 }
 
-export {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogOverlay,
-  DialogPortal,
-  DialogTitle,
-  DialogTrigger,
-};
+export { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle };

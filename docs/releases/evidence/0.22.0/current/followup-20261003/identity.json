@@ -1,0 +1,39 @@
+{
+  "recordedAt": "2026-10-03T07:56:11.293Z",
+  "version": "0.22.0",
+  "host": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "release": "27.0.0",
+    "node": "v26.10.0"
+  },
+  "commit": "6e0162d49b235d3ade5af3be438eb20a74e4d905",
+  "sourceDiffSha256": "32cf6a36bf9b39643d02792e26cb376f86206a5924f023a3e397b68d7b985163",
+  "productSourceDiffSha256": "9cfe8651db004e2567707669472e6aa78f3923f1f99b8c3b280c7dbc77e3a731",
+  "build": {
+    "reusedFrom": "../build-identity.json",
+    "manifest": "../full/build-manifest.json",
+    "manifestSha256": "b0b698da40c15ed10cccb731eb6df915dd485e1334e46d4c0b11ba288acd272a",
+    "verifiedFiles": 290,
+    "allMatch": true
+  },
+  "finalTestSources": [
+    {
+      "path": "tests/e2e/worktrees.spec.ts",
+      "sha256": "7def3f83ca7b49665b1ff7cd4a5508eb873433c7b6d54d660994621ad596ba52"
+    },
+    {
+      "path": "tests/e2e/experience.spec.ts",
+      "sha256": "94c891421ee84d9f33b069cbc651cdd1f03e3cf64f55064717a0a5b0487bcaff"
+    },
+    {
+      "path": "playwright.config.ts",
+      "sha256": "a7e977b10449c63a29a18cba616bcd4c67010b622f2092f0d8dddff95d3da804"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "sha256": "dbdb8940b1e91ba88feed47a1d75bf94a53bc8e77599de717add2c8ac41f2efe"
+    }
+  ],
+  "note": "Only acceptance tests and docs changed. First run has six passes and one desktop preference-emulation harness failure. After correcting the isolated native preference reader, both panel tests passed. No product rebuild or new release."
+}
