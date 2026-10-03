@@ -471,10 +471,10 @@ test('project hover stays uniform and its compose button targets that project', 
   await expect(menu).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
   await menu.click();
   await expect(page.getByRole('menuitem', { name: 'Delete project', exact: true })).toBeVisible();
-  await expect(page.getByRole('menuitem', { name: 'Delete project', exact: true })).toHaveCSS(
-    'white-space',
-    'nowrap',
-  );
+  const menuText = await page
+    .getByRole('menuitem', { name: 'Delete project', exact: true })
+    .evaluate((element) => ({ width: element.clientWidth, content: element.scrollWidth }));
+  expect(menuText.content).toBeLessThanOrEqual(menuText.width);
   await page.screenshot({ path: 'test-results/project-menu-english.png' });
   await page.keyboard.press('Escape');
   await selected.hover();
@@ -1005,6 +1005,7 @@ test('keeps model picker height stable across providers and empty searches with 
   await page.getByRole('button', { name: 'Model', exact: true }).click();
   const popup = page.locator('.combined-model-popup');
   await expect(popup.locator('.model-option')).toHaveCount(25);
+  await expect(popup).toHaveCSS('transform', 'none');
   const height = await popup.evaluate((el) => el.getBoundingClientRect().height);
   expect(
     await popup.locator('.model-options').evaluate((el) => el.scrollHeight > el.clientHeight),

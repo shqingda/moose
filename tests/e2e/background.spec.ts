@@ -437,7 +437,7 @@ test('moves the same terminal between window, bottom and right without stopping 
       return {
         font: getComputedStyle(tab).fontSize,
         pickerFont: getComputedStyle(picker).fontSize,
-        pickerHeight: picker.getBoundingClientRect().height,
+        pickerHeight: (picker as HTMLElement).offsetHeight,
       };
     });
   const dialogMetrics = await headerMetrics();

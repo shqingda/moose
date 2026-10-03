@@ -155,11 +155,6 @@ function Workspace({
     [searchOpen, setSearchOpen] = useState<boolean>(),
     [archived, setArchived] = useState(false);
   const review = sidePanel === 'review';
-  const [reviewOpened, setReviewOpened] = useState(false);
-  const toggleReview = useCallback(() => {
-    setReviewOpened(true);
-    setSidePanel((value) => (value === 'review' ? null : 'review'));
-  }, [setSidePanel]);
   const [filesOpened, setFilesOpened] = useState(false);
   const [fileRequest, setFileRequest] = useState<{
     reference: WorkspaceFileReference;
@@ -301,7 +296,8 @@ function Workspace({
         if (event.command === 'settings') setSettingsOpen(true);
         if (event.command === 'search') setSearchOpen(true);
         if (event.command === 'open') void command.current.addProject();
-        if (event.command === 'review') toggleReview();
+        if (event.command === 'review')
+          setSidePanel((value) => (value === 'review' ? null : 'review'));
         if (event.command === 'new') void command.current.newSession();
       }),
     [],
@@ -530,7 +526,7 @@ function Workspace({
                 </IconButton>
                 <IconButton
                   label={t('review')}
-                  onClick={toggleReview}
+                  onClick={() => setSidePanel((value) => (value === 'review' ? null : 'review'))}
                   disabled={!project}
                   aria-pressed={review}
                 >
@@ -688,17 +684,15 @@ function Workspace({
                     reduceMotion={!!reduceMotion || snapshot.reduceMotion}
                   />
                 )}
-                {reviewOpened && (
-                  <ReviewPanel
-                    open={review}
-                    key={`${project.id}:${session?.id}`}
-                    project={project}
-                    sessionId={session?.id}
-                    onClose={() => setSidePanel(null)}
-                    onError={setError}
-                    reduceMotion={!!reduceMotion || snapshot.reduceMotion}
-                  />
-                )}
+                <ReviewPanel
+                  open={review}
+                  key={`${project.id}:${session?.id}`}
+                  project={project}
+                  sessionId={session?.id}
+                  onClose={() => setSidePanel(null)}
+                  onError={setError}
+                  reduceMotion={!!reduceMotion || snapshot.reduceMotion}
+                />
               </Suspense>
             )}
           </div>
