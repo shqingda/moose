@@ -1,0 +1,43 @@
+{
+  "verifiedAt": "2026-10-03T22:50:32.488823+08:00",
+  "version": "0.23.1",
+  "commit": "f23076473559ce5b9bd358331fec4d4573d209e0",
+  "latest": "v0.23.1",
+  "manifest": "0.23.1-cd562756fb2b cd562756fb2b778bc06d37464022bb10bc03bb43508d0d81b04547d5f1f5b5c5 3",
+  "assets": [
+    {
+      "name": "install.sh",
+      "bytes": 3478,
+      "sha256": "11d5af809c75ebd410383e98d87ecf46fba5fcec4d549d59b04f0e63ffd95ab1"
+    },
+    {
+      "name": "Moose-0.23.1-arm64.dmg",
+      "bytes": 121471001,
+      "sha256": "4e2ab881d10d445c70a034cb45fb7647fbd06dcab6296f0f5890170d070ef23c"
+    },
+    {
+      "name": "Moose-0.23.1-SHA256SUMS.txt",
+      "bytes": 192,
+      "sha256": "4f7ae0341e4d92d33c217953f7309020b9dce94cc1d60326bca0d45fd6037405"
+    },
+    {
+      "name": "Moose-0.23.1-web-darwin-arm64.tar.gz",
+      "bytes": 42654299,
+      "sha256": "cd562756fb2b778bc06d37464022bb10bc03bb43508d0d81b04547d5f1f5b5c5"
+    }
+  ],
+  "retainedPreviousParts": [
+    {
+      "url": "https://moose.shqingda.workers.dev/releases/0.23.0-7ca16b4466f1/darwin-arm64/part-0",
+      "status": 200
+    },
+    {
+      "url": "https://moose.shqingda.workers.dev/releases/0.23.0-7ca16b4466f1/darwin-arm64/part-1",
+      "status": 200
+    },
+    {
+      "url": "https://moose.shqingda.workers.dev/releases/0.23.0-7ca16b4466f1/darwin-arm64/part-2",
+      "status": 200
+    }
+  ]
+}

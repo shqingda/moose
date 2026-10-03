@@ -1,0 +1,41 @@
+$ node scripts/release.mjs publish
+Moose-0.23.1-arm64.dmg: OK
+Moose-0.23.1-web-darwin-arm64.tar.gz: OK
+release not found
+To https://github.com/shqingda/moose.git
+   287fb76..f230764  HEAD -> main
+fatal: ambiguous argument 'v0.23.1': unknown revision or path not in the working tree.
+Use '--' to separate paths from revisions, like this:
+'git <command> [<revision>...] -- [<file>...]'
+To https://github.com/shqingda/moose.git
+ * [new tag]         v0.23.1 -> v0.23.1
+https://github.com/shqingda/moose/releases/tag/untagged-33e2a5b447df7073f87f
+▲ [WARNING] Proxy environment variables detected. We'll use your proxy for fetch requests.
+
+
+
+ ⛅️ wrangler 4.135.0
+────────────────────
+🌀 Building list of assets...
+✨ Read 85 files from the assets directory <HOME>/Projects/moose/distribution/public
+🌀 Starting asset upload...
+🌀 Found 5 new or modified static assets to upload. Proceeding with upload...
++ /latest-darwin-arm64.txt
++ /releases/0.23.1-cd562756fb2b/darwin-arm64/part-0
++ /index.html
++ /releases/0.23.1-cd562756fb2b/darwin-arm64/part-1
++ /releases/0.23.1-cd562756fb2b/darwin-arm64/part-2
+Uploaded 1 of 5 assets
+Uploaded 3 of 5 assets
+Uploaded 5 of 5 assets
+✨ Success! Uploaded 5 files (47 already uploaded) (56.70 sec)
+
+Total Upload: 0.42 KiB / gzip: 0.29 KiB
+Uploaded moose (61.42 sec)
+Deployed moose triggers (1.11 sec)
+  https://moose.shqingda.workers.dev
+Current Version ID: 4a93d35e-03a5-4b37-95e9-39bde8c2ca94
+Done in 1m 4.4s using pnpm v12.8.1
+PASS: clean install without Node on PATH, localhost auth, SQLite, PTY, repeated start, update without stopping tasks, reinstall, checksum rejection (local), stop/restart, browser opening
+https://github.com/shqingda/moose/releases/tag/v0.23.1
+Published desktop and Web 0.23.1.
