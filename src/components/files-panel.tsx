@@ -77,6 +77,7 @@ export function FilesPanel({
   const [revision, setRevision] = useState(0);
   const [loaded, setLoaded] = useState<{ path: string; data: FilePreview }>();
   const [error, setError] = useState<ReturnType<typeof fault>>();
+  const reportError = useCallback((error: unknown) => setError(fault(error)), []);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
   const [zoom, setZoom] = useState(1);
@@ -387,11 +388,7 @@ export function FilesPanel({
               </p>
             ) : showMarkdown ? (
               <div className="file-markdown-preview" key={active}>
-                <Markdown
-                  text={data?.content || ''}
-                  basePath={active}
-                  onError={(error) => setError(fault(error))}
-                />
+                <Markdown text={data?.content || ''} basePath={active} onError={reportError} />
               </div>
             ) : data?.kind === 'text' ? (
               <Suspense

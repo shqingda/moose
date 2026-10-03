@@ -13,6 +13,7 @@ import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { randomUUID } from 'node:crypto';
 import { Store } from '../../electron/db/store';
+import type { AppEvent, Message } from '../../shared/types';
 let peerApp: ElectronApplication | undefined;
 let app: ElectronApplication | undefined, server: ChildProcess | undefined, root: string;
 test.afterEach(async () => {
@@ -190,11 +191,19 @@ for (const web of [false, true])
     await expect(selected).toHaveAttribute('aria-selected', 'true');
     await expect(selected).not.toHaveCSS('box-shadow', 'none');
     await expect(searchInput).toHaveAttribute('aria-activedescendant', 'search-hit-1');
+    await searchInput.press('Control+End');
+    await expect(page.getByRole('option').last()).toHaveAttribute('aria-selected', 'true');
+    await searchInput.press('Control+Home');
+    await expect(page.getByRole('option').first()).toHaveAttribute('aria-selected', 'true');
     await page.getByRole('button', { name: 'Clear search', exact: true }).click();
     await expect(searchInput).toHaveValue('');
     await expect(searchInput).toBeFocused();
     await searchInput.fill('needle');
     await expect(page.getByRole('option')).toHaveCount(50);
+    await searchInput.press('Tab');
+    await expect(page.getByRole('button', { name: 'Clear search', exact: true })).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(page.getByRole('button', { name: 'Load more', exact: true })).toBeFocused();
     await page.getByRole('button', { name: 'Load more', exact: true }).click();
     await expect(page.getByRole('option')).toHaveCount(100);
     await page.getByRole('button', { name: 'Load more', exact: true }).click();
@@ -518,8 +527,24 @@ for (const web of [false, true])
     await expect(row.locator('.session-status')).toHaveCount(0);
     await page.getByRole('button', { name: 'Files', exact: true }).click();
     const panel = page.locator('.files-frame[aria-hidden="false"] .files-panel');
-    await panel.getByRole('treeitem', { name: 'src', exact: true }).click();
-    await panel.getByRole('treeitem', { name: 'hello.ts', exact: true }).click();
+    const filter = panel.getByRole('textbox', { name: 'Find files…', exact: true });
+    const directory = panel.getByRole('treeitem', { name: 'src', exact: true });
+    const sourceFile = panel.getByRole('treeitem', { name: 'hello.ts', exact: true });
+    await filter.focus();
+    await filter.press('Tab');
+    await expect(directory).toBeFocused();
+    await directory.press('ArrowRight');
+    await expect(sourceFile).toBeVisible();
+    await directory.press('ArrowRight');
+    await expect(sourceFile).toBeFocused();
+    await sourceFile.press('ArrowLeft');
+    await expect(directory).toBeFocused();
+    await directory.press('ArrowRight');
+    await sourceFile.press('Enter');
+    await sourceFile.press('Shift+Tab');
+    await expect(filter).toBeFocused();
+    await filter.press('Tab');
+    await expect(sourceFile).toBeFocused();
     await expect(panel.locator('[data-code]')).toContainText('export function hello');
     await expect(panel.locator('[data-line-number-content]').first()).toHaveText('1');
     await expect(page.locator('.file-preview-dialog')).toHaveCount(0);
@@ -628,6 +653,68 @@ for (const web of [false, true])
   });
 
 for (const web of [false, true])
+  test(`${web ? 'Web' : 'desktop'} preserves code controls and local images across streamed updates`, async () => {
+    const { page, session } = await launch(web, 8);
+    await writeFile(
+      join(root, 'project', 'stream.png'),
+      await readFile(join(root, 'project', 'image.png')),
+    );
+    await page.evaluate(() => {
+      const listeners = new Set<(event: AppEvent) => void>();
+      const subscribe = window.moose.subscribe;
+      window.moose.subscribe = (listener) => {
+        listeners.add(listener);
+        const unsubscribe = subscribe(listener);
+        return () => {
+          listeners.delete(listener);
+          unsubscribe();
+        };
+      };
+      const request = window.moose.request;
+      Reflect.set(window, 'imageReads', 0);
+      window.moose.request = (method, args) => {
+        if (method === 'filePreview' && 'path' in args && args.path === 'stream.png')
+          Reflect.set(window, 'imageReads', Reflect.get(window, 'imageReads') + 1);
+        return request(method, args);
+      };
+      Reflect.set(window, 'emitTestMessage', (message: Message) => {
+        for (const listener of listeners) listener({ type: 'message', message });
+      });
+    });
+    await page.locator('.session-row').filter({ hasText: 'UX history' }).click();
+    await expect(page.locator('.markdown')).toHaveCount(8);
+    const message = await page.evaluate(async (sessionId) => {
+      const result = await window.moose.request('messages', { sessionId });
+      const message = result.messages.at(-1)!;
+      message.text = '```ts\nconst answer = 42;\n```\n\n![Stream image](stream.png)\n\n';
+      message.seq++;
+      Reflect.get(window, 'emitTestMessage')(message);
+      return message;
+    }, session.id);
+    const row = page.locator(`[id="message-${message.id}"]`);
+    const wrap = row.getByRole('button', { name: 'Wrap code', exact: true });
+    await expect(row.getByRole('img', { name: 'Stream image' })).toBeVisible();
+    await wrap.click();
+    await row.locator('.code-block').evaluate((element) => {
+      element.setAttribute('data-continuity-check', 'preserved');
+    });
+    for (let i = 1; i <= 5; i++) {
+      await page.evaluate((message) => Reflect.get(window, 'emitTestMessage')(message), {
+        ...message,
+        seq: message.seq + i,
+        text: message.text + `Stream update ${i}`,
+      });
+      await expect(row).toContainText(`Stream update ${i}`);
+      await expect(wrap).toHaveAttribute('aria-pressed', 'true');
+      await expect(row.locator('.code-block')).toHaveAttribute(
+        'data-continuity-check',
+        'preserved',
+      );
+    }
+    expect(await page.evaluate(() => Reflect.get(window, 'imageReads'))).toBe(1);
+  });
+
+for (const web of [false, true])
   test(`${web ? 'Web' : 'desktop'} expands files and previews Markdown by default`, async () => {
     const { page } = await launch(web, 8);
     await mkdir(join(root, 'project', 'docs'));
@@ -649,6 +736,20 @@ for (const web of [false, true])
     await expect(preview.getByRole('table')).toContainText('42');
     await expect(preview.getByRole('checkbox')).toBeChecked();
     await expect(preview.getByRole('img', { name: 'Local image' })).toBeVisible();
+    const wrapCode = preview.getByRole('button', { name: 'Wrap code', exact: true });
+    await wrapCode.click();
+    await expect(wrapCode).toHaveAttribute('aria-pressed', 'true');
+    // Updating the workspace used to remount every Markdown code block and image.
+    await preview.locator('.code-block').evaluate((element) => {
+      element.setAttribute('data-continuity-check', 'preserved');
+    });
+    await page.evaluate(() => window.moose.request('settings', { theme: 'dark' }));
+    await expect(page.locator('html')).toHaveClass(/dark/);
+    await expect(wrapCode).toHaveAttribute('aria-pressed', 'true');
+    await expect(preview.locator('.code-block')).toHaveAttribute(
+      'data-continuity-check',
+      'preserved',
+    );
     await panel.getByRole('button', { name: 'View source', exact: true }).click();
     await expect(panel.locator('[data-code]')).toContainText('# Project guide');
     await expect(preview).toHaveCount(0);

@@ -1,6 +1,6 @@
 # 测试与验证
 
-当前方法适用于 Moose 0.23.0。历史实测数据集中在[专项验证记录](releases/runtime-validation-history.md)，发布验收见各版[发布说明](releases/)。
+当前方法适用于 Moose 0.23.1。历史实测数据集中在[专项验证记录](releases/runtime-validation-history.md)，发布验收见各版[发布说明](releases/)。
 
 ## 怎么选择测试
 

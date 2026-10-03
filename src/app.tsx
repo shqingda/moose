@@ -420,18 +420,29 @@ function Workspace({
       },
     });
   /** 提交最新用户消息的修改，仍选中原会话并等待时间线重置。 */
-  const editMessage = async (message: Message, text: string) => {
-    const next = await window.moose.request('editMessage', {
-      sessionId: message.sessionId,
-      messageId: message.id,
-      text,
-    });
-    await refresh();
-    setSelected(next.id);
-    setTargetMessage(undefined);
-    setProjectId(next.projectId);
-    setArchived(false);
-  };
+  const editMessage = useCallback(
+    async (message: Message, text: string) => {
+      const next = await window.moose.request('editMessage', {
+        sessionId: message.sessionId,
+        messageId: message.id,
+        text,
+      });
+      await refresh();
+      setSelected(next.id);
+      setTargetMessage(undefined);
+      setProjectId(next.projectId);
+      setArchived(false);
+    },
+    [refresh],
+  );
+  const openFile = useCallback(
+    (reference: WorkspaceFileReference) => {
+      setFileRequest({ reference, nonce: Date.now() });
+      setFilesOpened(true);
+      setSidePanel('files');
+    },
+    [setSidePanel],
+  );
   /** 通过主进程在 Finder 或系统默认编辑器中打开当前项目。 */
   const openProject = (target: 'finder' | 'editor') => {
     if (project)
@@ -452,11 +463,7 @@ function Workspace({
   };
   return (
     <FilePreviewProvider
-      onOpenFile={(reference) => {
-        setFileRequest({ reference, nonce: Date.now() });
-        setFilesOpened(true);
-        setSidePanel('files');
-      }}
+      onOpenFile={openFile}
       scope={project ? { projectId: project.id, sessionId: session?.id } : undefined}
     >
       <motion.div

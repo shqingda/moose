@@ -870,8 +870,10 @@ const zh: Record<TranslationKey, string> = {
   dismiss: '关闭提示',
 };
 export const LocaleContext = createContext('en');
+const translateEn = (key: TranslationKey) => en[key];
+const translateZh = (key: TranslationKey) => zh[key];
 /** 按语言上下文选择完整的中文或英文词表，返回类型安全的翻译函数。 */
 export function useI18n() {
   const locale = useContext(LocaleContext);
-  return (key: TranslationKey) => (locale === 'zh-CN' ? zh : en)[key];
+  return locale === 'zh-CN' ? translateZh : translateEn;
 }

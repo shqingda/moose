@@ -110,6 +110,10 @@ export function SearchDialog({
                 e.preventDefault();
                 setIndex((i) => Math.max(0, i - 1));
               }
+              if ((e.ctrlKey || e.metaKey) && (e.key === 'Home' || e.key === 'End')) {
+                e.preventDefault();
+                setIndex(e.key === 'Home' ? 0 : Math.max(0, hits.length - 1));
+              }
               if (e.key === 'Enter' && hits[index]) {
                 e.preventDefault();
                 choose(hits[index]);
@@ -131,6 +135,7 @@ export function SearchDialog({
         <div
           id="search-results"
           role="listbox"
+          tabIndex={-1}
           aria-label={t('search')}
           className="search-results"
           aria-busy={loading}
@@ -140,6 +145,7 @@ export function SearchDialog({
               id={`search-hit-${i}`}
               key={`${hit.sessionId}:${hit.messageId || ''}`}
               role="option"
+              tabIndex={-1}
               aria-selected={i === index}
               onClick={() => choose(hit)}
               onFocus={() => setIndex(i)}

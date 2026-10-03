@@ -1,4 +1,12 @@
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import type { FileReference, FilePreview } from '../../shared/experience';
 import type { WorkspaceFileReference } from '../../shared/experience';
 import { fault } from '../../shared/errors';
@@ -29,6 +37,20 @@ export function FilePreviewProvider({
     [zoom, setZoom] = useState(1),
     [saving, setSaving] = useState(false),
     [copied, setCopied] = useState(false);
+  const context = useMemo(
+    () => ({
+      open: (ref: FileReference) => {
+        if ('projectId' in ref && onOpenFile) {
+          onOpenFile(ref);
+          return;
+        }
+        trigger.current = document.activeElement as HTMLElement;
+        setReference(ref);
+      },
+      scope: scope ? { projectId: scope.projectId, sessionId: scope.sessionId } : undefined,
+    }),
+    [onOpenFile, scope?.projectId, scope?.sessionId],
+  );
   useEffect(() => {
     let live = true;
     setData(undefined);
@@ -49,19 +71,7 @@ export function FilePreviewProvider({
     };
   }, [reference, attempt]);
   return (
-    <FilesContext
-      value={{
-        open: (ref) => {
-          if ('projectId' in ref && onOpenFile) {
-            onOpenFile(ref);
-            return;
-          }
-          trigger.current = document.activeElement as HTMLElement;
-          setReference(ref);
-        },
-        scope,
-      }}
-    >
+    <FilesContext value={context}>
       {children}
       <Dialog
         open={!!reference}

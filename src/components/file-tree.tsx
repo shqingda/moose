@@ -1,4 +1,4 @@
-import { useEffect, useState, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { ChevronRight, FileCode2, Folder, FolderOpen } from 'lucide-react';
 import type { DirectoryEntry, WorkspaceFileReference } from '../../shared/experience';
 import { useI18n } from '../lib/i18n';
@@ -142,6 +142,7 @@ export function FileTree({
   revision: number;
 }) {
   const t = useI18n();
+  const lastFocused = useRef<HTMLButtonElement | null>(null);
   const [attempt, setAttempt] = useState(0);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<DirectoryEntry[]>();
@@ -210,7 +211,36 @@ export function FileTree({
           onChange={(e) => setQuery(e.target.value)}
         />
       </div>
-      <div className="file-tree-scroll" role="tree" aria-label={t('fileTree')} onKeyDown={navigate}>
+      <div
+        className="file-tree-scroll"
+        role="tree"
+        aria-label={t('fileTree')}
+        tabIndex={0}
+        onKeyDown={navigate}
+        onFocus={(event) => {
+          const tree = event.currentTarget;
+          if (event.target === tree) {
+            const target =
+              (lastFocused.current && tree.contains(lastFocused.current)
+                ? lastFocused.current
+                : null) ||
+              tree.querySelector<HTMLButtonElement>('[role="treeitem"][aria-selected="true"]') ||
+              tree.querySelector<HTMLButtonElement>('[role="treeitem"]');
+            target?.focus();
+          } else if (
+            event.target instanceof HTMLButtonElement &&
+            event.target.matches('[role="treeitem"]')
+          ) {
+            lastFocused.current = event.target;
+            // One Tab stop for the tree; Shift+Tab must be able to leave a focused row.
+            tree.tabIndex = -1;
+          }
+        }}
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null))
+            event.currentTarget.tabIndex = 0;
+        }}
+      >
         {query.trim() ? (
           error ? (
             <ErrorNotice value={error} onReconnect={() => setAttempt((v) => v + 1)} />
