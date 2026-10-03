@@ -1,0 +1,105 @@
+{
+  "version": "0.22.1",
+  "commit": "86767fc3d1713f96c53a22245182ad25457406da",
+  "archivedAt": "2026-10-03T08:32:42.430Z",
+  "files": [
+    {
+      "path": "run-context.json",
+      "source": ".moose-test/releases/0.22.1/run-context.json",
+      "sourceSha256": "249edddf175448ea13e47100955ee0eba130e83e04762e2a63a2c3e2d6a5f612",
+      "sha256": "249edddf175448ea13e47100955ee0eba130e83e04762e2a63a2c3e2d6a5f612",
+      "bytes": 351
+    },
+    {
+      "path": "prepare-result.json",
+      "source": ".moose-test/releases/0.22.1/prepare-result.json",
+      "sourceSha256": "2fca0eb1331b7b8352b0660d6f867b02b558595489a3e4cd8d8839766ce53585",
+      "sha256": "2fca0eb1331b7b8352b0660d6f867b02b558595489a3e4cd8d8839766ce53585",
+      "bytes": 343
+    },
+    {
+      "path": "github-release.json",
+      "source": ".moose-test/releases/0.22.1/github-release.json",
+      "sourceSha256": "ace266e62756e91749d492d25384ac5cc64bcb249a88c26c0aba8177ea2e6598",
+      "sha256": "ace266e62756e91749d492d25384ac5cc64bcb249a88c26c0aba8177ea2e6598",
+      "bytes": 2157
+    },
+    {
+      "path": "github-latest.txt",
+      "source": ".moose-test/releases/0.22.1/github-latest.txt",
+      "sourceSha256": "c3c97ce15d95057d71bea90597aad1b6213a54fcb447420dbbcb06f8fbc4d329",
+      "sha256": "c3c97ce15d95057d71bea90597aad1b6213a54fcb447420dbbcb06f8fbc4d329",
+      "bytes": 8
+    },
+    {
+      "path": "remote-tag.txt",
+      "source": ".moose-test/releases/0.22.1/remote-tag.txt",
+      "sourceSha256": "994997101bc1604e30b962451d4df79bcb85b0f379b65f92680e3ae0ed9bfa03",
+      "sha256": "994997101bc1604e30b962451d4df79bcb85b0f379b65f92680e3ae0ed9bfa03",
+      "bytes": 59
+    },
+    {
+      "path": "previous-public-manifest.txt",
+      "source": ".moose-test/releases/0.22.1/previous-public-manifest.txt",
+      "sourceSha256": "e8b978db8f2b481a3f581dbf0d3d8e9398625adb212a2bc9350f09dcebf425c5",
+      "sha256": "e8b978db8f2b481a3f581dbf0d3d8e9398625adb212a2bc9350f09dcebf425c5",
+      "bytes": 87
+    },
+    {
+      "path": "public-manifest.txt",
+      "source": ".moose-test/releases/0.22.1/public-manifest.txt",
+      "sourceSha256": "e70bdafcd83db1e0629b57458b552e426f905766867ee3b92f00a67864bac313",
+      "sha256": "e70bdafcd83db1e0629b57458b552e426f905766867ee3b92f00a67864bac313",
+      "bytes": 87
+    },
+    {
+      "path": "public-verification.json",
+      "source": ".moose-test/releases/0.22.1/public-verification.json",
+      "sourceSha256": "3e2965b84aad7513d36d5b5b8275cfc99bf579184d89ef8e6fd291344171dcba",
+      "sha256": "3e2965b84aad7513d36d5b5b8275cfc99bf579184d89ef8e6fd291344171dcba",
+      "bytes": 608
+    },
+    {
+      "path": "retained-web-parts.json",
+      "source": ".moose-test/releases/0.22.1/retained-web-parts.json",
+      "sourceSha256": "f51702a05c324bcd2618404811eec18c8818f6428c2e60eed515ec90e903dbfc",
+      "sha256": "f51702a05c324bcd2618404811eec18c8818f6428c2e60eed515ec90e903dbfc",
+      "bytes": 1344
+    },
+    {
+      "path": "prepared.json",
+      "source": "release/prepared.json",
+      "sourceSha256": "5d871e250b43d760b36285cccf9b15ee70da6b9080eecca77d5ba6afb159c3cb",
+      "sha256": "5d871e250b43d760b36285cccf9b15ee70da6b9080eecca77d5ba6afb159c3cb",
+      "bytes": 221
+    },
+    {
+      "path": "Moose-0.22.1-SHA256SUMS.txt",
+      "source": "release/Moose-0.22.1-SHA256SUMS.txt",
+      "sourceSha256": "f018511411ce4ab4edbffcb202bcb4b4f85eee456882ccd93053dd798b4006f3",
+      "sha256": "f018511411ce4ab4edbffcb202bcb4b4f85eee456882ccd93053dd798b4006f3",
+      "bytes": 192
+    },
+    {
+      "path": "prepare.redacted.log",
+      "source": ".moose-test/releases/0.22.1/prepare-1.log",
+      "sourceSha256": "ecadc5ed495323423debb9a65ffcf550e0df0cd7079186041037ef5bbfe238b8",
+      "sha256": "ecadc5ed495323423debb9a65ffcf550e0df0cd7079186041037ef5bbfe238b8",
+      "bytes": 40651
+    },
+    {
+      "path": "publish.redacted.log",
+      "source": ".moose-test/releases/0.22.1/publish-1.log",
+      "sourceSha256": "5f69876402dbdde7abc1df7d23c07d1e9fe94df4aeb10429997990fd7589f78e",
+      "sha256": "e4fb74c2e6e79ba1aa7e8559bfb9377b25d914a11577ef0e6127eaa73e1791fd",
+      "bytes": 2840
+    },
+    {
+      "path": "publication-result.json",
+      "source": ".moose-test/releases/0.22.1/publication-result.json",
+      "sourceSha256": "e0ecbfd7273e1d8a08e88c86f289e9c6cbd1323491947a8a2a2f761598523e5c",
+      "sha256": "e0ecbfd7273e1d8a08e88c86f289e9c6cbd1323491947a8a2a2f761598523e5c",
+      "bytes": 2098
+    }
+  ]
+}

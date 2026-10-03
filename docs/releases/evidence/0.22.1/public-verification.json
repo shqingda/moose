@@ -1,0 +1,19 @@
+{
+  "checkedAt": "2026-10-03T08:31:02.664Z",
+  "manifest": "0.22.1-0dabea4791a6 0dabea4791a6d49400a1535dbb910c4dbf1a5f883e9faab8a365863b8c23f68c 3",
+  "matchesPrepared": true,
+  "previousReleaseParts": [
+    {
+      "url": "https://moose.shqingda.workers.dev/releases/0.22.0-33629f851466/darwin-arm64/part-0",
+      "status": 200
+    },
+    {
+      "url": "https://moose.shqingda.workers.dev/releases/0.22.0-33629f851466/darwin-arm64/part-1",
+      "status": 200
+    },
+    {
+      "url": "https://moose.shqingda.workers.dev/releases/0.22.0-33629f851466/darwin-arm64/part-2",
+      "status": 200
+    }
+  ]
+}

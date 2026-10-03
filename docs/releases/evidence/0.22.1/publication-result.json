@@ -1,0 +1,52 @@
+{
+  "checkedAt": "2026-10-03T08:32:42.429Z",
+  "version": "0.22.1",
+  "commit": "86767fc3d1713f96c53a22245182ad25457406da",
+  "tag": "v0.22.1",
+  "releaseURL": "https://github.com/shqingda/moose/releases/tag/v0.22.1",
+  "publishedAt": "2026-10-03T08:30:12Z",
+  "isLatest": true,
+  "prepareExitCode": 0,
+  "publishExitCode": 0,
+  "unitTests": 192,
+  "e2eTests": 77,
+  "desktopVersion": "0.22.1",
+  "webVersion": "0.22.1",
+  "desktopSmoke": true,
+  "localWebSmoke": true,
+  "publicWebSmoke": true,
+  "publicInstallerMatchesSource": true,
+  "assets": [
+    {
+      "name": "install.sh",
+      "bytes": 3478,
+      "sha256": "11d5af809c75ebd410383e98d87ecf46fba5fcec4d549d59b04f0e63ffd95ab1",
+      "url": "https://github.com/shqingda/moose/releases/download/v0.22.1/install.sh"
+    },
+    {
+      "name": "Moose-0.22.1-arm64.dmg",
+      "bytes": 122317859,
+      "sha256": "d699817713c31b5c057f46a9fa97f3158a4e26e535de1ded52eb77dd400510a5",
+      "url": "https://github.com/shqingda/moose/releases/download/v0.22.1/Moose-0.22.1-arm64.dmg"
+    },
+    {
+      "name": "Moose-0.22.1-SHA256SUMS.txt",
+      "bytes": 192,
+      "sha256": "f018511411ce4ab4edbffcb202bcb4b4f85eee456882ccd93053dd798b4006f3",
+      "url": "https://github.com/shqingda/moose/releases/download/v0.22.1/Moose-0.22.1-SHA256SUMS.txt"
+    },
+    {
+      "name": "Moose-0.22.1-web-darwin-arm64.tar.gz",
+      "bytes": 43499910,
+      "sha256": "0dabea4791a6d49400a1535dbb910c4dbf1a5f883e9faab8a365863b8c23f68c",
+      "url": "https://github.com/shqingda/moose/releases/download/v0.22.1/Moose-0.22.1-web-darwin-arm64.tar.gz"
+    }
+  ],
+  "retainedPreviousReleasePartsVerified": true,
+  "limitations": [
+    "Real sleep/wake, notifications, VoiceOver and foreground motion deferred by user",
+    "Historical unexpected desktop close remains unexplained",
+    "Earlier two-hour soak is linked to its original build, not rerun on this release package"
+  ],
+  "logHandling": "Raw logs remain in the ignored source directory. Archived copies strip terminal control sequences and redact connection tokens. Other whitespace is preserved."
+}

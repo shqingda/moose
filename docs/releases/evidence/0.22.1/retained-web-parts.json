@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-03T08:21:50.697Z",
+  "source": "/Users/shqingda/.codex/worktrees/moose-0-22/moose/distribution/public/releases",
+  "destination": "distribution/public/releases",
+  "copied": [
+    {
+      "release": "0.22.0-33629f851466",
+      "parts": [
+        {
+          "part": "part-0",
+          "bytes": 20971520,
+          "sha256": "1197b7ac78d9e40a74238663c85319f51cb6f19f0a5c71f78fada6c0f3d237df"
+        },
+        {
+          "part": "part-1",
+          "bytes": 20971520,
+          "sha256": "b1510022f0e0cfb4f5b68d8cc6c4a74f54fb0bb9dc3bcd40b7e9217d5cb9ea47"
+        },
+        {
+          "part": "part-2",
+          "bytes": 1556722,
+          "sha256": "3cc34abddc28e7742799cecedd2163b31fe10aedf947328dd8a969a7f21b5194"
+        }
+      ]
+    },
+    {
+      "release": "0.22.0-4994f908cc8c",
+      "parts": [
+        {
+          "part": "part-0",
+          "bytes": 20971520,
+          "sha256": "93ac92cc8bd2f60c6ac7dc359b36302a035403e5224712637e52f42a61fed907"
+        },
+        {
+          "part": "part-1",
+          "bytes": 20971520,
+          "sha256": "c9280255de9564bf661df260908d83308e522671c44bab213301c50b58330dd1"
+        },
+        {
+          "part": "part-2",
+          "bytes": 1556793,
+          "sha256": "e03eeae5b0efcb8671bcbafb7b31405bc8d2674a6a09afc17dc43af30c8a7cd9"
+        }
+      ]
+    }
+  ]
+}

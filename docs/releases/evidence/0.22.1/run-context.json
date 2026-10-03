@@ -1,0 +1,14 @@
+{
+  "startedAt": "2026-10-03T08:20:21.679Z",
+  "version": "0.22.1",
+  "commit": "86767fc3d1713f96c53a22245182ad25457406da",
+  "node": "v26.10.0",
+  "pnpm": "12.6.0",
+  "host": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "release": "27.0.0"
+  },
+  "preparationCommand": "pnpm release:prepare",
+  "publicationCommand": "pnpm release:publish"
+}
