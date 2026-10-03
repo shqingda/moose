@@ -4,7 +4,6 @@ import { useSessionDrafts } from './lib/session-drafts';
 import { useNotifications } from './lib/notifications';
 import type { WorkspaceFileReference } from '../shared/experience';
 import { FilePreviewProvider } from './components/file-preview';
-import { SearchDialog } from './components/search-dialog';
 import { ArchiveUndo } from './components/archive-undo';
 import { ErrorNotice } from './components/error-notice';
 import { BackgroundTools } from './components/background-tools';
@@ -39,6 +38,9 @@ const ReviewPanel = lazy(() =>
 );
 const SettingsDialog = lazy(() =>
   import('./components/settings-dialog').then((m) => ({ default: m.SettingsDialog })),
+);
+const SearchDialog = lazy(() =>
+  import('./components/search-dialog').then((m) => ({ default: m.SearchDialog })),
 );
 import { IconButton, MooseMark } from './components/common';
 import { Button } from './components/ui/button';
@@ -150,9 +152,14 @@ function Workspace({
     [checking, setChecking] = useState(true);
   // Undefined defers the first load; false keeps dialog state and exit motion after closing.
   const [settingsOpen, setSettingsOpen] = useState<boolean>(),
-    [searchOpen, setSearchOpen] = useState(false),
+    [searchOpen, setSearchOpen] = useState<boolean>(),
     [archived, setArchived] = useState(false);
   const review = sidePanel === 'review';
+  const [reviewOpened, setReviewOpened] = useState(false);
+  const toggleReview = useCallback(() => {
+    setReviewOpened(true);
+    setSidePanel((value) => (value === 'review' ? null : 'review'));
+  }, [setSidePanel]);
   const [filesOpened, setFilesOpened] = useState(false);
   const [fileRequest, setFileRequest] = useState<{
     reference: WorkspaceFileReference;
@@ -294,8 +301,7 @@ function Workspace({
         if (event.command === 'settings') setSettingsOpen(true);
         if (event.command === 'search') setSearchOpen(true);
         if (event.command === 'open') void command.current.addProject();
-        if (event.command === 'review')
-          setSidePanel((value) => (value === 'review' ? null : 'review'));
+        if (event.command === 'review') toggleReview();
         if (event.command === 'new') void command.current.newSession();
       }),
     [],
@@ -524,7 +530,7 @@ function Workspace({
                 </IconButton>
                 <IconButton
                   label={t('review')}
-                  onClick={() => setSidePanel((value) => (value === 'review' ? null : 'review'))}
+                  onClick={toggleReview}
                   disabled={!project}
                   aria-pressed={review}
                 >
@@ -682,15 +688,17 @@ function Workspace({
                     reduceMotion={!!reduceMotion || snapshot.reduceMotion}
                   />
                 )}
-                <ReviewPanel
-                  open={review}
-                  key={`${project.id}:${session?.id}`}
-                  project={project}
-                  sessionId={session?.id}
-                  onClose={() => setSidePanel(null)}
-                  onError={setError}
-                  reduceMotion={!!reduceMotion || snapshot.reduceMotion}
-                />
+                {reviewOpened && (
+                  <ReviewPanel
+                    open={review}
+                    key={`${project.id}:${session?.id}`}
+                    project={project}
+                    sessionId={session?.id}
+                    onClose={() => setSidePanel(null)}
+                    onError={setError}
+                    reduceMotion={!!reduceMotion || snapshot.reduceMotion}
+                  />
+                )}
               </Suspense>
             )}
           </div>
@@ -732,16 +740,20 @@ function Workspace({
             />
           )}
         </Suspense>
-        <SearchDialog
-          open={searchOpen}
-          onOpenChange={setSearchOpen}
-          projectId={project?.id}
-          sessionId={session?.id}
-          onSelect={(hit) => {
-            select(hit.sessionId);
-            setTargetMessage(hit.messageId);
-          }}
-        />
+        <Suspense fallback={null}>
+          {searchOpen !== undefined && (
+            <SearchDialog
+              open={!!searchOpen}
+              onOpenChange={setSearchOpen}
+              projectId={project?.id}
+              sessionId={session?.id}
+              onSelect={(hit) => {
+                select(hit.sessionId);
+                setTargetMessage(hit.messageId);
+              }}
+            />
+          )}
+        </Suspense>
         <Dialog open={renaming} onOpenChange={setRenaming}>
           <DialogContent finalFocus={toolsTrigger}>
             <DialogHeader>

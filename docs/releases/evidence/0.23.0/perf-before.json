@@ -1,0 +1,20 @@
+{
+  "scenario": "packaged-shared-empty-hidden-warm-cache-service-restarted",
+  "samples": [
+    {
+      "readyMs": 602,
+      "residentMiB": 566,
+      "jsHeapMiB": 5.2
+    },
+    {
+      "readyMs": 649,
+      "residentMiB": 564,
+      "jsHeapMiB": 6.2
+    },
+    {
+      "readyMs": 604,
+      "residentMiB": 563,
+      "jsHeapMiB": 6.2
+    }
+  ]
+}

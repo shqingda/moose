@@ -4,22 +4,13 @@ import { fault } from '../shared/errors';
 /** Loopback-bound browser host with an optional trusted HTTPS tunnel origin. A disconnected browser never owns task lifetime. */
 import { createServer, type ServerResponse, type IncomingMessage } from 'node:http';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
-import {
-  mkdir,
-  open,
-  readFile,
-  realpath,
-  unlink,
-  readdir,
-  stat,
-  writeFile,
-  rename,
-} from 'node:fs/promises';
-import { resolve, join, extname, relative, isAbsolute, dirname } from 'node:path';
+import { mkdir, open, realpath, unlink, readdir, stat, writeFile, rename } from 'node:fs/promises';
+import { resolve, join, isAbsolute, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { homedir } from 'node:os';
 import { Store } from './db/store';
 import { nativeDirectoryAvailable, pickWebDirectory } from './web-directory-dialog';
+import { serveWebAsset } from './web-assets';
 import { MooseService } from './service';
 import type { AppEvent } from '../shared/types';
 import { version } from '../package.json';
@@ -250,31 +241,7 @@ const server = createServer(async (req, res) => {
       res.end();
       return;
     }
-    const path = resolve(
-      root,
-      '.' + decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname),
-    );
-    const rel = relative(root, path);
-    if (rel.startsWith('..') || isAbsolute(rel)) {
-      res.writeHead(404);
-      res.end();
-      return;
-    }
-    const bytes = await readFile(path);
-    const mime: Record<string, string> = {
-      '.html': 'text/html',
-      '.js': 'text/javascript',
-      '.css': 'text/css',
-      '.svg': 'image/svg+xml',
-      '.png': 'image/png',
-      '.woff2': 'font/woff2',
-      '.txt': 'text/plain',
-    };
-    res.writeHead(200, {
-      'Content-Type': mime[extname(path)] || 'application/octet-stream',
-      'Cache-Control': 'no-cache',
-    });
-    res.end(req.method === 'HEAD' ? undefined : bytes);
+    await serveWebAsset(root, url.pathname, req, res);
   } catch (error) {
     if (res.headersSent) res.destroy();
     else json(res, 400, { error: fault(error).message, fault: fault(error) });

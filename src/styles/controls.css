@@ -8,6 +8,7 @@ select {
 }
 button {
   -webkit-app-region: no-drag;
+  touch-action: manipulation;
 }
 button:not(:disabled) {
   cursor: default;
@@ -20,11 +21,13 @@ summary:focus-visible,
 }
 button:active:not(:disabled) {
   filter: brightness(0.96);
+  transition-duration: 0ms;
 }
 ::selection {
   background: color-mix(in srgb, var(--primary) 23%, transparent);
 }
-[data-slot='button'][data-size^='icon'] {
+/* Rendered menu/dialog triggers replace data-slot, but preserve button metadata. */
+[data-variant][data-size^='icon'] {
   min-width: 32px;
   min-height: 32px;
 }

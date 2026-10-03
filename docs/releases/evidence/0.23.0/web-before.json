@@ -1,0 +1,216 @@
+{
+  "scenario": "isolated-empty-web-hidden-browser-cache-disabled-localhost-warm-service",
+  "definition": "Three navigations; first includes token login, subsequent navigations reuse authentication. No disk cache flushing or network throttling. Heap is not process RSS.",
+  "samples": [
+    {
+      "readyMs": 1051,
+      "firstContentfulPaintMs": 604,
+      "assetTransferBytes": 1821813,
+      "assetEncodedBytes": 1818213,
+      "assetDecodedBytes": 1818213,
+      "jsHeapMiB": 7.6,
+      "assets": [
+        {
+          "path": "/assets/index-BvETnI2c.js",
+          "encodedBytes": 476515,
+          "decodedBytes": 476515
+        },
+        {
+          "path": "/assets/rolldown-runtime-hePW80VL.js",
+          "encodedBytes": 716,
+          "decodedBytes": 716
+        },
+        {
+          "path": "/assets/errors-B2AbE7tV.js",
+          "encodedBytes": 936,
+          "decodedBytes": 936
+        },
+        {
+          "path": "/assets/index-CBRxzsuo.css",
+          "encodedBytes": 150726,
+          "decodedBytes": 150726
+        },
+        {
+          "path": "/assets/x-Cw4xWilw.js",
+          "encodedBytes": 184,
+          "decodedBytes": 184
+        },
+        {
+          "path": "/assets/button-Da5Z6LvX.js",
+          "encodedBytes": 87564,
+          "decodedBytes": 87564
+        },
+        {
+          "path": "/assets/DialogTitle-C_e7-mek.js",
+          "encodedBytes": 6836,
+          "decodedBytes": 6836
+        },
+        {
+          "path": "/assets/useRegisterFieldControl-jX4J8PkI.js",
+          "encodedBytes": 54955,
+          "decodedBytes": 54955
+        },
+        {
+          "path": "/assets/common-fnfnYHEP.js",
+          "encodedBytes": 102461,
+          "decodedBytes": 102461
+        },
+        {
+          "path": "/assets/web-host-16BG5zHT.js",
+          "encodedBytes": 10237,
+          "decodedBytes": 10237
+        },
+        {
+          "path": "/assets/web-shortcuts-D5i4fY8P.js",
+          "encodedBytes": 1009,
+          "decodedBytes": 1009
+        },
+        {
+          "path": "/assets/moose-logo-transparent-CUJ-8Lh7.png",
+          "encodedBytes": 926074,
+          "decodedBytes": 926074
+        }
+      ]
+    },
+    {
+      "readyMs": 839,
+      "firstContentfulPaintMs": 364,
+      "assetTransferBytes": 1821813,
+      "assetEncodedBytes": 1818213,
+      "assetDecodedBytes": 1818213,
+      "jsHeapMiB": 12.7,
+      "assets": [
+        {
+          "path": "/assets/index-BvETnI2c.js",
+          "encodedBytes": 476515,
+          "decodedBytes": 476515
+        },
+        {
+          "path": "/assets/rolldown-runtime-hePW80VL.js",
+          "encodedBytes": 716,
+          "decodedBytes": 716
+        },
+        {
+          "path": "/assets/errors-B2AbE7tV.js",
+          "encodedBytes": 936,
+          "decodedBytes": 936
+        },
+        {
+          "path": "/assets/button-Da5Z6LvX.js",
+          "encodedBytes": 87564,
+          "decodedBytes": 87564
+        },
+        {
+          "path": "/assets/useRegisterFieldControl-jX4J8PkI.js",
+          "encodedBytes": 54955,
+          "decodedBytes": 54955
+        },
+        {
+          "path": "/assets/x-Cw4xWilw.js",
+          "encodedBytes": 184,
+          "decodedBytes": 184
+        },
+        {
+          "path": "/assets/index-CBRxzsuo.css",
+          "encodedBytes": 150726,
+          "decodedBytes": 150726
+        },
+        {
+          "path": "/assets/DialogTitle-C_e7-mek.js",
+          "encodedBytes": 6836,
+          "decodedBytes": 6836
+        },
+        {
+          "path": "/assets/common-fnfnYHEP.js",
+          "encodedBytes": 102461,
+          "decodedBytes": 102461
+        },
+        {
+          "path": "/assets/web-shortcuts-D5i4fY8P.js",
+          "encodedBytes": 1009,
+          "decodedBytes": 1009
+        },
+        {
+          "path": "/assets/web-host-16BG5zHT.js",
+          "encodedBytes": 10237,
+          "decodedBytes": 10237
+        },
+        {
+          "path": "/assets/moose-logo-transparent-CUJ-8Lh7.png",
+          "encodedBytes": 926074,
+          "decodedBytes": 926074
+        }
+      ]
+    },
+    {
+      "readyMs": 833,
+      "firstContentfulPaintMs": 348,
+      "assetTransferBytes": 1821813,
+      "assetEncodedBytes": 1818213,
+      "assetDecodedBytes": 1818213,
+      "jsHeapMiB": 17.2,
+      "assets": [
+        {
+          "path": "/assets/rolldown-runtime-hePW80VL.js",
+          "encodedBytes": 716,
+          "decodedBytes": 716
+        },
+        {
+          "path": "/assets/index-BvETnI2c.js",
+          "encodedBytes": 476515,
+          "decodedBytes": 476515
+        },
+        {
+          "path": "/assets/errors-B2AbE7tV.js",
+          "encodedBytes": 936,
+          "decodedBytes": 936
+        },
+        {
+          "path": "/assets/x-Cw4xWilw.js",
+          "encodedBytes": 184,
+          "decodedBytes": 184
+        },
+        {
+          "path": "/assets/DialogTitle-C_e7-mek.js",
+          "encodedBytes": 6836,
+          "decodedBytes": 6836
+        },
+        {
+          "path": "/assets/useRegisterFieldControl-jX4J8PkI.js",
+          "encodedBytes": 54955,
+          "decodedBytes": 54955
+        },
+        {
+          "path": "/assets/button-Da5Z6LvX.js",
+          "encodedBytes": 87564,
+          "decodedBytes": 87564
+        },
+        {
+          "path": "/assets/common-fnfnYHEP.js",
+          "encodedBytes": 102461,
+          "decodedBytes": 102461
+        },
+        {
+          "path": "/assets/index-CBRxzsuo.css",
+          "encodedBytes": 150726,
+          "decodedBytes": 150726
+        },
+        {
+          "path": "/assets/web-shortcuts-D5i4fY8P.js",
+          "encodedBytes": 1009,
+          "decodedBytes": 1009
+        },
+        {
+          "path": "/assets/web-host-16BG5zHT.js",
+          "encodedBytes": 10237,
+          "decodedBytes": 10237
+        },
+        {
+          "path": "/assets/moose-logo-transparent-CUJ-8Lh7.png",
+          "encodedBytes": 926074,
+          "decodedBytes": 926074
+        }
+      ]
+    }
+  ]
+}

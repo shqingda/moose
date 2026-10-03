@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import App from '../app';
+import { AppLoader } from './app-loader';
 import { WebDirectoryPicker } from './web-directory-picker';
 import { createWebAPI, webRequest, WEB_AUTH_REQUIRED, WEB_AUTH_RESTORED } from '../lib/web-api';
 import { Button } from './ui/button';
@@ -115,7 +115,7 @@ export function WebHost() {
     );
   return (
     <>
-      <App />
+      <AppLoader />
       <Dialog open={authRequired}>
         <DialogContent showCloseButton={false}>
           <DialogHeader>

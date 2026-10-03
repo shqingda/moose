@@ -63,8 +63,91 @@
 
 /* overlays: shared workspace styles. */
 
+/* Base UI keeps these mounted through transitions, including a mid-close reopen. */
+.ui-popup {
+  --popup-transform: scale(0.98);
+  opacity: 1;
+  transform: none;
+  box-shadow: var(--popup-shadow);
+  transition:
+    opacity 160ms ease-out,
+    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.ui-popup:is([data-starting-style], [data-ending-style]) {
+  opacity: 0;
+  transform: var(--popup-transform);
+}
+.ui-popup[data-ending-style] {
+  transition-duration: 120ms;
+  transition-timing-function: ease-in;
+}
+.ui-overlay {
+  background: #00000024;
+  opacity: 1;
+  transition: opacity 160ms ease-out;
+}
+.dark .ui-overlay {
+  background: #00000059;
+}
+.ui-overlay:is([data-starting-style], [data-ending-style]) {
+  opacity: 0;
+}
+.ui-overlay[data-ending-style] {
+  transition-duration: 120ms;
+  transition-timing-function: ease-in;
+}
+/* Keep native-style selects aligned with their selected item during opening. */
+[data-slot='select-content'][data-align-trigger='true'],
+[data-slot='tooltip-content'] {
+  --popup-transform: none;
+}
+:is(
+  [data-slot='popover-content'],
+  [data-slot='dropdown-menu-content'],
+  [data-slot='select-content']
+) {
+  max-width: min(calc(100vw - 1rem), var(--available-width, 100vw));
+  overscroll-behavior: contain;
+}
+[data-slot='popover-content'] {
+  max-height: var(--available-height);
+  overflow-y: auto;
+}
+.reduce-motion :is(.ui-popup, .ui-overlay) {
+  --popup-transform: none;
+  transition: opacity 100ms ease-out !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ui-popup,
+  .ui-overlay {
+    --popup-transform: none;
+    transition: opacity 100ms ease-out !important;
+  }
+}
+.high-contrast .ui-popup {
+  outline: 1px solid var(--border);
+  outline-offset: -1px;
+}
+@media (prefers-contrast: more) {
+  .ui-popup {
+    outline: 1px solid var(--border);
+    outline-offset: -1px;
+  }
+}
+
 .search-dialog {
   gap: 1rem;
+}
+.search-field {
+  position: relative;
+}
+.search-field > input {
+  padding-inline-end: 2.5rem;
+}
+.search-field > button {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: 0;
 }
 .search-results {
   max-height: 360px;
@@ -81,8 +164,12 @@
   flex-direction: column;
   gap: 4px;
 }
-.search-results > button:hover {
+.search-results > button:hover,
+.search-results > button[aria-selected='true'] {
   background: var(--muted);
+}
+.search-results > button[aria-selected='true'] {
+  box-shadow: inset 3px 0 var(--ring);
 }
 .search-results small {
   color: var(--muted-foreground);
@@ -105,7 +192,8 @@
   width: max-content;
 }
 [data-slot='dropdown-menu-item'] {
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
   align-items: center;
 }
 .git-action-dialog {
@@ -157,16 +245,6 @@
 [data-slot='dialog-title'],
 [data-slot='alert-dialog-title'] {
   overflow-wrap: anywhere;
-}
-.reduce-transparency :is([data-slot='dialog-overlay'], [data-slot='alert-dialog-overlay']),
-.high-contrast :is([data-slot='dialog-overlay'], [data-slot='alert-dialog-overlay']) {
-  backdrop-filter: none;
-}
-@media (prefers-reduced-transparency: reduce) {
-  [data-slot='dialog-overlay'],
-  [data-slot='alert-dialog-overlay'] {
-    backdrop-filter: none;
-  }
 }
 .archive-undo {
   position: fixed;

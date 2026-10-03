@@ -1,0 +1,17 @@
+import { performance } from 'node:perf_hooks';
+import { mergeMessages } from '../../../src/lib/transcript-messages';
+import type { Message } from '../../../shared/types';
+const rows: Message[] = Array.from({ length: 10000 }, (_, position) => ({ id: String(position), position, sessionId: 'test', runId: 'test', seq: 1, kind: 'assistant', text: 'text', title: '', state: 'done', createdAt: 0 }));
+const prior = (previous: Message[], incoming: Message[]) => {
+ const map = new Map(previous.map(row => [row.id, row]));
+ for (const row of incoming) { const old = map.get(row.id); if (!old || old.seq < row.seq) map.set(row.id, row); }
+ return [...map.values()].sort((a,b) => a.position - b.position);
+};
+const measure = (merge: typeof prior, unchanged: boolean) => {
+ let result = rows;
+ for (let i=0; i<100; i++) result = merge(result, [{...rows[9999], seq: unchanged ? 1 : i+2}]);
+ const start=performance.now();
+ for (let i=0; i<2000; i++) result = merge(result, [{...rows[9999], seq: unchanged ? 1 : i+102}]);
+ return { elapsedMs: Math.round(performance.now()-start), finalSeq: result[9999].seq };
+};
+console.log(JSON.stringify({ definition: '10000 loaded messages; 2000 last-row deltas after 100 warmup updates; isolated reconciliation, not UI frame time', before: { stream: measure(prior,false), duplicate: measure(prior,true)}, after:{stream:measure(mergeMessages,false), duplicate:measure(mergeMessages,true)}},null,2));

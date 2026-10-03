@@ -1,0 +1,12 @@
+{
+  "baselineSource": "f936a70",
+  "baselinePackageVersion": "0.22.1",
+  "candidateVersion": "0.23.0",
+  "timezone": "Asia/Shanghai",
+  "date": "2026-10-03",
+  "notes": [
+    "Initial candidate size report still references prior packaged desktop; final package sizes will be measured after release:prepare.",
+    "Web elapsed times include automation wait and vary at localhost scale; byte counts are the primary finding.",
+    "No system memory cache was flushed; these are not cold OS launch measurements."
+  ]
+}

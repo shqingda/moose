@@ -1,7 +1,7 @@
 import { ErrorNotice } from './error-notice';
 import { useFiles } from './file-preview';
 import { useEffect } from 'react';
-import { memo, useState } from 'react';
+import { memo, useRef, useState } from 'react';
 import { Markdown } from './markdown';
 import { PlanReview } from './plan-review';
 import {
@@ -37,6 +37,12 @@ import { Skeleton } from './ui/skeleton';
 import { AttachmentList } from './attachments';
 import { Picker, IconButton } from './common';
 import { SubagentActivity } from './subagent-activity';
+
+const messageTime = new Intl.DateTimeFormat('en-GB', {
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+});
 
 /** 展示代理提问并提交答案，由后台校验请求是否仍有效。 */
 function Questions({ message, onError }: { message: MessageData; onError(error: unknown): void }) {
@@ -120,6 +126,8 @@ const TranscriptRow = memo(function TranscriptRow({
     [editing, setEditing] = useState(false),
     [edited, setEdited] = useState(message.text),
     [sending, setSending] = useState(false);
+  const copyTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(copyTimer.current), []);
   if (message.kind === 'plan')
     return <PlanReview message={message} busy={busy} onError={onError} />;
   if (message.kind === 'error')
@@ -301,7 +309,8 @@ const TranscriptRow = memo(function TranscriptRow({
                 })()
                   .then(() => {
                     setCopied(true);
-                    setTimeout(() => setCopied(false), 1500);
+                    clearTimeout(copyTimer.current);
+                    copyTimer.current = setTimeout(() => setCopied(false), 1500);
                   })
                   .catch((error) => onError(error));
               }}
@@ -321,12 +330,11 @@ const TranscriptRow = memo(function TranscriptRow({
               </IconButton>
             )}
             <time className="message-time" dateTime={new Date(message.createdAt).toISOString()}>
-              {new Intl.DateTimeFormat('en-GB', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false,
-              }).format(message.createdAt)}
+              {messageTime.format(message.createdAt)}
             </time>
+            <span className="sr-only" role="status">
+              {copied ? t('copied') : ''}
+            </span>
           </div>
         )}
       </MessageContent>

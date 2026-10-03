@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
+import { X } from 'lucide-react';
 import type { SearchHit } from '../../shared/experience';
 import { useI18n } from '../lib/i18n';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { Picker } from './common';
+import { IconButton, Picker } from './common';
 export function SearchDialog({
   open,
   onOpenChange,
@@ -27,6 +28,7 @@ export function SearchDialog({
     [error, setError] = useState(''),
     [index, setIndex] = useState(0);
   const generation = useRef(0);
+  const input = useRef<HTMLInputElement>(null);
   const activeScope =
     (scope === 'session' && !sessionId) || (scope === 'project' && !projectId) ? 'all' : scope;
   async function fetchPage(token: number, next?: string) {
@@ -73,7 +75,7 @@ export function SearchDialog({
   };
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="search-dialog">
+      <DialogContent className="search-dialog" initialFocus={input}>
         <DialogHeader>
           <DialogTitle>{t('search')}</DialogTitle>
         </DialogHeader>
@@ -87,30 +89,45 @@ export function SearchDialog({
           ]}
           onChange={setScope}
         />
-        <Input
-          aria-label={t('search')}
-          role="combobox"
-          aria-expanded
-          aria-controls="search-results"
-          aria-activedescendant={hits[index] ? `search-hit-${index}` : undefined}
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.nativeEvent.isComposing) return;
-            if (e.key === 'ArrowDown') {
-              e.preventDefault();
-              setIndex((i) => Math.max(0, Math.min(hits.length - 1, i + 1)));
-            }
-            if (e.key === 'ArrowUp') {
-              e.preventDefault();
-              setIndex((i) => Math.max(0, i - 1));
-            }
-            if (e.key === 'Enter' && hits[index]) {
-              e.preventDefault();
-              choose(hits[index]);
-            }
-          }}
-        />
+        <div className="search-field">
+          <Input
+            ref={input}
+            aria-label={t('search')}
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded
+            aria-controls="search-results"
+            aria-activedescendant={hits[index] ? `search-hit-${index}` : undefined}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.nativeEvent.isComposing) return;
+              if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setIndex((i) => Math.max(0, Math.min(hits.length - 1, i + 1)));
+              }
+              if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setIndex((i) => Math.max(0, i - 1));
+              }
+              if (e.key === 'Enter' && hits[index]) {
+                e.preventDefault();
+                choose(hits[index]);
+              }
+            }}
+          />
+          {query && (
+            <IconButton
+              label={t('clearSearch')}
+              onClick={() => {
+                setQuery('');
+                input.current?.focus();
+              }}
+            >
+              <X />
+            </IconButton>
+          )}
+        </div>
         <div
           id="search-results"
           role="listbox"
@@ -137,7 +154,7 @@ export function SearchDialog({
           ))}
         </div>
         {loading && <p role="status">{t('searchLoading')}</p>}
-        {!loading && !hits.length && !error && <p>{t('noResults')}</p>}
+        {!loading && !hits.length && !error && <p role="status">{t('noResults')}</p>}
         {error && (
           <p role="alert">
             {error}

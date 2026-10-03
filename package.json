@@ -1,6 +1,6 @@
 {
   "name": "moose",
-  "version": "0.22.1",
+  "version": "0.23.0",
   "private": true,
   "description": "A quiet workspace for your coding agents",
   "license": "UNLICENSED",
@@ -38,7 +38,8 @@
     "site:build": "pnpm --filter @moose/site build && node distribution/scripts/sync-site.mjs",
     "merch:build": "pnpm --filter @moose/merch build",
     "test:stability": "tsx scripts/stability.ts",
-    "size:measure": "node scripts/measure-size.mjs"
+    "size:measure": "node scripts/measure-size.mjs",
+    "perf:web": "tsx scripts/measure-web-performance.ts"
   },
   "dependencies": {
     "better-sqlite3": "13.0.3",

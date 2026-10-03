@@ -1,6 +1,6 @@
 # 测试与验证
 
-当前方法适用于 Moose 0.22.1。历史实测数据集中在[专项验证记录](releases/runtime-validation-history.md)，发布验收见各版[发布说明](releases/)。
+当前方法适用于 Moose 0.23.0。历史实测数据集中在[专项验证记录](releases/runtime-validation-history.md)，发布验收见各版[发布说明](releases/)。
 
 ## 怎么选择测试
 
@@ -14,6 +14,7 @@ pnpm test:live             # 默认验收 Codex / Grok，会消耗额度
 pnpm test:live pi opencode # 只验收指定底座
 pnpm exec tsx scripts/package-smoke.ts # 打包应用：版本、沙箱、SQLite、终端等
 pnpm perf:measure          # 已打包应用的空工作区热启动测量
+pnpm perf:web              # 隔离 Web 工作区，浏览器 HTTP 缓存禁用下的加载量与就绪时间
 ```
 
 定向 E2E 可在 `pnpm build` 后运行 `pnpm exec playwright test --grep '用例名称'`。涉及原生模块时，遵循[开发与打包](development.md)的重建流程。
@@ -87,6 +88,8 @@ MOOSE_TEST_BACKGROUND=0 pnpm exec tsx scripts/package-smoke.ts
 自动化主要使用隔离数据库、测试 CLI 和真实本地 Shell，不调用真实模型。协议夹具通过不等于模型能力已实测；真实 CLI 探测与真实模型验收分别记录，不混写。
 
 性能脚本使用临时数据、禁用代理发现，以同一个空工作区连续启动三次，每次停止再启动共享服务。它测量温缓存下隐藏窗口欢迎界面就绪的耗时，1.5 秒后统计桌面进程树和独立服务进程树的 RSS，以及 renderer JS 堆。它不是冷启动、独占物理内存或长会话压力测试。解释与历史结果见[项目追问资料](interview/project-interview-reference.md#electron-启动慢包体积大内存高你怎么优化)。
+
+`pnpm perf:web` 补充 Web 实际资源瀑布口径：隔离空工作区、禁用代理发现和浏览器 HTTP 缓存，记录资源压缩后／解压后字节、FCP、工作区就绪时间和 JS 堆。三轮共用温服务，首轮包含令牌登录，其余沿用认证；没有清空磁盘缓存或模拟慢网，不把本机样本写成公网冷启动结论。结果应与同条件基线比较，按需入口静态依赖图另用 `pnpm size:measure` 测量。
 
 历史发布的验证证据保留在各版[发布记录](releases/)，本页只维护当前方法。Web 启动与限制见 [Web 使用说明](web.md)，底座支持范围见[原生能力](providers/native-capabilities.md)。
 

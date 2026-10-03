@@ -4,7 +4,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 import './app.css';
-import App from './app';
+import { AppLoader } from './components/app-loader';
 const WebHost = React.lazy(() =>
   import('./components/web-host').then((m) => ({ default: m.WebHost })),
 );
@@ -24,7 +24,7 @@ if (window.mooseBridge) {
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     {window.moose ? (
-      <App />
+      <AppLoader />
     ) : (
       <React.Suspense fallback={null}>
         <WebHost />

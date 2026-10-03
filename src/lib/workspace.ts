@@ -1,6 +1,7 @@
 import { fault, type Fault } from '../../shared/errors';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Message, Snapshot, TranscriptPage } from '../../shared/types';
+import type { Snapshot, TranscriptPage } from '../../shared/types';
+import { mergeTranscriptPage } from './transcript-messages';
 /** 维护全局快照和错误；合并后台刷新通知，并阻止旧请求覆盖新快照。 */
 export function useWorkspace() {
   const [snapshot, setSnapshot] = useState<Snapshot>();
@@ -22,7 +23,7 @@ export function useWorkspace() {
         setConnection(undefined);
       }
     } catch (error) {
-      setConnection(fault(error));
+      if (generation === requestGeneration.current) setConnection(fault(error));
     }
   }, []);
   useEffect(() => {
@@ -43,6 +44,7 @@ export function useWorkspace() {
       }
     });
     return () => {
+      requestGeneration.current++;
       unsubscribe();
       clearTimeout(timer);
     };
@@ -57,15 +59,6 @@ export function useWorkspace() {
     }
   }, []);
   return { snapshot, error, failure, connection, setError, refresh, perform };
-}
-/** 按 ID 和 seq 合并消息版本，再按 position 恢复稳定时间线顺序。 */
-function mergeMessages(previous: Message[], incoming: Message[]) {
-  const rows = new Map(previous.map((row) => [row.id, row]));
-  for (const row of incoming) {
-    const old = rows.get(row.id);
-    if (!old || old.seq < row.seq) rows.set(row.id, row);
-  }
-  return [...rows.values()].sort((a, b) => a.position - b.position);
 }
 /** 管理会话分页与实时订阅；切换或重置会话时使旧异步请求失效。 */
 export function useTranscript(
@@ -89,14 +82,13 @@ export function useTranscript(
           ? await window.moose.request('locateMessage', { sessionId, messageId: targetMessage })
           : await window.moose.request('messages', { sessionId });
         if (requestGeneration === generation.current)
-          setPage((old) => ({
-            messages: mergeMessages(old.messages, data.messages),
-            hasMore: initial ? data.hasMore : old.hasMore,
-          }));
+          setPage((old) =>
+            mergeTranscriptPage(old, data.messages, initial ? data.hasMore : old.hasMore),
+          );
       } catch (error) {
-        if (current === generation.current) report(error);
+        if (requestGeneration === generation.current) report(error);
       } finally {
-        if (current === generation.current) setLoading(false);
+        if (requestGeneration === generation.current) setLoading(false);
       }
     };
     const unsubscribe = window.moose.subscribe((event) => {
@@ -109,7 +101,7 @@ export function useTranscript(
         setPage((old) =>
           targetMessage && !old.messages.some((m) => m.id === event.message.id)
             ? old
-            : { ...old, messages: mergeMessages(old.messages, [event.message]) },
+            : mergeTranscriptPage(old, [event.message]),
         );
       if (event.type === 'changed') {
         clearTimeout(refreshTimer);
@@ -136,12 +128,9 @@ export function useTranscript(
         before: page.messages[0]?.position,
       });
       if (current === generation.current)
-        setPage((old) => ({
-          messages: mergeMessages(old.messages, data.messages),
-          hasMore: data.hasMore,
-        }));
+        setPage((old) => mergeTranscriptPage(old, data.messages, data.hasMore));
     } catch (error) {
-      report(error);
+      if (current === generation.current) report(error);
     } finally {
       if (current === generation.current) setLoading(false);
     }

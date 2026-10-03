@@ -1,0 +1,216 @@
+{
+  "scenario": "isolated-empty-web-hidden-browser-cache-disabled-localhost-warm-service",
+  "definition": "Three navigations; first includes token login, subsequent navigations reuse authentication. No disk cache flushing or network throttling. Heap is not process RSS.",
+  "samples": [
+    {
+      "readyMs": 1004,
+      "firstContentfulPaintMs": 548,
+      "assetTransferBytes": 369821,
+      "assetEncodedBytes": 366221,
+      "assetDecodedBytes": 944155,
+      "jsHeapMiB": 8.1,
+      "assets": [
+        {
+          "path": "/assets/rolldown-runtime-hePW80VL.js",
+          "encodedBytes": 716,
+          "decodedBytes": 716
+        },
+        {
+          "path": "/assets/index-i3Mgowov.css",
+          "encodedBytes": 31669,
+          "decodedBytes": 144400
+        },
+        {
+          "path": "/assets/index-lquq2R1W.js",
+          "encodedBytes": 78905,
+          "decodedBytes": 222895
+        },
+        {
+          "path": "/assets/web-host-DPIr9BmR.js",
+          "encodedBytes": 4465,
+          "decodedBytes": 10205
+        },
+        {
+          "path": "/assets/field-B5msxlEN.js",
+          "encodedBytes": 61768,
+          "decodedBytes": 165446
+        },
+        {
+          "path": "/assets/button-xhVjTpUm.js",
+          "encodedBytes": 34189,
+          "decodedBytes": 79428
+        },
+        {
+          "path": "/assets/web-shortcuts-D5i4fY8P.js",
+          "encodedBytes": 1009,
+          "decodedBytes": 1009
+        },
+        {
+          "path": "/assets/app-Bv8_hwjw.js",
+          "encodedBytes": 90449,
+          "decodedBytes": 250996
+        },
+        {
+          "path": "/assets/app-BrP-ENHg.css",
+          "encodedBytes": 1102,
+          "decodedBytes": 3939
+        },
+        {
+          "path": "/assets/file-preview-BvFBDPa3.js",
+          "encodedBytes": 1859,
+          "decodedBytes": 4515
+        },
+        {
+          "path": "/assets/alert-BbiS7IPk.js",
+          "encodedBytes": 574,
+          "decodedBytes": 1090
+        },
+        {
+          "path": "/assets/moose-logo-welcome-BTWPL7LC.png",
+          "encodedBytes": 59516,
+          "decodedBytes": 59516
+        }
+      ]
+    },
+    {
+      "readyMs": 817,
+      "firstContentfulPaintMs": 336,
+      "assetTransferBytes": 369821,
+      "assetEncodedBytes": 366221,
+      "assetDecodedBytes": 944155,
+      "jsHeapMiB": 13.4,
+      "assets": [
+        {
+          "path": "/assets/rolldown-runtime-hePW80VL.js",
+          "encodedBytes": 716,
+          "decodedBytes": 716
+        },
+        {
+          "path": "/assets/index-lquq2R1W.js",
+          "encodedBytes": 78905,
+          "decodedBytes": 222895
+        },
+        {
+          "path": "/assets/index-i3Mgowov.css",
+          "encodedBytes": 31669,
+          "decodedBytes": 144400
+        },
+        {
+          "path": "/assets/web-host-DPIr9BmR.js",
+          "encodedBytes": 4465,
+          "decodedBytes": 10205
+        },
+        {
+          "path": "/assets/field-B5msxlEN.js",
+          "encodedBytes": 61768,
+          "decodedBytes": 165446
+        },
+        {
+          "path": "/assets/web-shortcuts-D5i4fY8P.js",
+          "encodedBytes": 1009,
+          "decodedBytes": 1009
+        },
+        {
+          "path": "/assets/button-xhVjTpUm.js",
+          "encodedBytes": 34189,
+          "decodedBytes": 79428
+        },
+        {
+          "path": "/assets/file-preview-BvFBDPa3.js",
+          "encodedBytes": 1859,
+          "decodedBytes": 4515
+        },
+        {
+          "path": "/assets/app-Bv8_hwjw.js",
+          "encodedBytes": 90449,
+          "decodedBytes": 250996
+        },
+        {
+          "path": "/assets/alert-BbiS7IPk.js",
+          "encodedBytes": 574,
+          "decodedBytes": 1090
+        },
+        {
+          "path": "/assets/app-BrP-ENHg.css",
+          "encodedBytes": 1102,
+          "decodedBytes": 3939
+        },
+        {
+          "path": "/assets/moose-logo-welcome-BTWPL7LC.png",
+          "encodedBytes": 59516,
+          "decodedBytes": 59516
+        }
+      ]
+    },
+    {
+      "readyMs": 826,
+      "firstContentfulPaintMs": 344,
+      "assetTransferBytes": 369821,
+      "assetEncodedBytes": 366221,
+      "assetDecodedBytes": 944155,
+      "jsHeapMiB": 18.1,
+      "assets": [
+        {
+          "path": "/assets/index-lquq2R1W.js",
+          "encodedBytes": 78905,
+          "decodedBytes": 222895
+        },
+        {
+          "path": "/assets/rolldown-runtime-hePW80VL.js",
+          "encodedBytes": 716,
+          "decodedBytes": 716
+        },
+        {
+          "path": "/assets/index-i3Mgowov.css",
+          "encodedBytes": 31669,
+          "decodedBytes": 144400
+        },
+        {
+          "path": "/assets/web-host-DPIr9BmR.js",
+          "encodedBytes": 4465,
+          "decodedBytes": 10205
+        },
+        {
+          "path": "/assets/button-xhVjTpUm.js",
+          "encodedBytes": 34189,
+          "decodedBytes": 79428
+        },
+        {
+          "path": "/assets/field-B5msxlEN.js",
+          "encodedBytes": 61768,
+          "decodedBytes": 165446
+        },
+        {
+          "path": "/assets/web-shortcuts-D5i4fY8P.js",
+          "encodedBytes": 1009,
+          "decodedBytes": 1009
+        },
+        {
+          "path": "/assets/app-Bv8_hwjw.js",
+          "encodedBytes": 90449,
+          "decodedBytes": 250996
+        },
+        {
+          "path": "/assets/file-preview-BvFBDPa3.js",
+          "encodedBytes": 1859,
+          "decodedBytes": 4515
+        },
+        {
+          "path": "/assets/alert-BbiS7IPk.js",
+          "encodedBytes": 574,
+          "decodedBytes": 1090
+        },
+        {
+          "path": "/assets/app-BrP-ENHg.css",
+          "encodedBytes": 1102,
+          "decodedBytes": 3939
+        },
+        {
+          "path": "/assets/moose-logo-welcome-BTWPL7LC.png",
+          "encodedBytes": 59516,
+          "decodedBytes": 59516
+        }
+      ]
+    }
+  ]
+}

@@ -30,6 +30,7 @@ pnpm icon:build # 图标母图修改后重新生成 macOS 图标与 Web favicon
 pnpm dist      # 仅构建桌面 DMG；不等于正式联合发布
 pnpm site:build # 构建官网并同步到分发目录，不部署
 pnpm perf:measure # 测量已打包应用，使用隔离数据
+pnpm perf:web     # 测量无浏览器 HTTP 缓存时的 Web 资源传输与就绪时间
 ```
 
 Oxfmt 负责格式，Oxlint 负责基础正确性检查，不依赖 ESLint。统一 2 空格、单引号、分号及 100 列换行；生成代码、锁文件和文档由格式配置排除。没有启用完整 React Hooks / React Compiler 规则。测试命令及实际结果见 [测试与验证](testing.md)。
@@ -54,10 +55,10 @@ better-sqlite3 和 node-pty 是运行时原生依赖；安装与打包会准备�
 | --- | --- | --- |
 | macOS 应用与 Dock | [moose-icon-white.png](../src/assets/moose-icon-white.png)；桌面打包读取 `build/icon.icns` | 修改白底母图后执行 `pnpm icon:build` |
 | 官网与 README 标识 | [moose-icon-black.png](../src/assets/moose-icon-black.png) | 直接导入黑底母图 |
-| 会话区欢迎 logo | [moose-logo-transparent.png](../src/assets/moose-logo-transparent.png)；[welcome.tsx](../src/components/welcome.tsx) 使用透明 PNG，容器无底色 | 单独维护透明素材；保留金色鹿角、象牙白鹿头、黑色实心眼睛和透明边缘 |
+| 会话区欢迎 logo | [moose-logo-transparent.png](../src/assets/moose-logo-transparent.png)；[welcome.tsx](../src/components/welcome.tsx) 使用派生的 `moose-logo-welcome.png` 透明 PNG，容器无底色 | 单独维护透明素材；保留金色鹿角、象牙白鹿头、黑色实心眼睛和透明边缘 |
 | 侧边栏剪影与 Web favicon | [moose-mark.json](../src/assets/moose-mark.json)；[MooseMark](../src/components/common.tsx) 使用 `currentColor`，favicon 导出为深浅两份 | 修改共享矢量轮廓后执行 `pnpm icon:build`；侧边栏外观沿用原版 |
 
-`pnpm icon:build` 调用 [scripts/icon.swift](../scripts/icon.swift) 生成 `build/icon.iconset/` 各尺寸 PNG，以及 `public/` 和 `distribution/site/public/` 中的 `favicon.svg`、`favicon-light.svg`，再通过 `iconutil` 生成 `build/icon.icns`。生成资源随源文件一起提交；该命令不会重新生成透明 logo。
+`pnpm icon:build` 调用 [scripts/icon.swift](../scripts/icon.swift) 生成 `build/icon.iconset/` 各尺寸 PNG，以及 `public/` 和 `distribution/site/public/` 中的 `favicon.svg`、`favicon-light.svg`，再通过 `iconutil` 生成 `build/icon.icns`。生成资源随源文件一起提交；该命令不会重新生成透明 logo。欢迎页展示 96 CSS 像素，使用 288×288 的三倍尺寸派生图；更新原图后执行 `sips -Z 288 src/assets/moose-logo-transparent.png --out src/assets/moose-logo-welcome.png`。保留原始母图，检查浅深背景与边缘透明度。
 
 应用入口 [index.html](../index.html) 与官网 [根路由](../distribution/site/src/routes/__root.tsx) 通过 `prefers-color-scheme` 选择 favicon：浅色系统用 `favicon.svg`（深色剪影），深色系统用 `favicon-light.svg`（浅色剪影）。它跟随系统偏好，不读取 Moose 的主题设置。
 

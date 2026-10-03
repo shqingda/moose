@@ -115,8 +115,66 @@ async function launch(web = false, count = 160) {
 }
 async function search(page: Page, query: string) {
   await page.getByRole('button', { name: 'Search sessions', exact: true }).first().click();
-  await page.getByRole('combobox', { name: 'Search sessions', exact: true }).fill(query);
+  const input = page.getByRole('combobox', { name: 'Search sessions', exact: true });
+  await expect(input).toBeFocused();
+  await input.fill(query);
 }
+for (const web of [false, true])
+  test(`${web ? 'Web' : 'desktop'} reopens a closing dialog and keeps reduced-motion feedback`, async () => {
+    const { page } = await launch(web, 0);
+    const trigger = page.getByRole('button', { name: 'Search sessions', exact: true }).first();
+    const popup = page.locator('.search-dialog');
+    const accessibility = await page.context().newCDPSession(page);
+    for (const reduced of [false, true]) {
+      await accessibility.send('Emulation.setEmulatedMedia', {
+        features: [{ name: 'prefers-reduced-motion', value: reduced ? 'reduce' : 'no-preference' }],
+      });
+      // Isolate the preference under test from this Mac's own accessibility settings.
+      await page.evaluate(
+        (value) => document.documentElement.classList.toggle('reduce-motion', value),
+        reduced,
+      );
+      await trigger.click();
+      await expect(popup).toHaveCSS('opacity', '1');
+      const close = popup.getByRole('button', { name: 'Close', exact: true });
+      const target = await close.boundingBox();
+      expect(target!.width).toBeGreaterThanOrEqual(32);
+      expect(target!.height).toBeGreaterThanOrEqual(32);
+      const interrupted = await popup.evaluate(async (element) => {
+        element.querySelector<HTMLButtonElement>('[data-slot="dialog-close"]')!.click();
+        await new Promise(requestAnimationFrame);
+        await new Promise(requestAnimationFrame);
+        const closing = element.hasAttribute('data-ending-style');
+        const transform = getComputedStyle(element).transform;
+        const transition = getComputedStyle(element).transitionProperty;
+        // Bypass the automation stability wait so this reopens during the exit transition.
+        const search = [
+          ...document.querySelectorAll<HTMLButtonElement>('.sidebar-actions button'),
+        ].find((button) => button.textContent?.includes('Search sessions'))!;
+        search.click();
+        await new Promise(requestAnimationFrame);
+        return {
+          closing,
+          transform,
+          transition,
+          reused: document.querySelector('.search-dialog') === element,
+        };
+      });
+      expect(interrupted.closing).toBe(true);
+      expect(interrupted.reused).toBe(true);
+      if (reduced) {
+        expect(interrupted.transform).toBe('none');
+        expect(interrupted.transition).toBe('opacity');
+      }
+      await expect(popup).toHaveCSS('opacity', '1');
+      await expect(popup).not.toHaveAttribute('data-ending-style');
+      await close.click();
+      await expect(popup).toHaveCount(0);
+      await expect(page.locator('[data-slot="dialog-overlay"]')).toHaveCount(0);
+      await expect(trigger).toBeFocused();
+    }
+  });
+
 for (const web of [false, true])
   test(`${web ? 'Web' : 'desktop'} searches old messages, previews local files, keeps errors and supports undo`, async () => {
     const { page, session, target } = await launch(web);
@@ -125,6 +183,17 @@ for (const web of [false, true])
     await page.locator('.session-row').filter({ hasText: 'UX history' }).click();
     await expect(page.locator('#composer')).toHaveValue('preserved draft');
     await search(page, 'needle');
+    await expect(page.getByRole('option')).toHaveCount(50);
+    const searchInput = page.getByRole('combobox', { name: 'Search sessions', exact: true });
+    await searchInput.press('ArrowDown');
+    const selected = page.getByRole('option').nth(1);
+    await expect(selected).toHaveAttribute('aria-selected', 'true');
+    await expect(selected).not.toHaveCSS('box-shadow', 'none');
+    await expect(searchInput).toHaveAttribute('aria-activedescendant', 'search-hit-1');
+    await page.getByRole('button', { name: 'Clear search', exact: true }).click();
+    await expect(searchInput).toHaveValue('');
+    await expect(searchInput).toBeFocused();
+    await searchInput.fill('needle');
     await expect(page.getByRole('option')).toHaveCount(50);
     await page.getByRole('button', { name: 'Load more', exact: true }).click();
     await expect(page.getByRole('option')).toHaveCount(100);

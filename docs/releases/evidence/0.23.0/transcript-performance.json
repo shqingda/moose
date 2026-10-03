@@ -1,0 +1,23 @@
+{
+  "definition": "10000 loaded messages; 2000 last-row deltas after 100 warmup updates; isolated reconciliation, not UI frame time",
+  "before": {
+    "stream": {
+      "elapsedMs": 937,
+      "finalSeq": 2101
+    },
+    "duplicate": {
+      "elapsedMs": 914,
+      "finalSeq": 1
+    }
+  },
+  "after": {
+    "stream": {
+      "elapsedMs": 4,
+      "finalSeq": 2101
+    },
+    "duplicate": {
+      "elapsedMs": 0,
+      "finalSeq": 1
+    }
+  }
+}
