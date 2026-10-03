@@ -2,6 +2,7 @@
 import { spawn, type IPty } from 'node-pty';
 import { createInterface } from 'node:readline';
 import { execFileSync } from 'node:child_process';
+import { terminalEnvironment } from './terminal-environment';
 let terminal: IPty | undefined;
 let ending = false;
 function send(value: object) {
@@ -51,14 +52,12 @@ for await (const line of createInterface({ input: process.stdin })) {
   try {
     const message = JSON.parse(line);
     if (message.type === 'start' && !terminal && !ending) {
-      const env = { ...process.env };
-      delete env.ELECTRON_RUN_AS_NODE;
       terminal = spawn('/bin/zsh', ['-i'], {
         cwd: message.cwd,
         cols: message.cols,
         rows: message.rows,
         name: 'xterm-256color',
-        env: { ...env, TERM: 'xterm-256color', COLORTERM: 'truecolor' },
+        env: terminalEnvironment(process.env),
       });
       terminal.onData((data) => send({ type: 'data', data }));
       terminal.onExit(({ exitCode }) => {

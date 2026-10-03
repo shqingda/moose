@@ -4,7 +4,7 @@
 
 ## 当前版本
 
-0.23.1 优化 Markdown 更新连续性、无关重绘和键盘导航。见[本版说明](releases/0.23.1.md)、[发布验收](releases/0.23.1-validation.md)。正式下载以 GitHub Releases 和公网安装器为准；验收中的源码不代表已发布。
+0.23.1 修复终端乱码与复制权限错误，优化 Markdown 更新连续性、无关重绘和键盘导航。见[本版说明](releases/0.23.1.md)、[发布验收](releases/0.23.1-validation.md)。正式下载以 GitHub Releases 和公网安装器为准；验收中的源码不代表已发布。
 
 桌面用户从应用菜单检查更新并下载替换；独立 Web 用户执行 `moose update`，任务结束后重启后台。具体步骤分别见[桌面更新](usage.md#更新桌面版)和[Web 更新](web.md#更新独立-web-版)。
 

@@ -63,9 +63,16 @@ export function TerminalView({
           .catch((e) => error.current(String(e)));
       });
       term.attachCustomKeyEventHandler((event) => {
-        if (event.type === 'keydown' && event.metaKey && event.key === 'c' && term.hasSelection()) {
-          void navigator.clipboard
-            .writeText(term.getSelection())
+        if (
+          event.type === 'keydown' &&
+          !event.altKey &&
+          (event.metaKey || (event.ctrlKey && event.shiftKey)) &&
+          event.key.toLowerCase() === 'c' &&
+          term.hasSelection()
+        ) {
+          event.preventDefault();
+          void window.moose
+            .request('copyText', { text: term.getSelection() })
             .catch((e) => error.current(String(e)));
           return false;
         }

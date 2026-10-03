@@ -8,7 +8,7 @@ Moose 负责交互、协议适配、任务调度和历史存储；模型推理�
 
 [下载最新版本](https://github.com/shqingda/moose/releases/latest) · [使用指南](docs/usage.md) · [文档目录](docs/README.md)
 
-当前源码版本为 **0.23.1**：减少会话无关重绘，保留流式代码块操作状态，补齐文件树和搜索的键盘导航。见[本版说明](docs/releases/0.23.1.md)与[发布验收](docs/releases/0.23.1-validation.md)；桌面与独立 Web 按同一版本联合发布。
+当前源码版本为 **0.23.1**：修复终端乱码与复制权限错误，减少会话无关重绘，保留流式代码块操作状态，补齐文件树和搜索的键盘导航。见[本版说明](docs/releases/0.23.1.md)与[发布验收](docs/releases/0.23.1-validation.md)；桌面与独立 Web 按同一版本联合发布。
 
 ## 开始使用
 

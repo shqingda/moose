@@ -8,6 +8,36 @@ import type { AppEvent, MooseAPI, Snapshot, Attachment, Method } from '../../sha
 
 const clientId = crypto.randomUUID();
 
+async function copyText(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (error) {
+    // Some browsers deny the async API but permit a user-initiated native copy.
+    const focused = document.activeElement as HTMLElement | null;
+    const selection = document.getSelection();
+    const ranges = selection
+      ? Array.from({ length: selection.rangeCount }, (_, i) => selection.getRangeAt(i).cloneRange())
+      : [];
+    const field = document.createElement('textarea');
+    field.value = text;
+    field.readOnly = true;
+    field.tabIndex = -1;
+    field.style.cssText = 'position:fixed;opacity:0;width:1px;height:1px;';
+    (focused?.closest('[role="dialog"]') || document.body).append(field);
+    try {
+      field.select();
+      if (!document.execCommand('copy')) throw error;
+    } finally {
+      field.remove();
+      focused?.focus({ preventScroll: true });
+      if (selection) {
+        selection.removeAllRanges();
+        for (const range of ranges) selection.addRange(range);
+      }
+    }
+  }
+}
+
 export async function webRequest(method: string, params: unknown): Promise<unknown> {
   // Writes are deliberately never retried: a lost response may already have committed.
   const payload = JSON.stringify({ method, params, clientId });
@@ -177,7 +207,7 @@ export function createWebAPI(chooseProject: () => Promise<string | null>): Moose
       return null;
     }
     if (method === 'copyText') {
-      await navigator.clipboard.writeText((params as { text: string }).text);
+      await copyText((params as { text: string }).text);
       return null;
     }
     if (method === 'openExternal') {

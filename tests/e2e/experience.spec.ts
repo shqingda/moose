@@ -653,6 +653,51 @@ for (const web of [false, true])
   });
 
 for (const web of [false, true])
+  test(`${web ? 'Web' : 'desktop'} copies selected terminal text when the async clipboard API is denied`, async () => {
+    const { page } = await launch(web, 0);
+    await page.locator('.session-row').filter({ hasText: 'UX history' }).click();
+    await page
+      .getByRole('button', { name: 'Background commands & schedules', exact: true })
+      .click();
+    const screen = page.locator('.xterm-screen');
+    await expect(screen).toBeVisible();
+    const input = page.locator('.xterm-helper-textarea');
+    await input.focus();
+    await page.keyboard.type("printf 'COPY_TERMINAL_OK\\n'", { delay: 5 });
+    await page.keyboard.press('Enter');
+    await expect
+      .poll(async () =>
+        page.evaluate(async () => {
+          const snapshot = await window.moose.request('snapshot', {});
+          const sessions = await window.moose.request('terminalList', {
+            projectId: snapshot.projects[0].id,
+          });
+          return (await window.moose.request('terminalRead', { id: sessions[0].id, offset: 0 }))
+            .data;
+        }),
+      )
+      .toContain('COPY_TERMINAL_OK\r\n');
+    await page.evaluate(() => {
+      Object.defineProperty(navigator.clipboard, 'writeText', {
+        configurable: true,
+        value: () =>
+          Promise.reject(new DOMException('Write permission denied.', 'NotAllowedError')),
+      });
+    });
+    const box = (await screen.boundingBox())!;
+    await page.mouse.move(box.x + 2, box.y + 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width - 4, box.y + box.height - 4, { steps: 12 });
+    await page.mouse.up();
+    await page.keyboard.press('Meta+c');
+    await expect
+      .poll(() => app!.evaluate(({ clipboard }) => clipboard.readText()))
+      .toContain('COPY_TERMINAL_OK');
+    await expect(input).toBeFocused();
+    await expect(page.getByText(/NotAllowedError/)).toHaveCount(0);
+  });
+
+for (const web of [false, true])
   test(`${web ? 'Web' : 'desktop'} preserves code controls and local images across streamed updates`, async () => {
     const { page, session } = await launch(web, 8);
     await writeFile(
