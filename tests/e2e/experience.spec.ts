@@ -548,9 +548,9 @@ for (const web of [false, true])
     await expect
       .poll(async () => Math.abs((await code.evaluate((element) => element.scrollTop)) - scrollTop))
       .toBeLessThan(3);
-    await code.evaluate((element) => {
-      element.scrollTop = 0;
-    });
+    // Exercise user scrolling after the virtualized viewer restores this tab's position.
+    await code.hover();
+    await page.mouse.wheel(0, -30000);
     await expect(panel.locator('[data-code]')).toContainText('export function hello');
     const checkTabHover = async (theme: string) => {
       const tab = panel
@@ -1026,6 +1026,7 @@ test('shares panel width and focus, reverses motion smoothly, and respects acces
   await app!.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(430, 780));
   await page.locator('.global-sidebar-toggle button').click();
   await trigger.click();
+  await expect.poll(async () => (await panel.boundingBox())!.width).toBeGreaterThan(400);
   const box = (await panel.boundingBox())!;
   expect(box.width).toBeLessThanOrEqual(430);
   expect(box.width).toBeGreaterThan(400);
