@@ -1,0 +1,65 @@
+{
+  "assets": [
+    {
+      "apiUrl": "https://api.github.com/repos/shqingda/moose/releases/assets/607925926",
+      "contentType": "application/x-sh",
+      "createdAt": "2026-10-03T14:14:36Z",
+      "digest": "sha256:11d5af809c75ebd410383e98d87ecf46fba5fcec4d549d59b04f0e63ffd95ab1",
+      "downloadCount": 0,
+      "id": "RA_kwDOUYgvrc4kPDam",
+      "label": "",
+      "name": "install.sh",
+      "size": 3478,
+      "state": "uploaded",
+      "updatedAt": "2026-10-03T14:14:36Z",
+      "url": "https://github.com/shqingda/moose/releases/download/v0.23.0/install.sh"
+    },
+    {
+      "apiUrl": "https://api.github.com/repos/shqingda/moose/releases/assets/607925924",
+      "contentType": "application/x-apple-diskimage",
+      "createdAt": "2026-10-03T14:14:36Z",
+      "digest": "sha256:552f5bf234a4686e9f10658e5e5798f29740d250308b8f851ff20fa1ac5e9005",
+      "downloadCount": 0,
+      "id": "RA_kwDOUYgvrc4kPDak",
+      "label": "",
+      "name": "Moose-0.23.0-arm64.dmg",
+      "size": 121472918,
+      "state": "uploaded",
+      "updatedAt": "2026-10-03T14:16:54Z",
+      "url": "https://github.com/shqingda/moose/releases/download/v0.23.0/Moose-0.23.0-arm64.dmg"
+    },
+    {
+      "apiUrl": "https://api.github.com/repos/shqingda/moose/releases/assets/607925929",
+      "contentType": "text/plain; charset=utf-8",
+      "createdAt": "2026-10-03T14:14:36Z",
+      "digest": "sha256:0bf5cfe9555d4a508d9e3a309f1c39c2a5ba52a557203dd733e50d84419c44b8",
+      "downloadCount": 0,
+      "id": "RA_kwDOUYgvrc4kPDap",
+      "label": "",
+      "name": "Moose-0.23.0-SHA256SUMS.txt",
+      "size": 192,
+      "state": "uploaded",
+      "updatedAt": "2026-10-03T14:14:36Z",
+      "url": "https://github.com/shqingda/moose/releases/download/v0.23.0/Moose-0.23.0-SHA256SUMS.txt"
+    },
+    {
+      "apiUrl": "https://api.github.com/repos/shqingda/moose/releases/assets/607925931",
+      "contentType": "application/x-gtar",
+      "createdAt": "2026-10-03T14:14:36Z",
+      "digest": "sha256:7ca16b4466f1fac66186ea029fe496c8bfda23e153b7812d5dd0c4de12e218b7",
+      "downloadCount": 0,
+      "id": "RA_kwDOUYgvrc4kPDar",
+      "label": "",
+      "name": "Moose-0.23.0-web-darwin-arm64.tar.gz",
+      "size": 42653682,
+      "state": "uploaded",
+      "updatedAt": "2026-10-03T14:15:47Z",
+      "url": "https://github.com/shqingda/moose/releases/download/v0.23.0/Moose-0.23.0-web-darwin-arm64.tar.gz"
+    }
+  ],
+  "isDraft": false,
+  "isPrerelease": false,
+  "publishedAt": "2026-10-03T14:18:31Z",
+  "tagName": "v0.23.0",
+  "url": "https://github.com/shqingda/moose/releases/tag/v0.23.0"
+}

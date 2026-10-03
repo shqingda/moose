@@ -1,0 +1,55 @@
+$ node scripts/release.mjs publish
+Moose-0.23.0-arm64.dmg: OK
+Moose-0.23.0-web-darwin-arm64.tar.gz: OK
+release not found
+To https://github.com/shqingda/moose.git
+   f936a70..7c0e903  HEAD -> main
+fatal: ambiguous argument 'v0.23.0': unknown revision or path not in the working tree.
+Use '--' to separate paths from revisions, like this:
+'git <command> [<revision>...] -- [<file>...]'
+To https://github.com/shqingda/moose.git
+ * [new tag]         v0.23.0 -> v0.23.0
+https://github.com/shqingda/moose/releases/tag/untagged-c70cdc312638f672205b
+.../mush7157-1kc9                        | Progress: resolved 0, reused 1, downloaded 0, added 0
+.../mush7157-1kc9                        | Progress: resolved 0, reused 32, downloaded 0, added 0
+Packages are cloned from the content-addressable store to the virtual store.
+  Content-addressable store is at: <HOME>/Library/pnpm/store/v11
+  Virtual store is at:             ../../Library/Caches/pnpm/dlx/8b274d92562000a487bdad45eba3049b/mush7157-1kc9/node_modules/.pnpm
+.../mush7157-1kc9                        | Progress: resolved 36, reused 39, downloaded 0, added 36, done
+Ignored build scripts: esbuild@0.28.1, workerd@1.20260918.1.
+Run "pnpm approve-builds" to pick which dependencies should be allowed to run scripts.
+
+dependencies:
++ wrangler 4.135.0
+
+▲ [WARNING] Proxy environment variables detected. We'll use your proxy for fetch requests.
+
+
+
+ ⛅️ wrangler 4.135.0
+────────────────────
+
+Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
+🌀 Building list of assets...
+✨ Read 80 files from the assets directory <HOME>/Projects/moose/distribution/public
+🌀 Starting asset upload...
+🌀 Found 5 new or modified static assets to upload. Proceeding with upload...
++ /latest-darwin-arm64.txt
++ /releases/0.23.0-7ca16b4466f1/darwin-arm64/part-0
++ /index.html
++ /releases/0.23.0-7ca16b4466f1/darwin-arm64/part-1
++ /releases/0.23.0-7ca16b4466f1/darwin-arm64/part-2
+Uploaded 1 of 5 assets
+Uploaded 3 of 5 assets
+Uploaded 5 of 5 assets
+✨ Success! Uploaded 5 files (44 already uploaded) (53.33 sec)
+
+Total Upload: 0.42 KiB / gzip: 0.29 KiB
+Uploaded moose (58.18 sec)
+Deployed moose triggers (1.10 sec)
+  https://moose.shqingda.workers.dev
+Current Version ID: c39a7914-d08d-482d-8852-24e23e22936a
+Done in 1m 5.8s using pnpm v12.8.1
+PASS: clean install without Node on PATH, localhost auth, SQLite, PTY, repeated start, update without stopping tasks, reinstall, checksum rejection (local), stop/restart, browser opening
+https://github.com/shqingda/moose/releases/tag/v0.23.0
+Published desktop and Web 0.23.0.

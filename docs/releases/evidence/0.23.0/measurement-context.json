@@ -5,8 +5,11 @@
   "timezone": "Asia/Shanghai",
   "date": "2026-10-03",
   "notes": [
-    "Initial candidate size report still references prior packaged desktop; final package sizes will be measured after release:prepare.",
-    "Web elapsed times include automation wait and vary at localhost scale; byte counts are the primary finding.",
-    "No system memory cache was flushed; these are not cold OS launch measurements."
-  ]
+    "Final size report includes freshly verified desktop and Web packages.",
+    "Web elapsed times include automation wait and localhost variability; byte counts are the primary finding.",
+    "No system disk cache was flushed. Desktop measurements use a restarted isolated shared service and hidden window.",
+    "The first Suspense-based desktop candidate was rejected after a startup regression; final measurements use host import before React mount."
+  ],
+  "candidateCommit": "7c0e903e3850c3bf856c6a1f462b3b93f92d1798",
+  "publishedAt": "2026-10-03T22:18:49.383617+08:00"
 }

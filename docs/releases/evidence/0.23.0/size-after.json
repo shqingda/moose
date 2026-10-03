@@ -1,7 +1,7 @@
 {
   "version": "0.23.0",
   "definition": "sum of regular file lengths; gzip per JS resource; entry is static import graph (not a network waterfall)",
-  "totalBytes": 10553641,
+  "totalBytes": 10554388,
   "files": [
     {
       "path": "dist/assets/abap-CLvhMVsD.js",
@@ -28,7 +28,7 @@
       "bytes": 45058
     },
     {
-      "path": "dist/assets/alert-BbiS7IPk.js",
+      "path": "dist/assets/alert-BQ8kCLn3.js",
       "bytes": 1090
     },
     {
@@ -56,8 +56,8 @@
       "bytes": 3939
     },
     {
-      "path": "dist/assets/app-Bv8_hwjw.js",
-      "bytes": 250996
+      "path": "dist/assets/app-Cf5XKl8A.js",
+      "bytes": 250940
     },
     {
       "path": "dist/assets/applescript-CCn79oCD.js",
@@ -68,7 +68,7 @@
       "bytes": 6355
     },
     {
-      "path": "dist/assets/arrow-down-DuiZTUMf.js",
+      "path": "dist/assets/arrow-down-Bkr2fPV8.js",
       "bytes": 195
     },
     {
@@ -84,8 +84,8 @@
       "bytes": 24025
     },
     {
-      "path": "dist/assets/auxiliary-panel-C-B1FEol.js",
-      "bytes": 2156
+      "path": "dist/assets/auxiliary-panel-Di0bpTqa.js",
+      "bytes": 2151
     },
     {
       "path": "dist/assets/awk-BWXHIvNe.js",
@@ -128,8 +128,8 @@
       "bytes": 33949
     },
     {
-      "path": "dist/assets/button-xhVjTpUm.js",
-      "bytes": 79428
+      "path": "dist/assets/button-CTOxeRAl.js",
+      "bytes": 79423
     },
     {
       "path": "dist/assets/c-iCihek07.js",
@@ -168,8 +168,8 @@
       "bytes": 39072
     },
     {
-      "path": "dist/assets/code-preview-ByrIqZA0.js",
-      "bytes": 568072
+      "path": "dist/assets/code-preview-q46I3IKX.js",
+      "bytes": 568077
     },
     {
       "path": "dist/assets/codeowners-C8r90Shi.js",
@@ -280,16 +280,16 @@
       "bytes": 4761
     },
     {
-      "path": "dist/assets/field-B5msxlEN.js",
+      "path": "dist/assets/field-D1WnrJ_t.js",
       "bytes": 165446
     },
     {
-      "path": "dist/assets/file-preview-BvFBDPa3.js",
-      "bytes": 4515
+      "path": "dist/assets/file-preview-BBjjJa3d.js",
+      "bytes": 4510
     },
     {
-      "path": "dist/assets/files-panel-rWxLJovY.js",
-      "bytes": 13373
+      "path": "dist/assets/files-panel-D-Wc9FRM.js",
+      "bytes": 13378
     },
     {
       "path": "dist/assets/fish-BJitypiv.js",
@@ -444,12 +444,12 @@
       "bytes": 49923
     },
     {
-      "path": "dist/assets/index-i3Mgowov.css",
-      "bytes": 144400
+      "path": "dist/assets/index-BvqGW-R3.js",
+      "bytes": 223043
     },
     {
-      "path": "dist/assets/index-lquq2R1W.js",
-      "bytes": 222895
+      "path": "dist/assets/index-i3Mgowov.css",
+      "bytes": 144400
     },
     {
       "path": "dist/assets/ini-B5eOa1yu.js",
@@ -564,7 +564,7 @@
       "bytes": 59328
     },
     {
-      "path": "dist/assets/markdown-FAoX15c9.js",
+      "path": "dist/assets/markdown-DSC8ociI.js",
       "bytes": 325504
     },
     {
@@ -616,12 +616,12 @@
       "bytes": 3665
     },
     {
-      "path": "dist/assets/native-preview-DlDvOtDx.js",
+      "path": "dist/assets/native-preview-C0edvxgf.js",
       "bytes": 813
     },
     {
-      "path": "dist/assets/native-tools-B_8VdOlG.js",
-      "bytes": 4448
+      "path": "dist/assets/native-tools-lnSaPJNB.js",
+      "bytes": 4443
     },
     {
       "path": "dist/assets/nextflow-BJtWHP5T.js",
@@ -776,7 +776,7 @@
       "bytes": 3304
     },
     {
-      "path": "dist/assets/refresh-cw-D1HhmfEb.js",
+      "path": "dist/assets/refresh-cw-L5pkOgBv.js",
       "bytes": 351
     },
     {
@@ -792,8 +792,8 @@
       "bytes": 3361
     },
     {
-      "path": "dist/assets/review-panel-CoSD_Vph.js",
-      "bytes": 13970
+      "path": "dist/assets/review-panel-DF6Qcb5p.js",
+      "bytes": 13965
     },
     {
       "path": "dist/assets/riscv-Ckw8ddFX.js",
@@ -836,8 +836,8 @@
       "bytes": 28882
     },
     {
-      "path": "dist/assets/schedule-panel-gmZaW72s.js",
-      "bytes": 169274
+      "path": "dist/assets/schedule-panel-DE_AZXhx.js",
+      "bytes": 169279
     },
     {
       "path": "dist/assets/scheme-DQCgrYNe.js",
@@ -852,12 +852,12 @@
       "bytes": 4695
     },
     {
-      "path": "dist/assets/search-dialog-BRK-NFJv.js",
-      "bytes": 3093
+      "path": "dist/assets/search-dialog-BC8w2qAM.js",
+      "bytes": 3088
     },
     {
-      "path": "dist/assets/settings-dialog-CVhYCLfD.js",
-      "bytes": 28365
+      "path": "dist/assets/settings-dialog-DB1mZGQT.js",
+      "bytes": 28370
     },
     {
       "path": "dist/assets/shaderlab-TOUzSsQk.js",
@@ -960,8 +960,8 @@
       "bytes": 6419
     },
     {
-      "path": "dist/assets/transcript--O9fK2_W.js",
-      "bytes": 40334
+      "path": "dist/assets/transcript-D49VyxBi.js",
+      "bytes": 40329
     },
     {
       "path": "dist/assets/ts-tags-Cc5do7zu.js",
@@ -1040,8 +1040,8 @@
       "bytes": 12000
     },
     {
-      "path": "dist/assets/web-host-DPIr9BmR.js",
-      "bytes": 10205
+      "path": "dist/assets/web-host-0Ku-PxlS.js",
+      "bytes": 10880
     },
     {
       "path": "dist/assets/web-shortcuts-D5i4fY8P.js",
@@ -1068,8 +1068,8 @@
       "bytes": 262384
     },
     {
-      "path": "dist/assets/worktree-tools-D5D0q59o.js",
-      "bytes": 5546
+      "path": "dist/assets/worktree-tools-Df_kD-VB.js",
+      "bytes": 5541
     },
     {
       "path": "dist/assets/xml-BlnrEAEy.js",
@@ -1117,21 +1117,21 @@
     }
   ],
   "entry": {
-    "bytes": 223611,
-    "gzipBytes": 69822,
+    "bytes": 223759,
+    "gzipBytes": 69929,
     "files": [
-      "dist/assets/index-lquq2R1W.js",
+      "dist/assets/index-BvqGW-R3.js",
       "dist/assets/rolldown-runtime-hePW80VL.js"
     ]
   },
   "lazy": {
-    "bytes": 10117821,
-    "gzipBytes": 1975818,
+    "bytes": 10118420,
+    "gzipBytes": 1976093,
     "count": 268
   },
   "packages": {
-    "desktopApp": 268970427,
-    "dmg": null,
-    "web": null
+    "desktopApp": 268102357,
+    "dmg": 121472918,
+    "web": 42653682
   }
 }

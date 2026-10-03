@@ -1,0 +1,643 @@
+$ node scripts/release.mjs prepare
+$ oxfmt --check .
+Checking formatting...
+
+All matched files use the correct format.
+Finished in 408ms on 288 files using 11 threads.
+$ oxlint .
+$ vitest run
+
+ RUN  v5.0.2 <HOME>/Projects/moose
+
+
+ Test Files  34 passed (34)
+      Tests  207 passed (207)
+   Start at  21:43:46
+   Duration  13.88s (tests 83%, import 14%, transform 3%)
+
+$ node scripts/build-notifications.mjs && tsc --noEmit && vite build
+vite v8.3.1 building client environment for production...
+transforming...
+✓ 3879 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                0.74 kB │ gzip:   0.37 kB
+dist/assets/moose-logo-welcome-BTWPL7LC.png   59.51 kB
+dist/assets/app-BrP-ENHg.css                   3.93 kB │ gzip:   1.01 kB
+dist/assets/index-i3Mgowov.css               144.40 kB │ gzip:  24.88 kB
+dist/assets/arrow-down-DuiZTUMf.js             0.19 kB │ gzip:   0.17 kB
+dist/assets/refresh-cw-D1HhmfEb.js             0.35 kB │ gzip:   0.24 kB
+dist/assets/codeowners-C8r90Shi.js             0.54 kB │ gzip:   0.31 kB
+dist/assets/shellsession-CVsQGYfZ.js           0.71 kB │ gzip:   0.43 kB
+dist/assets/rolldown-runtime-hePW80VL.js       0.71 kB │ gzip:   0.42 kB
+dist/assets/tsv-sltzmVWM.js                    0.73 kB │ gzip:   0.33 kB
+dist/assets/native-preview-DlDvOtDx.js         0.81 kB │ gzip:   0.48 kB
+dist/assets/html-derivative-i4STDFnl.js        0.84 kB │ gzip:   0.45 kB
+dist/assets/git-rebase-BDPpS8w6.js             0.98 kB │ gzip:   0.44 kB
+dist/assets/qmldir-DCQb3MpD.js                 0.99 kB │ gzip:   0.44 kB
+dist/assets/web-shortcuts-D5i4fY8P.js          1.00 kB │ gzip:   0.45 kB
+dist/assets/alert-BbiS7IPk.js                  1.09 kB │ gzip:   0.56 kB
+dist/assets/csv-Dx-8-gkx.js                    1.13 kB │ gzip:   0.36 kB
+dist/assets/addon-fit-DIOBYJe3.js              1.20 kB │ gzip:   0.49 kB
+dist/assets/git-commit-BSykSTBG.js             1.22 kB │ gzip:   0.52 kB
+dist/assets/xsl-BOPS8gLt.js                    1.36 kB │ gzip:   0.49 kB
+dist/assets/dotenv-_5a1GRtc.js                 1.41 kB │ gzip:   0.52 kB
+dist/assets/sparql-D_iOobhT.js                 1.47 kB │ gzip:   0.81 kB
+dist/assets/ini-B5eOa1yu.js                    1.51 kB │ gzip:   0.49 kB
+dist/assets/fortran-fixed-form-DEKoE2YW.js     1.66 kB │ gzip:   0.68 kB
+dist/assets/docker-IyjqRm3v.js                 1.73 kB │ gzip:   0.59 kB
+dist/assets/desktop-Dlh5hvp9.js                1.82 kB │ gzip:   0.75 kB
+dist/assets/hxml-Dcm88srW.js                   1.89 kB │ gzip:   0.89 kB
+dist/assets/erb-C7MPl934.js                    2.13 kB │ gzip:   0.62 kB
+dist/assets/wenyan-C8pVoKbM.js                 2.15 kB │ gzip:   1.08 kB
+dist/assets/auxiliary-panel-C-B1FEol.js        2.15 kB │ gzip:   1.08 kB
+dist/assets/jssm-DXw9l8Rf.js                   2.23 kB │ gzip:   0.61 kB
+dist/assets/edge-DCY0a-ow.js                   2.30 kB │ gzip:   0.67 kB
+dist/assets/reg-CRGYupPL.js                    2.33 kB │ gzip:   0.69 kB
+dist/assets/diff-woXpYk--.js                   2.56 kB │ gzip:   0.68 kB
+dist/assets/gleam-CSRkHgEL.js                  2.57 kB │ gzip:   0.81 kB
+dist/assets/hy-CZbG8q4J.js                     2.64 kB │ gzip:   1.17 kB
+dist/assets/openscad-BUDT5pXO.js               2.81 kB │ gzip:   1.00 kB
+dist/assets/log-BNLmms1o.js                    2.84 kB │ gzip:   0.89 kB
+dist/assets/json-DAgxKhMr.js                   2.89 kB │ gzip:   0.82 kB
+dist/assets/cairo-DLTphjLi.js                  2.93 kB │ gzip:   0.80 kB
+dist/assets/berry-DKpUyyne.js                  2.99 kB │ gzip:   0.80 kB
+dist/assets/jsonl-CmCQp5Yx.js                  3.00 kB │ gzip:   0.78 kB
+dist/assets/search-dialog-BRK-NFJv.js          3.09 kB │ gzip:   1.42 kB
+dist/assets/jsonc-CYpm1nAK.js                  3.10 kB │ gzip:   0.78 kB
+dist/assets/logo-Cluzi2Zq.js                   3.12 kB │ gzip:   1.46 kB
+dist/assets/po-BiJDBrnU.js                     3.23 kB │ gzip:   0.90 kB
+dist/assets/json5-BR5RXkoi.js                  3.24 kB │ gzip:   0.82 kB
+dist/assets/mipsasm-BMqwQI7S.js                3.25 kB │ gzip:   1.17 kB
+dist/assets/tasl-DMoTqEGO.js                   3.28 kB │ gzip:   0.84 kB
+dist/assets/rbs-C0MpOrj4.js                    3.30 kB │ gzip:   0.72 kB
+dist/assets/genie-CV2tkWYe.js                  3.34 kB │ gzip:   1.20 kB
+dist/assets/rel-BtDbiS_P.js                    3.36 kB │ gzip:   1.10 kB
+dist/assets/vala-zf12oZj6.js                   3.36 kB │ gzip:   1.18 kB
+dist/assets/splunk-BC2Px7Mm.js                 3.42 kB │ gzip:   1.51 kB
+dist/assets/hurl-DCZHXKU4.js                   3.51 kB │ gzip:   1.09 kB
+dist/assets/fluent-C03EYrpw.js                 3.60 kB │ gzip:   0.89 kB
+dist/assets/ssh-config-BgfXC-Er.js             3.61 kB │ gzip:   1.59 kB
+dist/assets/jsonnet-CJTPZ8u_.js                3.61 kB │ gzip:   1.03 kB
+dist/assets/kdl-CsD5j6eV.js                    3.62 kB │ gzip:   1.03 kB
+dist/assets/narrat-_X_XdTYD.js                 3.66 kB │ gzip:   1.09 kB
+dist/assets/turtle-ByJddavk.js                 3.69 kB │ gzip:   0.96 kB
+dist/assets/glsl-D5MA2a_X.js                   3.69 kB │ gzip:   1.46 kB
+dist/assets/zenscript-BnlCZFoB.js              3.90 kB │ gzip:   1.28 kB
+dist/assets/ron-VUp2lXgN.js                    3.90 kB │ gzip:   0.97 kB
+dist/assets/gn-ilITqXS6.js                     3.99 kB │ gzip:   1.47 kB
+dist/assets/pascal-4ZHwLPI5.js                 4.14 kB │ gzip:   1.67 kB
+dist/assets/http-kmH8AyfE.js                   4.41 kB │ gzip:   1.06 kB
+dist/assets/tcl-CZd0xW_V.js                    4.42 kB │ gzip:   1.50 kB
+dist/assets/native-tools-B_8VdOlG.js           4.44 kB │ gzip:   1.60 kB
+dist/assets/nextflow-BJtWHP5T.js               4.50 kB │ gzip:   1.16 kB
+dist/assets/file-preview-BvFBDPa3.js           4.51 kB │ gzip:   1.73 kB
+dist/assets/rosmsg-CAekHB0j.js                 4.51 kB │ gzip:   1.05 kB
+dist/assets/polar-C7UOKdEL.js                  4.66 kB │ gzip:   1.12 kB
+dist/assets/sdbl-bTVj8UrX.js                   4.69 kB │ gzip:   2.00 kB
+dist/assets/fennel-DQxkIbk2.js                 4.76 kB │ gzip:   1.53 kB
+dist/assets/bibtex-Ci_nEsc7.js                 4.78 kB │ gzip:   0.83 kB
+dist/assets/llvm-DqHOMS-s.js                   5.03 kB │ gzip:   2.01 kB
+dist/assets/wgsl-BsKzXJz4.js                   5.13 kB │ gzip:   1.38 kB
+dist/assets/gdresource-xMC7jr7x.js             5.28 kB │ gzip:   1.33 kB
+dist/assets/zig-CMLA9XwU.js                    5.33 kB │ gzip:   1.55 kB
+dist/assets/qml-_a-QhfPD.js                    5.33 kB │ gzip:   1.38 kB
+dist/assets/dax-BkyTk9wS.js                    5.35 kB │ gzip:   2.21 kB
+dist/assets/bicep-CUHmPFLl.js                  5.37 kB │ gzip:   1.14 kB
+dist/assets/xml-BlnrEAEy.js                    5.44 kB │ gzip:   1.25 kB
+dist/assets/awk-BWXHIvNe.js                    5.45 kB │ gzip:   1.37 kB
+dist/assets/worktree-tools-D5D0q59o.js         5.54 kB │ gzip:   1.88 kB
+dist/assets/jinja-B-tLrNsM.js                  5.62 kB │ gzip:   1.36 kB
+dist/assets/lean-CewbzKMR.js                   5.77 kB │ gzip:   1.91 kB
+dist/assets/powerquery-DNMTfnFr.js             5.89 kB │ gzip:   1.51 kB
+dist/assets/shaderlab-TOUzSsQk.js              5.91 kB │ gzip:   2.08 kB
+dist/assets/cypher-ClKdZ_lG.js                 5.94 kB │ gzip:   1.71 kB
+dist/assets/coq-DuBRPxYg.js                    6.03 kB │ gzip:   1.95 kB
+dist/assets/vb-DOwzaHZ0.js                     6.06 kB │ gzip:   2.32 kB
+dist/assets/gdshader-CBce3t8t.js               6.31 kB │ gzip:   1.72 kB
+dist/assets/ara-4CJ0cIlV.js                    6.35 kB │ gzip:   1.80 kB
+dist/assets/verilog-B2gwz-sJ.js                6.40 kB │ gzip:   1.92 kB
+dist/assets/clojure-DqKBuwfJ.js                6.40 kB │ gzip:   1.41 kB
+dist/assets/postcss-BXeXVLqQ.js                6.41 kB │ gzip:   1.90 kB
+dist/assets/toml-CcmNWLt0.js                   6.41 kB │ gzip:   1.28 kB
+dist/assets/proto-DB4EqR-F.js                  6.54 kB │ gzip:   1.41 kB
+dist/assets/chapel-DmtgEXO_.js                 6.62 kB │ gzip:   1.85 kB
+dist/assets/talonscript-CohzipZa.js            6.75 kB │ gzip:   1.48 kB
+dist/assets/r-BHcO8Vjq.js                      6.80 kB │ gzip:   1.89 kB
+dist/assets/riscv-Ckw8ddFX.js                  6.90 kB │ gzip:   1.97 kB
+dist/assets/soy-DEd-qcad.js                    6.92 kB │ gzip:   1.62 kB
+dist/assets/scheme-DQCgrYNe.js                 7.16 kB │ gzip:   2.04 kB
+dist/assets/hlsl-Cvrh5tZx.js                   7.25 kB │ gzip:   2.18 kB
+dist/assets/qss-Fe1Jh2GI.js                    7.46 kB │ gzip:   2.57 kB
+dist/assets/prisma-DMgNhnYS.js                 7.73 kB │ gzip:   1.48 kB
+dist/assets/systemd-BxMlprV5.js                7.86 kB │ gzip:   2.54 kB
+dist/assets/regexp-DR20uMnK.js                 8.05 kB │ gzip:   1.47 kB
+dist/assets/haml-CwEpbK1d.js                   8.33 kB │ gzip:   1.86 kB
+dist/assets/vue-html-DkKkQnZL.js               8.47 kB │ gzip:   1.68 kB
+dist/assets/plsql-DGHpHOYJ.js                  8.50 kB │ gzip:   2.99 kB
+dist/assets/dart-CnvKMtbv.js                   8.61 kB │ gzip:   1.99 kB
+dist/assets/kotlin-DhhofPvG.js                 8.77 kB │ gzip:   2.12 kB
+dist/assets/make-Dixweg8N.js                   8.95 kB │ gzip:   1.76 kB
+dist/assets/sas-CBpMWA2M.js                    9.06 kB │ gzip:   3.82 kB
+dist/assets/smithy-Dgaz7aur.js                 9.12 kB │ gzip:   1.51 kB
+dist/assets/sass-DXrisJhu.js                   9.28 kB │ gzip:   2.48 kB
+dist/assets/jison-CBjhYtSs.js                  9.69 kB │ gzip:   1.86 kB
+dist/assets/tex-BK-H2Wn4.js                    9.73 kB │ gzip:   3.10 kB
+dist/assets/cmake-Bj61d0ZC.js                  9.84 kB │ gzip:   3.37 kB
+dist/assets/hcl-Dh228itO.js                   10.04 kB │ gzip:   1.93 kB
+dist/assets/web-host-DPIr9BmR.js              10.20 kB │ gzip:   4.27 kB
+dist/assets/rst-BQCbfb9V.js                   10.31 kB │ gzip:   2.24 kB
+dist/assets/pkl-ot-7Btpt.js                   10.36 kB │ gzip:   1.37 kB
+dist/assets/beancount-D-usSTwE.js             10.36 kB │ gzip:   1.43 kB
+dist/assets/nextflow-groovy-DJMQeKeT.js       10.43 kB │ gzip:   2.13 kB
+dist/assets/dream-maker-DW3nJb8Q.js           10.46 kB │ gzip:   2.25 kB
+dist/assets/raku-B3gFvitq.js                  10.46 kB │ gzip:   2.94 kB
+dist/assets/yaml-Du_6cdrH.js                  10.57 kB │ gzip:   2.32 kB
+dist/assets/just-B9Xn_Dp4.js                  10.84 kB │ gzip:   2.62 kB
+dist/assets/elm-o4NJxfws.js                   10.94 kB │ gzip:   2.09 kB
+dist/assets/github-light-EUqPIrTm.js          11.18 kB │ gzip:   2.49 kB
+dist/assets/prolog-iXnhIJG7.js                11.34 kB │ gzip:   3.84 kB
+dist/assets/terraform-DswuEJGm.js             11.38 kB │ gzip:   2.51 kB
+dist/assets/github-dark-C-LZuMrd.js           11.40 kB │ gzip:   2.53 kB
+dist/assets/puppet-CDv2pdJW.js                11.43 kB │ gzip:   2.10 kB
+dist/assets/gherkin-DExj1W_8.js               11.93 kB │ gzip:   5.04 kB
+dist/assets/wasm-ByWQv1Qj.js                  12.00 kB │ gzip:   2.17 kB
+dist/assets/hjson-CxZEssPk.js                 12.04 kB │ gzip:   1.64 kB
+dist/assets/surrealql-BZoq2lXR.js             12.06 kB │ gzip:   3.29 kB
+dist/assets/handlebars-ryMP1rBR.js            12.16 kB │ gzip:   2.37 kB
+dist/assets/apache-U0d_L8uA.js                12.44 kB │ gzip:   3.71 kB
+dist/assets/bat-qdxAdBWQ.js                   12.88 kB │ gzip:   3.23 kB
+dist/assets/fish-BJitypiv.js                  13.03 kB │ gzip:   1.73 kB
+dist/assets/nsis-CjNLYCLg.js                  13.11 kB │ gzip:   4.06 kB
+dist/assets/v-DBj4K9d_.js                     13.32 kB │ gzip:   2.75 kB
+dist/assets/files-panel-rWxLJovY.js           13.37 kB │ gzip:   4.62 kB
+dist/assets/pug-DkgDHZci.js                   13.84 kB │ gzip:   2.58 kB
+dist/assets/review-panel-CoSD_Vph.js          13.97 kB │ gzip:   4.07 kB
+dist/assets/smalltalk-BHpQb5nM.js             14.11 kB │ gzip:   2.14 kB
+dist/assets/clarity-CtfBBspg.js               14.35 kB │ gzip:   2.50 kB
+dist/assets/gnuplot-7GGW24-e.js               14.77 kB │ gzip:   3.27 kB
+dist/assets/rust-Cfkwpbl8.js                  15.06 kB │ gzip:   2.71 kB
+dist/assets/kusto-C7mF5XQf.js                 15.16 kB │ gzip:   3.92 kB
+dist/assets/nix-IvuFDN5E.js                   15.50 kB │ gzip:   2.47 kB
+dist/assets/actionscript-3-Cs6JJXT5.js        15.53 kB │ gzip:   2.70 kB
+dist/assets/lua-FONpmTUP.js                   15.60 kB │ gzip:   3.19 kB
+dist/assets/abap-CLvhMVsD.js                  15.84 kB │ gzip:   5.93 kB
+dist/assets/matlab-D7qyCx1q.js                16.07 kB │ gzip:   3.06 kB
+dist/assets/luau-C2pBCSgt.js                  16.13 kB │ gzip:   3.54 kB
+dist/assets/cue-CE9AQfxI.js                   16.19 kB │ gzip:   2.04 kB
+dist/assets/elixir-DP304Xio.js                16.26 kB │ gzip:   2.76 kB
+dist/assets/solidity-Bj7E1mRn.js              16.40 kB │ gzip:   3.14 kB
+dist/assets/odin-B1RWQWA5.js                  16.50 kB │ gzip:   2.92 kB
+dist/assets/ts-tags-Cc5do7zu.js               16.54 kB │ gzip:   2.05 kB
+dist/assets/move-BYnGhZoM.js                  17.65 kB │ gzip:   3.06 kB
+dist/assets/graphql-Ctjuxyvl.js               18.08 kB │ gzip:   2.53 kB
+dist/assets/liquid-G0MH4h_m.js                18.10 kB │ gzip:   3.14 kB
+dist/assets/svelte-Bj3Hmc9F.js                18.24 kB │ gzip:   3.14 kB
+dist/assets/gdscript-DYvRD3hg.js              19.08 kB │ gzip:   3.76 kB
+dist/assets/groovy-CacY0gHj.js                19.17 kB │ gzip:   3.59 kB
+dist/assets/glimmer-js-BONyzAsu.js            20.08 kB │ gzip:   2.94 kB
+dist/assets/glimmer-ts-f9c0GCOe.js            20.08 kB │ gzip:   2.93 kB
+dist/assets/mdc-BKfPFPZw.js                   20.08 kB │ gzip:   6.80 kB
+dist/assets/powershell-CCSX75yM.js            20.15 kB │ gzip:   4.05 kB
+dist/assets/viml-DvXPmvsu.js                  20.35 kB │ gzip:   6.73 kB
+dist/assets/nushell-DHYfO66s.js               20.87 kB │ gzip:   5.36 kB
+dist/assets/wit-DdvCle-K.js                   21.46 kB │ gzip:   2.87 kB
+dist/assets/twig-BVSnuTf-.js                  21.51 kB │ gzip:   3.75 kB
+dist/assets/nim-B6yJ_yaC.js                   22.45 kB │ gzip:   3.15 kB
+dist/assets/common-lisp-Cv5bFMCO.js           22.57 kB │ gzip:   6.07 kB
+dist/assets/sql-DdD7vxS4.js                   23.49 kB │ gzip:   7.51 kB
+dist/assets/cadence-CQ2zXKGN.js               23.66 kB │ gzip:   3.65 kB
+dist/assets/astro-B-4NNgOP.js                 24.02 kB │ gzip:   7.59 kB
+dist/assets/apl-Dhin1L29.js                   24.02 kB │ gzip:   4.16 kB
+dist/assets/templ-TjxbArHn.js                 24.06 kB │ gzip:   5.41 kB
+dist/assets/angular-html-B8mrqUL5.js          24.24 kB │ gzip:   3.99 kB
+dist/assets/vhdl-BroJfC0k.js                  24.25 kB │ gzip:   3.86 kB
+dist/assets/purescript-9MfHhQsQ.js            24.67 kB │ gzip:   3.24 kB
+dist/assets/moonbit-DgjMoLWr.js               24.93 kB │ gzip:   3.76 kB
+dist/assets/vue-BNQF7r6F.js                   24.96 kB │ gzip:   3.03 kB
+dist/assets/typespec-BRdr0IET.js              25.03 kB │ gzip:   2.62 kB
+dist/assets/fsharp-D13ZGOAj.js                25.30 kB │ gzip:   4.12 kB
+dist/assets/marko-DV5GrDmo.js                 25.48 kB │ gzip:   3.59 kB
+dist/assets/c3-D0apG41V.js                    26.37 kB │ gzip:   3.97 kB
+dist/assets/system-verilog-Dh5ihWbf.js        26.54 kB │ gzip:   4.85 kB
+dist/assets/codeql-oeQT6MSM.js                26.87 kB │ gzip:   3.79 kB
+dist/assets/scss-YesllqfO.js                  27.26 kB │ gzip:   4.23 kB
+dist/assets/java-DdHNQ9hk.js                  27.28 kB │ gzip:   4.31 kB
+dist/assets/coffee-CiiSLhB6.js                27.42 kB │ gzip:   6.35 kB
+dist/assets/razor-BMJ0eI3p.js                 27.45 kB │ gzip:   3.54 kB
+dist/assets/settings-dialog-CVhYCLfD.js       28.36 kB │ gzip:   9.29 kB
+dist/assets/scala-BiFt_7mu.js                 28.88 kB │ gzip:   3.93 kB
+dist/assets/crystal-DGPAtLeY.js               29.41 kB │ gzip:   4.44 kB
+dist/assets/applescript-CCn79oCD.js           29.56 kB │ gzip:   5.94 kB
+dist/assets/julia-CXJVy74_.js                 31.00 kB │ gzip:   4.30 kB
+dist/assets/stylus-B6D30XZt.js                31.06 kB │ gzip:   8.01 kB
+dist/assets/ahk-CA9gdOdF.js                   31.43 kB │ gzip:   7.82 kB
+dist/assets/bsl-_VjlB9mv.js                   33.94 kB │ gzip:   8.35 kB
+dist/assets/nginx-BTMw9COX.js                 35.35 kB │ gzip:   4.45 kB
+dist/assets/haxe-C8oCnwJJ.js                  35.94 kB │ gzip:   6.00 kB
+dist/assets/org-Ddi8Gs6E.js                   36.26 kB │ gzip:   3.67 kB
+dist/assets/erlang-Cphh6RMH.js                37.47 kB │ gzip:   4.36 kB
+dist/assets/bird2-CYIUgYqB.js                 38.67 kB │ gzip:   8.49 kB
+dist/assets/cobol-Cw2-KvLW.js                 39.07 kB │ gzip:  10.89 kB
+dist/assets/transcript--O9fK2_W.js            40.33 kB │ gzip:  12.28 kB
+dist/assets/asm-Cmm7eHzH.js                   40.71 kB │ gzip:   8.16 kB
+dist/assets/haskell-D8IpX4py.js               41.48 kB │ gzip:   6.41 kB
+dist/assets/shellscript-Da78Ox-3.js           41.54 kB │ gzip:   6.13 kB
+dist/assets/perl-DEgXgjuC.js                  43.14 kB │ gzip:   4.64 kB
+dist/assets/d-qD-0Kul2.js                     43.78 kB │ gzip:   8.43 kB
+dist/assets/ahk2-_6rzW9BS.js                  45.05 kB │ gzip:   9.87 kB
+dist/assets/ruby-B8JcIHv0.js                  46.60 kB │ gzip:   5.70 kB
+dist/assets/go-rLFTqkRN.js                    46.81 kB │ gzip:   5.14 kB
+dist/assets/apex-KFGFyKwG.js                  47.88 kB │ gzip:   6.85 kB
+dist/assets/ada-C5qYipkI.js                   48.07 kB │ gzip:   5.96 kB
+dist/assets/css-CNuuLpMC.js                   49.10 kB │ gzip:  11.96 kB
+dist/assets/imba-DsUTQ-LC.js                  49.92 kB │ gzip:   9.47 kB
+dist/assets/mermaid-BxpfTIzt.js               54.80 kB │ gzip:   4.79 kB
+dist/assets/wikitext-ClFFjSW2.js              55.87 kB │ gzip:   4.81 kB
+dist/assets/stata-CMv7m7Gi.js                 56.99 kB │ gzip:  12.39 kB
+dist/assets/html-XwrE-1r6.js                  57.32 kB │ gzip:  11.78 kB
+dist/assets/ballerina-B7ZEbQpA.js             58.68 kB │ gzip:   8.10 kB
+dist/assets/markdown-BYOwaDjH.js              59.32 kB │ gzip:   5.66 kB
+dist/assets/ocaml-O90oeIOV.js                 62.44 kB │ gzip:   5.04 kB
+dist/assets/mojo-fg40_ntQ.js                  69.51 kB │ gzip:   9.20 kB
+dist/assets/python-gzcpVVnB.js                69.94 kB │ gzip:   9.09 kB
+dist/assets/c-iCihek07.js                     72.17 kB │ gzip:  10.55 kB
+dist/assets/latex-o9DRzaEe.js                 72.88 kB │ gzip:   6.74 kB
+dist/assets/vyper-CgoNMtux.js                 74.64 kB │ gzip:  10.69 kB
+dist/assets/button-xhVjTpUm.js                79.42 kB │ gzip:  31.59 kB
+dist/assets/hack-Dh_ZLRbs.js                  81.07 kB │ gzip:  26.45 kB
+dist/assets/mcp-registration-qtWrRb23.js      86.70 kB │ gzip:  24.87 kB
+dist/assets/swift-CyEgAFGc.js                 87.22 kB │ gzip:  14.79 kB
+dist/assets/fortran-free-form-CYNrtFtB.js     88.96 kB │ gzip:  11.18 kB
+dist/assets/csharp-oqKa8noW.js                90.18 kB │ gzip:  10.71 kB
+dist/assets/racket-DcIDlBhZ.js                92.38 kB │ gzip:  15.07 kB
+dist/assets/less-DVTAwKKz.js                  97.62 kB │ gzip:  14.84 kB
+dist/assets/blade-C6Gedziy.js                104.97 kB │ gzip:  28.29 kB
+dist/assets/objective-c-D1A_Heim.js          105.40 kB │ gzip:  23.63 kB
+dist/assets/php-B9UPq-vz.js                  113.08 kB │ gzip:  28.85 kB
+dist/assets/asciidoc-SCjQUq34.js             136.04 kB │ gzip:   9.45 kB
+dist/assets/mdx-DQZ5AkYe.js                  136.10 kB │ gzip:  23.54 kB
+dist/assets/typst-C40W_gC6.js                163.48 kB │ gzip:  10.96 kB
+dist/assets/field-B5msxlEN.js                165.44 kB │ gzip:  55.65 kB
+dist/assets/schedule-panel-gmZaW72s.js       169.27 kB │ gzip:  48.92 kB
+dist/assets/objective-cpp-BsSzOQcm.js        171.96 kB │ gzip:  30.98 kB
+dist/assets/javascript-obGGvMPs.js           174.89 kB │ gzip:  16.68 kB
+dist/assets/tsx-CUOciP0b.js                  175.60 kB │ gzip:  16.68 kB
+dist/assets/jsx-gTgmArGx.js                  177.85 kB │ gzip:  16.77 kB
+dist/assets/typescript-BydbNFcO.js           181.14 kB │ gzip:  16.29 kB
+dist/assets/angular-ts-Bzix210W.js           183.73 kB │ gzip:  16.78 kB
+dist/assets/vue-vine-DFaKYU4X.js             190.05 kB │ gzip:  18.07 kB
+dist/assets/index-lquq2R1W.js                222.89 kB │ gzip:  70.11 kB
+dist/assets/app-Bv8_hwjw.js                  250.99 kB │ gzip:  79.85 kB
+dist/assets/wolfram-DLL8P-h_.js              262.38 kB │ gzip:  77.63 kB
+dist/assets/markdown-FAoX15c9.js             325.50 kB │ gzip: 100.77 kB
+dist/assets/xterm-ScmBfeDI.js                331.17 kB │ gzip:  83.03 kB
+dist/assets/code-preview-ByrIqZA0.js         568.07 kB │ gzip: 155.43 kB
+dist/assets/cpp-71xkOQct.js                  785.54 kB │ gzip:  58.27 kB
+dist/assets/emacs-lisp-c_oH4hRZ.js           790.00 kB │ gzip: 200.30 kB
+
+[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 920ms
+vite v8.3.1 building client environment for production...
+transforming...
+
+new URL("../../dist-native/notifications.node", import.meta.url) doesn't exist at build time, it will remain unchanged to be resolved at runtime. If this is intended, you can use the /* @vite-ignore */ comment to suppress this warning.
+✓ 108 modules transformed.
+rendering chunks...
+computing gzip size...
+dist-electron/main/main.js  157.99 kB │ gzip: 41.10 kB
+
+✓ built in 41ms
+vite v8.3.1 building client environment for production...
+transforming...
+✓ 2 modules transformed.
+rendering chunks...
+computing gzip size...
+dist-electron/preload/preload.cjs  0.30 kB │ gzip: 0.19 kB
+
+✓ built in 7ms
+vite v8.3.1 building client environment for production...
+transforming...
+✓ 292 modules transformed.
+rendering chunks...
+computing gzip size...
+dist-electron/runtime/runtime.js  734.43 kB │ gzip: 182.90 kB
+
+✓ built in 134ms
+vite v8.3.1 building client environment for production...
+transforming...
+✓ 2 modules transformed.
+rendering chunks...
+computing gzip size...
+dist-electron/pty-host/pty-host.js  1.81 kB │ gzip: 0.92 kB
+
+✓ built in 7ms
+vite v8.3.1 building client environment for production...
+transforming...
+✓ 294 modules transformed.
+rendering chunks...
+computing gzip size...
+dist-electron/web-server/web-server.js  745.10 kB │ gzip: 186.65 kB
+
+✓ built in 127ms
+$ tsc --noEmit
+$ pnpm --filter @moose/site build && node distribution/scripts/sync-site.mjs
+$ vite build
+vite v8.3.1 building client environment for production...
+transforming...
+✓ 136 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/client/assets/moose-icon-black-FHhrn8YJ.png  1,416.52 kB
+dist/client/assets/index-DyDke9Nv.css                 6.92 kB │ gzip:   2.35 kB
+dist/client/assets/routes-CJDO8kiK.js                 5.88 kB │ gzip:   2.14 kB
+dist/client/assets/index-DyIa3GKF.js                339.33 kB │ gzip: 108.99 kB
+
+✓ built in 165ms
+vite v8.3.1 building ssr environment for production...
+transforming...
+✓ 122 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/server/assets/empty-plugin-adapters-DETlmLN8.js         0.28 kB │ gzip:  0.18 kB
+dist/server/assets/start-BTP0BPKR.js                         0.29 kB │ gzip:  0.21 kB
+dist/server/assets/_tanstack-start-manifest_v-BiwG8Mej.js    0.59 kB │ gzip:  0.32 kB
+dist/server/assets/router-DZEFNM4k.js                        2.10 kB │ gzip:  0.97 kB
+dist/server/assets/routes-0-WCRTAE.js                        9.17 kB │ gzip:  2.56 kB
+dist/server/server.js                                      237.89 kB │ gzip: 55.15 kB
+
+✓ built in 158ms
+[prerender] Prerendering pages...
+[prerender] Concurrency: 11
+[prerender] Crawling: /
+[prerender] Prerendered 1 pages:
+[prerender] - /
+Updated landing page assets; installer and release files are unchanged.
+
+Running 79 tests using 1 worker
+
+(node:41000) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/e2e/background.spec.ts:43:1 › runs background commands, sends stdin and stops a command from the desktop panel (4.2s)
+  ✓   2 tests/e2e/background.spec.ts:74:1 › dispatches a one-time command while the window is closed and never replays it after restart (6.2s)
+  ✓   3 tests/e2e/background.spec.ts:119:1 › edits paused schedules with review, preserves their timezone, and rejects stale changes (3.4s)
+  ✓   4 tests/e2e/background.spec.ts:192:1 › runs a real PTY, resizes it, edits with vim and survives closing the panel (2.8s)
+  ✓   5 tests/e2e/background.spec.ts:275:1 › cleans up PTY children after runtime loss and marks the session unknown after restart (3.7s)
+  ✓   6 tests/e2e/background.spec.ts:333:1 › bounds PTY output and persists a stopped session without replaying input on restart (3.0s)
+  ✓   7 tests/e2e/background.spec.ts:380:1 › previews timezone calendar runs and preserves weekdays when editing (3.3s)
+  ✘   8 tests/e2e/background.spec.ts:417:1 › moves the same terminal between window, bottom and right without stopping its shell (2.0s)
+(node:41677) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   9 tests/e2e/background.spec.ts:535:1 › opens concurrent terminal tabs and releases the directory only after the last closes (4.4s)
+  ✓  10 tests/e2e/background.spec.ts:628:1 › runs pnpm test alongside a terminal and preserves directory protection until both finish (4.0s)
+  ✓  11 tests/e2e/background.spec.ts:689:1 › native shortcuts toggle and create terminals, switch tools and keep each tab one hover surface (2.5s)
+  ✓  12 tests/e2e/desktop-runtime.spec.ts:8:1 › desktop starts one shared service in its existing data directory and preserves the standard app menu (2.6s)
+  ✓  13 tests/e2e/experience.spec.ts:123:3 › desktop reopens a closing dialog and keeps reduced-motion feedback (2.9s)
+  ✓  14 tests/e2e/experience.spec.ts:123:3 › Web reopens a closing dialog and keeps reduced-motion feedback (3.0s)
+  ✓  15 tests/e2e/experience.spec.ts:179:3 › desktop searches old messages, previews local files, keeps errors and supports undo (9.1s)
+  ✓  16 tests/e2e/experience.spec.ts:179:3 › Web searches old messages, previews local files, keeps errors and supports undo (9.8s)
+  ✓  17 tests/e2e/experience.spec.ts:323:1 › explains paused queues, confirms terminal end with cancel focused, and preserves queue pause on undo (2.7s)
+  ✓  18 tests/e2e/experience.spec.ts:369:1 › Web notifications are opt-in, permission-aware, deduplicated and contain no message body (3.2s)
+  ✓  19 tests/e2e/experience.spec.ts:455:1 › keeps real terminal input and output responsive while searching 10,000 messages (3.2s)
+  ✓  20 tests/e2e/experience.spec.ts:501:3 › desktop browses workspace files in a side panel and keeps tabs and drafts (5.0s)
+  ✓  21 tests/e2e/experience.spec.ts:501:3 › Web browses workspace files in a side panel and keeps tabs and drafts (6.2s)
+  ✓  22 tests/e2e/experience.spec.ts:631:3 › desktop expands files and previews Markdown by default (3.3s)
+  ✓  23 tests/e2e/experience.spec.ts:631:3 › Web expands files and previews Markdown by default (4.3s)
+  ✓  24 tests/e2e/experience.spec.ts:688:3 › desktop preserves failed settings input and exposes safe recovery actions (2.5s)
+  ✓  25 tests/e2e/experience.spec.ts:739:3 › desktop pauses archive undo for pointer and keyboard without consuming its timeout (1.4s)
+  ✓  26 tests/e2e/experience.spec.ts:688:3 › Web preserves failed settings input and exposes safe recovery actions (2.9s)
+  ✓  27 tests/e2e/experience.spec.ts:739:3 › Web pauses archive undo for pointer and keyboard without consuming its timeout (1.6s)
+  ✓  28 tests/e2e/experience.spec.ts:760:1 › desktop and Web share notification ownership, restore click targets and suppress the foreground session (4.4s)
+  ✓  29 tests/e2e/experience.spec.ts:855:3 › desktop keeps historical reading during streaming and never repeats an uncertain write (2.2s)
+  ✓  30 tests/e2e/experience.spec.ts:855:3 › Web keeps historical reading during streaming and never repeats an uncertain write (2.7s)
+  ✓  31 tests/e2e/experience.spec.ts:919:1 › desktop asks permission only on opt-in and keeps denied notifications disabled (2.2s)
+  ✓  32 tests/e2e/experience.spec.ts:954:1 › shares panel width and focus, reverses motion smoothly, and respects accessibility settings (7.3s)
+  ✘  33 tests/e2e/experience.spec.ts:1038:3 › desktop keeps rapid auxiliary panel switches bounded and preserves focus, file tabs and draft (2.5s)
+(node:43002) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  34 tests/e2e/experience.spec.ts:1038:3 › Web keeps rapid auxiliary panel switches bounded and preserves focus, file tabs and draft (2.7s)
+(node:43037) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  35 tests/e2e/extensions.spec.ts:50:1 › previews scoped configuration changes, installs plugins, and never renders credentials (3.9s)
+  ✓  36 tests/e2e/extensions.spec.ts:82:1 › cancels native authentication and respects disabled providers without starting a model (2.6s)
+  ✓  37 tests/e2e/extensions.spec.ts:99:1 › previews MCP registration and saves a disabled server without revealing credentials (3.1s)
+  ✓  38 tests/e2e/extensions.spec.ts:166:1 › edits MCP configuration and refreshes externally removed servers (4.6s)
+  ✓  39 tests/e2e/extensions.spec.ts:239:1 › manages Pi and OpenCode user settings without showing unsupported controls (3.2s)
+  ✓  40 tests/e2e/git-review.spec.ts:68:1 › stages exact files, retains a failed commit message, and keeps native review separate (6.5s)
+  ✓  41 tests/e2e/git-review.spec.ts:126:1 › previews explicit PR targets and creates a draft through the GitHub fixture (4.6s)
+  ✓  42 tests/e2e/native-history.spec.ts:65:1 › imports paginated native history once, forks with lineage and waits for compaction completion (7.0s)
+  ✓  43 tests/e2e/native-history.spec.ts:114:1 › replays Grok native history without claiming unsupported lifecycle controls (3.1s)
+  ✓  44 tests/e2e/native-history.spec.ts:130:1 › opens child history independently while child approvals remain in the parent (2.1s)
+  ✓  45 tests/e2e/native-history.spec.ts:163:3 › pi exposes native history, imports once and continues from the same source (3.0s)
+  ✓  46 tests/e2e/native-history.spec.ts:163:3 › opencode exposes native history, imports once and continues from the same source (4.1s)
+  ✓  47 tests/e2e/runtime-launcher.spec.ts:8:1 › managed runtime starts once, survives launcher exit, stops and restarts with new credentials (2.2s)
+  ✓  48 tests/e2e/startup.spec.ts:8:1 › reveals first and subsequent desktop windows only after the hydrated frame is ready (4.1s)
+  ✓  49 tests/e2e/web.spec.ts:26:1 › browser login, project selection, OpenCode approval and terminal survive page reconnect (17.8s)
+  ✓  50 tests/e2e/web.spec.ts:462:1 › web appearance, browser shortcuts, narrow layout and expired login recover without losing drafts (6.1s)
+
+  ✓  51 tests/e2e/workspace.spec.ts:44:1 › opens a project, approves a real IPC turn, reviews diff, persists draft and switches themes (5.8s)
+  ✓  52 tests/e2e/workspace.spec.ts:106:1 › handles 10,000 persisted events, paging, IME input, archive and restore (5.7s)
+
+  ✓  53 tests/e2e/workspace.spec.ts:171:1 › Grok approval denial and questions travel through ACP, and cancellation preserves queue (3.5s)
+
+  ✓  54 tests/e2e/workspace.spec.ts:231:1 › imports image and text attachments, persists permissions, copies and edits messages, and collapses sidebar (2.5s)
+  ✓  55 tests/e2e/workspace.spec.ts:306:1 › archives before deletion, opens an unsaved conversation and keeps project files (3.9s)
+  ✓  56 tests/e2e/workspace.spec.ts:355:1 › composer searches project context, selects skills and plan mode with keyboard, and exposes broad navigation targets (2.9s)
+  ✓  57 tests/e2e/workspace.spec.ts:411:1 › shows available reasoning and hides empty summaries (1.4s)
+  ✘  58 tests/e2e/workspace.spec.ts:439:1 › project hover stays uniform and its compose button targets that project (6.5s)
+(node:44465) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  59 tests/e2e/workspace.spec.ts:498:1 › copies one complete AI turn and only offers editing on the latest user message (2.1s)
+  ✓  60 tests/e2e/workspace.spec.ts:546:1 › provider switches persist and usage displays actual windows through Cmd U (5.5s)
+  ✓  61 tests/e2e/workspace.spec.ts:626:1 › aligns sidebar labels at the shared row height and reveals message times on hover (1.4s)
+  ✓  62 tests/e2e/workspace.spec.ts:673:1 › selects Pi and persists a streamed RPC conversation (2.3s)
+  ✓  63 tests/e2e/workspace.spec.ts:697:1 › provider path saves on blur without a save button or duplicate model count (3.0s)
+  ✓  64 tests/e2e/workspace.spec.ts:727:3 › codex displays automatic native delegation without a composer toggle (2.5s)
+  ✓  65 tests/e2e/workspace.spec.ts:727:3 › grok displays automatic native delegation without a composer toggle (2.3s)
+  ✓  66 tests/e2e/workspace.spec.ts:769:1 › reviews, edits and approves a native plan, restoring execution permissions (2.6s)
+  ✓  67 tests/e2e/workspace.spec.ts:810:1 › steers the active Codex turn and persists delivery without enqueueing a new turn (2.4s)
+  ✓  68 tests/e2e/workspace.spec.ts:848:1 › retains rejected steering input and marks disconnects unknown without retrying (1.6s)
+  ✓  69 tests/e2e/workspace.spec.ts:890:1 › keeps workspace tools keyboard accessible and restores focus after dialogs at narrow width (1.9s)
+  ✓  70 tests/e2e/workspace.spec.ts:943:1 › keeps empty archives conversation-only and presents quiet workspace controls (4.7s)
+  ✘  71 tests/e2e/workspace.spec.ts:994:1 › keeps model picker height stable across providers and empty searches with a scrolling list (1.4s)
+(node:45040) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  72 tests/e2e/workspace.spec.ts:1048:1 › steers Grok natively while ordinary messages stay in the Moose queue (1.6s)
+  ✓  73 tests/e2e/workspace.spec.ts:1100:3 › keeps input typed while an existing send is awaiting acknowledgement (2.1s)
+  ✓  74 tests/e2e/workspace.spec.ts:1100:3 › keeps input typed while the first send is awaiting acknowledgement (2.3s)
+  ✓  75 tests/e2e/workspace.spec.ts:1138:1 › Pi steering preserves rejection, accepts receipts without turn IDs and clears pending input on cancel (1.7s)
+  ✓  76 tests/e2e/worktrees.spec.ts:73:1 › isolates agent writes and diff, merges reviewed changes, and safely cleans the managed directory (5.7s)
+  ✓  77 tests/e2e/worktrees.spec.ts:118:1 › keeps two isolated conversations running in parallel in the same project (3.8s)
+  ✓  78 tests/e2e/worktrees.spec.ts:152:3 › recovers merge conflicts after desktop restart and can complete through the UI (7.2s)
+  ✓  79 tests/e2e/worktrees.spec.ts:152:3 › recovers merge conflicts after desktop restart and can abort through the UI (7.0s)
+
+
+  1) tests/e2e/background.spec.ts:417:1 › moves the same terminal between window, bottom and right without stopping its shell 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Object {
+        "font": "14px",
+        "pickerFont": "14px",
+    -   "pickerHeight": 31.981861114501953,
+    +   "pickerHeight": 32,
+      }
+
+      443 |   const dialogMetrics = await headerMetrics();
+      444 |   await change('Bottom');
+    > 445 |   expect(await headerMetrics()).toEqual(dialogMetrics);
+          |                                 ^
+      446 |   await expect(page.getByRole('dialog')).toHaveCount(0);
+      447 |   await expect(page.locator('.workspace-stage')).toHaveAttribute('data-dock', 'bottom');
+      448 |   await page.locator('#composer').fill('Draft beside terminal');
+        at <HOME>/Projects/moose/tests/e2e/background.spec.ts:445:33
+
+    Error Context: test-results/background-moves-the-same--78652--without-stopping-its-shell/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/background-moves-the-same--78652--without-stopping-its-shell/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results/background-moves-the-same--78652--without-stopping-its-shell/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) tests/e2e/experience.spec.ts:1038:3 › desktop keeps rapid auxiliary panel switches bounded and preserves focus, file tabs and draft 
+
+    Error: page.evaluate: TypeError: Cannot read properties of null (reading 'getBoundingClientRect')
+        at eval (eval at evaluate (:311:30), <anonymous>:18:36)
+        at async <anonymous>:337:30
+        at eval (eval at evaluate (:311:30), <anonymous>:18:36)
+        at async <anonymous>:337:30
+        at <HOME>/Projects/moose/tests/e2e/experience.spec.ts:1070:34
+
+    Error Context: test-results/experience-desktop-keeps-r-30aeb-s-focus-file-tabs-and-draft/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/experience-desktop-keeps-r-30aeb-s-focus-file-tabs-and-draft/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results/experience-desktop-keeps-r-30aeb-s-focus-file-tabs-and-draft/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) tests/e2e/experience.spec.ts:1038:3 › Web keeps rapid auxiliary panel switches bounded and preserves focus, file tabs and draft 
+
+    Error: page.evaluate: TypeError: Cannot read properties of null (reading 'getBoundingClientRect')
+        at eval (eval at evaluate (:311:30), <anonymous>:18:36)
+        at async <anonymous>:337:30
+        at eval (eval at evaluate (:311:30), <anonymous>:18:36)
+        at async <anonymous>:337:30
+        at <HOME>/Projects/moose/tests/e2e/experience.spec.ts:1070:34
+
+    Error Context: test-results/experience-Web-keeps-rapid-52dda-s-focus-file-tabs-and-draft/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/experience-Web-keeps-rapid-52dda-s-focus-file-tabs-and-draft/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results/experience-Web-keeps-rapid-52dda-s-focus-file-tabs-and-draft/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) tests/e2e/workspace.spec.ts:439:1 › project hover stays uniform and its compose button targets that project 
+
+    Error: expect(locator).toHaveCSS(expected) failed
+
+    Locator:  getByRole('menuitem', { name: 'Delete project', exact: true })
+    Expected: "nowrap"
+    Received: "normal"
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCSS" getByRole('menuitem', { name: 'Delete project', exact: true }) with timeout 5000ms
+      - waiting for getByRole('menuitem', { name: 'Delete project', exact: true })
+        14 × locator resolved to <div tabindex="-1" role="menuitem" id="base-ui-_r_26_" data-variant="destructive" data-slot="dropdown-menu-item" class="group/dropdown-menu-item relative flex cursor-default items-center gap-1.5 rounded-md px-1.5 py-1 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-inset:pl-7 data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 data-[variant=destructive]:focu…>…</div>
+           - unexpected value "normal"
+
+
+      472 |   await menu.click();
+      473 |   await expect(page.getByRole('menuitem', { name: 'Delete project', exact: true })).toBeVisible();
+    > 474 |   await expect(page.getByRole('menuitem', { name: 'Delete project', exact: true })).toHaveCSS(
+          |                                                                                     ^
+      475 |     'white-space',
+      476 |     'nowrap',
+      477 |   );
+        at <HOME>/Projects/moose/tests/e2e/workspace.spec.ts:474:85
+
+    Error Context: test-results/workspace-project-hover-st-7c1f9-button-targets-that-project/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/workspace-project-hover-st-7c1f9-button-targets-that-project/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results/workspace-project-hover-st-7c1f9-button-targets-that-project/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) tests/e2e/workspace.spec.ts:994:1 › keeps model picker height stable across providers and empty searches with a scrolling list 
+
+    Error: expect(received).toBeCloseTo(expected, precision)
+
+    Expected: 314.72021484375
+    Received: 320
+
+    Expected precision:    0
+    Expected difference: < 0.5
+    Received difference:   5.27978515625
+
+      1017 |       .getByRole('button', { name: provider, exact: true })
+      1018 |       .click();
+    > 1019 |     expect(await popup.evaluate((el) => el.getBoundingClientRect().height)).toBeCloseTo(height, 0);
+           |                                                                             ^
+      1020 |   }
+      1021 |   await popup.getByRole('textbox').fill('no such model');
+      1022 |   await expect(popup.locator('.model-option')).toHaveCount(0);
+        at <HOME>/Projects/moose/tests/e2e/workspace.spec.ts:1019:77
+
+    Error Context: test-results/workspace-keeps-model-pick-69994-rches-with-a-scrolling-list/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/workspace-keeps-model-pick-69994-rches-with-a-scrolling-list/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results/workspace-keeps-model-pick-69994-rches-with-a-scrolling-list/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5 failed
+    tests/e2e/background.spec.ts:417:1 › moves the same terminal between window, bottom and right without stopping its shell 
+    tests/e2e/experience.spec.ts:1038:3 › desktop keeps rapid auxiliary panel switches bounded and preserves focus, file tabs and draft 
+    tests/e2e/experience.spec.ts:1038:3 › Web keeps rapid auxiliary panel switches bounded and preserves focus, file tabs and draft 
+    tests/e2e/workspace.spec.ts:439:1 › project hover stays uniform and its compose button targets that project 
+    tests/e2e/workspace.spec.ts:994:1 › keeps model picker height stable across providers and empty searches with a scrolling list 
+  74 passed (5.1m)
+node:internal/errors:999
+  const err = new Error(message);
+              ^
+
+Error: Command failed: pnpm exec playwright test
+    at genericNodeError (node:internal/errors:999:15)
+    at wrappedFn (node:internal/errors:544:14)
+    at checkExecSyncError (node:child_process:943:11)
+    at execFileSync (node:child_process:979:15)
+    at run (file://<HOME>/Projects/moose/scripts/release.mjs:9:3)
+    at pnpm (file://<HOME>/Projects/moose/scripts/release.mjs:11:27)
+    at file://<HOME>/Projects/moose/scripts/release.mjs:26:3 {
+  status: 1,
+  signal: null,
+  output: [ null, null, null ],
+  pid: 40960,
+  stdout: null,
+  stderr: null
+}
+
+Node.js v26.10.0
+[ELIFECYCLE] Command failed with exit code 1.
