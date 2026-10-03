@@ -4,10 +4,6 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 import './app.css';
-import { AppLoader } from './components/app-loader';
-const WebHost = React.lazy(() =>
-  import('./components/web-host').then((m) => ({ default: m.WebHost })),
-);
 // Restore typed failures on the renderer side: contextBridge strips custom Error fields.
 if (window.mooseBridge) {
   const bridge = window.mooseBridge;
@@ -21,14 +17,32 @@ if (window.mooseBridge) {
     },
   };
 }
-createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    {window.moose ? (
-      <AppLoader />
-    ) : (
-      <React.Suspense fallback={null}>
-        <WebHost />
-      </React.Suspense>
-    )}
-  </React.StrictMode>,
+const root = createRoot(document.getElementById('root')!);
+const zh = navigator.language.startsWith('zh');
+root.render(
+  <div className="boot-screen" role="status">
+    {zh ? '正在打开工作区…' : 'Opening your workspace…'}
+  </div>,
 );
+// Resolve the host before mounting: a desktop launch must not wait for a Suspense fallback.
+void (
+  window.moose
+    ? import('./app').then((module) => module.default)
+    : import('./components/web-host').then((module) => module.WebHost)
+)
+  .then((Host) =>
+    root.render(
+      <React.StrictMode>
+        <Host />
+      </React.StrictMode>,
+    ),
+  )
+  .catch(() => {
+    root.render(
+      <div className="boot-screen" role="alert">
+        <p>{zh ? '界面加载失败，请重新加载。' : 'Unable to load the workspace. Please reload.'}</p>
+        <button onClick={() => location.reload()}>{zh ? '重新加载' : 'Reload'}</button>
+      </div>,
+    );
+    window.moose?.ready();
+  });
