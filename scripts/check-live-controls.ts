@@ -38,7 +38,7 @@ for (const provider of ['pi', 'opencode'] as const) {
   const path = await discover(provider, '');
   for (const scenario of provider === 'pi' ? ['cancel'] : ['allow', 'reject', 'cancel']) {
     session.nativeId = null;
-    const adapter = createAdapter(provider, path);
+    const adapter = await createAdapter(provider, path);
     let approvals = 0;
     let cancelled = false;
     let settled = false;

@@ -12,7 +12,7 @@ import { Plans } from './plans';
 import { Steering } from './steering';
 import { providerDefinitions } from '../shared/providers';
 import { ProviderRegistry } from './provider-registry';
-import { createAdapter } from './providers/registry';
+import { createAdapter, type AdapterFactory } from './providers/registry';
 import { contextInText } from '../shared/prompt-context';
 import { ContextCatalog } from './context-catalog';
 import { Attachments, agentAttachments } from './attachments';
@@ -52,7 +52,7 @@ export class MooseService {
   constructor(
     readonly store: Store,
     private emit: (event: AppEvent) => void,
-    private adapterFactory = createAdapter,
+    private adapterFactory: AdapterFactory = createAdapter,
   ) {
     this.agents = new ProviderRegistry(store, adapterFactory);
     this.worktrees = new Worktrees(store, {
@@ -556,7 +556,10 @@ export class MooseService {
       let nativeId: string | null = null;
       const lastUser = retained.filter((m) => m.kind === 'user').at(-1);
       if (source.provider === 'codex' && source.nativeId && lastUser?.nativeTurnId) {
-        adapter = this.adapterFactory(source.provider, await this.providerPath(source.provider));
+        adapter = await this.adapterFactory(
+          source.provider,
+          await this.providerPath(source.provider),
+        );
         this.operations.add(adapter);
         if (adapter.fork)
           nativeId = await adapter.fork(source, project.path, lastUser.nativeTurnId);

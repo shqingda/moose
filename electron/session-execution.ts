@@ -3,7 +3,7 @@ import { Store } from './db/store';
 import { providerDefinitions } from '../shared/providers';
 import { fault } from '../shared/errors';
 import { pendingMessage } from './experience-data';
-import { createAdapter } from './providers/registry';
+import { createAdapter, type AdapterFactory } from './providers/registry';
 import { providerError, type AgentAdapter, type AgentEvent } from './providers/types';
 import type { AppEvent, Message, Provider, Session } from '../shared/types';
 import type { TaskNotice } from '../shared/experience';
@@ -43,7 +43,7 @@ export class SessionExecution {
     private worktrees: Worktrees,
     private background: Background,
     private hooks: ExecutionHooks,
-    private adapterFactory = createAdapter,
+    private adapterFactory: AdapterFactory = createAdapter,
   ) {
     for (const item of store.queued()) this.paused.add(item.sessionId);
     this.flushTimer = setInterval(() => this.flush(), 80);
@@ -100,6 +100,12 @@ export class SessionExecution {
           continue;
         }
         if (this.hooks.stopping() || this.hooks.configuring()) break;
+        const adapter = await this.adapterFactory(session.provider, path);
+        // The adapter has not started a process yet, so a skipped run only drops the instance.
+        if (this.hooks.stopping() || this.hooks.configuring()) {
+          void adapter.close();
+          break;
+        }
         const current = this.store.queued(session.id).find((queued) => queued.id === item.id);
         if (
           this.active.has(cwd) ||
@@ -108,12 +114,14 @@ export class SessionExecution {
           !this.store.listSessions().some((s) => s.id === session.id && !s.archived) ||
           this.paused.has(session.id) ||
           !current
-        )
+        ) {
+          void adapter.close();
           continue;
+        }
         const run: Active = {
           id: randomUUID(),
           session,
-          adapter: this.adapterFactory(session.provider, path),
+          adapter,
           seq: 1,
           cancelled: false,
           rows: new Map(),

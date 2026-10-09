@@ -1,7 +1,7 @@
 import { Store } from './db/store';
 import { MooseError, fault } from '../shared/errors';
 import { providerDefinitions, providerIds } from '../shared/providers';
-import { createAdapter } from './providers/registry';
+import { createAdapter, type AdapterFactory } from './providers/registry';
 import { discover, cliVersion } from './providers/process';
 import { providerError, type AgentAdapter } from './providers/types';
 import type { Provider, ProviderInfo, Requests } from '../shared/types';
@@ -20,7 +20,7 @@ export class ProviderRegistry {
   private probing = new Set<AgentAdapter>();
   constructor(
     private store: Store,
-    private adapterFactory = createAdapter,
+    private adapterFactory: AdapterFactory = createAdapter,
   ) {}
 
   invalidate() {
@@ -71,8 +71,9 @@ export class ProviderRegistry {
             info.available = true;
             info.version = await cliVersion(info.path);
             if (this.stopping || !info.enabled) return info;
-            adapter = this.adapterFactory(provider, info.path);
+            adapter = await this.adapterFactory(provider, info.path);
             this.probing.add(adapter);
+            if (this.stopping) return info;
             Object.assign(info, await adapter.probe());
             info.taskModes ??= [...providerDefinitions[provider].taskModes];
             info.steering ??= typeof adapter.steer === 'function';
@@ -112,9 +113,10 @@ export class ProviderRegistry {
           const revision = this.providerRevision;
           const path = await this.path(a.provider);
           if (this.stopping) throw new Error('Moose is shutting down');
-          const adapter = this.adapterFactory(a.provider, path);
+          const adapter = await this.adapterFactory(a.provider, path);
           this.probing.add(adapter);
           try {
+            if (this.stopping) throw new Error('Moose is shutting down');
             const value = (await adapter.usage?.()) || { context: null, limits: [] };
             if (revision === this.providerRevision)
               this.usageCache.set(a.provider, { at: Date.now(), value });
