@@ -94,7 +94,7 @@ MOOSE_TEST_BACKGROUND=0 pnpm exec tsx scripts/package-smoke.ts
 
 自动化主要使用隔离数据库、测试 CLI 和真实本地 Shell，不调用真实模型。协议夹具通过不等于模型能力已实测；真实 CLI 探测与真实模型验收分别记录，不混写。
 
-`pnpm perf:measure` 使用临时空工作区，每个场景先隐藏启动一次建库，再连续启动三次（`--runs` 可改），每次停止共享服务。默认场景 `legacy` 沿用 0.23.0 条件：隐藏窗口、磁盘热缓存、测量前关掉四家底座；`readyMs`、`residentMiB`（桌面与服务进程树 RSS 加总）和 `jsHeapMiB` 的口径不变，可与 0.23.0 样本对照。`--scenario visible`、`cold`、`providers` 各只改一项条件，`real` 同时用可见窗口、冷缓存和开启的底座，`all` 全跑。冷缓存每次启动前用 `sudo purge`（Linux 为 `drop_caches`）清缓存，先在同一终端执行 `sudo -v`。
+`pnpm perf:measure` 使用临时空工作区，每个场景先隐藏启动一次建库，再连续启动三次（`--runs` 可改），每次停止共享服务。默认场景 `legacy` 沿用 0.23.0 条件：隐藏窗口、磁盘热缓存、测量前关掉四家底座；`readyMs`、`residentMiB`（桌面与服务进程树 RSS 加总）和 `jsHeapMiB` 的口径不变，可与 0.23.0 样本对照。`--scenario visible`、`cold`、`providers` 各只改一项条件，`real` 同时用可见窗口、冷缓存和开启的底座，`first` 每次换全新数据目录（没有数据库、底座探测缓存和编译缓存）测真正的首次启动，`all` 全跑。`renderer/providersShown` 是底座列表第一次出现的时间，`main/didProbeProviders` 是本轮探测返回、「检查中」结束的时间。冷缓存每次启动前用 `sudo purge`（Linux 为 `drop_caches`）清缓存，先在同一终端执行 `sudo -v`。
 
 每次样本另记：按进程角色（主进程、GPU、渲染、utility、服务及其子进程）拆开的 RSS，macOS 物理足迹（`vmmap`，失败时用 `top`）或 Linux PSS/USS；以及从 `electron.launch()` 起算的分相时间：主进程 `start`、`willFinishLaunching`、`ready`、`willLoadURL`/`didLoadURL`、`readyToShow`、`rendererReady`、`revealable`/`shown`，服务 `spawn`、写出 `server.lock`（服务包求值完成）、写出 `connection.json`、主进程察觉就绪，首个 `snapshot` 往返，以及首次底座探测的开始与结束。内存在就绪 1.5 秒后、且首次探测返回 1.5 秒后采样。输出带提交、主机和每个场景的条件；`summary` 是中位数，样本全部保留。RSS 含共享页，按角色加总仍不是独占内存；不同条件、不同机器的绝对值不能直接比较。`--unpackaged` 用 `electron .` 跑当前构建，`--executable` 指定其他安装包。解释与历史结果见[项目追问资料](interview/reference/06-interview-expression.md#electron-启动慢包体积大内存高你怎么优化)。
 
