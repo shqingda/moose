@@ -1,5 +1,7 @@
 # Moose icon refinement
 
+This file records the 0.19.1 green-icon prompt. It is not the icon shipped today. Current masters are listed in [moose-icon-skeuomorphic.md](moose-icon-skeuomorphic.md).
+
 Created with the built-in imagegen tool, using `moose-icon-skeuomorphic.png` as the edit target. Output: `moose-icon-skeuomorphic-v2.png`.
 
 ## Final prompt

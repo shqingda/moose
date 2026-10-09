@@ -4,9 +4,9 @@
 
 ## 当前版本
 
-0.23.1 修复终端乱码与复制权限错误，优化 Markdown 更新连续性、无关重绘和键盘导航。见[本版说明](releases/0.23.1.md)、[发布验收](releases/0.23.1-validation.md)。正式下载以 GitHub Releases 和公网安装器为准；验收中的源码不代表已发布。
+源码版本是 **0.23.1**。这一版改的是终端和阅读，没有扩大代理协议。做了什么、怎么验收，见[本版说明](releases/0.23.1.md)和[发布验收](releases/0.23.1-validation.md)。正式下载以 GitHub Releases 和公网安装器为准。文档里的版本号跟 `package.json` 走；只改文档不会替换已经发布的安装包和 Git tag。
 
-桌面用户从应用菜单检查更新并下载替换；独立 Web 用户执行 `moose update`，任务结束后重启后台。具体步骤分别见[桌面更新](usage.md#更新桌面版)和[Web 更新](web.md#更新独立-web-版)。
+桌面用户从应用菜单检查更新并下载替换；独立 Web 用户执行 `moose update`，任务结束后重启后台。步骤分别见[桌面更新](usage.md#更新桌面版)和[Web 更新](web.md#更新独立-web-版)。
 
 ## 按任务查阅
 
@@ -17,9 +17,7 @@
 | 进程分工、消息执行与数据存储 | [技术架构](architecture.md) |
 | 本地开发、构建与发布 | [开发与打包](development.md) |
 | 应用图标、透明 logo 和 Web favicon | [图标与品牌资源](development.md#图标与品牌资源) |
-| 当前版本的双端准备、性能与发布验证 | [0.23.1 发布验收](releases/0.23.1-validation.md) |
-| 功能保留、体积对照、本轮验收状态 | [0.22.0 验收记录](releases/0.22.0-validation.md) |
-| 发布后原始证据、逐项断言、截图与人工验收步骤 | [0.22.0 证据索引](releases/0.22.0-evidence.md) |
+| 当前版本怎么验收、发布时过了哪些检查 | [0.23.1 发布验收](releases/0.23.1-validation.md) |
 | 选择测试、后台验收与验证边界 | [测试与验证](testing.md) |
 | 各代理已经接入哪些能力 | [底座能力与接入边界](providers/native-capabilities.md) |
 | 已完成的阶段和后续范围 | [开发计划](providers/native-capabilities-plan.md) |
@@ -27,8 +25,8 @@
 
 ## 专题与练习
 
-- [Pi 接入细节](providers/pi.md)：自定义 JSONL RPC、完成信号与权限边界。
-- [面试题目](interview/questions.md)与[参考答案](interview/answers/README.md)：保留常见前端与 AI 应用题，按原题号对应；不作为项目已实现能力的证明。
+- [Pi 接入细节](providers/pi.md)：按行 JSON 协议、一轮何时算结束、权限到哪一步。
+- [面试题目](interview/questions.md)与[参考答案](interview/answers/README.md)：常见前端和 AI 应用题，按原题号对应。这些题不能用来证明 Moose 已经做了题里的方案。
 - [React 搜索代码审查练习](interview/react-search-results-code-review.md)。
 - [Agent 与 Skill 追问备忘](interview/agent-skill-interview-retrospective.md)：相关岗位按需阅读，不作为 Moose 的实现说明。
 
@@ -41,7 +39,7 @@
 | 记录 | 内容 |
 | --- | --- |
 | [0.23.0](releases/0.23.0.md)、[性能验收](releases/0.23.0-validation.md) | 上一版的加载和传输改进 |
-| [0.22.1](releases/0.22.1.md)、[0.22.0](releases/0.22.0.md) | 界面重构那一轮；未完成的人工验收仍在 [TODO](TODO-0.22.0.md) |
+| [0.22.1](releases/0.22.1.md)、[0.22.0](releases/0.22.0.md) | 界面重构那一轮。体积和功能对照在[验收记录](releases/0.22.0-validation.md)，原始证据在[证据索引](releases/0.22.0-evidence.md)；没做完的人工项仍在 [TODO](TODO-0.22.0.md) |
 | [阶段验收归档](releases/feature-validation-history.md) | 0.8–0.13 的操作和证据，界面名称可能已变 |
 | [专项验证记录](releases/runtime-validation-history.md) | 共享后台、长历史、配置和搜索的原始测量 |
 | [早期验证记录](releases/validation-history.md) | 2026-09-13 的验收。其中“不导入 CLI 历史”“退出后任务不继续”只对当时的版本成立 |
