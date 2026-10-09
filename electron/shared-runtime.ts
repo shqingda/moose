@@ -2,7 +2,7 @@ import { open } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { MooseError, restoreError, transportError } from '../shared/errors';
 import { readFile, stat } from 'node:fs/promises';
-import { basename } from 'node:path';
+import { basename, dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { AppEvent } from '../shared/types';
 
@@ -132,7 +132,7 @@ export class SharedRuntime {
     )
       throw new MooseError(
         'version',
-        'Background service version changed. Choose Moose → Quit and Stop Background Service, then reopen Moose.',
+        `Background service version changed. Quitting Moose does not stop this service. After active tasks finish, stop it with MOOSE_WEB_DATA_DIR=${JSON.stringify(dirname(this.file))} moose stop, or pnpm runtime:stop with the same variable, then reopen Moose.`,
       );
     if (method === '_saveFile') {
       const { reference, path } = params as { reference: unknown; path: string };

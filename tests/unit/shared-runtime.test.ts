@@ -80,7 +80,11 @@ it('blocks business writes to an older service but permits shutdown and releases
     undefined,
     'new-version',
   );
-  await expect(runtime.request('gitCommit', {})).rejects.toThrow('version changed');
+  await expect(runtime.request('gitCommit', {})).rejects.toThrow(
+    /Background service version changed[\s\S]*Quitting Moose does not stop this service[\s\S]*moose stop[\s\S]*pnpm runtime:stop/,
+  );
+  await expect(runtime.request('gitCommit', {})).rejects.not.toThrow('Quit and Stop');
+  await expect(runtime.request('gitCommit', {})).rejects.toThrow(directory);
   expect(methods).toEqual([]);
   await runtime.stop();
   expect(methods).toEqual(['webStopService', 'webDisconnect']);
