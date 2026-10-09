@@ -37,10 +37,7 @@ app.setName(isDev ? 'Moose Dev' : 'Moose');
 if (process.env.MOOSE_DATA_DIR) app.setPath('userData', process.env.MOOSE_DATA_DIR);
 else if (isDev) app.setPath('userData', join(app.getPath('appData'), 'Moose Dev'));
 protocol.registerSchemesAsPrivileged([
-  {
-    scheme: 'moose',
-    privileges: { standard: true, secure: true, supportFetchAPI: true },
-  },
+  { scheme: 'moose', privileges: { standard: true, secure: true, supportFetchAPI: true } },
 ]);
 let window: BrowserWindow | null = null;
 let nativeFrameReady = false;
