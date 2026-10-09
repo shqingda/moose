@@ -42,6 +42,9 @@ export function desktopRuntime(entry: string, data: string, emit: (event: AppEve
         MOOSE_WEB_PORT: '0',
         // The desktop's automatic service is strictly local.
         MOOSE_WEB_PUBLIC_ORIGIN: '',
+        // Reuse V8 bytecode for the service bundle across starts; web-server drops it before spawning CLIs.
+        NODE_COMPILE_CACHE: join(data, 'compile-cache'),
+        MOOSE_COMPILE_CACHE: '1',
       },
     });
     child.on('error', (error) => {

@@ -15,6 +15,10 @@ import { MooseService } from './service';
 import type { AppEvent } from '../shared/types';
 import { version } from '../package.json';
 
+if (process.env.MOOSE_COMPILE_CACHE) {
+  delete process.env.NODE_COMPILE_CACHE;
+  delete process.env.MOOSE_COMPILE_CACHE;
+}
 const root = resolve(fileURLToPath(new URL(/* @vite-ignore */ '.', import.meta.url)), '../../dist');
 const data = resolve(process.env.MOOSE_WEB_DATA_DIR || join(homedir(), '.moose/web'));
 const publicOrigin = process.env.MOOSE_WEB_PUBLIC_ORIGIN || '';
