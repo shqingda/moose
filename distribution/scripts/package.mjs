@@ -21,7 +21,12 @@ await mkdir(join(app, 'runtime/bin'), { recursive: true });
 for (const file of ['bin/node', 'LICENSE']) {
   await cp(join(stage, 'node-v24.21.0-darwin-arm64', file), join(app, 'runtime', file));
 }
-for (const dir of ['dist', 'dist-electron/web-server', 'dist-electron/pty-host']) {
+for (const dir of [
+  'dist',
+  'dist-electron/web-server',
+  'dist-electron/chunks',
+  'dist-electron/pty-host',
+]) {
   await cp(join(root, dir), join(app, dir), {
     recursive: true,
     filter: (path) => !path.endsWith('.map'),
