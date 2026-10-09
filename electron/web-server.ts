@@ -285,6 +285,7 @@ try {
     flag: 'wx',
   });
   await rename(connectionTemp, connectionFile);
+  service.warmProviders();
   console.log(`Desktop connection: ${connectionFile}`);
   console.log(`Moose Web: ${origin}/#token=${secret}`);
   console.log(`Moose Web (localhost): ${localhostOrigin}/#token=${secret}`);

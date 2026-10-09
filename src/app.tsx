@@ -231,32 +231,19 @@ function Workspace({
     }
   }, [setError]);
   useEffect(() => {
-    // CLI 探测会占用后台与 CPU；首帧先用后台已有的上一轮结果，空闲后再刷新。
-    let probed = false,
-      timer: ReturnType<typeof setTimeout> | undefined,
-      idle: number | undefined;
+    if (providers.length && !performance.getEntriesByName('moose/renderer/providersShown').length)
+      performance.mark('moose/renderer/providersShown');
+  }, [providers]);
+  useEffect(() => {
+    // 先显示上一轮探测结果，同时立即刷新；刷新结果总是覆盖缓存。
+    let probed = false;
     void window.moose.request('providers', { cached: true }).then(
       (info) => {
         if (!probed && info.length) setProviders(info);
       },
       () => undefined,
     );
-    const probe = () => {
-      probed = true;
-      void connect();
-    };
-    const frame = requestAnimationFrame(() => {
-      timer = setTimeout(() => {
-        if (typeof requestIdleCallback === 'function')
-          idle = requestIdleCallback(probe, { timeout: 2000 });
-        else probe();
-      }, 500);
-    });
-    return () => {
-      cancelAnimationFrame(frame);
-      clearTimeout(timer);
-      if (idle !== undefined) cancelIdleCallback(idle);
-    };
+    void connect().finally(() => (probed = true));
   }, [connect]);
   useEffect(() => {
     if (selected) localStorage.setItem('moose.selected', selected);

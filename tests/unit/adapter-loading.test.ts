@@ -1,5 +1,5 @@
 import { afterEach, expect, it } from 'vitest';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { chmodSync, copyFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { Store } from '../../electron/db/store';
@@ -96,33 +96,69 @@ it('probes all four providers through lazily loaded adapters with unchanged resu
   }
 });
 
-it('reads cached providers without probing and matches the last refresh', async () => {
+it('shows the persisted probe on the next start and lets the fresh probe correct it', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'moose-provider-cache-'));
-  const store = new Store(join(dir, 'db.sqlite'));
   cleanups.push(() => rmSync(dir, { recursive: true, force: true }));
-  cleanups.push(() => store.close());
-  store.setSettings({
+  const opencode = join(dir, 'opencode.mjs');
+  copyFileSync(fixtures.opencode.path, opencode);
+  chmodSync(opencode, 0o755);
+  const database = join(dir, 'db.sqlite');
+  let created = 0;
+  const start = () => {
+    const store = new Store(database);
+    const registry = new ProviderRegistry(store, (provider, path) => {
+      created++;
+      return createAdapter(provider, path);
+    });
+    cleanups.push(() => store.close());
+    cleanups.push(() => registry.close());
+    return { store, registry };
+  };
+  const first = start();
+  first.store.setSettings({
     codexPath: fixtures.codex.path,
     grokPath: fixtures.grok.path,
     piPath: fixtures.pi.path,
-    opencodePath: fixtures.opencode.path,
+    opencodePath: opencode,
   });
-  let created = 0;
-  const registry = new ProviderRegistry(store, (provider, path) => {
-    created++;
-    return createAdapter(provider, path);
-  });
-  cleanups.push(() => registry.close());
-  expect(registry.cachedProviders()).toEqual([]);
+  expect(first.registry.cachedProviders()).toEqual([]);
   expect(created).toBe(0);
-  const refreshed = await registry.providers(true);
-  const probes = created;
-  expect(registry.cachedProviders()).toEqual(refreshed);
-  expect(await registry.providers()).toEqual(refreshed);
-  expect(created).toBe(probes);
-  registry.invalidate();
-  expect(registry.cachedProviders()).toEqual([]);
-  expect(created).toBe(probes);
+  first.registry.warmUp();
+  const refreshed = await first.registry.providers(true);
+  expect(created).toBe(providers.length);
+  expect(refreshed.map((info) => info.connected)).toEqual(providers.map(() => true));
+  expect(first.registry.cachedProviders()).toEqual(refreshed);
+
+  // A restarted service shows the last results without starting any CLI.
+  const second = start();
+  expect(second.registry.cachedProviders()).toEqual(refreshed);
+  expect(created).toBe(providers.length);
+  // Changing one provider's configuration drops only that provider's entry.
+  second.store.setSettings({ piEnabled: false });
+  second.registry.invalidate();
+  expect(second.registry.cachedProviders().map((info) => info.provider)).toEqual([
+    'codex',
+    'grok',
+    'opencode',
+  ]);
+  // A removed CLI is never shown from the cache, and the fresh probe reports it.
+  rmSync(opencode);
+  expect(second.registry.cachedProviders().map((info) => info.provider)).toEqual(['codex', 'grok']);
+  const corrected = await second.registry.providers(true);
+  expect(corrected.find((info) => info.provider === 'opencode')).toMatchObject({
+    connected: false,
+  });
+  expect(corrected.find((info) => info.provider === 'pi')).toMatchObject({
+    enabled: false,
+    connected: false,
+  });
+  expect(second.registry.cachedProviders()).toEqual(corrected);
+  const third = start();
+  expect(third.registry.cachedProviders().map((info) => info.provider)).toEqual([
+    'codex',
+    'grok',
+    'pi',
+  ]);
 });
 
 it.each(providers)('cancels a live %s prompt from a lazily loaded adapter', async (provider) => {

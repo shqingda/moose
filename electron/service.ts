@@ -231,6 +231,10 @@ export class MooseService {
   providers(refresh = false): Promise<ProviderInfo[]> {
     return this.agents.providers(refresh);
   }
+  /** Hosts call this once they accept requests, so the first window joins a probe already underway. */
+  warmProviders() {
+    this.agents.warmUp();
+  }
   /** 后台业务入口：校验 IPC 参数后分发项目、消息、审批、用量和 Git 操作。 */
   async handle(method: string, input: unknown, clientId = 'local'): Promise<unknown> {
     if (this.stopping) throw new Error('Moose is shutting down');

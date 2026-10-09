@@ -38,3 +38,4 @@ port.on('message', async ({ data: request }) => {
   }
 });
 port.postMessage({ ready: true });
+service.warmProviders();
