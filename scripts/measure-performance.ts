@@ -21,6 +21,8 @@ interface Conditions {
   window: 'hidden' | 'visible';
   diskCache: 'warm' | 'cold';
   providers: 'disabled' | 'enabled';
+  /** `fresh` launches every run on a new data directory: a true first run with nothing cached. */
+  data?: 'fresh';
 }
 const scenarios: Record<string, Conditions> = {
   legacy: { window: 'hidden', diskCache: 'warm', providers: 'disabled' },
@@ -28,6 +30,7 @@ const scenarios: Record<string, Conditions> = {
   cold: { window: 'hidden', diskCache: 'cold', providers: 'disabled' },
   providers: { window: 'hidden', diskCache: 'warm', providers: 'enabled' },
   real: { window: 'visible', diskCache: 'cold', providers: 'enabled' },
+  first: { window: 'hidden', diskCache: 'warm', providers: 'enabled', data: 'fresh' },
 };
 const { values } = parseArgs({
   options: {
@@ -51,8 +54,8 @@ const executablePath = resolve(
       : 'release/linux-unpacked/moose'),
 );
 const build = values.unpackaged ? 'unpackaged' : 'packaged';
-const scenarioId = ({ window, diskCache, providers }: Conditions) =>
-  `${build}-shared-empty-${window}-${diskCache}-cache${providers === 'enabled' ? '-providers-enabled' : ''}-service-restarted`;
+const scenarioId = ({ window, diskCache, providers, data }: Conditions) =>
+  `${build}-shared-${data === 'fresh' ? 'first-run' : 'empty'}-${window}-${diskCache}-cache${providers === 'enabled' ? '-providers-enabled' : ''}-service-restarted`;
 
 function launcher(dir: string) {
   return (window: Conditions['window']) => {
@@ -163,8 +166,9 @@ async function phases(app: ElectronApplication, page: Page, dir: string, launche
 const providerSummary = (page: Page) =>
   page.evaluate(async () =>
     (await window.moose.request('providers', {})).map(
-      ({ provider, enabled, available, connected, version, models }) => ({
+      ({ provider, enabled, available, connected, version, models, error }) => ({
         provider,
+        ...(error ? { error } : {}),
         enabled,
         available,
         connected,
@@ -275,6 +279,30 @@ for (const name of selected) {
   const dir = await mkdtemp(join(tmpdir(), 'moose-perf-'));
   const launch = launcher(dir);
   try {
+    if (conditions.data === 'fresh') {
+      const samples: Sample[] = [];
+      for (let index = 0; index < runs; index++) {
+        const fresh = await mkdtemp(join(tmpdir(), 'moose-perf-first-'));
+        try {
+          samples.push(await measure(() => launcher(fresh)(conditions.window), fresh, conditions));
+        } finally {
+          await rm(fresh, { recursive: true, force: true });
+        }
+      }
+      results.push({
+        name,
+        scenario: scenarioId(conditions),
+        conditions: {
+          ...conditions,
+          data: 'new empty data directory per run: no database, provider cache or compile cache',
+          runtime: 'shared ELECTRON_RUN_AS_NODE service, stopped after every launch',
+          diskCacheMethod: 'none; earlier launches leave the application files cached',
+        },
+        summary: summarize(samples),
+        samples,
+      });
+      continue;
+    }
     const setup = await launch('hidden');
     try {
       const page = await setup.firstWindow();
