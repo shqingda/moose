@@ -22,13 +22,28 @@ Moose 不安装或捆绑 Pi，也不复制其凭据。0.22.0 已重新核对 Pi 
 
 ## 调用脉络
 
-模型选择 → 受校验的宿主请求（桌面 IPC／Web HTTP）→ MooseService 排队 → createAdapter → PiAdapter → `pi --mode rpc`。
+一次 Pi 任务按这个顺序走。页面不解析 Pi 的协议，时间线上也不会出现 Pi 专用的消息类型。
 
-Pi 返回 JSONL 命令响应和事件。`piCodec` 只转换消息信封，共用原有传输层的请求关联、超时、缓冲限制和进程退出清理。`normalizePi` 将文本、思考和工具事件转成统一 AgentEvent；renderer 无需增加 Pi 专用时间线。
+```mermaid
+sequenceDiagram
+  participant Page as 页面
+  participant Svc as MooseService
+  participant Adapter as PiAdapter
+  participant CLI as pi --mode rpc
+  Page->>Svc: 选好模型和“完全访问”后发送
+  Svc->>Svc: 校验参数，先写入队列
+  Svc->>Adapter: 目录空闲后 createAdapter
+  Adapter->>CLI: stdio 上的 JSONL
+  CLI-->>Adapter: 命令响应和事件
+  Adapter-->>Svc: 统一的 AgentEvent
+```
 
-每个文本块的增量和完成快照使用同一个 key，避免重复显示。等待 `agent_settled` 而非 `agent_end`，因为后者之后可能仍有重试或压缩。
+- `piCodec` 只转换消息信封。请求对应、超时、缓冲上限和进程退出清理用的是公共传输层。
+- `normalizePi` 把文本、思考和工具事件转成统一的 AgentEvent。
+- 同一段文字的增量和最后的完整快照用同一个 key，避免回答显示两遍。
+- 一轮结束要等 `agent_settled`。`agent_end` 之后还可能重试或压缩，不能拿它当结束。
 
-## 精简的内容
+## 代理层收拢在哪里
 
 - `shared/providers.ts`：集中代理 ID、设置字段、安装指南和任务模式；类型、参数校验、服务商设置、命令菜单和探测脚本复用。
 - `electron/providers/registry.ts`：集中实例创建，移除 Service 和脚本中的代理二选一分支。

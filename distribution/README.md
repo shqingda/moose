@@ -1,10 +1,8 @@
 # Moose Web distribution
 
-Public installer: `https://moose.shqingda.workers.dev/install.sh`.
+本页是安装包怎么构建、发布、发布失败后怎么核对，不是给最终用户的操作步骤。用户侧见[Web 使用说明](../docs/web.md)，联合发布的完整顺序见[开发与打包](../docs/development.md#发布流程)。正文保持英文，方便和脚本输出对照。流程按 **0.23.1** 描述。
 
-This guide covers distribution operations for Moose 0.22.1. End-user steps are in
-the [Web guide](../docs/web.md); the complete release workflow is maintained in
-[Development and packaging](../docs/development.md#发布流程).
+Public installer: `https://moose.shqingda.workers.dev/install.sh`.
 
 The landing page in `distribution/site` uses pnpm, Vite, TanStack Start, and
 Tailwind CSS. `pnpm site:build` prerenders it and copies the client assets into

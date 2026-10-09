@@ -1,8 +1,30 @@
 # Moose Web
 
-Web 入口复用桌面版的 React 界面和业务服务，在浏览器里管理 AI 编程代理、项目、审批与终端。安装版从 0.16.0 起自动启动本机共享后台，桌面连接本机后台服务。
+浏览器里用的是同一套 React 界面和业务服务。本页适用于 0.23.1，日常操作见[使用指南](usage.md)。
 
-本页适用于 0.23.1。先区分入口：命令行独立安装与桌面自动启动的后台默认使用不同的数据目录，不会自动合并历史。
+先选入口。三条路的数据不会自动合并，关浏览器页面也不会把任务停掉。
+
+```mermaid
+flowchart LR
+  subgraph install ["命令行独立安装"]
+    Curl[curl 安装脚本] --> MooseCmd[moose 命令]
+    MooseCmd --> WebData["~/.moose/web"]
+  end
+  subgraph desktop ["桌面安装版"]
+    App[打开 Moose.app] --> Shared[本机共享后台]
+    Shared --> DeskData["~/Library/Application Support/Moose"]
+    Page[浏览器] --> Shared
+  end
+  subgraph source ["改源码"]
+    Pnpm[pnpm web] --> SrcData["默认仍是 ~/.moose/web"]
+  end
+```
+
+| 你想做的事 | 看哪一节 | 数据在哪 | 怎样才算停掉任务 |
+| --- | --- | --- | --- |
+| 不装桌面，只要浏览器 | [独立安装](#独立-web-安装) | `~/.moose/web` | `moose stop` |
+| 桌面已经在用，想用浏览器看同一份会话 | [连接桌面工作区](#桌面安装版在浏览器中打开同一工作区) | 桌面数据目录 | 等任务结束，再用该节的命令停止后台 |
+| 改 Moose 源码 | [从源码启动](#从源码启动独立-web-工作区) | 默认 `~/.moose/web`。不要指到桌面数据目录 | 终端里 Ctrl+C |
 
 ## 独立 Web 安装
 
@@ -138,13 +160,36 @@ MOOSE_SHARED_RUNTIME_FILE="$HOME/.moose/web/connection.json" pnpm dev
 
 ## 网页为什么能打开系统弹窗、发现 CLI
 
-浏览器只负责显示界面和发送 HTTP 请求。`pnpm web` 启动的是你电脑上的本机服务，运行时使用 Electron 自带的 Node，但不会打开桌面窗口。这个服务以启动它的用户身份访问文件、启动进程；浏览器本身没有获得这些权限。
+浏览器只负责显示界面和发 HTTP 请求。`pnpm web` 在你这台电脑上启动服务：用的是 Electron 自带的 Node，不打开桌面窗口。文件和进程权限属于启动服务的那个用户，不属于浏览器。
 
-打开项目的调用链：浏览器发送 `POST /api/request`，方法为 `webPickDirectory`；服务验证登录 cookie 和来源后，执行 `/usr/bin/osascript`。AppleScript 的 `choose folder` 显示 macOS 系统目录选择器，`POSIX path of selectedFolder` 将路径写到标准输出。服务读取路径、通过 HTTP 返回给网页；网页再调用 `webAddProject` 注册项目。取消不创建项目，系统选择失败显示错误，不自动追加另一层选择弹窗。它返回宿主机的绝对路径，与浏览器 `showDirectoryPicker()` 返回目录句柄不同；弹窗显示在运行服务的 Mac 上。实现参考 [DeepSeek Harness 的原生选择器](https://github.com/deepseek-ai/deepseek-harness/blob/ddefc45fbc7f8e46dd73185e68295696d1297887/packages/host/directory-picker-native/src/native-picker.ts)。
+打开项目时，系统文件夹窗口出现在**跑着服务的那台 Mac** 上，返回的是这台机器的绝对路径。这和浏览器的 `showDirectoryPicker()` 不一样，后者给的是目录句柄，不是路径。
 
-发现 CLI 的调用链：网页请求 `providers` → MooseService → `discover()`。服务按设置中的显式路径，或当前进程 PATH、登录 shell PATH 及常见安装目录寻找可执行文件，运行 `--version`，再由相应适配器探测协议和模型列表。找到文件、可启动、协议握手成功是不同状态，不等同于所有模型均已登录或可以调用。执行任务时，也是服务启动 CLI 子进程，浏览器接收结果。
+```mermaid
+sequenceDiagram
+  participant Page as 页面
+  participant Svc as 本机服务
+  participant OS as macOS
+  Page->>Svc: POST /api/request，方法 webPickDirectory
+  Svc->>Svc: 核对登录 cookie 和来源
+  Svc->>OS: /usr/bin/osascript，choose folder
+  OS-->>Svc: POSIX path of selectedFolder
+  Svc-->>Page: 绝对路径
+  Page->>Svc: webAddProject
+```
 
-桌面版使用 Electron IPC 连接界面和本机业务服务，Web 版使用 HTTP 请求与 SSE 事件流；发现 CLI 和执行任务共用业务代码。若未来将服务部署到另一台机器，发现的将是那台机器上的 CLI，系统弹窗也属于那台机器。当前版本默认只监听本机回环地址。
+取消不创建项目。系统选择失败就显示错误，不会再弹第二层选择器。实现参考 [DeepSeek Harness 的原生选择器](https://github.com/deepseek-ai/deepseek-harness/blob/ddefc45fbc7f8e46dd73185e68295696d1297887/packages/host/directory-picker-native/src/native-picker.ts)。
+
+发现 CLI 走的是 `providers` → MooseService → `discover()`。服务先看设置里填的路径，没有再查当前进程 PATH、登录 shell 的 PATH 和常见安装目录，然后运行 `--version`，由对应适配器探测协议和模型列表。
+
+| 状态 | 只说明 |
+| --- | --- |
+| 找到文件 | 这个路径上有可执行文件 |
+| 能启动 | `--version` 跑起来了 |
+| 握手成功 | 协议和模型列表读到了 |
+
+这三步都通过，仍不等于每个模型都已登录、都能调用。真正执行任务时，也是服务去启动 CLI，浏览器只接收结果。
+
+桌面用 Electron IPC，Web 用 HTTP 和 SSE，发现 CLI 和执行任务的业务代码是同一份。服务若放到另一台机器上，找到的 CLI 和弹出的窗口都属于那台机器。当前默认只监听本机回环地址。
 
 <details>
 <summary>临时远程预览（实验性，暂缓推进）</summary>

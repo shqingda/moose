@@ -1,6 +1,16 @@
 # Moose 技术架构
 
-> 按 0.23.1 源码更新（2026-10-03）。安装版桌面与浏览器共用本机后台及原桌面数据目录；源码独立 Web 工作区不自动合并。
+按 **0.23.1** 源码整理（2026-10-09）。这是实现说明：进程怎么分、一条消息怎么走完、数据存在哪。安装和日常操作见[使用指南](usage.md)，浏览器入口见 [Web 使用说明](web.md)。
+
+| 你想弄清的问题 | 看哪一节 |
+| --- | --- |
+| 界面、主进程、后台各管什么 | [第 2 节](#2-总体架构界面与执行分离) |
+| 从按下发送到任务结束 | [第 5 节](#5-一条消息如何完成) |
+| 四家 CLI 哪里相同、哪里必须分开 | [第 6 节](#6-代理接入统一接口保留能力差异) |
+| 重启、停止、编辑消息会留下什么 | [第 7 节](#7-审批停止与编辑) |
+| 桌面和浏览器怎样连到同一个后台 | [第 13 节](#13-web-宿主与共享连接) |
+
+安装版的桌面和浏览器共用本机后台，以及原来的桌面数据目录。命令行独立安装和源码 `pnpm web` 默认用另一份数据，不会自动合并。
 
 ## 1. 项目定位
 
@@ -58,7 +68,7 @@ flowchart TB
 | ProviderRegistry | CLI 发现、能力探测、额度缓存与探测进程清理 | [provider-registry.ts](../electron/provider-registry.ts) |
 | SessionExecution | 按目录执行队列、合并流式事件、批量落库、取消与关闭 | [session-execution.ts](../electron/session-execution.ts) |
 
-`MooseService` 继续拥有同一个 Store、目录锁、附件、Git、worktree、后台任务和原生历史服务。拆分没有引入第二套数据库或执行器。关闭时等待尚在准备目录的任务与运行任务释放资源，再关闭数据库；配置刷新使过期探测和额度缓存失效。
+ProviderRegistry 和 SessionExecution 从 MooseService 拆出之后，Store、目录锁、附件、Git、worktree、后台任务和原生历史仍由同一个 MooseService 持有。没有第二套数据库，也没有第二套执行器。关闭时先等正在准备目录的任务和运行中的任务释放资源，再关闭数据库。刷新配置会使过期的 CLI 探测和额度缓存失效。
 
 同步 SQLite 操作、代理协议处理和 Git 查询放在独立运行进程，避免直接阻塞界面。主进程仍负责原生窗口与系统能力，后台执行不依赖窗口是否打开。
 
@@ -73,17 +83,32 @@ flowchart TB
 
 构建包含 main、preload、runtime、pty-host 和 web-server 五个入口。preload 为沙箱兼容的单文件 CJS，其余为 ESM；SQLite 和 PTY 原生依赖按 Electron ABI 准备。构建、热更新和打包约束统一见[开发与打包](development.md#构建与原生依赖)。
 
-首屏按功能边界加载代码：历史与 worktree 由工具菜单持有公共弹窗外壳，首次打开时加载内容；计划面板首次切换时加载；Git 审阅模块在选中项目后加载，保留面板关闭动画和状态。扩展认证有跨弹窗的生命周期，继续由现有组件持有，不为缩小 bundle 强制卸载。终端启动恢复通过 SQLite 更新状态，避免把所有历史输出反序列化到 JS。
+首屏按功能边界加载，延后加载的是模块，不是把功能删掉：
+
+| 什么时候才加载 | 加载什么 | 为什么不跟首屏一起走 |
+| --- | --- | --- |
+| 第一次打开对应弹窗 | 历史、worktree 的内容；外壳由工具菜单先拿着 | 没打开就不解析这些面板 |
+| 第一次切到计划 | 计划面板 | 多数会话用不到 |
+| 选中项目之后 | Git 审阅 | 要留着面板关闭动画和已有状态 |
+| 终端启动恢复 | 只通过 SQLite 更新状态 | 避免把全部历史输出反序列化进 JS |
+
+扩展认证的生命周期跨过多个弹窗，仍放在现有组件里。为了缩小 bundle 把它卸掉，认证过程会丢。
 
 ### 界面职责与设计变量
 
-- `app.tsx` 组织应用壳；`workspace-header.tsx` 显示实际工作目录。
-- `useSessionDrafts` 管理文本、附件及延迟保存；发送只消费已经提交的内容，保留等待回执时的新输入。
-- `useWorkspaceLayout` 管理侧栏弹簧与面板位置；`useAuxiliaryPanel` 共用宽度、指针／键盘调整、关闭及焦点返回。
-- 导航、对话、输入、文件／审阅、终端和设置组件继续各自拥有业务交互。没有新增全局状态框架。
-- `styles/tokens.css` 管理中性灰日夜颜色、系统字体、间距和尺寸；`styles/base.css`／`controls.css` 管理基础与无障碍规则；其余样式按对应界面职责组织。`styles.css` 只配置样式基础，`app.css` 只组织导入。
+| 模块 | 管什么 |
+| --- | --- |
+| `app.tsx` | 应用壳 |
+| `workspace-header.tsx` | 实际工作目录 |
+| `useSessionDrafts` | 文本、附件和延迟保存。发送只消费已经提交的内容，等待回执时新打的字留着 |
+| `useWorkspaceLayout` | 侧栏弹簧和面板位置 |
+| `useAuxiliaryPanel` | 文件／审阅共用的宽度、指针和键盘调整、关闭、焦点返回 |
+| `styles/tokens.css` | 中性灰日夜颜色、系统字体、间距和尺寸 |
+| `styles/base.css`、`controls.css` | 基础样式和无障碍规则 |
 
-所有组件沿用 Base UI、Motion 与现有图标。持久侧栏使用不透明表面；覆盖内容的弹窗可使用背景模糊，减少透明度和高对比度时关闭。面板与侧栏共用无回弹弹簧参数，拖动即时更新；降低动态效果时直接到达目标位置。
+导航、对话、输入、文件／审阅、终端和设置各自管自己的交互，上面没有再加一层全局状态框架。`styles.css` 只放样式基础，`app.css` 只负责把这些文件导入进来。
+
+组件用 Base UI、Motion 和现有图标。一直看得到的侧栏用不透明表面；盖在内容上的弹窗可以用背景模糊，系统开启“减少透明度”或“提高对比度”时关掉模糊。面板和侧栏用同一套无回弹弹簧，拖动时位置马上跟上；开启“减少动态效果”时直接到目标位置。
 
 Pierre 使用现有 JavaScript 正则引擎与 GitHub 浅／深两套主题；通过锁定版本的 pnpm patch 移除从未使用的主题集合与 WASM 引擎入口。语言加载器全部保留，本地按需加载，不依赖远程字体或高亮资源。补丁与测量方法见[开发指南](development.md#资源与包体积)。
 
@@ -224,7 +249,7 @@ Drizzle 定义见 [schema.ts](../electron/db/schema.ts)；**实际启动迁移�
 - **技能**：发现用户目录和项目目录中的 `.agents/skills`、`.codex/skills`、`.grok/skills`，读取 SKILL.md 元数据。发送前重新解析技能 ID 与路径。
 - **输入同步**：[prompt-context.ts](../shared/prompt-context.ts) 根据编辑后的内联文字过滤仍然有效的文件和技能引用，避免删除文字后继续隐式携带引用。
 - **附件**：[attachments.ts](../electron/attachments.ts) 将文件复制到受控目录，以 ID 访问；单文件上限 20 MB，不支持视频。小型文本可内嵌，图片按代理能力传递，其他文件提供路径。
-- **Git**：[git.ts](../electron/git.ts) 解析 NUL 分隔的 porcelain 状态，区分 staged、unstaged、untracked。diff 限制为 256 KiB，处理二进制与截断，关闭外部 diff/textconv。diff 读取与写入操作分开；[git-actions.ts](../electron/git-actions.ts)负责逐文件暂存及带 HEAD／暂存区指纹的提交，[pull-requests.ts](../electron/pull-requests.ts)负责明确 GitHub origin／base／head 的草稿 PR，[review-workbench.ts](../electron/review-workbench.ts)管理目录锁、持久化操作回执与独立原生审查。只有用户显式操作才会暂存、提交或创建 PR，不自动推送或回滚。
+- **Git**：状态和 diff 在 [git.ts](../electron/git.ts)，写入在 [git-actions.ts](../electron/git-actions.ts)，草稿 PR 在 [pull-requests.ts](../electron/pull-requests.ts)，只针对已经写明的 GitHub origin、base 和 head。[review-workbench.ts](../electron/review-workbench.ts) 管目录锁、持久化的操作回执，以及独立的原生审查。porcelain 用 NUL 分隔，区分已暂存、未暂存和未跟踪。单次 diff 上限 256 KiB，二进制和超长会截断，并关掉外部 diff／textconv。读 diff 和写仓库分开。提交带上当时的 HEAD 和暂存区指纹，预览过期就要重新确认。只有用户明确操作才会暂存、提交或创建 PR，不会自动推送或回滚。
 
 文件引用解析时使用 realpath 检查项目边界；Git diff 还会确认目标仍属于当前改动列表。通过参数数组调用 Git，避免将文件名拼接成 shell 命令。
 
@@ -256,12 +281,12 @@ Renderer 开启 sandbox、contextIsolation，关闭 nodeIntegration，只能通�
 
 建议按下面顺序读代码，先看业务流，再看协议细节：
 
-1. [shared/types.ts](../shared/types.ts)：理解 Session、Message、Requests 与 AppEvent。
-2. [src/app.tsx](../src/app.tsx) → [composer.tsx](../src/components/composer.tsx)：理解选择项目、创建会话与发送输入。
-3. [preload.ts](../electron/preload.ts) → [main.ts](../electron/main.ts) → [desktop-runtime.ts](../electron/desktop-runtime.ts) → [shared-runtime.ts](../electron/shared-runtime.ts)：理解默认共享连接；独立模式另读 RuntimeHost。
-4. [service.ts](../electron/service.ts)：沿 `send → drain → execute → accept → flush` 阅读主执行链。
-5. [store.ts](../electron/db/store.ts)：理解队列、消息事务和恢复。
-6. [registry.ts](../electron/providers/registry.ts) 及其注册的适配器：最后看具体协议映射。
+1. [shared/types.ts](../shared/types.ts)：先看 Session、Message、Requests 和 AppEvent 各是什么。
+2. [src/app.tsx](../src/app.tsx)，然后是 [composer.tsx](../src/components/composer.tsx)：选择项目、创建会话、发送输入。
+3. [preload.ts](../electron/preload.ts)、[main.ts](../electron/main.ts)、[desktop-runtime.ts](../electron/desktop-runtime.ts)、[shared-runtime.ts](../electron/shared-runtime.ts)：默认的共享连接。独立模式再读 RuntimeHost。
+4. [service.ts](../electron/service.ts)：主执行链是 `send`、`drain`、`execute`、`accept`、`flush`。
+5. [store.ts](../electron/db/store.ts)：队列、消息事务和恢复。
+6. [registry.ts](../electron/providers/registry.ts) 和它注册的适配器：最后再看具体协议怎么映射。
 
 新增代理时实现 AgentAdapter，并接入 provider 类型、校验、发现逻辑及 UI 选项；可选能力应由探测结果驱动。新增 IPC 操作时同步修改 Requests/Responses、Zod 校验、处理端和调用端。修改数据结构时同时维护 Drizzle schema 与实际迁移。
 
@@ -271,15 +296,21 @@ Renderer 开启 sandbox、contextIsolation，关闭 nodeIntegration，只能通�
 
 `electron/web-server.ts` 在无窗口进程中启动 `MooseService`。浏览器的 `src/lib/web-api.ts` 实现同一份 MooseAPI，通过 HTTP 调用、SSE 接收变更通知；`web-host.tsx` 处理登录和服务端目录选择。客户端刷新或断开不会关闭 Service。安装版桌面通过同一服务访问数据库；独立模式的 utility process 不可同时打开服务占用的数据库。
 
-静态资源由 [web-assets.ts](../electron/web-assets.ts) 单独处理，按流读取与传输，文本达到 1 KiB 后根据客户端支持使用低开销 gzip。带内容指纹的 Vite 资源长期缓存，HTML 与固定文件名资源通过 ETag／Last-Modified 重新验证；HEAD 与 304 不读取正文，不在服务端长期缓存资源缓冲区。认证、API 与 SSE 仍由 Web 宿主管理。
+静态资源由 [web-assets.ts](../electron/web-assets.ts) 单独处理，按流读取和传输。文本达到 1 KiB 后，客户端支持的话再用低开销 gzip。带内容指纹的 Vite 资源可以长期缓存；HTML 和固定文件名通过 ETag／Last-Modified 重新验证。HEAD 和 304 不读正文，服务端也不长期缓存资源缓冲区。登录、API 和 SSE 仍由 Web 宿主管。OpenCode 的协议差异在[第 6 节](#6-代理接入统一接口保留能力差异)。
 
-OpenCode v2 适配器见 `electron/providers/opencode.ts`，通过 ACP stdio 连接私有 CLI 服务。与 Grok 共用 `acp-events.ts` 的文本／工具转换，底座专有命令分开处理。元数据与构造器分别登记在 `shared/providers.ts` 和 `electron/providers/registry.ts`。
+启动、限制和三条入口的差别见 [Web 使用说明](web.md)。
 
-启动、限制与后续顺序见 [Web 使用说明](web.md)。
+下面先分清“连的是哪一个后台”，再讲终端输出怎样送到页面。
 
 ### 显式共享后台
 
-设置 `MOOSE_SHARED_RUNTIME_FILE` 后，Electron 主进程用 `SharedRuntime` 替代自有 `RuntimeHost`，读取 Web 服务的私有连接文件，通过已认证 HTTP 请求和 SSE 使用同一个 MooseService。桌面原生文件选择保留在主进程，选定项目转为服务请求，附件通过已有上传接口传入。退出桌面只关闭连接，独立 Web 服务继续拥有数据库、任务和终端。不设置该变量时，安装版自动在原桌面数据目录启动服务，开发与隔离测试仍保留 utility process。数据不搬迁、不合并；无需引入另一套迁移管线。安装版自动后台只监听回环地址，版本不匹配时拒绝业务请求，允许用户从菜单停止旧服务。
+桌面可以不自己持有数据库，改连一个已经在跑的服务。原生的文件选择、菜单和剪贴板仍留在主进程；选定的项目变成服务请求，附件走已有的上传接口。退出桌面只断开连接，数据库、任务和终端仍属于那个服务。数据不搬迁，也不另做一套迁移。
+
+| 怎么启动 | 实际连到哪 |
+| --- | --- |
+| 设置了 `MOOSE_SHARED_RUNTIME_FILE` | 主进程用 `SharedRuntime` 替换自己的 `RuntimeHost`，读取连接文件，经已认证的 HTTP 和 SSE 使用同一个 MooseService |
+| 安装版，没有这个变量 | 自动在原来的桌面数据目录启动服务，只监听回环地址。版本对不上就拒绝业务请求，可以从菜单停止旧服务 |
+| 开发和隔离测试 | 仍用 utility process，不自动改成共享后台 |
 
 ### 终端输出传输
 
@@ -289,29 +320,47 @@ OpenCode v2 适配器见 `electron/providers/opencode.ts`，通过 ACP stdio 连
 
 SSE 对积压超过阈值的慢连接断开，重连后按游标补读。终端内容不再每 100 ms 轮询；会话列表与其他工具状态仍有低频刷新。输入与尺寸由一个客户端控制，其他客户端可同时查看。
 
+2026-09 评估 Web 入口时还考虑过另外三种做法，当前都没有采用：
+
+| 当时的方案 | 现在 |
+| --- | --- |
+| 终端单独用 WebSocket | 终端和会话事件共用 SSE |
+| 网关进程和执行进程拆开，重启网关不影响任务 | 两者仍在同一个后台进程里。重启后台会结束它管理的任务 |
+| 输入预测回显、笔记栏、资源监控栏 | 没做。文件预览和通知后来按更小的范围交付，见[开发计划](providers/native-capabilities-plan.md) |
+
 ## 14. 维护与精简原则
 
-当前分层保留：界面、宿主传输、业务服务、代理适配器和存储。桌面与 Web 共用业务服务；两种传输各有生命周期，不为了减少文件数强行合并。MooseService 负责调度和跨模块协作，Git、扩展、worktree、终端已有独立模块；没有证据需要继续引入服务容器、事件总线或微服务。
+分层就这五层：界面、宿主传输、业务服务、代理适配器、存储。桌面和 Web 共用业务服务，两种传输各有自己的生命周期，不为了少几个文件合成一个。Git、扩展、worktree、终端已经是独立模块；MooseService 负责调度和跨模块协作。目前没有证据需要服务容器、事件总线或微服务。
 
-优先删除重复逻辑和无效加载。历史／worktree 已共用弹窗外壳，终端恢复也已改为 SQL 状态更新，避免批量反序列化历史输出。`service.ts` 和 `app.tsx` 仍是较大的协调入口，后续应限制新领域逻辑继续进入；只有出现可独立描述、测试的职责时再提取，不按行数机械拆文件。
+| 已经做过的收敛 | 目的 |
+| --- | --- |
+| 历史和 worktree 共用弹窗外壳 | 少一套重复的弹窗生命周期 |
+| 终端恢复改为 SQL 更新状态 | 不再把全部历史输出反序列化进 JS |
+| `AppLoader` 把工作区和 Web 登录分开 | 登录通过后才加载工作区 |
+| 搜索、文件、设置第一次使用时再加载 | 关掉后仍留着组件状态和退出动画 |
+| 选中项目后才准备审阅模块 | 第一次来回切换时面板还在 |
 
-`AppLoader` 将工作区与 Web 登录入口分开，登录通过后才加载工作区模块。搜索、文件和设置在首次使用时加载，关闭后保留组件状态及退出过渡；审阅模块在选中项目后准备，以保留首次快速切换时的连续性。延后加载不等于删除功能，也不等于减少相同字节的安装包。
+`service.ts` 和 `app.tsx` 仍然是比较大的协调入口。新的领域逻辑不要再往里堆；只有一块职责能单独讲清、单独测试时再提出去。不要按行数拆文件。
 
-文件上下文按项目、会话和打开文件回调保留引用；消息编辑回调、翻译函数与 Markdown 渲染组件类型保持稳定。工作区更新不会重新解析未变的正文，流式正文更新继续复用代码块与本地图片，保留换行状态并避免重复图片读取。
+延后加载不等于删功能，也不等于安装包少了同样多的字节。文件上下文按项目、会话和“当前打开的文件”回调留着引用。消息编辑回调、翻译函数和 Markdown 组件的类型保持稳定，工作区一更新就不会把没变的正文重新解析一遍。流式更新复用代码块和本地图片，换行状态留着，同一张图不反复读。
 
 ## 15. 日夜主题与视觉规则
 
-界面以 Apple 的[材质](https://developer.apple.com/design/human-interface-guidelines/materials)、[排版](https://developer.apple.com/design/human-interface-guidelines/typography)和[侧栏](https://developer.apple.com/design/human-interface-guidelines/sidebars)规范为参考：内容优先，系统字体，柔和层次和适度圆角。桌面仍是 Electron，不将 CSS 半透明效果描述成原生 Liquid Glass。
+视觉参考是 Apple 的[材质](https://developer.apple.com/design/human-interface-guidelines/materials)、[排版](https://developer.apple.com/design/human-interface-guidelines/typography)和[侧栏](https://developer.apple.com/design/human-interface-guidelines/sidebars)：内容优先、系统字体、层次柔和、圆角适度。桌面仍是 Electron，CSS 半透明不是原生 Liquid Glass。
 
-白天以白色为主：正文区、审阅区和输入框保持白色，侧栏与辅助卡片仅使用接近白色的浅灰。输入框通过轻微阴影区分层级，不加外框。夜间缩小正文区和侧栏的明度差，避免大块灰面板割裂内容，输入框略亮以保持可辨识性。蓝色用于主要操作、焦点和运行状态，侧栏标识、普通文字与会话选中项保持中性色。代码增删、失败状态和语法高亮保留其阅读用途。
+| 规则 | 具体做法 |
+| --- | --- |
+| 白天 | 正文、审阅、输入框用白；侧栏和辅助卡片只用接近白的浅灰。输入框靠轻微阴影分层，不加外框 |
+| 夜间 | 缩小正文和侧栏的明度差，避免一大块灰把内容切开；输入框略亮，还能认出来 |
+| 颜色用途 | 蓝只用在主要操作、焦点和运行状态。侧栏标识、正文、选中的会话保持中性色。代码增删、失败和语法高亮保留原来的阅读颜色 |
+| 圆角 | 颜色在 `src/styles.css` 的语义变量里。基础控件 8px，输入框 18px，对话气泡 16px，发送按钮圆形 |
+| 动效 | 侧栏宽度、标题栏左侧留白、Web 侧栏按钮共用一个无回弹弹簧，从当前的位置和速度接着动。展开、折叠、中途反向都不先跳到终点。窄屏 Web 的侧栏是盖在上面的，标题不动。“减少动态效果”时立刻到位。标题栏分隔线不占高度，图标中心线对齐 |
+| 浮层 | 六类基础浮层用 Base UI 的生命周期和可以反向的 CSS 过渡；减少动态效果时只短暂淡入淡出。能直接拖的面板继续用弹簧 |
+| 点击与焦点 | 输入区用文字光标表示可编辑，按钮保留键盘焦点环。图标按钮和包住它的浮层触发器至少 32px。按下马上有反馈，不再额外上下跳一下 |
+| 辅助功能 | 保留“减少透明度”和“提高对比度”。终端的背景、前景和光标读同一组主题变量 |
+| 不要加的东西 | 侧栏可以轻微半透明，浮层可以有限的阴影。会话行、气泡、输入框不加装饰外框，也不做切角 |
 
-应用使用白底拟物图标，官网保留黑底版，会话区使用去掉底座的透明拟物 logo；这些素材保留金色鹿角、象牙白鹿头和黑色眼睛。侧边栏继续由 `MooseMark` 从 `moose-mark.json` 绘制单色剪影。Web favicon 使用同一矢量轮廓导出的深浅两份 SVG，通过系统 `prefers-color-scheme` 选择，独立于应用主题设置。源文件、生成命令和输出路径统一见[图标与品牌资源](development.md#图标与品牌资源)。
-
-侧栏宽度、标题栏左侧留白和 Web 侧栏按钮共用一个无回弹的弹簧进度，从当前画面位置与速度连续响应切换。展开、折叠及中途反向不先跳到目标留白；窄屏 Web 的侧栏作为覆盖层，标题保持固定。减少动态效果时同步立即切换。标题栏分隔线不占布局高度，保持图标中心线一致。
-
-颜色统一定义在 `src/styles.css` 的语义变量中。基础控件为 8px 圆角，输入框为 18px，对话气泡为 16px，发送按钮为圆形。侧栏使用轻微半透明背景，浮层保留有限阴影；会话、气泡和输入框不添加装饰性外框或切角。
-
-输入区通过文字光标反馈编辑状态，按钮保留键盘焦点环。图标按钮及包裹后的浮层触发器至少保留 32px 点击区域；按压立即反馈，不额外上下跳动。六类基础浮层统一使用 Base UI 生命周期与可反向的 CSS 过渡，减少动态效果时仅短暂淡入淡出；侧栏等可直接操纵的面板继续使用弹簧。保留减少透明度和提高对比度适配，终端背景、前景与光标读取同一组主题变量。
+应用图标是白底拟物，官网用黑底，会话区用去掉底座的透明 logo（金色鹿角、象牙白鹿头、黑色眼睛）。侧栏的 `MooseMark` 从 `moose-mark.json` 画单色剪影。Web favicon 是同一轮廓导出的深浅两份 SVG，跟系统 `prefers-color-scheme` 走，不跟应用里的主题设置走。源文件和生成命令见[图标与品牌资源](development.md#图标与品牌资源)。
 
 ## 16. 搜索、通知、文件查看与错误恢复
 

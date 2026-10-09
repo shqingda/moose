@@ -32,22 +32,19 @@
 - [React 搜索代码审查练习](interview/react-search-results-code-review.md)。
 - [Agent 与 Skill 追问备忘](interview/agent-skill-interview-retrospective.md)：相关岗位按需阅读，不作为 Moose 的实现说明。
 
-项目介绍放在[简明指南](interview/project-interview-guide.md)，协议与调用链放在[追问资料](interview/reference/README.md)。通用题用“章节＋原题号”定位，每题链接到对应答案。
+面试材料怎么读、先看哪一篇，以[面试入口](interview/README.md)为准。
 
 ## 历史记录
 
-- [0.23.0 发布说明](releases/0.23.0.md)与[性能验收](releases/0.23.0-validation.md)。
-- [0.22.1 发布说明](releases/0.22.1.md)。
-- [0.22.0 发布说明](releases/0.22.0.md)。
-- [0.21.4 发布说明](releases/0.21.4.md)。
-- [0.21.3 发布说明](releases/0.21.3.md)。
-- [0.21.2 发布说明](releases/0.21.2.md)。
-- [0.21.1 发布说明](releases/0.21.1.md)。
-- [0.21.0 发布说明](releases/0.21.0.md)；其他版本见 [releases 目录](releases/)。
-- [阶段验收归档](releases/feature-validation-history.md)：原六份阶段验收的操作与证据，按当时版本解释。
-- [运行与界面专项验证记录](releases/runtime-validation-history.md)：共享后台、长历史、配置适配与搜索测量，保留原始日期和条件。
-- [早期验证记录](releases/validation-history.md)。
-- [Roost / DeepSeek Harness 调研](research/web-ui-and-roost.md)：保留调研背景和原始方案，当前实现以使用指南、架构与开发计划为准。
+下面是当时的交付说明和测量，不是当前操作步骤。阅读时以每篇自己写的版本和日期为准。0.21 及更早的发布说明在 [releases 目录](releases/)。
+
+| 记录 | 内容 |
+| --- | --- |
+| [0.23.0](releases/0.23.0.md)、[性能验收](releases/0.23.0-validation.md) | 上一版的加载和传输改进 |
+| [0.22.1](releases/0.22.1.md)、[0.22.0](releases/0.22.0.md) | 界面重构那一轮；未完成的人工验收仍在 [TODO](TODO-0.22.0.md) |
+| [阶段验收归档](releases/feature-validation-history.md) | 0.8–0.13 的操作和证据，界面名称可能已变 |
+| [专项验证记录](releases/runtime-validation-history.md) | 共享后台、长历史、配置和搜索的原始测量 |
+| [早期验证记录](releases/validation-history.md) | 2026-09-13 的验收。其中“不导入 CLI 历史”“退出后任务不继续”只对当时的版本成立 |
 
 ## 维护约定
 
