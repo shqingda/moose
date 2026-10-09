@@ -1,6 +1,6 @@
 # Moose Web distribution
 
-本页是安装包怎么构建、发布、发布失败后怎么核对，不是给最终用户的操作步骤。用户侧见[Web 使用说明](../docs/web.md)，联合发布的完整顺序见[开发与打包](../docs/development.md#发布流程)。正文保持英文，方便和脚本输出对照。流程按 **0.23.1** 描述。
+本页写安装包怎么构建、发布，以及发布失败后怎么核对。给最终用户的步骤在[Web 使用说明](../docs/web.md)，联合发布的完整顺序在[开发与打包](../docs/development.md#发布流程)。正文保持英文，方便和脚本输出对照。流程按 **0.23.1** 描述。
 
 Public installer: `https://moose.shqingda.workers.dev/install.sh`.
 
@@ -14,6 +14,9 @@ The standalone installer supports **macOS Apple Silicon**. It includes official 
 the built Web UI and service, SQLite, and the PTY module. No Electron, system Node,
 pnpm, or compiler is required on the target computer. Agent CLIs are installed and
 authenticated separately. The local service keeps its data in `~/.moose/web`.
+
+End users run the public installer. From the packager's point of view that command
+does the following; do not treat this section as a second user guide.
 
 ```sh
 curl -fsSL https://moose.shqingda.workers.dev/install.sh | sh
