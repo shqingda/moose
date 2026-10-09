@@ -192,8 +192,12 @@ export async function cliVersion(path: string) {
     });
     p.once('exit', (code) => {
       clearTimeout(timer);
-      if (code === 0) resolve(output.trim());
-      else reject(new Error(`CLI exited with code ${code}`));
+      if (code !== 0) return reject(new Error(`CLI exited with code ${code}`));
+      // exit can fire before stdout is drained; a grandchild holding the pipe must not stall the check.
+      const done = () => resolve(output.trim());
+      if (p.stdout.readableEnded) return done();
+      p.stdout.once('end', done);
+      setTimeout(done, 500);
     });
   });
   return result;
