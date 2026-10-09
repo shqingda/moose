@@ -498,8 +498,10 @@ export class MooseService {
       }
       case 'usage':
         return this.agents.usage(args as Requests['usage']);
-      case 'providers':
-        return this.providers((args as Requests['providers']).refresh);
+      case 'providers': {
+        const { refresh, cached } = args as Requests['providers'];
+        return cached ? this.agents.cachedProviders() : this.providers(refresh);
+      }
       case 'settings': {
         const s = this.store.setSettings(args as Requests['settings']);
         this.agents.invalidate();

@@ -37,6 +37,10 @@ export class ProviderRegistry {
       throw new MooseError('provider', String(error));
     }
   }
+  /** 只读上一轮探测结果；没有时返回空列表，绝不启动探测。 */
+  cachedProviders(): ProviderInfo[] {
+    return this.providerCache ?? [];
+  }
   /** 并行探测代理版本与能力；缓存结果，并合并重复探测请求。 */
   async providers(refresh = false): Promise<ProviderInfo[]> {
     if (!refresh && this.providerCache) return this.providerCache;

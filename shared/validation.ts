@@ -279,7 +279,7 @@ const schemas = {
     choice: z.string().max(300).optional(),
     answers: z.record(z.string(), z.string().max(10000)).optional(),
   }),
-  providers: z.strictObject({ refresh: z.boolean().optional() }),
+  providers: z.strictObject({ refresh: z.boolean().optional(), cached: z.boolean().optional() }),
   settings: z.strictObject({
     notifyAttention: z.boolean().optional(),
     notifyResults: z.boolean().optional(),

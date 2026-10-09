@@ -231,7 +231,32 @@ function Workspace({
     }
   }, [setError]);
   useEffect(() => {
-    void connect();
+    // CLI 探测会占用后台与 CPU；首帧先用后台已有的上一轮结果，空闲后再刷新。
+    let probed = false,
+      timer: ReturnType<typeof setTimeout> | undefined,
+      idle: number | undefined;
+    void window.moose.request('providers', { cached: true }).then(
+      (info) => {
+        if (!probed && info.length) setProviders(info);
+      },
+      () => undefined,
+    );
+    const probe = () => {
+      probed = true;
+      void connect();
+    };
+    const frame = requestAnimationFrame(() => {
+      timer = setTimeout(() => {
+        if (typeof requestIdleCallback === 'function')
+          idle = requestIdleCallback(probe, { timeout: 2000 });
+        else probe();
+      }, 500);
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(timer);
+      if (idle !== undefined) cancelIdleCallback(idle);
+    };
   }, [connect]);
   useEffect(() => {
     if (selected) localStorage.setItem('moose.selected', selected);

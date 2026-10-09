@@ -96,6 +96,35 @@ it('probes all four providers through lazily loaded adapters with unchanged resu
   }
 });
 
+it('reads cached providers without probing and matches the last refresh', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'moose-provider-cache-'));
+  const store = new Store(join(dir, 'db.sqlite'));
+  cleanups.push(() => rmSync(dir, { recursive: true, force: true }));
+  cleanups.push(() => store.close());
+  store.setSettings({
+    codexPath: fixtures.codex.path,
+    grokPath: fixtures.grok.path,
+    piPath: fixtures.pi.path,
+    opencodePath: fixtures.opencode.path,
+  });
+  let created = 0;
+  const registry = new ProviderRegistry(store, (provider, path) => {
+    created++;
+    return createAdapter(provider, path);
+  });
+  cleanups.push(() => registry.close());
+  expect(registry.cachedProviders()).toEqual([]);
+  expect(created).toBe(0);
+  const refreshed = await registry.providers(true);
+  const probes = created;
+  expect(registry.cachedProviders()).toEqual(refreshed);
+  expect(await registry.providers()).toEqual(refreshed);
+  expect(created).toBe(probes);
+  registry.invalidate();
+  expect(registry.cachedProviders()).toEqual([]);
+  expect(created).toBe(probes);
+});
+
 it.each(providers)('cancels a live %s prompt from a lazily loaded adapter', async (provider) => {
   const { adapter, run } = await held(provider);
   await adapter.cancel();
