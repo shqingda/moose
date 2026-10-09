@@ -30,13 +30,14 @@ void (
     ? import('./app').then((module) => module.default)
     : import('./components/web-host').then((module) => module.WebHost)
 )
-  .then((Host) =>
+  .then((Host) => {
+    performance.mark('moose/renderer/hostLoaded');
     root.render(
       <React.StrictMode>
         <Host />
       </React.StrictMode>,
-    ),
-  )
+    );
+  })
   .catch(() => {
     root.render(
       <div className="boot-screen" role="alert">

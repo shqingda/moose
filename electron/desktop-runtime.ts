@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 import { access, mkdir, open } from 'node:fs/promises';
 import { join } from 'node:path';
 import { SharedRuntime } from './shared-runtime';
+import { startupMark } from './startup-marks';
 import type { AppEvent } from '../shared/types';
 import { version } from '../package.json';
 
@@ -27,6 +28,7 @@ export function desktopRuntime(entry: string, data: string, emit: (event: AppEve
     const log = await open(join(data, 'runtime.log'), 'a', 0o600);
     await log.chmod(0o600);
     let failure: Error | undefined;
+    startupMark('moose/service/spawn');
     const child = spawn(process.execPath, [entry], {
       detached: true,
       stdio: ['ignore', log.fd, log.fd],
@@ -48,6 +50,7 @@ export function desktopRuntime(entry: string, data: string, emit: (event: AppEve
       if (failure) throw failure;
       try {
         await access(file);
+        startupMark('moose/service/ready');
         return;
       } catch (error) {
         if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;

@@ -21,9 +21,13 @@ import { RuntimeHost } from './runtime-host';
 import { SharedRuntime } from './shared-runtime';
 import { desktopRuntime } from './desktop-runtime';
 import { openEditor } from './editor';
+import { startupMark } from './startup-marks';
 import { validate } from '../shared/validation';
 import type { AppEvent, Method, Requests, Snapshot, Settings } from '../shared/types';
 
+startupMark('moose/main/start');
+app.once('will-finish-launching', () => startupMark('moose/main/willFinishLaunching'));
+app.once('ready', () => startupMark('moose/main/ready'));
 const directory = fileURLToPath(new URL(/* @vite-ignore */ '.', import.meta.url));
 const rendererRoot = resolve(directory, '../../dist');
 const isDev = !!process.env.VITE_DEV_SERVER_URL;
@@ -116,8 +120,11 @@ const appearance = () => ({
 
 /** Both Chromium's first paint and the hydrated React tree must be ready before revealing it. */
 function revealWindow() {
-  if (!backgroundTest && nativeFrameReady && rendererReady && window && !window.isDestroyed())
-    window.show();
+  if (!nativeFrameReady || !rendererReady || !window || window.isDestroyed()) return;
+  startupMark('moose/main/revealable');
+  if (backgroundTest) return;
+  window.show();
+  startupMark('moose/main/shown');
 }
 
 /** 创建隔离的渲染窗口，限制导航和权限，并加载开发页或正式应用协议。 */
@@ -179,6 +186,7 @@ async function createWindow() {
     callback({ responseHeaders: { ...details.responseHeaders, 'Content-Security-Policy': [csp] } });
   });
   window.once('ready-to-show', () => {
+    startupMark('moose/main/readyToShow');
     nativeFrameReady = true;
     revealWindow();
   });
@@ -186,8 +194,10 @@ async function createWindow() {
     window = null;
     void presence(false).catch(() => {});
   });
+  startupMark('moose/main/willLoadURL');
   if (isDev) await window.loadURL(process.env.VITE_DEV_SERVER_URL!);
   else await window.loadURL('moose://app/index.html');
+  startupMark('moose/main/didLoadURL');
 }
 /** 根据界面语言创建原生菜单，把快捷键转换成渲染层 command 事件。 */
 function menu(language: Settings['language'] = 'system') {
@@ -310,6 +320,7 @@ else {
           )
         )
           return;
+        startupMark('moose/main/rendererReady');
         rendererReady = true;
         revealWindow();
         if (pendingNavigation) {
@@ -390,7 +401,15 @@ else {
             } else await openEditor(path);
             return null;
           }
+          const phase =
+            method === 'snapshot'
+              ? 'Snapshot'
+              : method === 'providers' && (params as Requests['providers']).refresh
+                ? 'ProbeProviders'
+                : undefined;
+          if (phase) startupMark(`moose/main/will${phase}`);
           const result = await runtime.request(method, params);
+          if (phase) startupMark(`moose/main/did${phase}`);
           if (method === 'snapshot' || method === 'settings') {
             const settings =
               method === 'snapshot' ? (result as Snapshot).settings : (result as Settings);

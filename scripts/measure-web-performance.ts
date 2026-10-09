@@ -7,6 +7,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { Store } from '../electron/db/store';
+import { processMemory } from './process-memory';
 
 const directory = await mkdtemp(join(tmpdir(), 'moose-web-perf-'));
 const store = new Store(join(directory, 'moose.sqlite'));
@@ -85,13 +86,18 @@ try {
       }, readyMs),
     );
   }
+  await page.waitForTimeout(1500);
+  const { residentMiB, physicalSource, total, processes } = await processMemory({
+    service: child.pid,
+  });
   console.log(
     JSON.stringify(
       {
         scenario: 'isolated-empty-web-hidden-browser-cache-disabled-localhost-warm-service',
         definition:
-          'Three navigations; first includes token login, subsequent navigations reuse authentication. No disk cache flushing or network throttling. Heap is not process RSS.',
+          'Three navigations; first includes token login, subsequent navigations reuse authentication. No disk cache flushing or network throttling. Heap is not process RSS. service: the ELECTRON_RUN_AS_NODE web service and its children 1.5 s after the third navigation; RSS plus macOS physical footprint or Linux PSS/USS. The browser is not counted.',
         samples,
+        service: { residentMiB, physicalSource, total, processes },
       },
       null,
       2,

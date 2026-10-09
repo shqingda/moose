@@ -1,6 +1,7 @@
 import { restoreError, transportError } from '../shared/errors';
 import { utilityProcess, type UtilityProcess } from 'electron';
 import { randomUUID } from 'node:crypto';
+import { startupMark } from './startup-marks';
 import type { AppEvent } from '../shared/types';
 export class RuntimeHost {
   private clientId = randomUUID();
@@ -25,6 +26,7 @@ export class RuntimeHost {
   start() {
     if (this.boot) return this.boot;
     this.boot = new Promise<void>((resolve, reject) => {
+      startupMark('moose/service/spawn');
       const child = (this.child = utilityProcess.fork(this.entry, [this.data], {
         serviceName: 'Moose Agent Runtime',
         stdio: 'pipe',
@@ -39,6 +41,7 @@ export class RuntimeHost {
       );
       child.on('message', (message) => {
         if (message.ready) {
+          startupMark('moose/service/ready');
           clearTimeout(timer);
           resolve();
         } else if (message.event) this.emit(message.event);
