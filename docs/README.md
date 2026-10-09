@@ -28,11 +28,11 @@
 ## 专题与练习
 
 - [Pi 接入细节](providers/pi.md)：自定义 JSONL RPC、完成信号与权限边界。
-- [面试题目](interview/questions.md)与[参考答案](interview/answers.md)：保留常见前端与 AI 应用题，按原题号对应；不作为项目已实现能力的证明。
+- [面试题目](interview/questions.md)与[参考答案](interview/answers/README.md)：保留常见前端与 AI 应用题，按原题号对应；不作为项目已实现能力的证明。
 - [React 搜索代码审查练习](interview/react-search-results-code-review.md)。
 - [Agent 与 Skill 追问备忘](interview/agent-skill-interview-retrospective.md)：相关岗位按需阅读，不作为 Moose 的实现说明。
 
-项目介绍放在[简明指南](interview/project-interview-guide.md)，协议与调用链放在[追问资料](interview/project-interview-reference.md)。通用题用“章节＋原题号”定位，每题链接到对应答案。
+项目介绍放在[简明指南](interview/project-interview-guide.md)，协议与调用链放在[追问资料](interview/reference/README.md)。通用题用“章节＋原题号”定位，每题链接到对应答案。
 
 ## 历史记录
 
