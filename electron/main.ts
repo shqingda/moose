@@ -37,7 +37,10 @@ app.setName(isDev ? 'Moose Dev' : 'Moose');
 if (process.env.MOOSE_DATA_DIR) app.setPath('userData', process.env.MOOSE_DATA_DIR);
 else if (isDev) app.setPath('userData', join(app.getPath('appData'), 'Moose Dev'));
 protocol.registerSchemesAsPrivileged([
-  { scheme: 'moose', privileges: { standard: true, secure: true, supportFetchAPI: true } },
+  {
+    scheme: 'moose',
+    privileges: { standard: true, secure: true, supportFetchAPI: true },
+  },
 ]);
 let window: BrowserWindow | null = null;
 let nativeFrameReady = false;
@@ -292,6 +295,10 @@ function menu(language: Settings['language'] = 'system') {
 }
 if (!app.requestSingleInstanceLock()) app.quit();
 else {
+  // Start the service alongside Electron's own boot; the first snapshot reuses this connection.
+  // Failures are reported by that request instead.
+  if (runtime instanceof SharedRuntime) void runtime.start().catch(() => {});
+  else void app.whenReady().then(() => runtime.start().catch(() => {}));
   app.on('second-instance', () => {
     void createWindow();
     if (!backgroundTest) window?.focus();

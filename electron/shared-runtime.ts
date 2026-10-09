@@ -23,6 +23,9 @@ export class SharedRuntime {
     private expectedVersion?: string,
   ) {}
 
+  start() {
+    return this.connect();
+  }
   private connect() {
     if (!this.connection)
       this.connection = this.authenticate().catch((error) => {

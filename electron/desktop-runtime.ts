@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process';
-import { access, mkdir, open } from 'node:fs/promises';
+import { accessSync, closeSync, fchmodSync, mkdirSync, openSync } from 'node:fs';
+import { access } from 'node:fs/promises';
 import { join } from 'node:path';
 import { SharedRuntime } from './shared-runtime';
 import { startupMark } from './startup-marks';
@@ -9,29 +10,31 @@ import { version } from '../package.json';
 /** Keep the existing desktop data directory; only change who owns the service process. */
 export function desktopRuntime(entry: string, data: string, emit: (event: AppEvent) => void) {
   const file = join(data, 'connection.json');
+  // The steps before spawn are synchronous so the service starts while Electron is still booting,
+  // instead of waiting for the event loop to service each file operation.
   const prepare = async () => {
     try {
-      await access(file);
+      accessSync(file);
       return;
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
     }
     try {
-      await access(join(data, 'server.lock'));
+      accessSync(join(data, 'server.lock'));
       throw new Error(
         'The background service is starting or stopped unexpectedly. Check runtime.log before restarting it.',
       );
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
     }
-    await mkdir(data, { recursive: true, mode: 0o700 });
-    const log = await open(join(data, 'runtime.log'), 'a', 0o600);
-    await log.chmod(0o600);
+    mkdirSync(data, { recursive: true, mode: 0o700 });
+    const log = openSync(join(data, 'runtime.log'), 'a', 0o600);
+    fchmodSync(log, 0o600);
     let failure: Error | undefined;
     startupMark('moose/service/spawn');
     const child = spawn(process.execPath, [entry], {
       detached: true,
-      stdio: ['ignore', log.fd, log.fd],
+      stdio: ['ignore', log, log],
       env: {
         ...process.env,
         ELECTRON_RUN_AS_NODE: '1',
@@ -45,8 +48,9 @@ export function desktopRuntime(entry: string, data: string, emit: (event: AppEve
       failure = error;
     });
     child.unref();
-    await log.close();
-    for (let attempt = 0; attempt < 60; attempt++) {
+    closeSync(log);
+    // A short poll: access() is cheap, and every interval is spent with the window waiting.
+    for (let attempt = 0; attempt < 1200; attempt++) {
       if (failure) throw failure;
       try {
         await access(file);
@@ -57,7 +61,7 @@ export function desktopRuntime(entry: string, data: string, emit: (event: AppEve
       }
       if (child.exitCode !== null)
         throw new Error('Background service exited. See ' + join(data, 'runtime.log'));
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      await new Promise((resolve) => setTimeout(resolve, 10));
     }
     throw new Error('Background service did not become ready. See ' + join(data, 'runtime.log'));
   };
