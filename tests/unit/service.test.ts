@@ -34,7 +34,7 @@ afterEach(async () => {
   for (const cleanup of cleanups.splice(0)) await cleanup();
 });
 /** 创建独立测试数据与依赖，并登记清理，避免测试间相互污染。 */
-function fixture() {
+function fixture(lazy = false) {
   const dir = mkdtempSync(join(tmpdir(), 'moose-service-')),
     store = new Store(join(dir, 'db.sqlite')),
     agents: ControlledAgent[] = [];
@@ -44,7 +44,8 @@ function fixture() {
     () => {
       const a = new ControlledAgent();
       agents.push(a);
-      return a;
+      // lazy mirrors the production factory, which loads each adapter chunk asynchronously.
+      return lazy ? Promise.resolve(a) : a;
     },
   );
   cleanups.push(async () => {
@@ -68,6 +69,24 @@ it('serializes a shared directory but runs independent projects concurrently', a
   expect(agents.map((a) => a.context?.text).sort()).toEqual(['first', 'parallel']);
   agents[0].complete();
   await vi.waitFor(() => expect(agents.filter((a) => a.context)).toHaveLength(3));
+  expect(agents[2].context?.text).toBe('second');
+});
+it('creates adapters only for runs that start when adapters load asynchronously', async () => {
+  const { dir, store, service, agents } = fixture(true);
+  mkdirSync(`${dir}/other`);
+  const p1 = store.addProject(dir),
+    p2 = store.addProject(`${dir}/other`);
+  const a = store.createSession(p1.id, 'codex'),
+    b = store.createSession(p1.id, 'codex'),
+    c = store.createSession(p2.id, 'codex');
+  await service.handle('send', { sessionId: a.id, text: 'first' });
+  await service.handle('send', { sessionId: b.id, text: 'second' });
+  await service.handle('send', { sessionId: c.id, text: 'parallel' });
+  await vi.waitFor(() => expect(agents.filter((a) => a.context)).toHaveLength(2));
+  expect(agents.map((a) => a.context?.text).sort()).toEqual(['first', 'parallel']);
+  agents.find((a) => a.context?.text === 'first')!.complete();
+  await vi.waitFor(() => expect(agents.filter((a) => a.context)).toHaveLength(3));
+  expect(agents).toHaveLength(3);
   expect(agents[2].context?.text).toBe('second');
 });
 it('expires approvals on cancellation and rejects stale responses and late deltas', async () => {

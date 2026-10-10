@@ -100,24 +100,38 @@ export class SessionExecution {
           continue;
         }
         if (this.hooks.stopping() || this.hooks.configuring()) break;
-        const adapter = await this.adapterFactory(session.provider, path);
-        // The adapter has not started a process yet, so a skipped run only drops the instance.
-        if (this.hooks.stopping() || this.hooks.configuring()) {
-          void adapter.close();
-          break;
-        }
-        const current = this.store.queued(session.id).find((queued) => queued.id === item.id);
-        if (
-          this.active.has(cwd) ||
-          this.hooks.directoryBusy(cwd) ||
-          this.worktrees.blocks(cwd) ||
-          !this.store.listSessions().some((s) => s.id === session.id && !s.archived) ||
-          this.paused.has(session.id) ||
-          !current
-        ) {
-          void adapter.close();
-          continue;
-        }
+        // Re-check after the awaits above: the session may have been paused or its resolved
+        // directory taken meanwhile. Only an item that can start gets an adapter.
+        const startable = () => {
+          const queued = this.store.queued(session.id).find((entry) => entry.id === item.id);
+          if (
+            this.active.has(cwd) ||
+            this.hooks.directoryBusy(cwd) ||
+            this.worktrees.blocks(cwd) ||
+            !this.store.listSessions().some((s) => s.id === session.id && !s.archived) ||
+            this.paused.has(session.id)
+          )
+            return undefined;
+          return queued;
+        };
+        let current = startable();
+        if (!current) continue;
+        const made = this.adapterFactory(session.provider, path);
+        let adapter: AgentAdapter;
+        if (made instanceof Promise) {
+          adapter = await made;
+          // Loading the adapter chunk yields; the instance has not started a process yet, so a run
+          // that can no longer start only drops it.
+          if (this.hooks.stopping() || this.hooks.configuring()) {
+            void adapter.close();
+            break;
+          }
+          current = startable();
+          if (!current) {
+            void adapter.close();
+            continue;
+          }
+        } else adapter = made;
         const run: Active = {
           id: randomUUID(),
           session,
