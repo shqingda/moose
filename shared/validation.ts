@@ -280,6 +280,13 @@ const schemas = {
     answers: z.record(z.string(), z.string().max(10000)).optional(),
   }),
   providers: z.strictObject({ refresh: z.boolean().optional(), cached: z.boolean().optional() }),
+  rememberSelection: z.strictObject({
+    provider: z.enum(providerIds),
+    model: z.string().max(200),
+    effort: z.string().max(100),
+    mode: z.enum(['ask', 'auto', 'full']),
+    taskMode: z.enum(['build', 'plan', 'goal']),
+  }),
   settings: z.strictObject({
     notifyAttention: z.boolean().optional(),
     notifyResults: z.boolean().optional(),
@@ -299,6 +306,7 @@ const schemas = {
     projectId: id.optional(),
     sessionId: id.optional(),
     provider: z.enum(providerIds),
+    cached: z.boolean().optional(),
   }),
   extensionsChange: z.strictObject({
     projectId: id.optional(),

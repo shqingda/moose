@@ -82,6 +82,12 @@ it('maps permission modes without treating auto-review as full access', () => {
     approvalPolicy: 'never',
     sandbox: 'danger-full-access',
   });
+  expect(codexPermissions('')).toMatchObject({
+    approvalPolicy: 'on-request',
+    approvalsReviewer: 'auto_review',
+    sandbox: 'workspace-write',
+  });
+  expect(codexPermissions('full').sandbox).not.toBe(codexPermissions('auto').sandbox);
 });
 it('renders actual old and new line numbers across multiple hunks', () => {
   const lines = diffLines(

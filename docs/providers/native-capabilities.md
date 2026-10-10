@@ -15,9 +15,9 @@
 | 能力 | Codex | Grok Build | Pi | OpenCode v2 |
 | --- | --- | --- | --- | --- |
 | 对话、模型选择、原生会话延续 | 支持 | 支持 | 支持 | 支持 |
-| 权限档位 | 请求批准、原生自动审核、完全访问 | 请求批准、完全访问 | 仅完全访问 | 请求审批，遵循 CLI 配置 |
-| 原生 Plan 审阅后执行 | 支持 | 未接入 | 未接入 | 未接入 |
-| Goal | `thread/goal/*` | ACP 转交 `/goal` | 未接入 | 未接入 |
+| 权限档位 | 请求批准、帮我批准、完全访问 | 请求批准、帮我批准、完全访问 | 请求批准、帮我批准、完全访问 | 请求批准、帮我批准、完全访问 |
+| Plan | 原生协作模式；缺少时用只读提示 | Moose 只读提示，并拒绝会改动的权限 | Moose 只读提示；会改动的工具会被中止 | 原生 plan 代理（若握手提供）加上只读提示 |
+| Goal | `thread/goal/*`；接口失败时用目标提示 | ACP 转交 `/goal` | 目标提示，由这一轮代理循环执行 | 目标提示，由这一轮代理循环执行 |
 | 当前回合插话 | `turn/steer` | `_x.ai/interject` | 1.x 原生 `steer` | 普通队列 |
 | 原生子代理 | 活动、历史面板及受限控制 | 工具活动与结果 | 未接入专门管理 | 未接入专门管理 |
 | 浏览与导入 CLI 历史 | 支持 | 回放导入 | 只读 JSONL 导入 | ACP 列表与回放导入 |
@@ -31,13 +31,24 @@
 
 ## Plan、Goal 与插话
 
-Codex Plan 使用原生 `collaborationMode: plan`，先核对底座的模式能力。Moose 保存计划版本，提供审阅和修改；批准后将确定版本送入同一原生会话，切回 `default` 执行。规划保留只读约束，执行恢复会话权限；Plan 结束会暂停队列，不自动批准或执行。Grok CLI 自身的 `/plan` 不等于 Moose 已接通相同的 ACP 审阅流程。
+Codex Plan 优先使用原生 `collaborationMode: plan`。这一版 CLI 没有列出 plan 时，Moose 仍用只读沙箱加上计划提示完成同一轮，并把助手回复收成可审阅的计划。Moose 保存计划版本，提供审阅和修改；批准后将确定版本送入同一原生会话，切回 `default` 执行。规划保留只读约束，执行恢复会话权限；Plan 结束会暂停队列，不自动批准或执行。
 
-Codex Goal 由原生目标接口保存和推进，支持预算与暂停；Grok 将命令交给原生 CLI。界面中的模式菜单由 Moose 提供，不是 Moose 自行模拟底座的推理循环。
+Grok、Pi、OpenCode 的计划也进入同一套审阅。Grok 不依赖曾经空成功的 `session/set_mode(plan)`：提示要求只读，权限请求里会改动的工具会被拒绝。Pi 没有审批回调，看到会改动的工具就中止这一轮。OpenCode 在握手提供 `mode=plan` 时会选中它，同时加上同样的只读提示。没有原生 plan 事件时，Moose 用这一轮的助手正文生成计划记录。
+
+Codex Goal 由原生目标接口保存和推进，支持预算与暂停；接口失败时改用目标提示跑完这一轮。Grok 把 `/goal` 交给原生 CLI，并带上预算说明。Pi 和 OpenCode 没有对应接口，用目标提示让当前代理循环继续做到完成或受阻；它们不会像 Codex 那样在回合结束后再查询目标状态并自动开下一轮。
+
+界面中的模式菜单由 Moose 提供。权限三档的实现见下表。没有保存过的选择默认是帮我批准。完全访问只在明确选择时启用，探测缓存里即使只剩这一档，也不会自动替用户选上。
+
+| 底座 | 请求批准 | 帮我批准 | 完全访问 |
+| --- | --- | --- | --- |
+| Codex | `on-request` + 用户审批 + `workspace-write` | `on-request` + `auto_review` + 同一沙箱 | `never` + `danger-full-access` |
+| Grok | `--permission-mode default`，权限请求交给用户；CLI 不认识该参数时仍拦截 ACP 权限 | `--permission-mode auto`，剩余请求由 Moose 选一次性允许 | `--always-approve`；若仍有请求则选始终允许 |
+| Pi | 扩展确认交给用户；会改动的工具被中止。Pi 没有可暂停的工具协议 | 允许工具运行，并代答扩展确认 | 与帮我批准是同一套工具策略。Pi 没有更宽的权限或沙箱参数；`--approve` 只影响是否加载项目扩展，不能当作完全访问 |
+| OpenCode | ACP `session/request_permission` 交给用户 | Moose 选择 `allow_once`，不写永久允许规则 | Moose 选择 `allow_always`（CLI 提供时）。没有单独的沙箱逃逸参数 |
 
 0.22.0 在探测结果中返回运行时模式和插话能力，前后端按同一结果开放操作。Pi 1.x 的 `steer` 回执可以不含原生 turn ID；只有明确接收或处理才记为已接收，缺失投递结果仍记为未知。停止先清除原生待投递队列，再取消任务，避免迟到输入成为后续任务。
 
-2026-10-02 对 Grok 1.0.46 的隔离协议探测发现：握手没有规划模式，`session/set_mode(plan)` 与无效模式均返回空成功对象，随后加载的会话仍为 `build`。这不足以证明规划、审阅、批准后同会话执行成立，所以 Grok Plan 继续不可用。
+2026-10-02 对 Grok 1.0.46 的隔离协议探测发现：握手没有规划模式，`session/set_mode(plan)` 与无效模式均返回空成功对象，随后加载的会话仍为 `build`。因此当前 Grok 计划不依赖这次切换，而由 Moose 的只读提示和权限拒绝实现，审阅仍走 Moose 自己的计划记录。
 
 运行中普通发送进入 Moose 的持久化队列，当前任务结束后再开始下一轮；“立即发送”调用受支持底座的原生插话接口。它不改变本轮模型、权限或模式，也不用“取消后重启”冒充 steering。投递记录区分已接收、明确拒绝和结果未知；拒绝保留输入，超时或断连不自动重发。相关实现见 [plans.ts](../../electron/plans.ts) 和 [steering.ts](../../electron/steering.ts)。
 
@@ -63,7 +74,7 @@ opencode --version
 
 Moose 搜索 PATH 和 `~/.opencode/bin`，也支持在设置中指定绝对路径。要求 CLI v2，不以旧版 SDK 中名为 `v2` 的导出路径判断版本。
 
-[适配器](../../electron/providers/opencode.ts) 使用 [`opencode acp`](https://opencode.ai/v2/docs/cli/acp)，由 CLI 启动私有服务；与 Grok 共用基础 ACP 事件转换及历史加载，专有能力分别处理。权限请求遵循 CLI 配置，Moose 不额外提供执行沙箱。原生历史已接入；Plan／Goal 和用量查询尚未接入。配置页通过用户 JSON/JSONC 文件保留式更新及原生插件命令管理 OpenCode v2；不把 v1 的 MCP 字段直接用于 v2。
+[适配器](../../electron/providers/opencode.ts) 使用 [`opencode acp`](https://opencode.ai/v2/docs/cli/acp)，由 CLI 启动私有服务；与 Grok 共用基础 ACP 事件转换及历史加载，专有能力分别处理。权限请求遵循 CLI 配置，Moose 不额外提供执行沙箱；帮我批准和完全访问只在权限回调里代选一次允许或始终允许。计划在握手提供 plan 代理时选中它，并加上只读提示。目标模式使用目标提示。用量查询尚未接入。配置页通过用户 JSON/JSONC 文件保留式更新及原生插件命令管理 OpenCode v2；不把 v1 的 MCP 字段直接用于 v2。
 
 ## 思考内容的边界
 

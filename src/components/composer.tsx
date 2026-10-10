@@ -43,6 +43,8 @@ export function Composer({
   onDraft,
   onProvider,
   onOptions,
+  taskMode,
+  onTaskMode,
   onSend,
   onStop,
   onError,
@@ -61,6 +63,8 @@ export function Composer({
   onDraft(text: string): void;
   onProvider(provider: Provider): void;
   onOptions(patch: { model?: string; effort?: string; mode?: PermissionMode }): void;
+  taskMode?: PromptContext['mode'];
+  onTaskMode?(mode: PromptContext['mode']): void;
   onSend(context: PromptContext, delivery?: 'steer'): Promise<boolean | undefined>;
   onStop(): void;
   onError(error: unknown): void;
@@ -68,13 +72,19 @@ export function Composer({
 }) {
   const t = useI18n(),
     info = providers.find((p) => p.provider === provider);
-  const [context, setContext] = useState<PromptContext>(session?.draftContext || emptyContext);
+  const [context, setContext] = useState<PromptContext>(
+    session?.draftContext || { ...emptyContext, mode: taskMode || 'build' },
+  );
   const [skills, setSkills] = useState<ContextEntry[]>([]),
     [skillsReady, setSkillsReady] = useState(false);
   const migrated = useRef(false);
   useEffect(() => {
     if (session?.draftContext) setContext(session.draftContext);
   }, [session?.draftContext?.mode]);
+  useEffect(() => {
+    if (session?.draftContext || !taskMode) return;
+    setContext((current) => (current.mode === taskMode ? current : { ...current, mode: taskMode }));
+  }, [taskMode, session?.id, session?.draftContext]);
   useEffect(() => {
     let live = true;
     void window.moose
@@ -93,6 +103,7 @@ export function Composer({
   /** 同步引用与模式选择，并保存为当前草稿上下文。 */
   const updateContext = (value: PromptContext) => {
     setContext(value);
+    if (value.mode !== context.mode) onTaskMode?.(value.mode);
     if (session)
       void window.moose
         .request('updateSession', { id: session.id, draftContext: value })
@@ -127,7 +138,7 @@ export function Composer({
     updateContext,
     onError,
     session?.id,
-    info?.taskModes,
+    [...providerDefinitions[provider].taskModes],
   );
   const busy = !!session && ['running', 'waiting', 'queued'].includes(session.status);
   const [sending, setSending] = useState(false),
@@ -356,7 +367,7 @@ export function Composer({
               onChange={(mode) =>
                 updateContext({ ...context, mode: mode as PromptContext['mode'] })
               }
-              options={(info?.taskModes || providerDefinitions[provider].taskModes).map((mode) => ({
+              options={providerDefinitions[provider].taskModes.map((mode) => ({
                 value: mode,
                 label: t(
                   mode === 'build' ? 'buildMode' : mode === 'plan' ? 'planMode' : 'goalMode',
@@ -376,16 +387,12 @@ export function Composer({
               label={t('permissionsLabel')}
               icon={<ShieldCheck />}
               placeholder={t('permissionsLabel')}
-              value={
-                info?.modes.length && !info.modes.some((m) => m.id === (options.mode || 'ask'))
-                  ? ''
-                  : options.mode || 'ask'
-              }
+              value={options.mode || 'auto'}
               onChange={(mode) => onOptions({ mode: mode as PermissionMode })}
               disabled={busy}
-              options={(info?.modes.length ? info.modes : [{ id: 'ask' }]).map((m) => ({
-                value: m.id,
-                label: t(m.id as PermissionMode),
+              options={(['ask', 'auto', 'full'] as const).map((mode) => ({
+                value: mode,
+                label: t(mode),
               }))}
               className={`compact-picker permission-picker ${options.mode === 'full' ? 'permission-full' : ''}`}
             />
@@ -402,10 +409,9 @@ export function Composer({
                   onProvider(next);
                   updateContext({
                     ...context,
-                    mode: (
-                      providers.find((item) => item.provider === next)?.taskModes ||
-                      (providerDefinitions[next].taskModes as readonly string[])
-                    ).includes(context.mode)
+                    mode: (providerDefinitions[next].taskModes as readonly string[]).includes(
+                      context.mode,
+                    )
                       ? context.mode
                       : 'build',
                   });
@@ -476,6 +482,9 @@ export function Composer({
         </InputGroupAddon>
       </InputGroup>
       <div className="composer-foot">
+        {info?.failure?.code === 'subscription' && <span>{t('subscriptionExpired')}</span>}
+        {info?.failure?.code === 'model' && <span>{t('modelUnavailable')}</span>}
+        {info?.failure?.code === 'auth' && <span>{t('signInRequired')}</span>}
         {unsupportedImages && <span>{t('imageUnavailable')}</span>}
         {(session?.archived || busy) && (
           <span>{t(session?.archived ? 'archivedHint' : 'queueHint')}</span>

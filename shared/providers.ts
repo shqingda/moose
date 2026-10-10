@@ -9,16 +9,16 @@ export const providerDefinitions = {
   grok: {
     pathKey: 'grokPath',
     enabledKey: 'grokEnabled',
-    taskModes: ['build', 'goal'],
+    taskModes: ['build', 'plan', 'goal'],
   },
   pi: {
     pathKey: 'piPath',
     enabledKey: 'piEnabled',
-    taskModes: ['build'],
+    taskModes: ['build', 'plan', 'goal'],
   },
   opencode: {
     pathKey: 'opencodePath',
     enabledKey: 'opencodeEnabled',
-    taskModes: ['build'],
+    taskModes: ['build', 'plan', 'goal'],
   },
 } as const;

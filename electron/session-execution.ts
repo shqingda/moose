@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Store } from './db/store';
 import { providerDefinitions } from '../shared/providers';
+import { entitlementError } from '../shared/entitlement';
 import { fault } from '../shared/errors';
 import { pendingMessage } from './experience-data';
 import { createAdapter, type AdapterFactory } from './providers/registry';
@@ -30,6 +31,7 @@ type ExecutionHooks = {
   changed(): void;
   emit(event: AppEvent): void;
   notice(session: Session, kind: TaskNotice['kind'], id: string, messageId?: string): void;
+  modelUnavailable(provider: Provider, model: string): void;
 };
 /** Serializes each directory's queue and batches agent events into the shared store. */
 export class SessionExecution {
@@ -248,15 +250,29 @@ export class SessionExecution {
           this.hooks.changed();
         },
       });
+      if (context?.mode === 'plan' && !run.cancelled) {
+        const planned = [...run.rows.values()].some(
+          (row) => row.kind === 'plan' && row.text.trim(),
+        );
+        const text = [...run.rows.values()]
+          .filter((row) => row.kind === 'assistant' && row.text.trim())
+          .map((row) => row.text)
+          .join('\n\n');
+        if (!planned && text.trim())
+          this.accept(run, { key: 'plan', kind: 'plan', title: 'Plan', text, state: 'done' });
+      }
     } catch (error) {
       if (!run.cancelled && !this.hooks.stopping()) {
         failed = true;
         this.paused.add(run.session.id);
+        const entitlement = entitlementError(error);
+        if (entitlement?.code === 'model' && run.session.model)
+          this.hooks.modelUnavailable(run.session.provider, run.session.model);
         this.accept(run, {
           key: 'error',
           kind: 'error',
-          failure: fault(error),
-          text: providerError(error),
+          failure: entitlement ? fault(entitlement) : fault(error),
+          text: entitlement?.message || providerError(error),
           state: 'error',
         });
       }

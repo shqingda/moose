@@ -182,6 +182,8 @@ test('Grok approval denial and questions travel through ACP, and cancellation pr
     .getByRole('button', { name: 'Grok Build', exact: true })
     .click();
   await page.locator('.model-option').first().click();
+  await page.getByRole('combobox', { name: 'Permissions', exact: true }).click();
+  await page.getByRole('option', { name: 'Request approval', exact: true }).click();
   await page.locator('#composer').fill('Change this');
   await page.locator('#composer').press('Enter');
   await page.getByRole('button', { name: 'Deny', exact: true }).click();
@@ -385,9 +387,11 @@ test('composer searches project context, selects skills and plan mode with keybo
   await input.press('Home');
   await input.pressSequentially('inspect-input ');
   await input.press('Enter');
-  await expect(page.locator('.markdown')).toContainText('read-only');
-  await expect(page.locator('.markdown')).toContainText('moose-fixture');
-  await expect(page.locator('.markdown')).toContainText('mention');
+  const reply = page.locator('.message-assistant .markdown');
+  await expect(reply).toContainText('read-only');
+  await expect(reply).toContainText('moose-fixture');
+  await expect(reply).toContainText('mention');
+  await expect(page.getByRole('region', { name: 'Review plan' })).toContainText('read-only');
   const snapshot = await page.evaluate(() => window.moose.request('snapshot', {}));
   expect(snapshot.sessions[0].projectId).toBe(projectId);
   const messages = await page.evaluate(

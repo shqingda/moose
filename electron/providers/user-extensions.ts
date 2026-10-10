@@ -34,7 +34,7 @@ export class UserExtensions {
     private provider: Exclude<Provider, 'codex'>,
     private env: NodeJS.ProcessEnv = agentEnvironment(),
   ) {}
-  private async run(args: string[], cwd: string): Promise<string> {
+  private async run(args: string[], cwd: string, timeout = 2500): Promise<string> {
     if (this.closed) throw new Error('Configuration client is closed');
     const child = spawnAgent(this.path, args, cwd, this.env);
     this.children.add(child);
@@ -45,7 +45,7 @@ export class UserExtensions {
       const timer = setTimeout(() => {
         void terminate(child);
         reject(new Error('Configuration command timed out'));
-      }, 120000);
+      }, timeout);
       const clean = () => {
         clearTimeout(timer);
         this.children.delete(child);
@@ -227,13 +227,17 @@ export class UserExtensions {
               change.id,
             ];
       if (this.provider === 'grok' && change.action === 'install') args.push('--trust');
-      await this.run(args, cwd);
+      await this.run(args, cwd, 120000);
       return;
     }
     if (this.provider === 'grok') {
       if (change.type !== 'toggle' || change.name.startsWith('-'))
         throw new Error('Unsupported Grok operation');
-      await this.run([change.category, change.enabled ? 'enable' : 'disable', change.name], cwd);
+      await this.run(
+        [change.category, change.enabled ? 'enable' : 'disable', change.name],
+        cwd,
+        120000,
+      );
       return;
     }
     let next = content || '{}\n';

@@ -16,9 +16,21 @@ import { Input } from './ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Badge } from './ui/badge';
 import { Empty, EmptyHeader, EmptyTitle } from './ui/empty';
+const blankSnapshot: ExtensionSnapshot = {
+  supported: true,
+  pending: true,
+  version: '',
+  cwd: '',
+  sources: [],
+  settings: [],
+  mcp: [],
+  plugins: [],
+  hooks: [],
+  diagnostics: [],
+};
 export function ExtensionTools({ scope }: { scope: ExtensionScope }) {
   const t = useI18n(),
-    [snapshot, setSnapshot] = useState<ExtensionSnapshot>(),
+    [snapshot, setSnapshot] = useState<ExtensionSnapshot>(blankSnapshot),
     [sourceId, setSourceId] = useState(''),
     [busy, setBusy] = useState(false),
     [pendingToggle, setPendingToggle] = useState(''),
@@ -40,27 +52,46 @@ export function ExtensionTools({ scope }: { scope: ExtensionScope }) {
     snapshot?.plugins
       .filter((p) => (search ? p.id.toLowerCase().includes(search.toLowerCase()) : p.installed))
       .slice(0, 100) || [];
+  function explain(reason: string | undefined) {
+    if (!reason) return '';
+    if (reason === 'subscription') return t('subscriptionExpired');
+    if (reason === 'model') return t('modelUnavailable');
+    if (reason === 'auth') return t('signInRequired');
+    if (reason === 'timeout') return t('configurationTimeout');
+    return reason;
+  }
   async function load() {
     if (operation.current) return;
-    operation.current = true;
-    setChange(undefined);
-    setEditing(undefined);
-    setBusy(true);
-    setError('');
     try {
       const next = await window.moose.request('extensionsRead', scope);
       setSnapshot(next);
       setSourceId(next.sources.find((s) => s.writable)?.id || '');
+      setError(explain(next.reason));
     } catch (e) {
-      setError(String(e));
-    } finally {
-      operation.current = false;
-      setPendingToggle('');
-      setBusy(false);
+      setError(explain(String(e)) || String(e));
     }
   }
   useEffect(() => {
-    void load();
+    let live = true;
+    setSnapshot(blankSnapshot);
+    setSourceId('');
+    setError('');
+    const apply = (next: ExtensionSnapshot) => {
+      if (!live) return;
+      setSnapshot((current) => (next.pending && current && !current.pending ? current : next));
+      setSourceId((current) => current || next.sources.find((source) => source.writable)?.id || '');
+      if (next.reason) setError(explain(next.reason));
+      else if (!next.pending) setError('');
+    };
+    void window.moose
+      .request('extensionsRead', { ...scope, cached: true })
+      .then(apply, () => undefined);
+    void window.moose.request('extensionsRead', scope).then(apply, (e) => {
+      if (live) setError(explain(String(e)) || String(e));
+    });
+    return () => {
+      live = false;
+    };
   }, [scope.projectId, scope.sessionId, scope.provider]);
   useEffect(() => {
     if (auth?.status !== 'pending') return;
@@ -197,11 +228,11 @@ export function ExtensionTools({ scope }: { scope: ExtensionScope }) {
             {error}
           </p>
         )}
-        {busy && !snapshot && <p>{t('loading')}</p>}
         {snapshot?.supported === false && <p className="extension-note">{t('extUnsupported')}</p>}
         {snapshot?.supported && (
           <>
             <Tabs
+              key={capabilities?.mcp === false ? 'agent' : 'mcp'}
               defaultValue={capabilities?.mcp === false ? 'agent' : 'mcp'}
               className="extension-tabs"
             >

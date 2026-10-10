@@ -6,6 +6,13 @@ import { cliVersion } from './process';
 import { normalizeAcp } from './acp-events';
 import { attachmentText, promptText } from './prompt';
 import { array, record, string, readable, type AgentAdapter, type RunContext } from './types';
+import {
+  allTaskModes,
+  normalizePermission,
+  permissionModes,
+  selectPermission,
+  taskPrompt,
+} from './modes';
 import type { ProviderInfo, ModelOption } from '../../shared/types';
 
 /** OpenCode v2 ACP: private server owned by the CLI, never a scraped terminal. */
@@ -58,8 +65,24 @@ export class OpenCodeAdapter implements AgentAdapter {
         const row = record(value);
         return { id: string(row.optionId), label: string(row.name), kind: string(row.kind) };
       });
-      this.pending.set(key, { id, options: new Set(choices.map((row) => row.id)) });
       const tool = record(params.toolCall);
+      const decision = this.context
+        ? selectPermission(
+            normalizePermission(this.context.session.mode),
+            this.context.promptContext?.mode || 'build',
+            choices,
+            string(tool.toolName || tool.kind),
+            string(tool.title),
+          )
+        : { action: 'ask' as const };
+      if (decision.action === 'select') {
+        rpc.send({
+          id,
+          result: { outcome: { outcome: 'selected', optionId: decision.optionId } },
+        });
+        return;
+      }
+      this.pending.set(key, { id, options: new Set(choices.map((row) => row.id)) });
       this.context.emit({
         key,
         kind: 'approval',
@@ -78,7 +101,7 @@ export class OpenCodeAdapter implements AgentAdapter {
     );
     return rpc;
   }
-  async probe(): Promise<Pick<ProviderInfo, 'models' | 'modes' | 'images'>> {
+  async probe(): Promise<Pick<ProviderInfo, 'models' | 'modes' | 'images' | 'taskModes'>> {
     const rpc = await this.connect();
     const session = record(await rpc.request('session/new', { cwd: homedir(), mcpServers: [] }));
     const options = array(session.configOptions).map(record);
@@ -97,16 +120,13 @@ export class OpenCodeAdapter implements AgentAdapter {
             const row = record(value);
             return { id: string(row.modelId), name: string(row.name), efforts: [] };
           }),
-      modes: [{ id: 'ask', label: 'Request approval' }],
+      modes: [...permissionModes],
+      taskModes: [...allTaskModes],
       images:
         record(record(this.initialization.agentCapabilities).promptCapabilities).image === true,
     };
   }
   async run(context: RunContext) {
-    if (context.session.mode && context.session.mode !== 'ask')
-      throw new Error('OpenCode currently supports Request approval mode in Moose.');
-    if (context.promptContext && context.promptContext.mode !== 'build')
-      throw new Error('This OpenCode integration currently supports Build mode.');
     const rpc = await this.connect(context.cwd);
     if (this.cancelled) return;
     const nativeId = context.session.nativeId;
@@ -141,6 +161,18 @@ export class OpenCodeAdapter implements AgentAdapter {
         value: selected,
       });
     }
+    if (context.promptContext?.mode === 'plan') {
+      const modeOption = options.find((row) => row.category === 'mode' || row.id === 'mode');
+      const plan = array(modeOption?.options)
+        .map(record)
+        .find((row) => string(row.value) === 'plan' || string(row.name).toLowerCase() === 'plan');
+      if (modeOption && plan)
+        await rpc.request('session/set_config_option', {
+          sessionId: this.sessionId,
+          configId: modeOption.id,
+          value: string(plan.value || plan.name),
+        });
+    }
     if (
       context.attachments?.some((a) => a.mime.startsWith('image/')) &&
       !record(record(this.initialization.agentCapabilities).promptCapabilities).image
@@ -155,7 +187,7 @@ export class OpenCodeAdapter implements AgentAdapter {
           {
             sessionId: this.sessionId,
             prompt: [
-              { type: 'text', text: promptText(context) },
+              { type: 'text', text: taskPrompt(context, promptText(context)) },
               ...(context.attachments || []).map((a) =>
                 a.mime.startsWith('image/')
                   ? { type: 'image', mimeType: a.mime, data: a.data }

@@ -152,6 +152,10 @@ export class MooseService {
         changed: () => this.changed(),
         emit,
         notice: (session, kind, id, messageId) => this.notice(session, kind, id, messageId),
+        modelUnavailable: (provider, model) => {
+          this.agents.rememberUnavailable(provider, model);
+          this.changed();
+        },
       },
       adapterFactory,
     );
@@ -275,6 +279,8 @@ export class MooseService {
           projects: this.store.listProjects(),
           sessions: this.store.listSessions(),
           settings: this.store.getSettings(),
+          selection: this.store.getSelection(),
+          unavailableModels: this.store.unavailableModels(),
           activities: Object.fromEntries(
             this.store.listSessions().map((s) => [s.id, this.activity(s.id)]),
           ),
@@ -505,6 +511,19 @@ export class MooseService {
       case 'providers': {
         const { refresh, cached } = args as Requests['providers'];
         return cached ? this.agents.cachedProviders() : this.providers(refresh);
+      }
+      case 'rememberSelection': {
+        const previous = this.store.getSelection();
+        const next = this.store.setSelection(args as Requests['rememberSelection']);
+        if (
+          previous.provider !== next.provider ||
+          previous.model !== next.model ||
+          previous.effort !== next.effort ||
+          previous.mode !== next.mode ||
+          previous.taskMode !== next.taskMode
+        )
+          this.changed();
+        return next;
       }
       case 'settings': {
         const s = this.store.setSettings(args as Requests['settings']);

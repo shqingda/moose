@@ -9,6 +9,7 @@ import type {
   ExtensionChange,
   ExtensionSnapshot,
 } from '../shared/extensions';
+import { entitlementError } from '../shared/entitlement';
 import type { Requests } from '../shared/types';
 
 type Method = 'extensionsRead' | 'extensionsChange' | 'extensionsLogin' | 'extensionsAuth';
@@ -73,11 +74,74 @@ export class Extensions {
     await client.close();
     this.clients.delete(client);
   }
-  private async read(scope: ExtensionScope, cwd: string) {
+  private cacheKey(scope: ExtensionScope, cwd: string) {
+    return `extension-cache:${scope.provider}:${createHash('sha256').update(cwd).digest('hex')}`;
+  }
+  private readCache(scope: ExtensionScope, cwd: string): ExtensionSnapshot | undefined {
+    const row = this.store.sqlite
+      .prepare('SELECT value FROM settings WHERE key=?')
+      .get(this.cacheKey(scope, cwd)) as { value: string } | undefined;
+    if (!row) return undefined;
+    try {
+      const snapshot = JSON.parse(row.value) as ExtensionSnapshot;
+      return { ...snapshot, cached: true, pending: false };
+    } catch {
+      return undefined;
+    }
+  }
+  private writeCache(scope: ExtensionScope, cwd: string, snapshot: ExtensionSnapshot) {
+    const stored = { ...snapshot, cached: false, pending: false, reason: undefined };
+    this.store.sqlite
+      .prepare(
+        'INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',
+      )
+      .run(this.cacheKey(scope, cwd), JSON.stringify(stored));
+  }
+  private async read(scope: ExtensionScope, cwd: string, cachedOnly = false) {
+    if (cachedOnly)
+      return (
+        this.readCache(scope, cwd) || {
+          supported: true,
+          pending: true,
+          version: '',
+          cwd,
+          sources: [],
+          settings: [],
+          mcp: [],
+          plugins: [],
+          hooks: [],
+          diagnostics: [],
+        }
+      );
     const client = await this.client(scope);
     try {
-      return await client.read(cwd);
-    } catch {
+      const snapshot = await client.read(cwd);
+      this.writeCache(scope, cwd, snapshot);
+      return snapshot;
+    } catch (error) {
+      const entitlement = entitlementError(error);
+      const message = error instanceof Error ? error.message : String(error);
+      const reason = entitlement?.code || (/timed out/i.test(message) ? 'timeout' : '');
+      const cached = this.readCache(scope, cwd);
+      if (cached) return { ...cached, reason: reason || undefined };
+      if (reason)
+        return {
+          supported: true,
+          version: '',
+          cwd,
+          sources: [],
+          settings: [],
+          mcp: [],
+          plugins: [],
+          hooks: [],
+          diagnostics: [
+            {
+              area: 'config',
+              message: entitlement?.message || 'Configuration lookup timed out',
+            },
+          ],
+          reason,
+        };
       throw new Error(
         'Configuration lookup failed. Check the provider CLI; raw errors are hidden to protect credentials.',
       );
@@ -103,7 +167,8 @@ export class Extensions {
     const scope = command.args,
       cwd = scope.projectId ? this.store.directory(scope.projectId, scope.sessionId) : homedir();
     if (!scope.projectId && scope.sessionId) throw new Error('A session requires a project');
-    if (command.method === 'extensionsRead') return this.read(scope, cwd);
+    if (command.method === 'extensionsRead')
+      return this.read(scope, cwd, command.args.cached === true);
     if (command.method === 'extensionsLogin') {
       if (this.auth.size >= 100)
         for (const [id, run] of this.auth) {
