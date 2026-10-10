@@ -29,7 +29,7 @@ export function ErrorNotice({
             {t(value.code === 'uncertain' ? 'checkStatus' : 'reconnectAction')}
           </Button>
         )}
-        {['provider', 'auth'].includes(value.code) && onSettings && (
+        {['provider', 'auth', 'subscription', 'model'].includes(value.code) && onSettings && (
           <Button variant="secondary" size="sm" onClick={onSettings}>
             {t('connectAgent')}
           </Button>

@@ -66,7 +66,11 @@ export function ProviderConnection({
         ? 'ready'
         : info.failure?.code === 'auth'
           ? 'auth'
-          : 'failed';
+          : info.failure?.code === 'subscription'
+            ? 'subscription'
+            : info.failure?.code === 'model'
+              ? 'model'
+              : 'failed';
   useEffect(() => {
     if (initiallyExpanded) setExpanded(true);
   }, [initiallyExpanded]);

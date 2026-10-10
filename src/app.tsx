@@ -277,6 +277,13 @@ function Workspace({
       );
   };
   useEffect(() => {
+    const blocked = snapshot.unavailableModels || {};
+    const known = providers.map((item) => ({
+      ...item,
+      models: item.models.map((model) =>
+        blocked[item.provider]?.includes(model.id) ? { ...model, unavailable: true } : model,
+      ),
+    }));
     const current = session
       ? readSelection({
           provider: session.provider,
@@ -286,7 +293,7 @@ function Workspace({
           taskMode: session.draftContext?.mode,
         })
       : selectionRef.current;
-    const next = reconcileSelection(current, providers, { lockProvider: !!session });
+    const next = reconcileSelection(current, known, { lockProvider: !!session });
     if (selectionsEqual(current, next)) return;
     selectionRef.current = next;
     setProvider(next.provider);
@@ -309,7 +316,15 @@ function Workspace({
       void perform(() =>
         window.moose.request('updateSession', { id: session.id, ...sessionPatch }),
       );
-  }, [providers, session?.id, session?.model, session?.effort, session?.mode, session?.provider]);
+  }, [
+    providers,
+    snapshot.unavailableModels,
+    session?.id,
+    session?.model,
+    session?.effort,
+    session?.mode,
+    session?.provider,
+  ]);
   const connect = useCallback(async () => {
     setChecking(true);
     try {

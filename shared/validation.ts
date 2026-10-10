@@ -306,6 +306,7 @@ const schemas = {
     projectId: id.optional(),
     sessionId: id.optional(),
     provider: z.enum(providerIds),
+    cached: z.boolean().optional(),
   }),
   extensionsChange: z.strictObject({
     projectId: id.optional(),

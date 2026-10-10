@@ -40,6 +40,14 @@ export function ExtensionTools({ scope }: { scope: ExtensionScope }) {
     snapshot?.plugins
       .filter((p) => (search ? p.id.toLowerCase().includes(search.toLowerCase()) : p.installed))
       .slice(0, 100) || [];
+  function explain(reason: string | undefined) {
+    if (!reason) return '';
+    if (reason === 'subscription') return t('subscriptionExpired');
+    if (reason === 'model') return t('modelUnavailable');
+    if (reason === 'auth') return t('signInRequired');
+    if (reason === 'timeout') return t('configurationTimeout');
+    return reason;
+  }
   async function load() {
     if (operation.current) return;
     operation.current = true;
@@ -51,8 +59,9 @@ export function ExtensionTools({ scope }: { scope: ExtensionScope }) {
       const next = await window.moose.request('extensionsRead', scope);
       setSnapshot(next);
       setSourceId(next.sources.find((s) => s.writable)?.id || '');
+      setError(explain(next.reason));
     } catch (e) {
-      setError(String(e));
+      setError(explain(String(e)) || String(e));
     } finally {
       operation.current = false;
       setPendingToggle('');
@@ -60,7 +69,21 @@ export function ExtensionTools({ scope }: { scope: ExtensionScope }) {
     }
   }
   useEffect(() => {
+    let live = true;
+    setSnapshot(undefined);
+    setError('');
+    void window.moose.request('extensionsRead', { ...scope, cached: true }).then(
+      (next) => {
+        if (!live) return;
+        setSnapshot((current) => current || next);
+        if (next.reason) setError(explain(next.reason));
+      },
+      () => undefined,
+    );
     void load();
+    return () => {
+      live = false;
+    };
   }, [scope.projectId, scope.sessionId, scope.provider]);
   useEffect(() => {
     if (auth?.status !== 'pending') return;
@@ -197,9 +220,8 @@ export function ExtensionTools({ scope }: { scope: ExtensionScope }) {
             {error}
           </p>
         )}
-        {busy && !snapshot && <p>{t('loading')}</p>}
         {snapshot?.supported === false && <p className="extension-note">{t('extUnsupported')}</p>}
-        {snapshot?.supported && (
+        {snapshot?.supported && !snapshot.pending && (
           <>
             <Tabs
               defaultValue={capabilities?.mcp === false ? 'agent' : 'mcp'}

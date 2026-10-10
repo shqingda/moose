@@ -3,6 +3,7 @@ import { MooseError, fault } from '../shared/errors';
 import { providerDefinitions, providerIds } from '../shared/providers';
 import { createAdapter, type AdapterFactory } from './providers/registry';
 import { discover, cliVersion } from './providers/process';
+import { entitlementError } from '../shared/entitlement';
 import { providerError, type AgentAdapter } from './providers/types';
 import type { Provider, ProviderInfo, Requests, Settings } from '../shared/types';
 import { statSync } from 'node:fs';
@@ -14,6 +15,17 @@ interface SavedProbe {
   mtimeMs: number;
   size: number;
   info: ProviderInfo;
+}
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const guarded = promise.finally(() => clearTimeout(timer));
+  void guarded.catch(() => {});
+  return Promise.race([
+    guarded,
+    new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error(message)), ms);
+    }),
+  ]).finally(() => clearTimeout(timer));
 }
 const probeKey = (provider: Provider, settings: Settings) =>
   JSON.stringify([
@@ -157,13 +169,32 @@ export class ProviderRegistry {
             adapter = await this.adapterFactory(provider, info.path);
             this.probing.add(adapter);
             if (this.stopping) return info;
-            Object.assign(info, await adapter.probe());
+            Object.assign(
+              info,
+              await withTimeout(adapter.probe(), 12000, 'Provider probe timed out'),
+            );
             info.taskModes ??= [...providerDefinitions[provider].taskModes];
             info.steering ??= typeof adapter.steer === 'function';
-            info.connected = true;
+            if (info.failure || info.error) {
+              info.connected = false;
+              info.error ||= info.failure?.message;
+              if (info.failure?.code === 'subscription' || info.failure?.code === 'auth')
+                info.models = info.models.map((model) => ({ ...model, unavailable: true }));
+            } else {
+              info.connected = true;
+              this.store.clearUnavailable(provider);
+            }
+            const blocked = new Set(this.store.unavailableModels()[provider] || []);
+            if (blocked.size)
+              info.models = info.models.map((model) =>
+                blocked.has(model.id) ? { ...model, unavailable: true } : model,
+              );
           } catch (error) {
-            info.error = providerError(error);
-            info.failure = fault(error);
+            const entitlement = entitlementError(error);
+            info.error = entitlement?.message || providerError(error);
+            info.failure = entitlement ? fault(entitlement) : fault(error);
+            if (info.failure.code === 'subscription' || info.failure.code === 'auth')
+              info.models = info.models.map((model) => ({ ...model, unavailable: true }));
           } finally {
             if (adapter) {
               await adapter.close();
@@ -220,7 +251,12 @@ export class ProviderRegistry {
       try {
         await pending;
       } catch (error) {
-        return { ...(cached?.value || { limits: [] }), context, error: providerError(error) };
+        const entitlement = entitlementError(error);
+        return {
+          ...(cached?.value || { limits: [] }),
+          context,
+          error: entitlement?.message || providerError(error),
+        };
       }
       cached = this.usageCache.get(a.provider);
     }
@@ -234,6 +270,19 @@ export class ProviderRegistry {
     };
   }
 
+  rememberUnavailable(provider: Provider, model: string) {
+    this.store.rememberUnavailable(provider, model);
+    this.providerCache = this.providerCache?.map((info) =>
+      info.provider === provider
+        ? {
+            ...info,
+            models: info.models.map((item) =>
+              item.id === model ? { ...item, unavailable: true } : item,
+            ),
+          }
+        : info,
+    );
+  }
   async close() {
     this.stopping = true;
     await Promise.all([...this.probing].map((adapter) => adapter.close()));

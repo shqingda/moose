@@ -482,6 +482,9 @@ export function Composer({
         </InputGroupAddon>
       </InputGroup>
       <div className="composer-foot">
+        {info?.failure?.code === 'subscription' && <span>{t('subscriptionExpired')}</span>}
+        {info?.failure?.code === 'model' && <span>{t('modelUnavailable')}</span>}
+        {info?.failure?.code === 'auth' && <span>{t('signInRequired')}</span>}
         {unsupportedImages && <span>{t('imageUnavailable')}</span>}
         {(session?.archived || busy) && (
           <span>{t(session?.archived ? 'archivedHint' : 'queueHint')}</span>

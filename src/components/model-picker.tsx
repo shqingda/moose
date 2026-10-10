@@ -26,7 +26,9 @@ export function ModelPicker({
     [query, setQuery] = useState(''),
     [category, setCategory] = useState(provider);
   const info = providers.find((p) => p.provider === category);
-  const options = (info?.models || []).map((m) => ({ value: m.id, label: m.name }));
+  const options = (info?.models || [])
+    .filter((model) => !model.unavailable)
+    .map((m) => ({ value: m.id, label: m.name }));
   const filtered = options.filter((o) => o.label.toLowerCase().includes(query.toLowerCase()));
   const selected =
     providers.find((p) => p.provider === provider)?.models.find((m) => m.id === value)?.name ||

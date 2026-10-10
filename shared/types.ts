@@ -199,6 +199,8 @@ export interface Snapshot {
   settings: Settings;
   /** 上次使用的底座、模型、推理、权限和任务模式；随快照一起到达，不另等探测。 */
   selection?: ComposerSelection;
+  /** 已确认当前账号用不上的模型，界面会隐藏并改选其他模型。 */
+  unavailableModels?: Partial<Record<Provider, string[]>>;
   locale: string;
   dark: boolean;
   reduceMotion: boolean;

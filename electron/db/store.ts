@@ -185,6 +185,45 @@ export class Store {
       .run();
     return next;
   }
+  /** 记住探测或执行时确认不可用的模型，供下次打开时立刻隐藏。 */
+  unavailableModels(): Partial<Record<Provider, string[]>> {
+    const row = this.db
+      .select()
+      .from(table.settings)
+      .where(eq(table.settings.key, 'unavailable-models'))
+      .get();
+    const value = row ? (JSON.parse(row.value) as Partial<Record<Provider, string[]>>) : {};
+    return value && typeof value === 'object' ? value : {};
+  }
+  rememberUnavailable(provider: Provider, model: string) {
+    if (!model) return;
+    const current = this.unavailableModels();
+    const models = [...new Set([...(current[provider] || []), model])].slice(0, 50);
+    this.db
+      .insert(table.settings)
+      .values({
+        key: 'unavailable-models',
+        value: JSON.stringify({ ...current, [provider]: models }),
+      })
+      .onConflictDoUpdate({
+        target: table.settings.key,
+        set: { value: JSON.stringify({ ...current, [provider]: models }) },
+      })
+      .run();
+  }
+  clearUnavailable(provider: Provider) {
+    const current = this.unavailableModels();
+    if (!current[provider]?.length) return;
+    delete current[provider];
+    this.db
+      .insert(table.settings)
+      .values({ key: 'unavailable-models', value: JSON.stringify(current) })
+      .onConflictDoUpdate({
+        target: table.settings.key,
+        set: { value: JSON.stringify(current) },
+      })
+      .run();
+  }
   /** 按消息 ID 更新记录；seq 不增加时拒绝覆盖，保持流式更新顺序。 */
   saveMessage(message: Omit<Message, 'position'>): Message {
     const {

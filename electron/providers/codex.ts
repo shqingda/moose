@@ -1,6 +1,8 @@
 import { CodexSessions } from './codex-sessions';
 import { codexPermissions } from './codex-permissions';
 export { codexPermissions } from './codex-permissions';
+import { entitlementError } from '../../shared/entitlement';
+import { MooseError } from '../../shared/errors';
 import { allTaskModes, goalInstruction, permissionModes, planInstruction } from './modes';
 import { codexInput } from './codex-input';
 import { codexDelegation } from './codex-subagents';
@@ -296,7 +298,7 @@ export class CodexAdapter implements AgentAdapter {
     const rpc = await this.connect();
     const result = await rpc.request<
       import('./generated/codex/v2/GetAccountRateLimitsResponse').GetAccountRateLimitsResponse
-    >('account/rateLimits/read', {});
+    >('account/rateLimits/read', {}, 8000);
     const buckets =
       result.rateLimitsByLimitId && Object.keys(result.rateLimitsByLimitId).length
         ? Object.values(result.rateLimitsByLimitId)
@@ -320,19 +322,19 @@ export class CodexAdapter implements AgentAdapter {
   }
   /** 查询真实模型与推理强度，返回界面可选择的能力。 */
   async probe(): Promise<
-    Pick<ProviderInfo, 'models' | 'modes' | 'images' | 'taskModes' | 'steering'>
+    Pick<
+      ProviderInfo,
+      'models' | 'modes' | 'images' | 'taskModes' | 'steering' | 'failure' | 'error'
+    >
   > {
     const rpc = await this.connect();
-    const result = await rpc.request<ModelListResponse>('model/list', {
-      limit: 100,
-      includeHidden: false,
-    });
-    const account = record(await rpc.request('account/read', { refreshToken: false }));
-    if (!account.account) throw new Error('Sign in with `codex login`, then reconnect.');
-    return {
-      taskModes: [...allTaskModes],
-      steering: true,
-      models: result.data
+    const listed = async () => {
+      const result = await rpc.request<ModelListResponse>(
+        'model/list',
+        { limit: 100, includeHidden: false },
+        8000,
+      );
+      return result.data
         .filter((m) => !m.hidden)
         .map((m) => ({
           id: m.model,
@@ -341,10 +343,37 @@ export class CodexAdapter implements AgentAdapter {
             id: e.reasoningEffort,
             label: e.reasoningEffort,
           })),
-        })),
-      modes: [...permissionModes],
-      images: true,
+        }));
     };
+    let models: ProviderInfo['models'] = [];
+    try {
+      models = await listed();
+      const account = record(await rpc.request('account/read', { refreshToken: false }, 8000));
+      if (!account.account) throw new MooseError('auth', 'Sign in required');
+      return {
+        taskModes: [...allTaskModes],
+        steering: true,
+        models,
+        modes: [...permissionModes],
+        images: true,
+      };
+    } catch (error) {
+      const entitlement =
+        error instanceof MooseError &&
+        (error.code === 'auth' || error.code === 'subscription' || error.code === 'model')
+          ? error
+          : entitlementError(error);
+      if (!entitlement) throw error;
+      return {
+        taskModes: [...allTaskModes],
+        steering: true,
+        models: models.map((model) => ({ ...model, unavailable: true })),
+        modes: [...permissionModes],
+        images: true,
+        failure: { code: entitlement.code, message: entitlement.message },
+        error: entitlement.message,
+      };
+    }
   }
   /** 创建或恢复原生 thread，发送本轮输入，并等待普通任务或 Goal 结束。 */
   async run(context: RunContext) {

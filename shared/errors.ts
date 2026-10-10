@@ -3,6 +3,8 @@ export type ErrorCode =
   | 'unknown'
   | 'disconnected'
   | 'auth'
+  | 'subscription'
+  | 'model'
   | 'provider'
   | 'busy'
   | 'version'
@@ -30,6 +32,8 @@ export function fault(error: unknown): Fault {
         'attachments',
         'disconnected',
         'auth',
+        'subscription',
+        'model',
         'provider',
         'busy',
         'version',

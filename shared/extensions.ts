@@ -16,6 +16,10 @@ export interface ConfigSource {
 export interface ExtensionSnapshot {
   supported: boolean;
   configurationOnly?: boolean;
+  /** 来自上次成功读取，界面可以先画出来。 */
+  cached?: boolean;
+  /** 还没有缓存，新鲜读取仍在后台进行。 */
+  pending?: boolean;
   capabilities?: {
     model: boolean;
     mcp: boolean;
@@ -77,7 +81,7 @@ export interface ExtensionAuth {
   status: 'pending' | 'completed' | 'failed' | 'cancelled' | 'expired';
 }
 export interface ExtensionRequests {
-  extensionsRead: ExtensionScope;
+  extensionsRead: ExtensionScope & { cached?: boolean };
   extensionsChange: ExtensionScope & { requestId: string; change: ExtensionChange };
   extensionsLogin: ExtensionScope & { name: string; requestId: string };
   extensionsAuth: { id: string; cancel?: boolean };

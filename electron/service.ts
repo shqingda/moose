@@ -152,6 +152,10 @@ export class MooseService {
         changed: () => this.changed(),
         emit,
         notice: (session, kind, id, messageId) => this.notice(session, kind, id, messageId),
+        modelUnavailable: (provider, model) => {
+          this.agents.rememberUnavailable(provider, model);
+          this.changed();
+        },
       },
       adapterFactory,
     );
@@ -276,6 +280,7 @@ export class MooseService {
           sessions: this.store.listSessions(),
           settings: this.store.getSettings(),
           selection: this.store.getSelection(),
+          unavailableModels: this.store.unavailableModels(),
           activities: Object.fromEntries(
             this.store.listSessions().map((s) => [s.id, this.activity(s.id)]),
           ),
