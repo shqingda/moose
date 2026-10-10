@@ -15,7 +15,7 @@
 
 只有“Moose 里的做法”是项目的真实实现，其余代码和方案都是通用讲解。完整项目链路见[项目面试指南](../project-interview-guide.md)。
 
-按同样题目顺序练口的题单在 [rehab/](rehab/README.md)，不替代本目录的答题稿。
+按知识体系重讲、用来恢复手写手感的教程在 [rehab/](rehab/README.md)，不替代本目录的答题稿。
 
 ## 章节目录
 

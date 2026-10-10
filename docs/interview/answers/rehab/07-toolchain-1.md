@@ -1,86 +1,69 @@
-# 七、AI 工程化与前端工具链 · 上
+# 七、拦住坏代码 · 上：先在本地看见，再在发布前拦住
 
-> 题单，对着说。每题顺序固定：这题在考什么 → 一句话回答 → 展开说明 → 示例 → Moose 里的做法 → 容易答错的地方。对应 [答案](../07-engineering-toolchain.md) 第 2、4、10 题。下篇是监控、日志和构建。事实按 Moose 0.23.3。答题稿里写了「没有」的，不要说成已经做了。
+> 对应答案：[07-engineering-toolchain.md](../07-engineering-toolchain.md) 第 2、4、10 题。下篇讲怎么看见慢、怎么拆包。
 
-## 2. 现在怎样搭一套前端代码规范和提交检查？ESLint、Prettier 之外还有什么选择？
+前面几章把类型、审批和密钥放在了该放的层。代码仍会在合进去之前就写错。这一章按「什么时候拦住」往下接：写的时候尽快知道错了，所以本地只查这次改动；合并或发布之前必须拦住，同一组检查不能被人用参数跳过。模型 SDK 再加一层：编译能过，不代表流事件、取消和错误格式还跟以前一样。
 
-> **这题在考什么**：代码规范不是一个工具能搞定的：有的工具检查类型，有的找潜在错误，有的只统一空格和换行。近几年工具也在换代，配置格式变了，还出现了用 Rust 写的更快的替代品。面试官想看你知道各类工具管什么、怎样在本地提前反馈，以及为什么最终要靠 CI 把关。
+## 三类检查各管一件事，快的工具替不了类型
 
-**一句话回答**：类型检查用 `tsc --noEmit`，lint 用 ESLint 9 的 flat config 或更快的 oxlint、Biome，格式化用 Prettier 或 oxfmt、Biome；Git Hook 配合 lint-staged 只检查暂存的文件，给出快速反馈，CI 再跑完整的一组检查兜底；提交信息规范按团队需要决定。
+类型检查管类型是否对得上，常见是 `tsc --noEmit`。Lint 管潜在错误和不良写法，常见是 ESLint、oxlint、Biome。格式管空格、换行、引号，常见是 Prettier、oxfmt、Biome。
 
-**展开说明**
+需要类型信息的检查，以 TypeScript 编译器为准。oxlint 或 Biome 再快，也不做完整的类型检查。换成它们之后，`tsc --noEmit` 仍然要跑。
 
-| 工具类别 | 管什么 | 常见选择 |
-| --- | --- | --- |
-| 类型检查 | 类型是否匹配 | TypeScript（`tsc --noEmit`） |
-| Lint | 潜在错误和不良写法 | ESLint、oxlint、Biome |
-| 格式化 | 空格、换行、引号等风格 | Prettier、oxfmt、Biome |
-| Git Hook | 提交前在本地自动运行检查 | husky、lefthook，配合 lint-staged |
-| 提交信息检查 | 提交说明是否符合约定 | Commitlint（可选） |
-
-- ESLint 9 默认使用 flat config，也就是一个 `eslint.config.js` 文件导出配置数组，取代了以前的 `.eslintrc` 层层继承。新项目直接按这种格式写。
-- oxlint、oxfmt（Oxc 项目）和 Biome 用 Rust 编写，速度比 ESLint、Prettier 快很多，适合大仓库。代价是规则和插件生态没有 ESLint 全，迁移前要确认团队依赖的规则都有对应实现。
-- 需要类型信息的检查（比如参数类型不匹配）仍以 TypeScript 编译器为准，lint 工具不能替代 `tsc --noEmit`。
-- Hook 只跑暂存的文件（lint-staged 做的就是这件事），否则每次提交都检查全仓库，太慢大家就会绕过去。
-- `git commit --no-verify` 可以跳过 Hook，所以 Hook 只是提前反馈，真正的门槛是 CI 上同一组检查必须通过才能合并。
-- 生成的代码和构建产物要排除在检查之外；lint 和格式化工具的规则冲突要先解决，比如关掉 lint 里管格式的规则。
-
-**示例**：下面是一个 ESLint 9 flat config 的最小写法（示意）。
+ESLint 9 默认用 flat config：一个 `eslint.config.js` 导出配置数组，不再用以前 `.eslintrc` 那种层层继承。新项目按这种格式写。
 
 ```js
-// eslint.config.js
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
 export default [
-  { ignores: ['dist/**', 'src/generated/**'] }, // 构建产物和生成代码不检查
+  { ignores: ['dist/**', 'src/generated/**'] },
   js.configs.recommended,
-  ...tseslint.configs.recommended,             // TypeScript 推荐规则
+  ...tseslint.configs.recommended,
 ];
 ```
 
-**Moose 里的做法**：Moose 没有用 ESLint 和 Prettier，而是用 oxlint 和 oxfmt。`package.json` 里 `pnpm lint` 运行 `oxlint .`，`pnpm format:check` 运行 `oxfmt --check .`，类型检查是 `pnpm typecheck`（`tsc --noEmit`），`pnpm build` 也会先跑 `tsc --noEmit` 再 `vite build`。`.oxlintrc.json` 启用了 typescript、unicorn、oxc 插件，把 correctness 类规则设为错误，并忽略 `electron/providers/generated/**`；`.oxfmtrc.json` 规定行宽 100、单引号、保留分号和尾随逗号。仓库里没有 husky、lefthook、lint-staged 或 Commitlint，也没有 `.github/workflows`。这些检查平时靠手动运行，发布时由 `pnpm release:prepare`（`scripts/release.mjs`）依次执行 `format:check`、`lint`、`test`、`build` 和 E2E，任何一步失败就不打包。
+oxlint、oxfmt 和 Biome 用 Rust 写，大仓库里往往比 ESLint、Prettier 快。代价是规则和插件没有 ESLint 全。迁移前要核对团队真的依赖的规则有没有对应实现，而不是只比速度。
 
-**容易答错的地方**
-- 不能把题目里的 ESLint、Prettier、Commitlint 都说成 Moose 已经在用，也不能说 Moose 有 Git Hook。
-- 以为换成 oxlint 或 Biome 就不需要 `tsc` 了。它们不做完整的类型检查。
-- 只靠 Hook 把关。Hook 能被跳过，CI 才是硬门槛。
+生成的代码和构建产物排除在检查之外，否则每轮都在报机器写出来的风格问题。lint 和格式化如果都管引号，先关掉 lint 里那些纯格式规则，让格式化工具独占风格。
 
-## 4. 设计一个 AI 前端项目的 CI/CD 流水线，包括代码检查、单元测试、E2E 测试、构建优化、自动部署。
+## 本地的钩子只是提前告诉你
 
-> **这题在考什么**：CI/CD 是从提交代码到产出可安装版本的一连串自动检查和构建。关键不是列一堆工具名，而是让有问题的代码在发布前被拦住，并且能说清最终产物对应哪个提交。
+类型、lint、格式有了，还要决定它们什么时候跑。Git Hook 在 `git commit` 时自动跑命令。husky、lefthook 负责装这个钩子。lint-staged 让它只检查暂存的文件。全仓库每次提交都查一遍，会慢到大家去找开关。
 
-**一句话回答**：PR 阶段跑类型、lint、单测、构建和关键 E2E；发布阶段只使用通过验证的提交和制品，并记录版本、签名和回滚方式；真实模型测试单独受控执行。
+开关是存在的：`git commit --no-verify` 跳过 Hook。所以 Hook 只适合提前告诉你。真正的门槛是 CI 上同一组检查，没过不能合并。
 
-**展开说明**
-- PR 阶段先锁定依赖，再依次跑类型检查、lint、单元测试、构建和关键 E2E（模拟用户操作的端到端测试）。
-- 发布阶段只使用已经通过验证的提交和制品（构建产出的安装包等文件），并记录版本、签名和回滚方式。
-- 调用真实模型的测试要单独、受控地执行，避免每个 PR 都受登录状态、额度和网络波动影响。
+提交说明要不要符合某种格式（Commitlint），看团队要不要从说明里生成变更日志。它不替代类型和测试。
 
-**Moose 里的做法**：Moose 已有可执行的联合发布脚本。`release:prepare` 检查并打包桌面与 Web，记录当前提交；`release:publish` 核对版本、提交和校验值，上传草稿、部署 Web，再从公网安装验证，通过后才公开 Release。
+## 发布要能指出安装包来自哪一次提交
 
-**容易答错的地方**
-- 这是显式运行的发布流程。不能仅凭脚本存在，就声称每次 push 都会自动上线。
-- 两端发布不是跨 GitHub 与 Cloudflare 的原子事务，可能一端成功、另一端失败。
+CI/CD 是从提交到可安装版本的一串自动检查和构建。价值在两句：有问题的代码在发布前被拦住，而且你能指出这个安装包对应哪一次提交。
 
-## 10. 请设计一个 AI 前端依赖管理策略，定期更新模型 SDK、工具库，并评估兼容性与性能影响。
+PR 阶段先锁定依赖，用同一份锁文件。然后跑类型检查、lint、单元测试、构建，以及关键路径的 E2E。E2E 是模拟用户操作的端到端测试。这些就是上一节那组检查，只是不能再被 `--no-verify` 跳过。
 
-> **这题在考什么**：升级模型 SDK 可能改变流事件、工具调用参数或错误格式。项目照样能编译，真实运行时却可能出错。面试官想看你是否知道依赖升级要验证行为，而不只是改版本号。
+发布阶段只用已经通过上述验证的提交和制品。制品就是安装包这类文件。记录版本、签名和回滚方式。回滚要事先能说出来：坏了装回哪一个包，数据能不能被旧版本读。
 
-**一句话回答**：锁定版本、小批量更新，先读变更说明，再跑类型、协议测试、关键 E2E 和打包验证，模型 SDK 重点查流事件、工具参数、取消和错误格式。
+调用真实模型的测试单独、受控地跑。每个 PR 都打真模型，会被登录态、额度和网络波动带着失败。失败了也不知道是代码坏了还是额度没了。
 
-**展开说明**
-- 锁定版本并提交锁文件，保证每个人、每次构建装的依赖都一样。
-- 小批量更新，出问题时容易定位是哪个依赖导致的。
-- 升级前先看变更说明，升级后跑类型检查、协议测试、关键 E2E 与打包验证。
-- 模型 SDK 尤其要检查流事件、工具参数、取消和错误格式有没有变化。
-- 原生依赖（包含编译好的二进制模块）还要核对运行时 ABI（二进制接口版本），否则可能在 Electron 或 Node 里加载失败。
+「脚本存在」不等于「每次 push 都会自动上线」。显式运行的发布流程，只有有人，或有一个你确认过的发布任务执行时才会走。两端如果分属不同系统，例如一边是 GitHub Release、一边是另一处托管，它们通常不是同一个原子事务。一端成功、另一端失败是可能的。
 
-**Moose 里的做法**：Moose 锁定 pnpm 依赖版本。Codex 协议类型可以用 `pnpm protocol:generate` 重新生成，之后还要跑类型检查、测试和真实 CLI 流程。
+## 依赖锁住以后，升级还要重跑行为
 
-**容易答错的地方**
-- 不能只看协议类型生成成功就认为升级没问题。
+锁文件提交进仓库，每台机器、每次构建装到的才是同一组版本。一次升一大批，出了问题不知道是哪一个包。小批量更新，才好定位。
 
----
+升级时先读变更说明，再改版本、更新锁文件，然后跑类型检查、协议测试、关键 E2E，再打包。必要时看体积和启动。模型 SDK 重点看四样有没有变：流事件、工具参数、取消、错误格式。类型生成成功，只说明类型文件写出来了，不说明运行时的 CLI 还按旧协议说话。
 
-上一篇：[六、输出安全与审批 · 下](06-ai-features-2.md) ｜ [题单目录](README.md) ｜ 下一篇：[七、工具链 · 下](07-toolchain-2.md)
+原生依赖带编译好的二进制模块。除了版本号，还要核对 ABI。ABI 是编译好的二进制期待宿主提供哪一套接口。Node 或 Electron 的 ABI 一变，旧的 `.node` 文件会加载失败。这和 TypeScript 类型对不对是两条线。
+
+## Moose 里实际是这样
+
+只对得上 [答案](../07-engineering-toolchain.md) 第 2、4、10 题。
+
+- 没有用 ESLint 和 Prettier，用的是 oxlint 和 oxfmt。`pnpm lint` 是 `oxlint .`，`pnpm format:check` 是 `oxfmt --check .`，`pnpm typecheck` 是 `tsc --noEmit`。`pnpm build` 会先 `tsc --noEmit` 再 `vite build`。
+- `.oxlintrc.json` 启用 typescript、unicorn、oxc 插件，correctness 类规则设为错误，忽略 `electron/providers/generated/**`。`.oxfmtrc.json` 规定行宽 100、单引号、保留分号和尾随逗号。
+- 没有 husky、lefthook、lint-staged、Commitlint，也没有 `.github/workflows`。这些检查平时靠手动运行。
+- `pnpm release:prepare`（`scripts/release.mjs`）依次执行 `format:check`、`lint`、`test`、`build` 和 E2E，任何一步失败就不打包。它检查并打包桌面与 Web，记录当前提交。`release:publish` 核对版本、提交和校验值，上传草稿、部署 Web，再从公网安装验证，通过后才公开 Release。
+- 这是显式运行的发布流程，不能仅凭脚本存在就说每次 push 都会自动上线。两端发布不是跨 GitHub 与 Cloudflare 的原子事务，可能一端成功、另一端失败。
+- 依赖版本由 pnpm 锁定。Codex 协议类型可以用 `pnpm protocol:generate` 重新生成，之后还要跑类型检查、测试和真实 CLI 流程。不能只看生成成功。
+
+面试时不要把题目里的 ESLint、Prettier、Commitlint、Git Hook 说成 Moose 已经在用。

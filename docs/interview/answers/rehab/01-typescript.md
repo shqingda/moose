@@ -1,135 +1,138 @@
-# 一、TypeScript 与类型系统
+# 一、类型：把会变的数据说清楚
 
-> 题单，对着说。每题顺序固定：这题在考什么 → 一句话回答 → 展开说明 → 示例 → Moose 里的做法 → 容易答错的地方。对应 [答案](../01-typescript.md)，原题 1、2、5、7。事实按 Moose 0.23.3。答题稿里写了「没有」的，不要说成已经做了。
+> 对应答案：[01-typescript.md](../01-typescript.md)，原题 1、2、5、7。
 
-## 1. 在定义 AI 接口返回的嵌套数据结构（如多轮对话、工具调用结果）时，如何用 TypeScript 的泛型与条件类型实现灵活的类型推导？
+发消息和查用量都是一次请求。外壳一样：成功拿数据，失败拿错误。里面不一样：一个要 `text`，一个要 `provider`。这一章先把外壳固定住，再让方法名决定里面填什么。类型只能管到你写代码的时候。网上来的 JSON、任务换状态、流式事件，都得在这个界限之后再谈。
 
-> **这题在考什么**：AI 应用里接口很多，比如“发送消息”和“查询用量”，它们都是请求，但参数和返回数据各不相同。面试官想看你能不能复用同一个请求外壳，同时让每次调用都拿到准确的类型提示，而不是到处写 `any`。
+## 外壳留一个洞
 
-**一句话回答**：把不变的外层结构固定下来，用泛型表示变化的部分，再用“方法名到参数、返回值的映射表”让编译器根据方法名自动推出类型。
-
-**展开说明**
-- 先定义稳定的外壳。例如 `Result<T>` 表示“成功时返回 T，失败时返回错误”，所有接口共用同一套成功和失败处理。
-- 再用映射表把方法名、参数和返回值绑在一起：`request<M extends Method>(method: M, params: Requests[M]): Promise<Responses[M]>`。传入方法名后，参数类型和返回类型就都确定了，写错参数会直接报错。
-- 条件类型（按“某类型是否满足条件”来选择结果类型）适合做类型提取。比如 `T extends Promise<infer U> ? U : T`，其中 `infer U` 的意思是“把 Promise 里包着的类型取出来”。
-- 类型只在写代码和编译时起作用。数据真正进来时，仍需要运行时校验。
-
-**示例**：下面是一个简化版，方法名决定参数和返回值。
+成功和失败的处理，每种接口都一样，不必重写。
 
 ```ts
-// 每个方法名对应的参数和返回值
-type Params = { send: { text: string }; usage: { provider: string } };
-type Outputs = { send: { queueId: string }; usage: { used: number } };
-
-declare function request<M extends keyof Params>(
-  method: M,          // M 被推断为 'send' 或 'usage'
-  params: Params[M],  // 参数类型随方法名变化
-): Promise<Outputs[M]>; // 返回类型也随方法名变化
-
-request('send', { text: '修复报错' }); // 推出 Promise<{ queueId: string }>
+type Result<T> =
+  | { ok: true; data: T }
+  | { ok: false; error: string };
 ```
 
-**Moose 里的做法**：Moose 在 `shared/types.ts` 中定义 `Method`、`Requests`、`Responses`。`window.moose.request` 用方法名约束参数和返回类型；IPC 入口再用 Zod 校验实际传入的数据。
+`T` 是类型上留的洞。发消息时填 `{ queueId: string }`，查用量时填 `{ used: number }`。外壳不动，里面的数据变。
 
-## 2. 当 AI 接口返回的字段可能因模型版本不同而动态变化时，如何设计类型守卫（type guard）与类型收缩策略？
+类型标注，比如 `text: string`，编译结束以后不会留在跑起来的 JavaScript 里。联合类型 `A | B` 表示不是 A 就是 B。泛型就是上面那个洞，调用时把具体类型填进去。
 
-> **这题在考什么**：TypeScript 只检查你写代码时声明的类型，管不了网络上实际收到的 JSON。模型升级后字段可能改名或换位置。面试官想看你是否知道要在运行时检查数据，再把它“收窄”成确定的类型。
+这一步只去掉了重复。函数如果写成 `request(method: string, params: any)`，编译器仍然不知道这次该传 `text` 还是 `provider`。
 
-**一句话回答**：接口返回值先当作 `unknown`，用类型守卫在运行时逐项检查，检查通过后再转换成页面统一使用的类型。
+## 用方法名把洞填上
 
-**展开说明**
-- 类型守卫是一个返回 `value is X` 的函数。它在运行时做检查，检查通过后，TypeScript 才允许把这份数据当成 X 使用。
-- 收窄的顺序是：先确认是不是对象，再根据 `type` 或版本字段判断是哪种格式，最后验证必需字段。
-- 不同版本的差异放在适配器里消化。比如旧版给 `text`、新版给 `delta.content`，适配器分别识别，对页面都输出同一种“文本增量”。
-- 缺少关键字段时，应当报告协议错误；多出不认识的字段可以忽略，这样模型新增字段时不会把页面弄坏。
+上一节的 `T` 还是调用的人自己填。方法一多，就会填错。把「方法名 → 参数」和「方法名 → 返回值」写成两张表，让这一次传入的方法名同时决定两格。
 
-**示例**：下面的守卫只有在真的找到字符串类型的 `text` 后，才允许读取它。
+```ts
+type Params = {
+  send: { text: string };
+  usage: { provider: string };
+};
+type Outputs = {
+  send: { queueId: string };
+  usage: { used: number };
+};
+
+declare function request<M extends keyof Params>(
+  method: M,
+  params: Params[M],
+): Promise<Outputs[M]>;
+
+request('send', { text: '修复报错' });
+// 返回类型是 Promise<{ queueId: string }>
+```
+
+`M extends keyof Params` 把方法名限制在表里。`Params[M]` 查参数，`Outputs[M]` 用同一次方法名查返回值。这些都发生在编译期。`request('send', { provider: 'x' })` 会报错，因为 `'send'` 那一格没有 `provider`。
+
+方法少的时候，每个方法写一个函数更直白。方法有几十个、又要走同一条 IPC 或 HTTP 时，查表让通道只有一个入口，类型仍然按方法名分开。
+
+## 查表不够时，再从类型里抽出里面那层
+
+有时你拿到的不是表里的一格，而是包了一层的类型，想要里面那层。条件类型的写法是：如果 `T` 长得像某种样子，就用一种结果，否则用另一种。
+
+```ts
+type Unwrap<T> = T extends Promise<infer U> ? U : T;
+
+type A = Unwrap<Promise<{ queueId: string }>>; // { queueId: string }
+type B = Unwrap<string>;                       // string
+```
+
+`infer U` 的意思是：这里有一个当时还不知道的类型，请编译器从匹配到的结构里把它认出来。`Promise<infer U>` 对上了，`U` 就是 Promise 里包着的那个类型。
+
+这也只在编译期发生。运行时要等 Promise 完成，用的是 `await`。业务代码里更常见的仍是上一节的查表。条件类型是查表不够、需要拆开已有类型时才用。
+
+## 编译期到此为止，进来的数据要自己证明
+
+上面三节都管「你写下的类型」。模型一升级，JSON 可能从 `{ text }` 变成 `{ delta: { content } }`。`JSON.parse` 不会按你的类型去核对。
+
+把外部数据先看成 `unknown`。编译器会拒绝你直接读 `.text`，直到你证明它真有这个字段。类型守卫是一个返回 `value is X` 的函数。它返回 `true` 之后，后面的代码才能把这个值当 `X` 用。
 
 ```ts
 function hasText(value: unknown): value is { text: string } {
-  return typeof value === 'object' && value !== null && // 先确认是对象
-    'text' in value && typeof value.text === 'string';  // 再确认字段和类型
+  return typeof value === 'object'
+    && value !== null
+    && 'text' in value
+    && typeof value.text === 'string';
 }
 ```
 
-**Moose 里的做法**：Moose 的 `shared/validation.ts` 用 Zod 校验 IPC 参数。各代理适配器把 CLI 的原始事件转换为统一的 `AgentEvent`，页面不直接依赖某个 CLI 的字段。
+证明要按顺序走。先确认是对象，而且不是 `null`。再用 `type` 或版本字段判断是哪一种格式。然后检查这种格式必有的字段。跳步就会把别的形状误认成文本。
 
-**容易答错的地方**
-- 不能直接用 `as` 把数据“断言正确”。`as` 只是让编译器闭嘴，运行时什么也没检查。
+版本差异放在适配器里消化。旧版认 `text`，新版认 `delta.content`，两边都输出同一种「文本增量」。缺了关键字段，报告协议错误。多出来的不认识字段可以忽略，这样模型新增字段时页面不会被弄坏。
 
-## 5. 设计一个类型系统，用于描述 AI Agent 执行过程中的状态流转（如思考→执行→观察→完成），并实现类型安全的状态切换。
+`as X` 只让编译器闭嘴。数据是坏的，它什么也不查。网络、磁盘、别的进程来的数据，用守卫。
 
-> **这题在考什么**：Agent 一轮任务会经历排队、执行、等待用户批准、结束等状态。如果用几个互不相关的布尔值表示，很容易出现“已经完成却还在等待批准”这种矛盾组合。面试官想看你会不会用类型把不合法的状态和切换排除掉。
+## 同一种「证明」用在状态上：同一时刻只能有一种形态
 
-**一句话回答**：用判别联合描述每种状态各自带哪些数据，用函数签名限制哪些状态可以切换到哪些状态，运行时再核对当前状态和任务 ID。
+守卫证明的是「这份未知数据是不是文本」。状态如果是三个布尔值 `running`、`waiting`、`done`，类型允许它们同时为真。那就不是收窄，而是自相矛盾。
 
-**展开说明**
-- 判别联合（用一个公共字段区分几种形态的类型）适合表示状态。例如 `{ status: 'running', runId }`、`{ status: 'waiting', requestId }` 和 `{ status: 'done' }`，每种状态只带自己需要的字段。
-- 处理事件时检查转移是否合法。已经结束的任务，不能被迟到的“开始”事件改回运行中；审批也只能答复仍在等待的那个请求。
-- 可以把切换函数的参数限制为特定状态。例如“批准”函数只接受等待态，编译器就不允许把完成态传进去。但调用方仍需先读取并检查当前状态。
-
-**示例**：先看简化的状态图（省略了失败后恢复等分支）。
-
-```mermaid
-stateDiagram-v2
-  [*] --> queued
-  queued --> running
-  running --> waiting: 需要用户审批
-  waiting --> running: 审批完成
-  running --> completed
-  running --> failed
-  running --> cancelled
-```
-
-下面的代码只演示“等待审批 → 运行中”这一条转移，其他事件省略。
+判别联合用一个公共字段区分形态，每种形态只带自己的数据：
 
 ```ts
 type RunState =
   | { status: 'running'; runId: string }
   | { status: 'waiting'; runId: string; requestId: string }
   | { status: 'completed'; runId: string };
+```
 
+`status` 就是判别字段。进了 `'waiting'` 才能读 `requestId`。进了 `'completed'` 就读不到，那种形态里没有这个字段。
+
+转移也按这个字段限制。排队到运行；运行可以完成、失败、取消，也可以进入等待；审批完再回到运行。`Extract<RunState, { status: 'waiting' }>` 只取出等待态，于是 `approve` 在编译期就不接受完成态：
+
+```ts
 function approve(
-  state: Extract<RunState, { status: 'waiting' }>, // 只接受等待态
+  state: Extract<RunState, { status: 'waiting' }>,
   requestId: string,
-): Extract<RunState, { status: 'running' }> {      // 只能返回运行态
-  if (state.requestId !== requestId) throw new Error('审批已失效'); // 运行时再核对
+): Extract<RunState, { status: 'running' }> {
+  if (state.requestId !== requestId) throw new Error('审批已失效');
   return { status: 'running', runId: state.runId };
 }
 ```
 
-**Moose 里的做法**：Moose 用 `Status` 字符串联合表示 idle、queued、running、waiting 等状态，Service 在运行时检查审批是否属于当前待处理的请求。它没有完整的类型级状态机。
+函数签名只说明：别的状态传进来，编译失败。调用方如果先读到当前状态再传进来，编译器相信你已经收窄过。来自网络的批准仍要在运行时核对：是不是还在等待，`requestId` 是不是这一次的。类型防的是漏写字段和漏写分支，防不了迟到的事件。
 
-**容易答错的地方**
-- 类型只能防止漏写字段和遗漏分支。来自网络的请求在运行时仍要核对当前状态和 `runId`，不能用 `as` 绕过。
-- 这个示例只改变状态，不包含“向代理发送批准”这个副作用。
+上面的 `approve` 只改状态。它没有把批准发给代理。那个副作用要另写，并且写在状态核对之后。
 
-## 7. 如何用 TypeScript 声明一个支持流式 Chunk 数据与错误处理的泛型接口，并兼容 SSE、WebSocket 等多种传输方式？
+## 事件也是一种判别联合，通道只负责把它搬过来
 
-> **这题在考什么**：流式回答会一小段一小段地到达。SSE、WebSocket 只是运送这些数据的通道，页面真正关心的是“收到正文、出错了还是结束了”。面试官想看你能不能把业务事件和传输方式分开设计。
-
-**一句话回答**：先定义一个与传输无关的泛型事件联合（正文片段、错误、结束），各种传输方式只负责解码，再交给同一个处理函数。
-
-**展开说明**
-- 业务事件只描述三件事：收到一段正文、出错、结束。泛型 `T` 表示正文片段的具体类型，文本、结构化数据都能复用。
-- SSE 和 WebSocket 各自负责把收到的消息解码成上面的事件，后续逻辑完全相同，以后换传输方式也不用改页面。
-- 传输错误（比如断网）和模型报错（比如额度不足）要分开表示，因为处理方式不同：前者可以重连，后者要提示用户。
-- 还要提前约定取消和断线重连的规则。
-
-**示例**：下面是统一的事件类型，`seq` 是序号，用来发现重复或缺失。
+页面关心的也是互斥的几件事：来了一段正文、出错了、结束了。SSE 和 WebSocket 只是搬运。通道换了，后面的处理不该重写。所以事件本身不要写死某一种传输。
 
 ```ts
 type StreamEvent<T> =
-  | { type: 'chunk'; runId: string; seq: number; data: T } // 正文片段
-  | { type: 'error'; runId: string; message: string }      // 业务错误
-  | { type: 'done'; runId: string };                        // 正常结束
+  | { type: 'chunk'; runId: string; seq: number; data: T }
+  | { type: 'error'; runId: string; message: string }
+  | { type: 'done'; runId: string };
 ```
 
-**Moose 里的做法**：Moose 的适配器把各 CLI 的 stdio 消息转成统一的 `AgentEvent`。Web 页面通过 HTTP 发请求、通过 SSE 收业务事件，并不直接读取 CLI 输出。
+`T` 就是第一节那个洞，文本和结构化片段都能装。`seq` 用来发现重复或跳号，下一章才展开。
 
-**容易答错的地方**
-- 断开连接不等于取消服务端任务。要停止生成，需要单独发取消请求。
+断网可以重连。额度不足要提示用户，并保留已收到的文字。这是两种错误，处理不同，类型上先分开。连接断开只说明通道没了，不说明服务端任务已经停。要停止生成，还得单独发取消。
 
----
+## Moose 里实际是这样
 
-[题单目录](README.md) ｜ 下一篇：[二、流式 · 上](02-streaming-1.md)
+文件见 [答案](../01-typescript.md)。和上面的讲法比，只记这三条：
+
+- `request` 用方法名约束参数和返回值，IPC 再用 Zod 校验。页面不读某一家 CLI 的原始字段，适配器先收成 `AgentEvent`。
+- 会话状态是字符串联合，**没有**完整的类型级状态机。审批是否仍有效，要在运行时核对。
+- 文中的 `approve`、`StreamEvent`、`hasText` 是讲法，不是 Moose 源码。
