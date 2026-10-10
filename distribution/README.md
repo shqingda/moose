@@ -1,6 +1,6 @@
 # Moose Web distribution
 
-本页写安装包怎么构建、发布，以及发布失败后怎么核对。给最终用户的步骤在[Web 使用说明](../docs/web.md)，联合发布的完整顺序在[开发与打包](../docs/development.md#发布流程)。正文保持英文，方便和脚本输出对照。流程按 **0.23.1** 描述。
+本页写安装包怎么构建、发布，以及发布失败后怎么核对。给最终用户的步骤在[Web 使用说明](../docs/web.md)，联合发布的完整顺序在[开发与打包](../docs/development.md#发布流程)。正文保持英文，方便和脚本输出对照。流程按当前 `scripts/release.mjs` 描述（源码版本 0.23.3）。只改这篇文档不会替换已经发布的安装包。
 
 Public installer: `https://moose.shqingda.workers.dev/install.sh`.
 
@@ -48,19 +48,9 @@ with its desktop background service.
 
 ## Build and publish
 
-Both hosts must be published with the same `package.json` version. Commit release
-notes and code first, then use the joint pipeline:
-
-```sh
-pnpm release:prepare
-pnpm release:publish
-```
-
-The preparation step builds and verifies both packages. Publication refuses a dirty
-workspace, a different commit, mismatching versions, or mismatching checksums. It
-uploads both packages to a draft GitHub Release, deploys Workers Static Assets,
-verifies an installation from the public URL, then publishes the desktop release.
-Do not publish a Web-only release using Wrangler directly.
+Command order, dirty-workspace checks, and the rule that both hosts ship together
+live in [开发与打包](../docs/development.md#发布流程). This section only records
+what the packager must keep straight. Do not publish a Web-only release with Wrangler.
 
 The version comes from `package.json`. The desktop DMG, Web tarball, release
 notes and `v<version>` tag all use that version. The Web manifest additionally

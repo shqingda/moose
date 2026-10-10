@@ -1,6 +1,6 @@
 # 测试与验证
 
-当前方法适用于 Moose 0.23.1。本页只写**现在怎么验**。文中的底座指本机安装的代理 CLI。某一次跑出来的数字留在[专项验证记录](releases/runtime-validation-history.md)和各版[发布说明](releases/)里，改文档时不要把那些样本改成“刚刚又测过”。
+当前方法适用于 Moose 0.23.3。本页只写**现在怎么验**。文中的底座指本机安装的代理 CLI。某一次跑出来的数字留在[专项验证记录](releases/runtime-validation-history.md)和各版[发布说明](releases/)里，改文档时不要把那些样本改成“刚刚又测过”。
 
 | 你要做的事 | 从这里开始 |
 | --- | --- |
@@ -65,6 +65,7 @@ MOOSE_TEST_BACKGROUND=0 pnpm exec tsx scripts/package-smoke.ts
 | 功能 | 不消耗模型额度的检查 | 需要另行验证的边界 |
 | --- | --- | --- |
 | 会话与队列 | 用测试 CLI 检查排队、取消、重启后暂停及编辑消息 | 真实底座执行效果 |
+| 权限与任务模式 | `tests/unit/modes.test.ts`、`selection.test.ts`：三档代选、计划拒绝改动、没有原生模式才加提示、记住的选择 | 真实 CLI 是否提供 plan／goal 接口仍要单独握手 |
 | Plan 与插话 | 夹具验证版本批准、接收／拒绝／结果未知、重复请求 | 真实原生模式和插话协议 |
 | 原生历史与子代理 | 读取历史、预览导入；夹具检查分叉和子线程事件归属 | 新增委派、压缩等真实模型操作 |
 | Worktree 与 Git | 临时仓库检查隔离、暂存、提交、合并与冲突；PR 使用替身 | 实际 GitHub 认证与远端创建 |
@@ -116,7 +117,7 @@ MOOSE_TEST_BACKGROUND=0 pnpm exec tsx scripts/package-smoke.ts
 
 共享后台定向复测结果见[历史记录](releases/runtime-validation-history.md#共享后台复测2026-09-21)。系统睡眠仍需人工验收：保留草稿并启动一个短命令，手动休眠／唤醒后核对命令完成状态、终端输出、审批与草稿，确认未重发写操作。该检查不通过脚本强制休眠用户电脑。
 
-真实最小任务可指定 `MOOSE_LIVE_PI_MODEL`、`MOOSE_LIVE_OPENCODE_MODEL` 等环境变量选择模型，未指定则沿用 CLI 默认配置。脚本在临时 Git 目录验证两轮精确文件内容与原生会话 ID；第二轮重新创建适配器以验证续接。Pi 使用其唯一支持的完全访问模式。每轮最多 120 秒；目录保留供检查。该脚本不证明真实取消、审批或长时间运行已验收。
+真实最小任务可指定 `MOOSE_LIVE_PI_MODEL`、`MOOSE_LIVE_OPENCODE_MODEL` 等环境变量选择模型，未指定则沿用 CLI 默认配置。脚本在临时 Git 目录验证两轮精确文件内容与原生会话 ID；第二轮重新创建适配器以验证续接。`scripts/live-providers.ts` 仍把 Pi 设为完全访问，用来写入文件。界面上的请求批准会中止会改动的工具；帮我批准和完全访问允许同一组工具。每轮最多 120 秒；目录保留供检查。该脚本不证明真实取消、审批或长时间运行已验收。
 
 真实控制验收使用 `pnpm exec tsx scripts/check-live-controls.ts`，同样通过上述模型环境变量选择 Pi／OpenCode 模型，会消耗额度。OpenCode 按 [v2 权限规则](https://opencode.ai/v2/docs/permissions) 在临时项目写入 `shell: ask` 配置，不修改全局配置；检查单次批准和拒绝。取消检查等 Shell 写出启动标记后才取消，再等待 17 秒，确认原定 15 秒后写入的文件没有出现。历史结果见[底座能力验证记录](providers/native-capabilities.md#已验证到哪里)；这不涵盖任意外部工具、脱离进程组的任务或所有取消时机。
 

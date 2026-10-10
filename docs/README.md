@@ -34,11 +34,11 @@
 
 ## 历史记录
 
-下面是当时的交付说明和测量，不是当前操作步骤。阅读时以每篇自己写的版本和日期为准。0.21 及更早的发布说明在 [releases 目录](releases/)。
+下面是当时的交付说明和测量，不是当前操作步骤。阅读时以每篇自己写的版本和日期为准。各版发布说明都在 [releases 目录](releases/)。
 
 | 记录 | 内容 |
 | --- | --- |
-| [0.23.0](releases/0.23.0.md)、[性能验收](releases/0.23.0-validation.md) | 上一版的加载和传输改进 |
+| [0.23.2](releases/0.23.2.md)、[0.23.1](releases/0.23.1.md)、[0.23.0](releases/0.23.0.md) | 启动与资源、终端阅读、加载和传输。0.23.0 的测量在[性能验收](releases/0.23.0-validation.md) |
 | [0.22.1](releases/0.22.1.md)、[0.22.0](releases/0.22.0.md) | 界面重构那一轮。体积和功能对照在[验收记录](releases/0.22.0-validation.md)，原始证据在[证据索引](releases/0.22.0-evidence.md)；没做完的人工项仍在 [TODO](TODO-0.22.0.md) |
 | [阶段验收归档](releases/feature-validation-history.md) | 0.8–0.13 的操作和证据，界面名称可能已变 |
 | [专项验证记录](releases/runtime-validation-history.md) | 共享后台、长历史、配置和搜索的原始测量 |

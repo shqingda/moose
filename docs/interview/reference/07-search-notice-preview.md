@@ -44,14 +44,7 @@ sequenceDiagram
 | 4. 定位上下文 | 点击结果后，后台确认消息所属的会话，按它的 `position` 读取前后的消息，页面高亮目标 | 和普通历史分页（每页 80 条）不是同一个接口 |
 | 5. 阅读历史时不打扰 | 查看目标期间，新到的其他消息不会插进当前片段，页面也不会自动滚回底部；已有消息的新版本仍会更新 | 用户点“回到最新消息”才恢复实时跟随 |
 
-```text
-// 请求代次的伪代码
-generation += 1                  // 每次输入或切换范围都推进代次
-const mine = generation
-const result = await search(query, scope)
-if (mine !== generation) return  // 已经有更新的请求，丢弃这份旧结果
-show(result)
-```
+请求代次的写法和[流式那一节](02-agents-and-streaming.md#6-流式消息和-react-页面如何保持一致)相同：每次输入或切换范围都推进代次，返回时对不上就丢掉。搜索这里只是把同一办法用在查询上。
 
 #### 为什么先用 SQLite 子串查询
 
@@ -198,4 +191,4 @@ flowchart TD
 
 ---
 
-上一篇：[面试表达：案例、取舍、简历与演示](06-interview-expression.md) ｜ [追问资料目录](README.md)
+上一篇：[面试表达：案例、取舍、简历与演示](06-interview-expression.md) ｜ [追问资料目录](README.md) ｜ 下一篇：[计划、目标与三档权限](08-plan-goal-permissions.md)

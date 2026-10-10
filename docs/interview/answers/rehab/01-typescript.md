@@ -216,14 +216,11 @@ type StreamEvent<T> =
 
 ## Moose 这一章实际落在哪
 
-以下只复述 [答案](../01-typescript.md) 里核对过的事实。
+文件和字段见 [答案](../01-typescript.md)。和通用示例相比，只记这三条：
 
-- `shared/types.ts` 定义 `Method`、`Requests`、`Responses`。`window.moose.request` 用方法名约束参数和返回类型。IPC 入口再用 Zod 校验实际传入的数据。
-- `shared/validation.ts` 用 Zod 校验 IPC 参数。各代理适配器把 CLI 的原始事件转成统一的 `AgentEvent`，页面不直接依赖某个 CLI 的字段。
-- 状态用 `Status` 字符串联合表示 idle、queued、running、waiting 等。Service 在运行时检查审批是不是当前待处理的请求。**没有**完整的类型级状态机。
-- 适配器把各 CLI 的 stdio 消息转成统一的 `AgentEvent`。Web 页面通过 HTTP 发请求、通过 SSE 收业务事件，不直接读取 CLI 输出。
-
-通用示例里的 `approve`、`StreamEvent`、`hasText` 是讲法，不是 Moose 源码。
+- `request` 用方法名约束参数和返回值，IPC 再用 Zod 校验。页面不读某一家 CLI 的原始字段，适配器先收成 `AgentEvent`。
+- 会话状态是字符串联合，**没有**完整的类型级状态机。审批是否仍有效，要在运行时核对。
+- 文中的 `approve`、`StreamEvent`、`hasText` 是讲法，不是 Moose 源码。
 
 ## 本章速记
 

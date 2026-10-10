@@ -9,8 +9,7 @@
 - Cloudflare Workers Static Assets 托管，无数据库或支付逻辑。
 - SVG 品牌标志与 JPEG 商品效果图，响应式布局，支持键盘操作和减少动态效果偏好。
 - 商品效果图由内置图像生成工具制作；购物袋使用第一方功能 Cookie 保留商品和数量。
-- JSON-LD `OnlineStore` 结构化数据、canonical、Open Graph、robots.txt、sitemap.xml
-  和 llms.txt。
+- 页面带 JSON-LD `OnlineStore`（给搜索引擎的商店结构化数据）、canonical（首选网址）、Open Graph、robots.txt、sitemap.xml，以及给语言模型读的 llms.txt。
 
 ## 发布前必须确认
 
