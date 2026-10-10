@@ -85,7 +85,7 @@ export function WebHost() {
   if (!ready)
     return (
       <main className="web-login">
-        <h1>Moose Web</h1>
+        <h1>Versta</h1>
         <p>
           {zh
             ? '使用服务启动时打印的访问链接，或输入令牌。'
