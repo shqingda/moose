@@ -56,6 +56,7 @@
 - [Moose 怎样驱动 Codex 的目标](08-plan-goal-permissions.md#3-moose-怎样驱动-codex-的目标)
 - [0.23.3 四家分别怎么接](08-plan-goal-permissions.md#4-0233-四家分别怎么接)
 - [和主流产品的权限怎么对上](08-plan-goal-permissions.md#5-和主流产品的权限怎么对上)
+- [不要说成](08-plan-goal-permissions.md#6-不要说成)
 
 ### [Git、扩展配置与后台任务](04-git-extensions-background.md)
 
