@@ -182,6 +182,8 @@ test('Grok approval denial and questions travel through ACP, and cancellation pr
     .getByRole('button', { name: 'Grok Build', exact: true })
     .click();
   await page.locator('.model-option').first().click();
+  await page.getByRole('combobox', { name: 'Permissions', exact: true }).click();
+  await page.getByRole('option', { name: 'Request approval', exact: true }).click();
   await page.locator('#composer').fill('Change this');
   await page.locator('#composer').press('Enter');
   await page.getByRole('button', { name: 'Deny', exact: true }).click();

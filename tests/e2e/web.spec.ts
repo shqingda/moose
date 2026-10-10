@@ -272,6 +272,7 @@ test('browser login, project selection, OpenCode approval and terminal survive p
       projectId,
       provider: 'opencode',
     });
+    await window.moose.request('updateSession', { id: session.id, mode: 'ask' });
     await window.moose.request('send', { sessionId: session.id, text: 'hello' });
     return session;
   }, project!.id);

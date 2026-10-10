@@ -185,9 +185,14 @@ for (const provider of ['pi', 'opencode'] as const)
         (s) => s.nativeId === nativeId,
       ),
     ).toHaveLength(1);
-    if (provider === 'pi') {
+    if (provider === 'pi' || provider === 'opencode') {
       await page.getByRole('combobox', { name: 'Permissions', exact: true }).click();
-      await page.getByRole('option', { name: 'Full access', exact: true }).click();
+      await page
+        .getByRole('option', {
+          name: provider === 'pi' ? 'Full access' : 'Request approval',
+          exact: true,
+        })
+        .click();
     }
     await page.locator('#composer').fill('Continue this imported history');
     await page.locator('#composer').press('Enter');
