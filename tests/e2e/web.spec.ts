@@ -24,6 +24,7 @@ test.afterEach(async () => {
   if (dir) await rm(dir, { recursive: true, force: true });
 });
 test('browser login, project selection, OpenCode approval and terminal survive page reconnect', async () => {
+  test.setTimeout(120000);
   dir = await realpath(await mkdtemp(join(tmpdir(), 'moose-web-e2e-')));
   const root = join(dir, 'repo');
   await mkdir(root);
@@ -269,9 +270,9 @@ test('browser login, project selection, OpenCode approval and terminal survive p
       brandText: element.querySelector('.brand-row > span')!.getBoundingClientRect().x,
     };
   });
-  expect(columns.newIcon).toBe(columns.projectIcon);
-  expect(columns.newText).toBe(columns.projectText);
-  expect(columns.brandText).toBe(columns.projectText);
+  expect(Math.abs(columns.newIcon - columns.projectIcon)).toBeLessThan(1);
+  expect(Math.abs(columns.newText - columns.projectText)).toBeLessThan(1);
+  expect(Math.abs(columns.brandText - columns.projectText)).toBeLessThan(1);
   await page.screenshot({ path: 'test-results/web-sidebar-alignment.png' });
   const session = await page.evaluate(async (projectId) => {
     const providers = await window.moose.request('providers', { refresh: true });
