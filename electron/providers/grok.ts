@@ -12,6 +12,13 @@ import {
 import { Readable, Writable } from 'node:stream';
 import { spawnAgent, terminate } from './process';
 import { array, readable, record, string, type AgentAdapter, type RunContext } from './types';
+import {
+  allTaskModes,
+  normalizePermission,
+  permissionModes,
+  selectPermission,
+  taskPrompt,
+} from './modes';
 import type { ProviderInfo } from '../../shared/types';
 
 /** 从 Grok 握手元数据提取可选模型。 */
@@ -29,6 +36,16 @@ export function grokModels(meta: unknown): ProviderInfo['models'] {
   });
 }
 export { normalizeAcp as normalizeGrok } from './acp-events';
+
+/** 目标走 Grok 的 /goal。计划不依赖未验证的 set_mode，改由提示和权限拦截约束。 */
+function grokPrompt(context: RunContext) {
+  const body = promptText(context);
+  if (context.promptContext?.mode === 'goal') {
+    const budget = context.promptContext.goalBudget;
+    return `/goal ${body}${budget ? `\nToken budget: ${budget}.` : ''}`;
+  }
+  return taskPrompt(context, body, { goal: true });
+}
 export class GrokAdapter implements AgentAdapter {
   private billingRpc?: JsonRpc;
   private child?: ReturnType<typeof spawnAgent>;
@@ -41,6 +58,7 @@ export class GrokAdapter implements AgentAdapter {
   private cancelled = false;
   private prompting = false;
   private permissionSerial = 0;
+  private stderr = '';
   private permissions = new Map<
     string,
     { options: Set<string>; resolve(value: RequestPermissionResponse): void }
@@ -107,19 +125,23 @@ export class GrokAdapter implements AgentAdapter {
     };
   }
   /** 建立 ACP 连接并注册会话更新与权限回调，拒绝当前协议不支持的权限模式。 */
-  private async connect(context?: RunContext) {
+  private async connect(context?: RunContext, nativeFlags = true): Promise<ClientSideConnection> {
     if (this.connection) return this.connection;
-    const args = ['agent', '--no-leader'];
-    if (context?.session.mode === 'full') args.push('--always-approve');
-    if (context?.session.mode === 'auto')
-      throw new Error(
-        'This Grok CLI does not expose risk-based auto review over ACP. Choose Request approval or Full access.',
-      );
+    const mode = context ? normalizePermission(context.session.mode) : undefined;
+    const args: string[] = [];
+    if (nativeFlags && mode === 'auto') args.push('--permission-mode', 'auto');
+    if (nativeFlags && mode === 'ask') args.push('--permission-mode', 'default');
+    args.push('agent', '--no-leader');
+    if (mode === 'full') args.push('--always-approve');
     if (context?.session.model) args.push('--model', context.session.model);
     if (context?.session.effort) args.push('--reasoning-effort', context.session.effort);
     args.push('stdio');
     this.child = spawnAgent(this.path, args, context?.cwd);
-    this.child.stderr.resume();
+    this.stderr = '';
+    this.child.stderr.setEncoding('utf8');
+    this.child.stderr.on('data', (chunk: string) => {
+      this.stderr = (this.stderr + chunk).slice(-4000);
+    });
     // Handle spawn failures as a disconnected protocol stream, never as an uncaught EventEmitter error.
     this.child.on('error', () => this.child?.stdout.destroy());
     this.child.stdin.on('error', () => {});
@@ -158,6 +180,21 @@ export class GrokAdapter implements AgentAdapter {
           const key = `permission:${params.toolCall.toolCallId}:${++this.permissionSerial}`;
           if (!this.context || this.cancelled)
             return { outcome: { outcome: 'cancelled' as const } };
+          const options = params.options.map((option) => ({
+            id: option.optionId,
+            kind: option.kind,
+            label: option.name,
+          }));
+          const tool = params.toolCall;
+          const decision = selectPermission(
+            normalizePermission(this.context.session.mode),
+            this.context.promptContext?.mode || 'build',
+            options,
+            string(record(tool).toolName || record(tool).kind),
+            tool.title || '',
+          );
+          if (decision.action === 'select')
+            return { outcome: { outcome: 'selected' as const, optionId: decision.optionId } };
           const promise = new Promise<RequestPermissionResponse>((resolve) => {
             this.permissions.set(key, {
               options: new Set(params.options.map((o) => o.optionId)),
@@ -180,16 +217,38 @@ export class GrokAdapter implements AgentAdapter {
         Readable.toWeb(this.child.stdout) as ReadableStream<Uint8Array>,
       ),
     ));
-    this.initialization = await this.deadline(
-      connection.initialize({
-        protocolVersion: PROTOCOL_VERSION,
-        clientInfo: { name: 'moose', version: '0.1.0' },
-        clientCapabilities: { fs: { readTextFile: false, writeTextFile: false }, terminal: false },
-      }),
-    );
+    try {
+      this.initialization = await this.deadline(
+        connection.initialize({
+          protocolVersion: PROTOCOL_VERSION,
+          clientInfo: { name: 'moose', version: '0.1.0' },
+          clientCapabilities: {
+            fs: { readTextFile: false, writeTextFile: false },
+            terminal: false,
+          },
+        }),
+      );
+    } catch (error) {
+      await this.resetConnection();
+      const detail = `${this.stderr}\n${error instanceof Error ? error.message : ''}`;
+      if (
+        nativeFlags &&
+        /unexpected argument|unrecognized|unknown option|permission-mode/i.test(detail)
+      )
+        return this.connect(context, false);
+      throw error;
+    }
     if (this.initialization.authMethods?.some((m) => m.id === 'cached_token'))
       await this.deadline(connection.authenticate({ methodId: 'cached_token' }));
     return connection;
+  }
+  /** 握手失败时丢掉半连接，以便在不带原生权限参数时重试一次。 */
+  private async resetConnection() {
+    const child = this.child;
+    this.child = undefined;
+    this.connection = undefined;
+    this.initialization = undefined;
+    if (child) await terminate(child);
   }
   /** 为 ACP 请求附加连接期限，避免握手或会话设置永久挂起。 */
   private async deadline<T>(promise: Promise<T>): Promise<T> {
@@ -213,21 +272,17 @@ export class GrokAdapter implements AgentAdapter {
     }
   }
   /** 返回握手声明的模型、权限档位及图片能力。 */
-  async probe(): Promise<Pick<ProviderInfo, 'models' | 'modes' | 'images'>> {
+  async probe(): Promise<Pick<ProviderInfo, 'models' | 'modes' | 'images' | 'taskModes'>> {
     await this.connect();
     return {
       models: grokModels(this.initialization?._meta),
-      modes: [
-        { id: 'ask', label: 'Request approval' },
-        { id: 'full', label: 'Full access' },
-      ],
+      modes: [...permissionModes],
+      taskModes: [...allTaskModes],
       images: this.initialization?.agentCapabilities?.promptCapabilities?.image === true,
     };
   }
   /** 按 ACP 能力创建或恢复会话，设置模型并发送文本、附件及引用。 */
   async run(context: RunContext) {
-    if (context.promptContext?.mode === 'plan')
-      throw new Error('Plan mode currently requires Codex.');
     const conn = await this.connect(context);
     if (this.cancelled) return;
     if (
@@ -260,7 +315,7 @@ export class GrokAdapter implements AgentAdapter {
         );
     }
     context.nativeId(this.sessionId);
-    if (context.session.mode !== 'full')
+    if (normalizePermission(context.session.mode) === 'ask')
       await this.deadline(
         conn.prompt({
           sessionId: this.sessionId,
@@ -276,7 +331,7 @@ export class GrokAdapter implements AgentAdapter {
         prompt: [
           {
             type: 'text',
-            text: `${context.promptContext?.mode === 'goal' ? '/goal ' : ''}${promptText(context)}`,
+            text: grokPrompt(context),
           },
           ...(context.attachments || []).map((a) =>
             a.mime.startsWith('image/')

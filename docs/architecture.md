@@ -192,7 +192,7 @@ Store 和 Renderer 都通过 `seq` 拒绝旧版本覆盖新版本。这里保证
 
 RPC 是调用方式，JSON-RPC 是具体消息协议，JSONL 是按行划分 JSON 消息的格式。Pi 与 Codex 都可以通过 stdio 传输 JSON 行，但消息信封与完成条件不同；公共 [rpc.ts](../electron/providers/rpc.ts) 通过 codec 处理差异。Grok 与 OpenCode 共用基础 ACP 事件转换，专有接口留在各自适配器中。
 
-**权限模式与任务模式是两个维度。** `Session.mode` 表示 ask/auto/full；`PromptContext.mode` 表示 build/plan/goal。Codex Plan 使用原生协作模式并保留只读约束，Goal 使用原生目标接口；其他底座不能仅凭同名 CLI 命令视为已接通。当前功能、权限及真实验证范围集中在[能力表](providers/native-capabilities.md)，Pi 的协议细节见 [Pi 接入](providers/pi.md)。
+**权限模式与任务模式是两个维度。** `Session.mode` 表示 ask/auto/full；`PromptContext.mode` 表示 build/plan/goal。四个底座都提供这三项任务模式和三档权限。CLI 有对应接口时直接映射；没有时由 Moose 用只读提示、工具拦截或审批代选实现。各家的具体映射见[能力表](providers/native-capabilities.md)，Pi 的协议细节见 [Pi 接入](providers/pi.md)。
 
 代理 ID、设置字段和模式集中在 [providers.ts](../shared/providers.ts)，实例创建集中在 [registry.ts](../electron/providers/registry.ts)。[prompt.ts](../electron/providers/prompt.ts) 复用附件文本，[rpc.ts](../electron/providers/rpc.ts) 通过 codec 兼容不同信封。新增代理不再需要在 Service、设置页和探测脚本中复制二选一分支。
 

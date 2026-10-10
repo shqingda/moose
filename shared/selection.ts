@@ -14,7 +14,7 @@ export const defaultSelection: ComposerSelection = {
   provider: 'codex',
   model: '',
   effort: '',
-  mode: 'ask',
+  mode: 'auto',
   taskMode: 'build',
 };
 
@@ -105,7 +105,9 @@ export function reconcileSelection(
   }
   if (active?.modes.length && !active.modes.some((mode) => mode.id === next.mode)) {
     const fallback =
-      active.modes.find((mode) => mode.id === defaultSelection.mode) || active.modes[0];
+      active.modes.find((mode) => mode.id === 'auto') ||
+      active.modes.find((mode) => mode.id === 'ask');
+    // 过期的探测缓存可能只列出完全访问。不能因此把未显式选择的档位抬成完全访问。
     if (fallback) next = { ...next, mode: fallback.id as PermissionMode };
   }
   if (active?.taskModes?.length && !active.taskModes.includes(next.taskMode))

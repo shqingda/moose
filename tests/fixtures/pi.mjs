@@ -77,6 +77,15 @@ createInterface({ input: process.stdin }).on('line', (line) => {
   send({ type: 'response', id: command.id, command: command.type, success: true, data });
   if (command.type === 'prompt') {
     pending = command.message;
+    if (String(pending).includes('MUTATE')) {
+      send({
+        type: 'tool_execution_start',
+        toolCallId: 'write',
+        toolName: 'bash',
+        args: { command: 'rm fixture' },
+      });
+      return;
+    }
     if (pending === 'approve')
       send({
         type: 'extension_ui_request',

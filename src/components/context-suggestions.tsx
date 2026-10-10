@@ -111,10 +111,6 @@ export function useSuggestions(
   const choose = (at: number) => {
     const row = rows[at];
     if (!row || !match) return;
-    if (row.mode === 'plan' && provider !== 'codex') {
-      onError(t('planUnavailable'));
-      return;
-    }
     const start = caret - query.length - 1;
     const insertion =
       row.kind === 'file' || row.kind === 'folder'

@@ -1,6 +1,7 @@
 import { CodexSessions } from './codex-sessions';
 import { codexPermissions } from './codex-permissions';
 export { codexPermissions } from './codex-permissions';
+import { allTaskModes, goalInstruction, permissionModes, planInstruction } from './modes';
 import { codexInput } from './codex-input';
 import { codexDelegation } from './codex-subagents';
 import { JsonRpc, RpcRejected } from './rpc';
@@ -328,10 +329,8 @@ export class CodexAdapter implements AgentAdapter {
     });
     const account = record(await rpc.request('account/read', { refreshToken: false }));
     if (!account.account) throw new Error('Sign in with `codex login`, then reconnect.');
-    const collaboration = record(await rpc.request('collaborationMode/list', {}).catch(() => ({})));
-    const plan = array(collaboration.data).some((value) => record(value).mode === 'plan');
     return {
-      taskModes: plan ? ['build', 'plan', 'goal'] : ['build', 'goal'],
+      taskModes: [...allTaskModes],
       steering: true,
       models: result.data
         .filter((m) => !m.hidden)
@@ -343,11 +342,7 @@ export class CodexAdapter implements AgentAdapter {
             label: e.reasoningEffort,
           })),
         })),
-      modes: [
-        { id: 'ask', label: 'Request approval' },
-        { id: 'auto', label: 'Approve for me' },
-        { id: 'full', label: 'Full access' },
-      ],
+      modes: [...permissionModes],
       images: true,
     };
   }
@@ -357,15 +352,16 @@ export class CodexAdapter implements AgentAdapter {
     const rpc = await this.connect(context.cwd);
     if (this.cancelled) return;
     const planning = context.promptContext?.mode === 'plan';
+    let nativePlan = false;
     if (planning) {
-      const modes = await rpc.request<
-        import('./generated/codex/v2/CollaborationModeListResponse').CollaborationModeListResponse
-      >('collaborationMode/list', {});
-      if (!modes.data?.some((mode) => mode.mode === 'plan'))
-        throw new Error(
-          'This Codex CLI does not provide native Plan mode. Update Codex and reconnect.',
-        );
+      const modes = await rpc
+        .request<
+          import('./generated/codex/v2/CollaborationModeListResponse').CollaborationModeListResponse
+        >('collaborationMode/list', {})
+        .catch(() => ({ data: [] }));
+      nativePlan = !!modes.data?.some((mode) => mode.mode === 'plan');
     }
+    let nativeGoal = false;
     const params: ThreadStartParams = {
       cwd: context.cwd,
       developerInstructions: '',
@@ -390,18 +386,24 @@ export class CodexAdapter implements AgentAdapter {
     if (!this.threadId) throw new Error('Codex did not return a thread ID');
     context.nativeId(this.threadId);
     if (this.cancelled) return;
+    let turnText = context.text;
     if (context.promptContext?.mode === 'goal') {
       if (context.text.length > 4000)
         throw new Error('Goal objectives are limited to 4,000 characters.');
-      await rpc.request('thread/goal/set', {
-        threadId: this.threadId,
-        objective: context.text,
-        status: 'paused',
-        ...(context.promptContext.goalBudget
-          ? { tokenBudget: context.promptContext.goalBudget }
-          : {}),
-      });
-    }
+      try {
+        await rpc.request('thread/goal/set', {
+          threadId: this.threadId,
+          objective: context.text,
+          status: 'paused',
+          ...(context.promptContext.goalBudget
+            ? { tokenBudget: context.promptContext.goalBudget }
+            : {}),
+        });
+        nativeGoal = true;
+      } catch {
+        turnText = `${goalInstruction(context.promptContext?.goalBudget)}\n\n${context.text}`;
+      }
+    } else if (planning && !nativePlan) turnText = `${planInstruction}\n\n${context.text}`;
     const completed = new Promise<void>((resolve, reject) => {
       this.finish = { resolve, reject };
     });
@@ -410,9 +412,9 @@ export class CodexAdapter implements AgentAdapter {
     const turn: TurnStartParams = {
       summary: 'auto',
       threadId: this.threadId,
-      input: codexInput(context),
+      input: codexInput({ ...context, text: turnText }),
       collaborationMode: {
-        mode: planning ? 'plan' : 'default',
+        mode: nativePlan ? 'plan' : 'default',
         settings: {
           model: context.session.model || string(result.model),
           reasoning_effort: context.session.effort
@@ -432,7 +434,7 @@ export class CodexAdapter implements AgentAdapter {
     context.turnId?.(startedId);
     if (this.cancelled) await this.cancel();
     await completed;
-    if (context.promptContext?.mode === 'goal' && !this.cancelled) {
+    if (nativeGoal && !this.cancelled) {
       const goal = record(
         record(await rpc.request('thread/goal/get', { threadId: this.threadId })).goal,
       );

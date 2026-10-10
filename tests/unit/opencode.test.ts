@@ -23,7 +23,8 @@ it('discovers v2 ACP models and permissions, suppresses history, and settles onl
   try {
     expect(await adapter.probe()).toMatchObject({
       models: [{ id: 'fixture/model' }],
-      modes: [{ id: 'ask' }],
+      modes: [{ id: 'ask' }, { id: 'auto' }, { id: 'full' }],
+      taskModes: ['build', 'plan', 'goal'],
       images: true,
     });
     const events: AgentEvent[] = [];
@@ -43,20 +44,30 @@ it('discovers v2 ACP models and permissions, suppresses history, and settles onl
     await adapter.close();
   }
 });
-it('supports denial and rejects unsupported permission modes', async () => {
+it('supports denial and approves tool calls for the user in auto mode', async () => {
   const adapter = new OpenCodeAdapter(path);
   try {
-    await expect(adapter.run(context(() => {}, { mode: 'full' }))).rejects.toThrow(
-      'Request approval',
-    );
     const events: AgentEvent[] = [];
     await adapter.run(
+      context(
+        (event) => {
+          events.push(event);
+        },
+        { mode: 'auto' },
+      ),
+    );
+    expect(events.at(-1)?.delta).toBe('OpenCode fixture completed');
+    expect(events.some((event) => event.kind === 'approval' && event.state === 'pending')).toBe(
+      false,
+    );
+    const denied: AgentEvent[] = [];
+    await adapter.run(
       context((event) => {
-        events.push(event);
+        denied.push(event);
         if (event.kind === 'approval') adapter.respond(event.key, 'deny');
       }),
     );
-    expect(events.at(-1)?.delta).toBe('OpenCode fixture denied');
+    expect(denied.at(-1)?.delta).toBe('OpenCode fixture denied');
   } finally {
     await adapter.close();
   }

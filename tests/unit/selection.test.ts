@@ -91,6 +91,14 @@ it('falls back when the provider, model, or effort is no longer valid', () => {
   ).toMatchObject({ effort: '', taskMode: 'build' });
 });
 
+it('does not promote an ordinary mode to full access', () => {
+  expect(
+    reconcileSelection(remembered, [
+      info({ provider: 'codex', modes: [{ id: 'full', label: 'Full access' }] }),
+    ]).mode,
+  ).toBe('auto');
+});
+
 it('does not retarget an existing session onto another provider', () => {
   expect(
     reconcileSelection(remembered, [info({ provider: 'codex', enabled: false })], {

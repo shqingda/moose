@@ -63,7 +63,7 @@ it('uses stable block keys for final snapshots and preserves reasoning', () => {
 it('discovers actual model capabilities over Pi RPC', async () => {
   expect(await adapter().probe()).toMatchObject({
     models: [{ id: 'test/model', efforts: [{ id: 'off' }, { id: 'high' }] }],
-    modes: [{ id: 'full' }],
+    modes: [{ id: 'ask' }, { id: 'auto' }, { id: 'full' }],
     images: true,
   });
 });
@@ -97,17 +97,17 @@ it('streams, answers extension approval and resumes native session', async () =>
     emit: () => {},
   });
 });
-it('rejects unsupported permissions and cancels a pending turn', async () => {
+it('stops a mutating tool in ask mode and cancels a pending turn', async () => {
   const a = adapter();
   await expect(
     a.run({
       session: { ...session, mode: 'ask' },
       cwd: process.cwd(),
-      text: 'x',
+      text: 'MUTATE',
       nativeId: () => {},
       emit: () => {},
     }),
-  ).rejects.toThrow('Full access');
+  ).rejects.toThrow('mutating tool');
   const running = a.run({
     session,
     cwd: process.cwd(),
@@ -166,7 +166,10 @@ it('acknowledges steering without a turn ID and clears native input before cance
 it('keeps steering unavailable on older CLI versions and rejects direct attempts', async () => {
   vi.stubEnv('MOOSE_TEST_PI_VERSION', 'pi 0.85.1');
   const a = adapter();
-  expect(await a.probe()).toMatchObject({ steering: false, taskModes: ['build'] });
+  expect(await a.probe()).toMatchObject({
+    steering: false,
+    taskModes: ['build', 'plan', 'goal'],
+  });
   await expect(
     a.steer({ session, cwd: process.cwd(), text: 'unsupported', nativeId() {}, emit() {} }),
   ).rejects.toThrow('does not provide verified');

@@ -248,6 +248,17 @@ export class SessionExecution {
           this.hooks.changed();
         },
       });
+      if (context?.mode === 'plan' && !run.cancelled) {
+        const planned = [...run.rows.values()].some(
+          (row) => row.kind === 'plan' && row.text.trim(),
+        );
+        const text = [...run.rows.values()]
+          .filter((row) => row.kind === 'assistant' && row.text.trim())
+          .map((row) => row.text)
+          .join('\n\n');
+        if (!planned && text.trim())
+          this.accept(run, { key: 'plan', kind: 'plan', title: 'Plan', text, state: 'done' });
+      }
     } catch (error) {
       if (!run.cancelled && !this.hooks.stopping()) {
         failed = true;

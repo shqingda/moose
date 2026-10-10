@@ -12,6 +12,13 @@ import {
   type RunContext,
 } from './types';
 import type { ProviderInfo } from '../../shared/types';
+import {
+  allTaskModes,
+  normalizePermission,
+  permissionModes,
+  taskPrompt,
+  toolMutates,
+} from './modes';
 
 /** Pi RPC 是 JSONL 而非 JSON-RPC；只在边界转换信封，传输与清理逻辑共用。 */
 export const piCodec: RpcCodec = {
@@ -129,6 +136,7 @@ export class PiAdapter implements AgentAdapter {
         this.context.emit(normalized);
         if (normalized.kind === 'error') this.failure = new Error(normalized.text);
       }
+      if (type === 'tool_execution_start') this.guardTool(string(event.toolName));
       if (type === 'extension_ui_request') this.extensionRequest(event);
       // agent_end 可能还会自动重试或压缩；必须等待会话级 settled。
       if (type === 'agent_settled') {
@@ -163,19 +171,15 @@ export class PiAdapter implements AgentAdapter {
     }
     return {
       models,
-      modes: [{ id: 'full', label: 'Full access' }],
+      modes: [...permissionModes],
       images,
-      taskModes: ['build'],
+      taskModes: [...allTaskModes],
       steering: await this.supportsSteering(),
     };
   }
 
   /** 保持 Moose 自己排队；Pi 只接收当前一条输入，所有续聊都恢复指定文件。 */
   async run(context: RunContext) {
-    if (context.session.mode !== 'full')
-      throw new Error('Pi has no built-in approval sandbox. Select Full access to run Pi.');
-    if (context.promptContext && context.promptContext.mode !== 'build')
-      throw new Error('Pi does not provide native Plan or Goal mode.');
     this.context = context;
     this.failure = undefined;
     const rpc = this.connect(context);
@@ -208,7 +212,7 @@ export class PiAdapter implements AgentAdapter {
       .map(attachmentText);
     const receipt = record(
       await rpc.request('prompt', {
-        message: [promptText(context), ...files].join('\n\n'),
+        message: [taskPrompt(context, promptText(context)), ...files].join('\n\n'),
         images: (context.attachments || [])
           .filter((a) => a.mime.startsWith('image/'))
           .map((a) => ({ type: 'image', data: a.data, mimeType: a.mime })),
@@ -239,8 +243,10 @@ export class PiAdapter implements AgentAdapter {
       throw new RpcRejected('This Pi version does not provide verified steering receipts');
     if (!this.rpc || !this.context || this.cancelled || !this.finish)
       throw new RpcRejected('No active Pi turn accepts steering');
-    if (context.promptContext && context.promptContext.mode !== 'build')
-      throw new RpcRejected('Pi steering supports Build mode only');
+    if ((context.promptContext?.mode || 'build') !== (this.context?.promptContext?.mode || 'build'))
+      throw new RpcRejected(
+        'Steering cannot change the active task mode. Add this message to the queue.',
+      );
     if (!this.modelImages && context.attachments?.some((item) => item.mime.startsWith('image/')))
       throw new RpcRejected('The selected Pi model does not support images');
     const receipt = record(
@@ -261,11 +267,36 @@ export class PiAdapter implements AgentAdapter {
     return undefined;
   }
 
+  /** Pi 没有工具审批协议。计划模式和“请求批准”会中止会改动的工具；自动档代答扩展确认。 */
+  private guardTool(name: string) {
+    const mode = normalizePermission(this.context?.session.mode);
+    const task = this.context?.promptContext?.mode || 'build';
+    if (!toolMutates(name)) return;
+    if (task !== 'plan' && mode !== 'ask') return;
+    this.failure = new Error(
+      task === 'plan'
+        ? 'Plan mode stopped a mutating tool.'
+        : 'Pi stopped a mutating tool. Choose Approve for me or Full access to run tools that change files or execute commands.',
+    );
+    void this.rpc?.request('abort', {}, 3000).catch(() => this.rpc?.close());
+  }
   /** Pi 扩展可以提问；这些交互不代表 Pi 内置了沙箱或全局权限审批。 */
   private extensionRequest(event: Record<string, unknown>) {
     const id = string(event.id),
       method = string(event.method);
     if (!['confirm', 'select', 'input', 'editor'].includes(method)) return;
+    if (normalizePermission(this.context?.session.mode) !== 'ask') {
+      this.rpc?.send({
+        method: 'extension_ui_response',
+        params: {
+          id,
+          ...(method === 'confirm'
+            ? { confirmed: true }
+            : { value: string(array(event.options)[0]) }),
+        },
+      });
+      return;
+    }
     this.requests.set(id, event);
     const text = [string(event.title), string(event.message)].filter(Boolean).join('\n');
     if (method === 'confirm')

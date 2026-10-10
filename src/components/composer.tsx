@@ -138,7 +138,7 @@ export function Composer({
     updateContext,
     onError,
     session?.id,
-    info?.taskModes,
+    [...providerDefinitions[provider].taskModes],
   );
   const busy = !!session && ['running', 'waiting', 'queued'].includes(session.status);
   const [sending, setSending] = useState(false),
@@ -367,7 +367,7 @@ export function Composer({
               onChange={(mode) =>
                 updateContext({ ...context, mode: mode as PromptContext['mode'] })
               }
-              options={(info?.taskModes || providerDefinitions[provider].taskModes).map((mode) => ({
+              options={providerDefinitions[provider].taskModes.map((mode) => ({
                 value: mode,
                 label: t(
                   mode === 'build' ? 'buildMode' : mode === 'plan' ? 'planMode' : 'goalMode',
@@ -387,16 +387,12 @@ export function Composer({
               label={t('permissionsLabel')}
               icon={<ShieldCheck />}
               placeholder={t('permissionsLabel')}
-              value={
-                info?.modes.length && !info.modes.some((m) => m.id === (options.mode || 'ask'))
-                  ? ''
-                  : options.mode || 'ask'
-              }
+              value={options.mode || 'auto'}
               onChange={(mode) => onOptions({ mode: mode as PermissionMode })}
               disabled={busy}
-              options={(info?.modes.length ? info.modes : [{ id: 'ask' }]).map((m) => ({
-                value: m.id,
-                label: t(m.id as PermissionMode),
+              options={(['ask', 'auto', 'full'] as const).map((mode) => ({
+                value: mode,
+                label: t(mode),
               }))}
               className={`compact-picker permission-picker ${options.mode === 'full' ? 'permission-full' : ''}`}
             />
@@ -413,10 +409,9 @@ export function Composer({
                   onProvider(next);
                   updateContext({
                     ...context,
-                    mode: (
-                      providers.find((item) => item.provider === next)?.taskModes ||
-                      (providerDefinitions[next].taskModes as readonly string[])
-                    ).includes(context.mode)
+                    mode: (providerDefinitions[next].taskModes as readonly string[]).includes(
+                      context.mode,
+                    )
                       ? context.mode
                       : 'build',
                   });
