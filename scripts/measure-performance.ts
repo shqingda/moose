@@ -14,6 +14,7 @@ import { join, resolve } from 'node:path';
 import { parseArgs, promisify } from 'node:util';
 import { SharedRuntime } from '../electron/shared-runtime';
 import { processMemory } from './process-memory';
+import { closeDesktop as close } from './close-desktop';
 import { version } from '../package.json';
 const exec = promisify(execFile);
 
@@ -71,18 +72,6 @@ function launcher(dir: string) {
     delete env.MOOSE_SHARED_RUNTIME_FILE;
     return electron.launch(values.unpackaged ? { args: ['.'], env } : { executablePath, env });
   };
-}
-/** On Linux the detached service inherits the desktop's open pipes, so wait for the desktop process to exit. */
-async function close(app: ElectronApplication) {
-  const child = app.process();
-  const closing = app.close();
-  closing.catch(() => {});
-  await Promise.race([
-    closing,
-    child.exitCode === null && child.signalCode === null
-      ? new Promise((resolve) => child.once('exit', resolve))
-      : Promise.resolve(),
-  ]);
 }
 async function stop(dir: string) {
   const runtime = new SharedRuntime(join(dir, 'connection.json'), () => {});

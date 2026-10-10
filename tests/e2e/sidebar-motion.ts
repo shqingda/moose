@@ -13,7 +13,14 @@ export async function verifySidebarMotion(page: Page) {
       const start = performance.now();
       let reversed = false;
       button.click();
-      while (performance.now() - start < 950) {
+      // Hidden test windows get sparse frames, so the spring may only start on a late frame:
+      // sample until the title stops moving instead of for a fixed window.
+      const settled = () =>
+        points.length > 2 &&
+        Math.abs(points.at(-1)! - points.at(-2)!) < 0.01 &&
+        (mode === 'reverse' || Math.abs(points.at(-1)! - points[0]) > 1);
+      while (performance.now() - start < 950 || !settled()) {
+        if (performance.now() - start > 8000) throw new Error('Sidebar motion did not settle');
         await new Promise(requestAnimationFrame);
         points.push(position());
         if (mode === 'reverse' && !reversed && performance.now() - start >= 90) {
