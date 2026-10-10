@@ -74,7 +74,8 @@ export function reconcileSelection(
   const entry = providers.find((item) => item.provider === current.provider);
   const listed = providers.length >= providerIds.length;
   const missing = !entry && listed;
-  const unusable = !!entry && (entry.enabled === false || entry.available === false);
+  // 用户在设置里暂时关掉底座时，不改掉输入区里的选择；只有 CLI 不在了才换。
+  const unusable = !!entry && entry.available === false;
   if (!options?.lockProvider && (missing || unusable)) {
     const usable = (item: ProviderInfo) => item.enabled !== false && item.available !== false;
     const fallback =

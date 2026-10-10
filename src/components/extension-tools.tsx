@@ -232,6 +232,7 @@ export function ExtensionTools({ scope }: { scope: ExtensionScope }) {
         {snapshot?.supported && (
           <>
             <Tabs
+              key={capabilities?.mcp === false ? 'agent' : 'mcp'}
               defaultValue={capabilities?.mcp === false ? 'agent' : 'mcp'}
               className="extension-tabs"
             >

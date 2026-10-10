@@ -91,6 +91,12 @@ it('falls back when the provider, model, or effort is no longer valid', () => {
   ).toMatchObject({ effort: '', taskMode: 'build' });
 });
 
+it('keeps a disabled provider until its CLI is actually missing', () => {
+  expect(
+    reconcileSelection(remembered, [info({ provider: 'codex', enabled: false })]).provider,
+  ).toBe('codex');
+});
+
 it('does not promote an ordinary mode to full access', () => {
   expect(
     reconcileSelection(remembered, [
