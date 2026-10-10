@@ -121,15 +121,7 @@ flowchart TD
 
 - Grok 和 OpenCode 共用的 ACP 事件转换放在 `acp-events.ts`，各自独有的控制留在自己的适配器里。
 
-验证范围要如实说：
-
-| 状态 | 内容 |
-| --- | --- |
-| OpenCode 2.0.10 已验证 | 握手、模型列表，以及在隔离目录里真实写文件、续接、审批批准／拒绝和取消 |
-| 0.22.0 起新增 | ACP 历史列表与回放导入 |
-| 不代表 | 所有模型和权限配置都通过了 |
-| 尚未接入 | 额度查询。计划和目标已接到界面，但没有 OpenCode 自己的目标状态机，见[专文](08-plan-goal-permissions.md) |
-| 仍由 CLI 决定 | 工具权限按 CLI 自己的配置执行 |
+验证范围要如实说：OpenCode 2.0.10 验证过握手、隔离目录写文件、续接、审批和取消；0.22.0 起能列出并导入历史。这不代表所有模型和权限配置都通过了。额度查询还没接。计划和目标已接到界面，但没有 OpenCode 自己的目标状态机，见[专文](08-plan-goal-permissions.md)。工具权限仍按 CLI 自己的配置执行。
 
 ## 6. 流式消息和 React 页面如何保持一致
 
@@ -227,18 +219,14 @@ sequenceDiagram
 
 #### 0.23.x 减少流式更新时的无效工作
 
-| 优化 | 效果与边界 |
-| --- | --- |
-| 合并时保留没变化的消息对象，只有位置真的变了才重新排序 | 一万条已加载消息里连续更新最后一条 2,000 次，合并函数耗时从 937 ms 降到 4 ms。这只是单个函数的微基准，不代表整页帧率提升了同样倍数 |
-| 文件上下文、翻译函数和消息回调保持引用稳定 | 避免一次快照更新让所有消息行的 `memo` 失效 |
-| Markdown 渲染组件的类型保持稳定 | 文字增量到来时不会卸载已有的代码块或重新读取本地图片 |
+0.23.0 让合并函数保留没变的消息对象：一万条里连续更新最后一条 2,000 次，函数耗时从 937 ms 降到 4 ms。这只是单个函数的微基准。同一轮还稳住了回调和 Markdown 组件的引用，避免 `memo` 失效，也避免代码块被卸掉后重读本地图片。条件和其余数字见 [0.23.0 验收记录](../../releases/0.23.0-validation.md)。
 
 要主动说明的边界：
 
 - **这不是严格的虚拟列表**，持续向上加载时 DOM 节点仍会增加。
 - 一万条历史的测试验证了分页、持久化和交互正常，没有证明同时渲染一万条也不卡。
 
-代码入口：[执行与 flush](../../../electron/session-execution.ts)、[前端数据 Hook](../../../src/lib/workspace.ts)、[消息合并](../../../src/lib/transcript-messages.ts)、[时间线](../../../src/components/transcript.tsx)、[滚动组件](../../../src/components/ui/message-scroller.tsx)。性能数据见 [0.23.0 验收记录](../../releases/0.23.0-validation.md)。
+代码入口：[执行与 flush](../../../electron/session-execution.ts)、[前端数据 Hook](../../../src/lib/workspace.ts)、[消息合并](../../../src/lib/transcript-messages.ts)、[时间线](../../../src/components/transcript.tsx)、[滚动组件](../../../src/components/ui/message-scroller.tsx)。
 
 ---
 

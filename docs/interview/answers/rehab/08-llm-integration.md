@@ -164,25 +164,16 @@ MCP：Host 运行时向 Server 要工具列表，交给模型
 
 ## Moose 这一章实际落在哪
 
-以下只复述 [答案](../08-llm-integration.md)。
+配置字段和文件路径见 [答案](../08-llm-integration.md)。面试只记和通用讲法不同的几条：
 
-工具执行：
+| 不要说成 | 实际 |
+| --- | --- |
+| 页面在调模型的工具 API | 工具由代理 CLI 决定和执行。页面展示记录，批准仍按原请求交还 |
+| 有一条专给模型事件的 WebSocket | Web 是 HTTP 加 SSE，桌面是 IPC，进的是同一个后台 |
+| Moose 实现了 MCP Client | 连接和调用在 CLI。Moose 只读写 Codex、OpenCode、Grok 的配置；Pi 不支持 MCP |
+| 运行时把 MCP Server 注入进会话 | Grok 和 OpenCode 的 ACP 会话传入的 `mcpServers` 是空数组 |
 
-- Renderer 不直接调用模型的工具 API。决定和执行工具的是代理 CLI。适配器把 CLI 事件转成工具记录，Service 负责保存和推送。
-- CLI 请求审批时，适配器记住原始请求 ID 和可选项。用户回复经 Service 校验仍有效后，再按原请求 ID 交还 CLI。细节在审批那篇。
-
-通道：
-
-- Web 用 HTTP 发命令，用 SSE 接收后台事件。桌面端经 preload / IPC 转发到同一个后台。没有用于模型事件的 WebSocket 服务。
-
-MCP：
-
-- Moose 自己不连接 MCP Server。连接和调用由底层代理 CLI 完成。Moose 做的是读取和修改这些 CLI 的 MCP 配置。
-- 读取：Codex 通过 app-server 的 `config/read` 读出各配置层的 `mcp_servers`，再用 `mcpServerStatus/list` 查认证状态和工具数量（`electron/providers/codex-extensions.ts`）。Grok 运行 `grok mcp list --json`，只取用户级配置。OpenCode 直接解析配置文件里的 `mcp` 字段。Pi 不支持 MCP（`electron/providers/user-extensions.ts`）。
-- 修改：新增和编辑只开放给 Codex（`config/value/write`，带 `expectedVersion`，配置被别人改过就拒绝）和 OpenCode（原子替换配置文件，保留注释，文件被外部改过也拒绝）。Grok 只能用 `grok mcp enable/disable` 开关。
-- 校验在 `shared/mcp-registration.ts`：只接受 stdio 和 HTTP。远程地址必须是 HTTPS，或者本机回环地址上的 HTTP，且不能带用户名密码、查询参数和片段。令牌和请求头只能填环境变量名，不能填明文。新登记的 Server 一律写成未启用。保存前 `src/components/extension-confirm.tsx` 会列出命令、参数、环境变量或请求头让用户确认。
-- Codex 的 MCP OAuth 登录通过 `mcpServer/oauth/login` 发起。Moose 只接受 HTTPS 且不带凭据的授权地址。
-- 运行任务时，Grok 和 OpenCode 的 ACP 会话传入的 `mcpServers` 是空数组。Moose 不额外注入 Server，CLI 使用自己配置里的 MCP。Codex 的 MCP 工具调用会作为工具记录显示在时间线上。
+地址校验仍在：远程只允许 HTTPS，或本机回环上的 HTTP，不能带用户名密码；秘密只填环境变量名；新 Server 默认不启用。
 
 不要说 Moose 实现了 MCP Client。
 

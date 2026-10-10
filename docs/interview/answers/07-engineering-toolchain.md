@@ -143,7 +143,7 @@ const ReviewPanel = lazy(loadReview);           // 单独打包，按需加载
 // 打开面板时在 Suspense 内渲染 ReviewPanel
 ```
 
-**Moose 里的做法**：Moose 用 Vite 构建，`package.json` 锁定的是 Vite 8.3.1，`vite.config.ts` 里 Electron 各入口使用 `rolldownOptions` 并关闭代码分割，安装的依赖里只有 Rolldown、没有 Rollup。前端没有配置手动分包，主要靠动态 `import`：`src/main.tsx` 先渲染启动提示，再按宿主动态加载桌面工作区或 Web 入口；`src/app.tsx` 把时间线、文件面板、审查面板、设置和搜索对话框都改为 `lazy` 加载，终端组件也是打开时才导入 xterm。根据 [0.23.0 验证记录](../../releases/0.23.0-validation.md)，静态入口 JS 从 730,167 B 降到 223,759 B，减少 69.4%，但工作区代码仍在认证后加载，同一记录里桌面和 Web 的就绪时间变化并不大。
+**Moose 里的做法**：Moose 用 Vite 构建，`package.json` 锁定的是 Vite 8.3.1，依赖里是 Rolldown、没有 Rollup。0.23.2 起服务入口（runtime 与 web-server）共用 `dist-electron/chunks/`，桌面包不再打两份后台；preload 等其余入口仍关闭代码分割。前端没有手动分包表，主要靠动态 `import`：`src/main.tsx` 先渲染启动提示，再按宿主动态加载桌面工作区或 Web 入口；`src/app.tsx` 把时间线、文件面板、审查面板、设置和搜索改为 `lazy`，终端在打开时才导入 xterm。根据 [0.23.0 验证记录](../../releases/0.23.0-validation.md)，静态入口 JS 从 730,167 B 降到 223,759 B，减少 69.4%，但工作区仍在认证后加载，同一次记录里就绪时间变化并不大。
 
 **容易答错的地方**
 - 包体变小不能自动证明启动更快，要用相同条件下打包出的应用实际测量。

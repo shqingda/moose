@@ -181,18 +181,6 @@ window.addEventListener('pagehide', saveDraft); // 补充入口
 | 拖动页面元素、调整宽度 | Pointer Events、`setPointerCapture` |
 | 把系统文件拖进页面 | drag/drop 事件、DataTransfer |
 
-**示例**：下面的关键代码在拖动开始时捕获指针，移动时调整宽度，结束时释放。
-
-```ts
-// 按下时捕获指针，之后移出分隔条也能收到事件
-handle.onpointerdown = (e) => handle.setPointerCapture(e.pointerId);
-handle.onpointermove = (e) => {
-  // 只有处于拖动中（已捕获）才调整宽度
-  if (handle.hasPointerCapture(e.pointerId)) resizeTo(e.clientX);
-};
-handle.onpointerup = (e) => handle.releasePointerCapture(e.pointerId);
-```
-
 **Moose 里的做法**：Moose 的文件和审阅共用一个右侧面板，调整宽度用的就是 Pointer Events 和 `setPointerCapture`，还支持用方向键调整；把文件拖入输入区则使用 `DataTransfer.files`。
 
 ## 18. ResizeObserver 有什么用？要实时统计浏览器窗口大小该怎么做？

@@ -138,29 +138,13 @@ messages.map((m) => <MessageRow key={m.id} message={m} />);
 
 ## Moose 这一章实际落在哪
 
-以下只复述 [答案](../04-performance.md)。
+测量条件和文件路径见 [答案](../04-performance.md)。这里只留和通用讲法不同的几条，P95 的样本不要从速记里丢掉：
 
-搜索：
-
-- 已实现消息内容搜索。项目名、会话标题、已保存消息的标题和正文都可以匹配，也包含归档会话。用参数化的 `LIKE` 子串查询，没有全文索引。
-- 搜索每页 50 条，用排序字段组成游标继续加载。输入防抖 200 ms，过期请求的结果会丢弃。点击结果后按消息的 `position` 读上下文。
-- 普通历史向前翻是另一套逻辑，每页 80 条。
-- 0.21.0 的本机基准：一万条约 1 KiB 的消息，后端 P95 约 33 ms。0.21.1 的回归测试继续检查 300 ms 预算。这个数字不包含 200 ms 防抖，也不是大数据量下的普遍保证。
-- 如果以后扫描拖慢后台，再评估全文索引和中文检索。限制见项目搜索链路文档，教程不另加结论。
-
-长列表：
-
-- 没有虚拟列表，也没有「远处消息改用纯文本」的按需渲染。
-- 历史按 `position` 游标分页，每页 80 条，点击「加载更早消息」才读上一页（`electron/db/store.ts`、`src/lib/workspace.ts`）。
-- 每条消息外层的 `MessageScrollerItem` 使用 `content-visibility: auto` 和 `contain-intrinsic-size: auto 10rem`（`src/components/ui/message-scroller.tsx`）。
-- `TranscriptRow` 用 `memo` 包裹（`src/components/transcript.tsx`）。
-- 从搜索结果跳转时，按目标 `position` 读附近内容，再滚动到它。
-
-编译器与引用：
-
-- 没有开 React Compiler：`vite.config.ts` 里的 `@vitejs/plugin-react` 没有配置编译器插件，`package.json` 里也没有 `babel-plugin-react-compiler`。缓存是手写的。
-- `src/lib/transcript-messages.ts` 的 `mergeMessages`：旧版本或重复版本直接跳过，只替换真正变化的记录，其他记录保留原对象。
-- 传给行的 `onError`、`onEdit` 分别由 `src/lib/workspace.ts` 和 `src/app.tsx` 用 `useCallback` 固定。文件上下文在 `src/components/file-preview.tsx` 里用 `useMemo` 生成。翻译函数是模块级常量。因此一次快照更新不会让所有行的 `memo` 失效。
+| 题目 | 实际 | 不要说成 |
+| --- | --- | --- |
+| 搜索 | 参数化 `LIKE`，50 条一页，200 ms 防抖。0.21.0 那次一万条的后端 P95 约 33 ms，不含防抖 | 有全文索引，或这个数字就是整页延迟 |
+| 长列表 | 没有虚拟列表。历史另按 80 条分页，加上 `content-visibility` 和手写 `memo` | 一万条同时渲染也不卡 |
+| 编译器 | 没开 React Compiler。`mergeMessages` 保留没变的对象 | 装了 React 19 就自动跳过重渲染 |
 
 ## 本章速记
 

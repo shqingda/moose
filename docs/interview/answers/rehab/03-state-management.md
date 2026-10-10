@@ -164,13 +164,15 @@ const [error, sendAction, isPending] = useActionState(
 
 ## Moose 这一章实际落在哪
 
-以下只复述 [答案](../03-state-management.md)。
+逐步写法见 [答案](../03-state-management.md)。不要把通用方案说成已经接上：
 
-- `useWorkspace` 管全局快照，`useTranscript` 管当前会话的消息和分页，输入框状态留在组件里。没有使用 Zustand 或 Redux。
-- `Snapshot` 不包含全部消息，消息另存在 SQLite。重启时修正运行状态，并暂停旧队列。恢复顺序是：从 SQLite 读会话、消息、队列；旧的 queued / running / waiting 标为 interrupted；旧队列先暂停；页面重拉快照和消息。
-- `send` 返回表示输入已持久化进队列，不表示模型已完成。
-- 依赖里是 React 19.3.0（`package.json`），但没有使用 Actions、`useActionState`、`useOptimistic` 或 `useTransition`。
-- 输入框（`src/components/composer.tsx`）用 `useState` 维护 `sending`，发送期间拒绝重复提交，失败时保留草稿。用户消息不会乐观插入列表，而是等后台写入队列后，由推送的快照显示出来。
+| 实际 | 不要说成 |
+| --- | --- |
+| `useWorkspace` 管快照，`useTranscript` 管当前消息，输入留在组件里 | 用了 Zustand 或 Redux |
+| 快照不含全部消息。重启把 queued / running / waiting 标成 interrupted，旧队列先暂停 | 快照能复活进程 |
+| `send` 只表示已经入队 | 发送成功等于模型做完了 |
+| 依赖是 React 19，但没有 Actions、`useActionState`、`useOptimistic`、`useTransition` | 因为是 React 19 就用了这些 Hook |
+| 手写 `sending`，失败留草稿；用户消息等队列写入后的快照出现 | 乐观地显示了还没生成的回答 |
 
 ## 本章速记
 

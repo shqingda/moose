@@ -110,25 +110,12 @@ pendingRequests.delete(requestId);
 
 ## Moose 这一章实际落在哪
 
-以下只复述 [答案](../06-ai-features.md) 第 10、11 题。渲染措施管的是渲染层；代理会不会被注入内容骗去执行命令，要靠审批和底座沙箱。
+渲染和审批的逐步做法见 [答案](../06-ai-features.md) 第 10、11 题。这里只留和通用设计不同的地方：
 
-Markdown（`src/components/markdown.tsx`）：
-
-- `react-markdown`，加上 `remark-gfm`、`rehype-highlight`。
-- 开了 `skipHtml`。`urlTransform` 只保留 `http(s)`、`file:` 和不带协议的相对路径。
-- 链接改成点击事件：`http(s)` 通过 `openExternal` 交给系统浏览器；其余当作本地文件，在应用内预览。
-- 外部图片不会自动加载，只显示成点击才打开的链接。代码块只提供换行和复制。
-- `shared/validation.ts` 里 `openExternal` 的参数只允许 `http:` 和 `https:`。
-- `electron/main.ts`：窗口开了 `sandbox`、`contextIsolation`，关了 `nodeIntegration`。`setWindowOpenHandler` 一律拒绝新窗口。`will-navigate` 和 `will-redirect` 阻止跳离当前页。注入 CSP，其中有 `img-src 'self' data:`、`object-src 'none'` 等。Web 版 CSP 在 `electron/web-server.ts`。
-
-审批：
-
-- 由代理 CLI 发起。以 Codex 为例，`electron/providers/codex.ts` 收到 `item/commandExecution/requestApproval`、`item/fileChange/requestApproval` 或 `item/permissions/requestApproval` 后，记下原始请求 ID 和可选项，生成 `kind: 'approval'`、状态 `pending` 的消息。标题是命令，正文是理由和改动或权限内容。选项是 “Allow once” 和 “Deny”。
-- 消息 ID 由任务 ID 和请求键拼成（`electron/session-execution.ts`）。用户走 `respond`。`electron/service.ts` 先确认任务仍在运行、消息仍是 `pending`、任务没有被取消，否则返回 “This request is no longer active”。适配器再核对选项属于当初那几个，用原始请求 ID 回给 CLI，然后删除这条待处理请求。
-- 任务结束、失败或被取消时，仍在等待的审批标成 `expired`，不会被当成批准或拒绝。Grok 适配器在取消和关闭时，把未决权限请求回复为 `cancelled`。
+- Markdown 开了 `skipHtml`，链接限协议，外图不自动加载，代码不自动跑。CSP 和 Electron 沙箱挡住的是页面，不是代理被提示词骗去执行命令。
+- 没有审批超时，没有「拒绝并附原因」，也没有「本会话内允许」。Codex 的卡是一次允许或拒绝；未决项要到任务结束才标成 `expired`。
 - Plan 模式和原生代码审查期间，Codex 的命令和文件改动审批会被自动拒绝。
-- 权限档位在 `electron/providers/codex-permissions.ts`：「请求批准」映射为 `on-request` 加 `workspace-write` 沙箱，并关闭沙箱网络和网页搜索；「帮我批准」改由 Codex 的 `auto_review`；「完全访问」对应 `never` 加 `danger-full-access`。0.23.3 起四家都有这三档。Pi 仍没有可暂停的工具协议：请求批准会中止改动，帮我批准和完全访问允许同一组工具。OpenCode 由 Moose 在权限回调里交给用户、选一次性允许或选始终允许。见[计划、目标与三档权限](../../reference/08-plan-goal-permissions.md)。
-- **没有**审批超时（任务结束前一直等），也**没有**「拒绝并附原因」的输入框。Codex 的审批卡只有「仅此一次」和「拒绝」，没有「本会话内允许」。Grok 的选项直接使用代理给出的列表。
+- 0.23.3 起四家都有三档权限。Pi 没有可暂停的工具协议：请求批准会中止改动，帮我批准和完全访问允许同一组工具。OpenCode 在回调里交给用户、选一次性允许或始终允许。见[计划、目标与三档权限](../../reference/08-plan-goal-permissions.md)。
 
 通用设计里的「本会话允许」「拒绝附原因」「等待超时」，Moose 没有做。讲方案时可以说设计，不要说成已经实现。
 
