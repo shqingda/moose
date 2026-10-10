@@ -43,6 +43,8 @@ export function Composer({
   onDraft,
   onProvider,
   onOptions,
+  taskMode,
+  onTaskMode,
   onSend,
   onStop,
   onError,
@@ -61,6 +63,8 @@ export function Composer({
   onDraft(text: string): void;
   onProvider(provider: Provider): void;
   onOptions(patch: { model?: string; effort?: string; mode?: PermissionMode }): void;
+  taskMode?: PromptContext['mode'];
+  onTaskMode?(mode: PromptContext['mode']): void;
   onSend(context: PromptContext, delivery?: 'steer'): Promise<boolean | undefined>;
   onStop(): void;
   onError(error: unknown): void;
@@ -68,13 +72,19 @@ export function Composer({
 }) {
   const t = useI18n(),
     info = providers.find((p) => p.provider === provider);
-  const [context, setContext] = useState<PromptContext>(session?.draftContext || emptyContext);
+  const [context, setContext] = useState<PromptContext>(
+    session?.draftContext || { ...emptyContext, mode: taskMode || 'build' },
+  );
   const [skills, setSkills] = useState<ContextEntry[]>([]),
     [skillsReady, setSkillsReady] = useState(false);
   const migrated = useRef(false);
   useEffect(() => {
     if (session?.draftContext) setContext(session.draftContext);
   }, [session?.draftContext?.mode]);
+  useEffect(() => {
+    if (session?.draftContext || !taskMode) return;
+    setContext((current) => (current.mode === taskMode ? current : { ...current, mode: taskMode }));
+  }, [taskMode, session?.id, session?.draftContext]);
   useEffect(() => {
     let live = true;
     void window.moose
@@ -93,6 +103,7 @@ export function Composer({
   /** 同步引用与模式选择，并保存为当前草稿上下文。 */
   const updateContext = (value: PromptContext) => {
     setContext(value);
+    if (value.mode !== context.mode) onTaskMode?.(value.mode);
     if (session)
       void window.moose
         .request('updateSession', { id: session.id, draftContext: value })

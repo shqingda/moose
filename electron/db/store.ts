@@ -7,6 +7,7 @@ import { basename } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import * as table from './schema';
 import { migrate } from './migrations';
+import { readSelection, selectionsEqual, type ComposerSelection } from '../../shared/selection';
 import {
   defaultSettings,
   type Attachment,
@@ -163,6 +164,26 @@ export class Store {
       .onConflictDoUpdate({ target: table.settings.key, set: { value: JSON.stringify(value) } })
       .run();
     return value;
+  }
+  /** 读取上次的输入选择；没有记录时用默认值，不访问任何代理 CLI。 */
+  getSelection(): ComposerSelection {
+    const row = this.db
+      .select()
+      .from(table.settings)
+      .where(eq(table.settings.key, 'selection'))
+      .get();
+    return readSelection(row ? JSON.parse(row.value) : {});
+  }
+  /** 合并并保存输入选择。内容没变时不写库，避免无意义的快照刷新。 */
+  setSelection(patch: Partial<ComposerSelection>): ComposerSelection {
+    const next = readSelection({ ...this.getSelection(), ...patch });
+    if (selectionsEqual(next, this.getSelection())) return next;
+    this.db
+      .insert(table.settings)
+      .values({ key: 'selection', value: JSON.stringify(next) })
+      .onConflictDoUpdate({ target: table.settings.key, set: { value: JSON.stringify(next) } })
+      .run();
+    return next;
   }
   /** 按消息 ID 更新记录；seq 不增加时拒绝覆盖，保持流式更新顺序。 */
   saveMessage(message: Omit<Message, 'position'>): Message {

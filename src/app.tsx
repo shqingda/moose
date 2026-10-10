@@ -11,6 +11,12 @@ import { WorkspaceTools } from './components/workspace-tools';
 import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { MotionConfig, motion, type MotionStyle } from 'motion/react';
 import { ChevronDown, Folder, PanelRight, PanelLeft } from 'lucide-react';
+import {
+  readSelection,
+  reconcileSelection,
+  selectionsEqual,
+  type ComposerSelection,
+} from '../shared/selection';
 import type {
   PromptContext,
   Message,
@@ -21,6 +27,7 @@ import type {
   Settings,
   Snapshot,
 } from '../shared/types';
+import { emptyContext } from '../shared/types';
 import { LocaleContext, useI18n } from './lib/i18n';
 import { useWorkspace } from './lib/workspace';
 import { ConfirmDialog, type Confirmation } from './components/confirm-dialog';
@@ -142,12 +149,15 @@ function Workspace({
     () => localStorage.getItem('moose.selected') || undefined,
   );
   const [projectId, setProjectId] = useState<string>();
-  const [provider, setProvider] = useState<Provider>('codex');
+  const restored = snapshot.selection ?? readSelection({});
+  const [provider, setProvider] = useState<Provider>(restored.provider);
   const [newOptions, setNewOptions] = useState({
-    model: '',
-    effort: '',
-    mode: 'ask' as PermissionMode,
+    model: restored.model,
+    effort: restored.effort,
+    mode: restored.mode,
   });
+  const [taskMode, setTaskMode] = useState<PromptContext['mode']>(restored.taskMode);
+  const selectionRef = useRef<ComposerSelection>(restored);
   const [providers, setProviders] = useState<ProviderInfo[]>([]),
     [checking, setChecking] = useState(true);
   // Undefined defers the first load; false keeps dialog state and exit motion after closing.
@@ -219,6 +229,87 @@ function Workspace({
     }
   }, [snapshot.activities, session?.id, targetMessage]);
   const currentProvider = session?.provider || provider;
+  /** 立刻更新界面上的选择，并在后台记下，供下次启动和新会话恢复。 */
+  const visibleSelection = (): ComposerSelection =>
+    session
+      ? readSelection({
+          provider: session.provider,
+          model: session.model,
+          effort: session.effort,
+          mode: session.mode,
+          taskMode: session.draftContext?.mode || selectionRef.current.taskMode,
+        })
+      : selectionRef.current;
+  const publishSelection = (patch: Partial<ComposerSelection>, persistSession = true) => {
+    const next = readSelection({ ...visibleSelection(), ...patch });
+    const previous = selectionRef.current;
+    selectionRef.current = next;
+    if (next.provider !== previous.provider) setProvider(next.provider);
+    if (
+      next.model !== previous.model ||
+      next.effort !== previous.effort ||
+      next.mode !== previous.mode
+    )
+      setNewOptions({ model: next.model, effort: next.effort, mode: next.mode });
+    if (next.taskMode !== previous.taskMode) setTaskMode(next.taskMode);
+    if (!selectionsEqual(previous, next))
+      void window.moose.request('rememberSelection', next).catch(() => undefined);
+    if (!session || !persistSession) return;
+    const sessionPatch: {
+      model?: string;
+      effort?: string;
+      mode?: PermissionMode;
+      draftContext?: PromptContext;
+    } = {};
+    if (patch.model !== undefined && next.model !== session.model) sessionPatch.model = next.model;
+    if (patch.effort !== undefined && next.effort !== session.effort)
+      sessionPatch.effort = next.effort;
+    if (patch.mode !== undefined && next.mode !== session.mode) sessionPatch.mode = next.mode;
+    if (patch.taskMode !== undefined && next.taskMode !== (session.draftContext?.mode || 'build'))
+      sessionPatch.draftContext = {
+        ...emptyContext,
+        ...session.draftContext,
+        mode: next.taskMode,
+      };
+    if (Object.keys(sessionPatch).length)
+      void perform(() =>
+        window.moose.request('updateSession', { id: session.id, ...sessionPatch }),
+      );
+  };
+  useEffect(() => {
+    const current = session
+      ? readSelection({
+          provider: session.provider,
+          model: session.model,
+          effort: session.effort,
+          mode: session.mode,
+          taskMode: session.draftContext?.mode,
+        })
+      : selectionRef.current;
+    const next = reconcileSelection(current, providers, { lockProvider: !!session });
+    if (selectionsEqual(current, next)) return;
+    selectionRef.current = next;
+    setProvider(next.provider);
+    setNewOptions({ model: next.model, effort: next.effort, mode: next.mode });
+    setTaskMode(next.taskMode);
+    void window.moose.request('rememberSelection', next).catch(() => undefined);
+    if (!session) return;
+    const sessionPatch: {
+      model?: string;
+      effort?: string;
+      mode?: PermissionMode;
+      draftContext?: PromptContext;
+    } = {};
+    if (next.model !== session.model) sessionPatch.model = next.model;
+    if (next.effort !== session.effort) sessionPatch.effort = next.effort;
+    if (next.mode !== session.mode && session.mode) sessionPatch.mode = next.mode;
+    if (next.taskMode !== (session.draftContext?.mode || 'build') && session.draftContext?.mode)
+      sessionPatch.draftContext = { ...session.draftContext, mode: next.taskMode };
+    if (Object.keys(sessionPatch).length)
+      void perform(() =>
+        window.moose.request('updateSession', { id: session.id, ...sessionPatch }),
+      );
+  }, [providers, session?.id, session?.model, session?.effort, session?.mode, session?.provider]);
   const connect = useCallback(async () => {
     setChecking(true);
     try {
@@ -283,12 +374,20 @@ function Workspace({
       await addProject();
       return;
     }
-    setProvider(currentProvider);
-    setNewOptions({
-      model: session?.model || '',
-      effort: session?.effort || '',
-      mode: (session?.mode || 'ask') as PermissionMode,
-    });
+    const next = session
+      ? readSelection({
+          provider: session.provider,
+          model: session.model,
+          effort: session.effort,
+          mode: session.mode,
+          taskMode: session.draftContext?.mode,
+        })
+      : selectionRef.current;
+    selectionRef.current = next;
+    setProvider(next.provider);
+    setNewOptions({ model: next.model, effort: next.effort, mode: next.mode });
+    setTaskMode(next.taskMode);
+    void window.moose.request('rememberSelection', next).catch(() => undefined);
     setProjectId(targetProject.id);
     setSelected(undefined);
     setTargetMessage(undefined);
@@ -376,9 +475,15 @@ function Workspace({
     mode?: PermissionMode;
     archived?: boolean;
   }) => {
-    if (session)
-      void perform(() => window.moose.request('updateSession', { id: session.id, ...patch }));
-    else setNewOptions((old) => ({ ...old, ...patch }));
+    if (patch.archived !== undefined && session)
+      void perform(() =>
+        window.moose.request('updateSession', { id: session.id, archived: patch.archived }),
+      );
+    const selectionPatch: Partial<ComposerSelection> = {};
+    if (patch.model !== undefined) selectionPatch.model = patch.model;
+    if (patch.effort !== undefined) selectionPatch.effort = patch.effort;
+    if (patch.mode !== undefined) selectionPatch.mode = patch.mode;
+    if (Object.keys(selectionPatch).length) publishSelection(selectionPatch);
   };
   const archiveSession = (target: Session) => {
     if (target.archived) {
@@ -663,11 +768,12 @@ function Workspace({
                   providers={providers}
                   draft={drafts[draftKey] ?? session?.draft ?? ''}
                   onDraft={onDraft}
-                  onProvider={(value) => {
-                    setProvider(value);
-                    setNewOptions({ model: '', effort: '', mode: 'ask' });
-                  }}
+                  onProvider={(value) =>
+                    publishSelection({ provider: value, model: '', effort: '' })
+                  }
                   onOptions={updateSession}
+                  taskMode={session?.draftContext?.mode || taskMode}
+                  onTaskMode={(mode) => publishSelection({ taskMode: mode }, false)}
                   onSend={onSend}
                   onStop={() => {
                     if (session)

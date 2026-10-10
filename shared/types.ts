@@ -8,6 +8,7 @@ import type { BackgroundRequests, BackgroundResponses } from './background';
 import type { ExtensionRequests, ExtensionResponses } from './extensions';
 import type { GitRequests, GitResponses } from './git-actions';
 import type { providerIds } from './providers';
+import type { ComposerSelection } from './selection';
 // 跨进程公共契约：请求、响应、事件和数据实体；此文件只描述类型，不负责运行时校验。
 export interface PromptContext {
   inline?: boolean;
@@ -154,6 +155,8 @@ export interface ModelOption {
   id: string;
   name: string;
   efforts: Choice[];
+  /** 订阅或账号不再包含该模型时为 true；界面隐藏它，并改选仍可用的模型。 */
+  unavailable?: boolean;
 }
 export interface ProviderInfo {
   /** Capabilities verified for the connected CLI, not inferred from its name in the UI. */
@@ -194,6 +197,8 @@ export interface Snapshot {
   projects: Project[];
   sessions: Session[];
   settings: Settings;
+  /** 上次使用的底座、模型、推理、权限和任务模式；随快照一起到达，不另等探测。 */
+  selection?: ComposerSelection;
   locale: string;
   dark: boolean;
   reduceMotion: boolean;
@@ -286,6 +291,7 @@ export interface Requests
     answers?: Record<string, string>;
   };
   providers: { refresh?: boolean; cached?: boolean };
+  rememberSelection: ComposerSelection;
   settings: Partial<Settings>;
   gitStatus: { projectId: string; sessionId?: string };
   gitDiff: { projectId: string; sessionId?: string; path: string; area: GitFile['area'] };
@@ -344,6 +350,7 @@ export interface Responses
   updateQueue: null;
   respond: null;
   providers: ProviderInfo[];
+  rememberSelection: ComposerSelection;
   settings: Settings;
   gitStatus: GitStatus;
   gitDiff: GitDiff;
