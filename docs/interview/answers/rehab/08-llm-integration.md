@@ -1,132 +1,123 @@
-# 八、模型接入：意图、通道、工具从哪来
+# 八、大模型前端集成
 
-> 对应答案：[08-llm-integration.md](../08-llm-integration.md)，原题 1、5、7。
+> 题单，对着说。每题顺序固定：这题在考什么 → 一句话回答 → 展开说明 → 示例 → Moose 里的做法 → 容易答错的地方。对应 [答案](../08-llm-integration.md)，原题 1、5、7。事实按 Moose 0.23.3。答题稿里写了「没有」的，不要说成已经做了。
 
-这一章接上「循环放在可信侧」。一次工具调用还要过哪些检查、哪些检查不能放在浏览器，双向通道自己要带什么身份，工具定义又从哪来，都在这里。
+## 1. 大模型的工具调用（tool calling）在应用里怎么落地？哪些步骤必须放在后端？
 
-## 模型只表达意图，应用负责执行
+> **这题在考什么**：早期 OpenAI 把这个能力叫 Function Calling，现在各家统一叫工具调用：OpenAI 在 2025 年 3 月推出的 Responses API、Anthropic 的 tool use、Vercel AI SDK 的 `tools` 都是这一类。名字不同，本质一样：模型说“调用计算器”，只是给出了调用意图，工具并不会因此自动执行。面试官想看你清楚应用要负责验证、执行、回传结果，以及这些事该在哪里做。
 
-各家名字不同。早期 OpenAI 叫 Function Calling，现在多叫工具调用。OpenAI Responses API（2025 年 3 月）、Anthropic 的 tool use、Vercel AI SDK 的 `tools` 都是这一类。模型说「调用计算器」，只是给出了名字和参数。计算器不会因此自己跑起来。
+**一句话回答**：模型只输出工具名和参数；应用收全参数后校验名称、参数格式和用户权限，在可信后台执行（有副作用的先请用户批准），再按原来的调用 ID 把结果或错误交还模型，并设循环上限。
 
-应用要补上的顺序是：收全工具名和参数（流式时可能分好几段），确认名字在白名单里，确认参数符合这份工具的 JSON Schema，确认当前用户有权做这件事。有副作用的，先请用户批准。然后在可信后台执行，按原来的调用 ID 把结果或错误交还模型。还要有轮次上限和总超时，防止停不下来。
+**展开说明**
+- 先收全模型给出的工具名和参数。流式返回时参数可能分几段到达，没收全不能执行。
+- 校验三件事：工具名在白名单里、参数符合 JSON Schema、当前用户有权限做这件事。
+- 由可信后台执行。浏览器里的代码用户可以随意修改，所以凭据、数据库访问和命令执行都不能放在前端。
+- 有副作用的工具（写数据库、发邮件、改文件）在执行前要让用户确认，只读工具可以直接执行。
+- 结果按原来的调用 ID（OpenAI 叫 `call_id`，Anthropic 叫 `tool_use_id`）交还模型；失败也要回传错误，模型才能换一种做法。
+- 一次回答可能包含多个并行调用，要逐个匹配 ID；互不依赖的可以并发执行。
+- 设置循环轮次上限和总超时，防止模型反复调用停不下来。
 
-没收全参数不能执行。半截参数的展示规则在流式下篇：可以显示「正在准备」，不能跑命令。
+| 步骤 | 放在哪里 | 原因 |
+| --- | --- | --- |
+| 展示调用过程、收集审批 | 前端 | 只是界面 |
+| 校验工具名、参数、权限 | 后端 | 前端校验可被绕过 |
+| 执行工具 | 后端 | 需要凭据和系统权限 |
+| 拼接结果、继续下一轮 | 后端 | 要防止伪造结果 |
 
-失败也要按同一个调用 ID 交还。模型才知道这次失败了，可以换一种做法。丢掉错误、假装没调用过，模型会重复同一种尝试。
-
-一次回答里可能有多个并行调用，逐个用 ID 匹配。互不依赖的可以并发。有依赖的仍要按顺序，见 Agent 上篇。
-
-展示过程和收集审批放在前端，因为那只是界面。校验名字、参数、权限放在后端，因为前端校验可以被绕过。执行放在后端，因为需要凭据和系统权限。把结果接回模型、进入下一轮也放在后端，防止有人伪造工具结果。
-
-浏览器不应保存数据库凭据，也不应执行任意命令。这条和架构章「长期密钥不进浏览器」是同一条边界。
+**示例**：下面是后台执行前的关键检查，白名单、参数校验和审批（伪代码）。
 
 ```ts
-const tool = allowedTools[call.name];
+const tool = allowedTools[call.name];            // 只查白名单里的工具
 if (!tool) return { callId: call.id, error: '不允许的工具' };
-const args = tool.schema.parse(call.args);
-if (tool.sideEffect && !(await askUser(call))) {
+const args = tool.schema.parse(call.args);       // 参数不合法会直接抛错
+if (tool.sideEffect && !(await askUser(call))) {  // 有副作用的先请用户批准
   return { callId: call.id, error: '用户拒绝' };
 }
-return { callId: call.id, result: await tool.run(args) };
+return { callId: call.id, result: await tool.run(args) }; // 带回原调用 ID
 ```
 
-OpenAI 把这个 ID 叫 `call_id`，Anthropic 叫 `tool_use_id`。名字不同，作用都是把结果送回这一次调用。
+**Moose 里的做法**：Moose 不在 Renderer 里直接调用模型的工具 API。决定和执行工具的是代理 CLI；适配器把 CLI 发出的事件转成工具记录，Service 负责保存和推送。CLI 请求审批时，适配器记住原始请求 ID 和可选项，用户的回复经 Service 校验仍有效后，再按原请求 ID 交还 CLI（细节见[六、AI 特性与前端工程实践](06-ai-features-2.md#11-agent-要执行危险操作改文件跑命令联网前审批界面该怎么设计)）。
 
-## 双向通道要自己带身份
+**容易答错的地方**
+- 浏览器不应保存数据库凭据，也不应执行任意命令。
+- 以为模型返回了工具调用就要立刻执行。参数校验和权限检查都通过、需要时用户也批准了，才能执行。
 
-WebSocket 允许浏览器和后台在同一条连接上互发消息。生成增量、取消、审批可以走同一条管道。SSE 则是服务器往下推，浏览器再用别的 HTTP 请求往上发命令。两种都能做聊天。差别在上行是不是同一条连接。
+## 5. 如何用 WebSocket 实现双向流式通信，支持 AI 模型主动推送进度更新、中断信号、工具调用请求？
 
-无论用哪一种，消息自己要带身份，不能靠「这条连接上的下一帧一定是我要的」。类型说明这是增量、审批请求、完成，还是取消。`runId` 说明是不是当前这次任务。请求 ID 对上审批或取消是哪一次。序号用来发现重复和跳号。内容才是真正的数据。
+> **这题在考什么**：WebSocket 允许浏览器和后台在同一个连接上互相发消息，适合同时传生成内容和取消、审批这类指令。但面试官想看你是否知道：连接断开后，之前漏掉的消息不会自己回来。
+
+**一句话回答**：先约定带类型、`runId`、请求 ID 和序号的消息格式，服务端推增量和请求，客户端发审批和取消；断线后靠服务端保存的事件和游标补读。
+
+**展开说明**
+- 消息格式包含：类型、`runId`、请求 ID、序号和内容。
+- 服务端推送生成增量、工具调用请求和完成通知；客户端发送审批、取消等指令。
+- 连接中断后，要靠服务端保留的事件和客户端的游标补读漏掉的部分。
+- 连接要做鉴权，限制缓冲区大小，并处理消费太慢的客户端，避免服务端内存被撑满。
+- 取消请求发出后，要等服务端确认才算真正取消。
+
+**示例**：下面在收到事件时先核对是不是当前任务、序号是否连续（客户端示意）。
 
 ```ts
 socket.onmessage = ({ data }) => {
   const event = JSON.parse(data);
-  if (event.runId !== activeRunId || event.seq <= lastSeq) return;
-  if (event.seq !== lastSeq + 1) return reloadSnapshot();
-  lastSeq = event.seq;
-  apply(event);
+  if (event.runId !== activeRunId || event.seq <= lastSeq) return; // 别的任务或重复事件
+  if (event.seq !== lastSeq + 1) return reloadSnapshot();          // 缺号，重拉完整状态
+  lastSeq = event.seq; apply(event);                               // 正常应用
 };
 ```
 
-连接中断之后，中间漏掉的消息不会因为「又连上了」重新出现。要靠服务端留着的事件，加上客户端记住的游标，补读缺口。这和 SSE 那章的 `Last-Event-ID` 是同一原理：游标只是声明，补得回是因为服务端存了。
+**Moose 里的做法**：Moose Web 用 HTTP 发命令、用 SSE 接收后台事件；桌面端经 preload/IPC 转发到同一个后台。它没有用于模型事件的 WebSocket 服务。
 
-连接要鉴权。还要限制缓冲区，并处理读得太慢的客户端，否则服务端会为一条没人消费的连接把内存撑满。
+**容易答错的地方**
+- 重新打开 WebSocket 本身不会恢复漏掉的内容。
 
-取消请求发出之后，要等服务端确认，才算真正取消。只把本地状态改成「已停止」，服务端任务可能还在跑。
+## 7. MCP 是什么？和直接写工具调用有什么区别，前端/全栈要关心什么？
 
-SSE 是服务器推给浏览器，上行另走 HTTP。WebSocket 在同一连接上双向。两边断线后的缺口都不会自动补齐。SSE 除非服务端按 id 重放，WebSocket 同样不会自己把漏掉的帧变回来。页面要做的也一样：解析消息，按类型，按序号。
+> **这题在考什么**：每个 AI 应用都给模型单独写一遍“读 GitHub”“查数据库”的工具，重复又难以复用。MCP 想把工具接入标准化，让一个工具服务能被多个 AI 应用使用。面试官想看你说清它的角色和传输方式、它和自己写工具调用的关系，以及引入第三方工具服务带来的安全问题。
 
-类型章把 `StreamEvent` 定义成与通道无关，就是为了这里换通道时不必改后面的状态更新。
+**一句话回答**：MCP（Model Context Protocol）是 Anthropic 在 2024 年 11 月发布的开放协议，2025 年起被 OpenAI、Google 等采用；它用 JSON-RPC 2.0 规定 AI 应用怎样发现和调用外部服务提供的工具、资源和提示词模板。它不取代工具调用：模型仍然通过工具调用表达意图，MCP 只是把“工具从哪来、怎么调”标准化了。
 
-## MCP：工具从外部服务来
+**展开说明**
 
-每个应用都自己写一遍「读 GitHub」「查数据库」，工具就没法换宿主。MCP（Model Context Protocol）是 Anthropic 在 2024 年 11 月发布的开放协议，2025 年起被 OpenAI、Google 等采用。它用 JSON-RPC 2.0 规定：AI 应用怎样发现并调用外部服务提供的工具、资源和提示词模板。
+| 角色 | 是什么 | 例子 |
+| --- | --- | --- |
+| Host | 用户直接使用的 AI 应用 | 桌面聊天应用、IDE、代理 CLI |
+| Client | Host 内部负责连接某一个 Server 的组件 | 每个 Server 对应一个连接 |
+| Server | 对外提供能力的服务 | GitHub、数据库、文件系统的 MCP 服务 |
 
-它不取代工具调用。模型仍然通过工具调用表达「我要执行这个」。MCP 标准化的是「工具列表从哪来、调用怎样转发到外部进程或服务」。
+- Server 可以提供三类东西：工具（tools，模型可调用的操作）、资源（resources，可读取的数据）、提示词模板（prompts）。
+- 传输方式：本地 Server 用 stdio，Host 启动一个子进程，通过标准输入输出通信；远程 Server 用 Streamable HTTP，它在 2025-03-26 版规范里取代了早先的 HTTP+SSE 方式。远程 Server 用 OAuth 授权。
+- 和直接写工具调用的区别：直接写时，工具定义和执行代码都在你的应用里；用 MCP 时，Host 在运行时从 Server 拿到工具列表交给模型，模型选中后再由 Client 转发给 Server 执行。
+- 安全问题：
+  - 工具描述会原样进入模型上下文，恶意 Server 可以在描述里藏提示词注入。
+  - Server 拿到的权限常常过大，比如只需读一个仓库，却给了整个账号的令牌。
+  - 混淆代理（confused deputy）：Server 用自己的高权限替低权限的用户办事，用户借此做到本来无权做的事。
+  - 所以添加 Server、首次调用工具、授权 OAuth 都应征得用户同意，令牌按最小范围申请。
+- 前端/全栈要关心的：配置界面要清楚展示要启动的命令、参数、远程地址和环境变量；密钥用环境变量引用而不是明文写进配置；新加的 Server 默认不启用；调用记录要能看到是哪个 Server 的哪个工具。
 
-Host 是用户直接用的 AI 应用，比如桌面聊天、IDE、代理 CLI。Client 是 Host 里负责连某一个 Server 的组件，一个 Server 一条连接。Server 是对外提供能力的服务，比如 GitHub、数据库、文件系统。
-
-Server 可以提供三类东西。tools 是模型可以调用的操作。resources 是可以读取的数据。prompts 是提示词模板。
-
-本地 Server 用 stdio，Host 拉起一个子进程，经标准输入输出通信。远程 Server 用 Streamable HTTP。它在 2025-03-26 版规范里取代了早先的 HTTP+SSE。远程用 OAuth 授权。
-
-直接写工具时，定义和执行代码都在你的应用里。用 MCP 时，Host 运行时向 Server 要工具列表，交给模型。模型选中后，Client 再转发给 Server 执行。
-
-一次调用的形状（示意）：
+**示例**：下面是 Client 调用 Server 工具时的一条 JSON-RPC 请求（示意）。
 
 ```json
 {
   "jsonrpc": "2.0",
   "id": 7,
   "method": "tools/call",
-  "params": {
-    "name": "search_issues",
-    "arguments": { "query": "crash" }
-  }
+  "params": { "name": "search_issues", "arguments": { "query": "crash" } }
 }
 ```
 
-**补充知识：** JSON-RPC 用 `id` 把请求和响应配对，`method` 是要调用的方法名。MCP 规定了这些 method 叫什么，例如 `tools/call`，这样不同 Host 和 Server 不必再私自约定一套。
+**Moose 里的做法**：Moose 自己不连接 MCP Server，连接和调用都由底层代理 CLI 完成；Moose 做的是读取和修改这些 CLI 的 MCP 配置。
+- 读取：Codex 通过 app-server 的 `config/read` 读出各配置层里的 `mcp_servers`，再用 `mcpServerStatus/list` 查认证状态和工具数量（`electron/providers/codex-extensions.ts`）；Grok 运行 `grok mcp list --json`，只取用户级配置；OpenCode 直接解析配置文件里的 `mcp` 字段；Pi 不支持 MCP（`electron/providers/user-extensions.ts`）。
+- 修改：新增和编辑只开放给 Codex（经 `config/value/write` 写入，并带上 `expectedVersion`，配置被别人改过就拒绝）和 OpenCode（原子替换配置文件，保留注释，文件被外部改过也拒绝）；Grok 只能用 `grok mcp enable/disable` 开关。
+- 校验：`shared/mcp-registration.ts` 只接受 stdio 和 HTTP 两种传输；远程地址必须是 HTTPS，或者本机回环地址上的 HTTP，且不能带用户名密码、查询参数和片段；令牌和请求头只能填环境变量名，不能填明文值；新登记的 Server 一律写成未启用。保存前 `src/components/extension-confirm.tsx` 会列出命令、参数、环境变量或请求头让用户确认。
+- 认证：Codex 的 MCP OAuth 登录通过 `mcpServer/oauth/login` 发起，Moose 只接受 HTTPS 且不带凭据的授权地址。
+- 运行任务时，Grok 和 OpenCode 的 ACP 会话传入的 `mcpServers` 是空数组，Moose 不额外注入 Server，CLI 使用自己配置里的 MCP；Codex 的 MCP 工具调用会作为工具记录显示在时间线上。
 
-第三方 Server 会带来安全问题。工具描述会原样进入模型上下文，恶意 Server 可以在描述里藏提示词注入。Server 拿到的权限常常过大：只需要读一个仓库，却给了整个账号的令牌。还有混淆代理（confused deputy）：Server 用自己的高权限替低权限的用户办事，用户借此做到本来无权做的事。
+**容易答错的地方**
+- 说 MCP 取代了工具调用。模型那一侧仍然是工具调用，MCP 管的是工具的发现和传输。
+- 认为装了官方或热门的 MCP Server 就安全。工具描述和返回内容都可能带注入，权限也要按最小范围给。
+- 说 Moose 实现了 MCP Client。它只管理底座 CLI 的配置，真正连接 Server 的是 CLI。
 
-所以添加 Server、第一次调用工具、授权 OAuth，都应征得用户同意。令牌按最小范围申请。官方或热门，不代替这几步。
+---
 
-配置界面要让人看清将要启动的命令、参数、远程地址和环境变量。密钥用环境变量名引用，不把明文写进配置。新加的 Server 默认不启用。调用记录能看出是哪个 Server 的哪个工具。
-
-远程地址如果允许任意 HTTP，或允许把用户名密码写在 URL 里，配置界面就会变成泄露和误连的入口。这些限制属于产品校验，不只是说明文字。
-
-## 容易答错的地方
-
-模型返回了工具调用，还不等于可以执行。中间还有收全参数、白名单、schema、权限，以及必要时的批准。
-
-重新连上 WebSocket，只是通道回来了。补回漏掉的事件，要服务端留底，再加上游标。
-
-模型侧仍是工具调用。MCP 管发现和传输。说「用了 MCP 就不用工具调用」，是把两层并成了一层。
-
-应用自己去连 MCP Server，是 Host 和 Client 的事。读写某个 CLI 的配置文件或管理接口，是另一件事。
-
-## Moose 里实际是这样
-
-配置字段和文件路径见 [答案](../08-llm-integration.md)。面试只记和通用讲法不同的几条：
-
-| 不要说成 | 实际 |
-| --- | --- |
-| 页面在调模型的工具 API | 工具由代理 CLI 决定和执行。页面展示记录，批准仍按原请求交还 |
-| 有一条专给模型事件的 WebSocket | Web 是 HTTP 加 SSE，桌面是 IPC，进的是同一个后台 |
-| Moose 实现了 MCP Client | 连接和调用在 CLI。Moose 只读写 Codex、OpenCode、Grok 的配置；Pi 不支持 MCP |
-| 运行时把 MCP Server 注入进会话 | Grok 和 OpenCode 的 ACP 会话传入的 `mcpServers` 是空数组 |
-
-地址校验仍在：远程只允许 HTTPS，或本机回环上的 HTTP，不能带用户名密码。秘密只填环境变量名。新 Server 默认不启用。
-
-不要说 Moose 实现了 MCP Client。
-
-## 合上之后能说的几句
-
-模型给出的是工具名和参数。应用收全之后做白名单、schema 和权限检查。有副作用的先审批，在可信侧执行，再按调用 ID 把结果或错误送回去，并设轮次上限。浏览器只负责展示和收集批准。
-
-双向通道上的每条消息自带类型、`runId`、请求 ID 和序号。断线后靠服务端保存的事件补缺口。重连本身不会把漏掉的帧变回来。取消也要等确认。
-
-MCP 用 JSON-RPC 把「发现工具、转发调用」标准化。模型侧仍是工具调用。第三方 Server 的描述和权限都不可信。默认不启用，秘密只用环境变量名。
-
-Moose 的页面不调模型工具 API，也没有模型事件用的 WebSocket。Web 是 HTTP 加 SSE，桌面是 IPC。MCP 的连接在 CLI 里。Moose 只读写 Codex、OpenCode、Grok 的配置，并做传输和地址校验。Pi 不支持 MCP。
+上一篇：[七、工具链 · 下](07-toolchain-2.md) ｜ [题单目录](README.md) ｜ 下一篇：[九、页面与浏览器 · 上](09-ui-react-1.md)
