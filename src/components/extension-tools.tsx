@@ -62,7 +62,6 @@ export function ExtensionTools({ scope }: { scope: ExtensionScope }) {
   }
   async function load() {
     if (operation.current) return;
-    operation.current = true;
     try {
       const next = await window.moose.request('extensionsRead', scope);
       setSnapshot(next);
@@ -70,9 +69,6 @@ export function ExtensionTools({ scope }: { scope: ExtensionScope }) {
       setError(explain(next.reason));
     } catch (e) {
       setError(explain(String(e)) || String(e));
-    } finally {
-      operation.current = false;
-      setPendingToggle('');
     }
   }
   useEffect(() => {
@@ -80,16 +76,19 @@ export function ExtensionTools({ scope }: { scope: ExtensionScope }) {
     setSnapshot(blankSnapshot);
     setSourceId('');
     setError('');
-    void window.moose.request('extensionsRead', { ...scope, cached: true }).then(
-      (next) => {
-        if (!live) return;
-        setSnapshot((current) => (current && !current.pending ? current : next));
-        setSourceId((current) => current || next.sources.find((s) => s.writable)?.id || '');
-        if (next.reason) setError(explain(next.reason));
-      },
-      () => undefined,
-    );
-    void load();
+    const apply = (next: ExtensionSnapshot) => {
+      if (!live) return;
+      setSnapshot((current) => (next.pending && current && !current.pending ? current : next));
+      setSourceId((current) => current || next.sources.find((source) => source.writable)?.id || '');
+      if (next.reason) setError(explain(next.reason));
+      else if (!next.pending) setError('');
+    };
+    void window.moose
+      .request('extensionsRead', { ...scope, cached: true })
+      .then(apply, () => undefined);
+    void window.moose.request('extensionsRead', scope).then(apply, (e) => {
+      if (live) setError(explain(String(e)) || String(e));
+    });
     return () => {
       live = false;
     };
