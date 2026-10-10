@@ -15,7 +15,9 @@ import {
 import type { Project, Session } from '../../shared/types';
 import { useI18n } from '../lib/i18n';
 import { Button } from './ui/button';
-import { IconButton, MooseMark } from './common';
+import verstaIcon from '../assets/brand/versta-icon.png';
+import verstaWordmark from '../assets/brand/versta-wordmark.png';
+import { IconButton } from './common';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -79,8 +81,10 @@ export function Sidebar({
     <aside className="sidebar" aria-label={t('projects')}>
       {!web && <div className="sidebar-drag" aria-hidden="true" />}
       <div className="brand-row">
-        <MooseMark className="brand-mark" />
-        <span>Moose</span>
+        <img src={verstaIcon} alt="" className="brand-mark" draggable={false} />
+        <span className="brand-name">
+          <img src={verstaWordmark} alt="Versta" className="brand-wordmark" draggable={false} />
+        </span>
       </div>
       <div className="sidebar-actions">
         <Button variant="ghost" className="justify-start" onClick={() => onNew()}>
