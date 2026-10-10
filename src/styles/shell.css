@@ -49,7 +49,8 @@
   color: var(--muted-foreground);
 }
 
-.boot-screen > svg {
+.boot-screen > svg,
+.boot-screen > img {
   width: 44px;
   height: 44px;
   color: var(--primary);

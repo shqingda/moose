@@ -143,7 +143,7 @@ async function createWindow() {
     height: 860,
     minWidth: 900,
     minHeight: 620,
-    title: 'Moose',
+    title: 'Versta',
     titleBarStyle: 'hiddenInset',
     trafficLightPosition: { x: 18, y: 16 },
     vibrancy: 'sidebar',

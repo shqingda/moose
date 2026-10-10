@@ -49,7 +49,8 @@ const SettingsDialog = lazy(() =>
 const SearchDialog = lazy(() =>
   import('./components/search-dialog').then((m) => ({ default: m.SearchDialog })),
 );
-import { IconButton, MooseMark } from './components/common';
+import verstaIcon from './assets/brand/versta-icon.png';
+import { IconButton } from './components/common';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
 import { Field, FieldLabel } from './components/ui/field';
@@ -98,7 +99,7 @@ export default function App() {
             <Workspace {...workspace} snapshot={snapshot} />
           ) : (
             <div className="boot-screen">
-              <MooseMark />
+              <img src={verstaIcon} alt="" width={44} height={44} draggable={false} />
               <span>
                 {workspace.error ||
                   workspace.connection?.message ||
