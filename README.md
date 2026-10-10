@@ -8,7 +8,7 @@ Moose 负责界面、把各家 CLI 接进同一套流程、安排任务先后，
 
 [下载最新版本](https://github.com/shqingda/moose/releases/latest) · [使用指南](docs/usage.md) · [文档目录](docs/README.md)
 
-当前源码版本为 **0.23.2**：只做启动和资源优化，功能和界面不变。后台更早启动、提前探测底座并缓存上一次结果，窗口就绪和底座列表出现都更快，桌面包不再重复打包后台。见[本版说明](docs/releases/0.23.2.md)与[发布验收](docs/releases/0.23.2-validation.md)。桌面和独立 Web 按同一版本一起发布。
+当前源码版本为 **0.23.3**：记住上次选的底座、模型、推理强度、权限和任务模式；四个底座都有计划／目标模式和三档权限；会员过期或 CLI 卡住时配置页立刻显示缓存，不再转圈等待。见[本版说明](docs/releases/0.23.3.md)与[发布验收](docs/releases/0.23.3-validation.md)。桌面和独立 Web 按同一版本一起发布。
 
 ## 开始使用
 
