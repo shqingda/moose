@@ -7,7 +7,7 @@
 1. 安装官方 CLI：`npm install -g --ignore-scripts @earendil-works/pi-coding-agent`。
 2. 在终端启动 `pi`，用 `/login` 登录所需模型服务，或按 Pi 文档配置 API 模型。
 3. Moose 设置 → 代理连接 → Pi，刷新检测；自动发现读取 shell PATH，并覆盖 PNPM_HOME 与 `~/Library/pnpm/bin`；仍找不到时填写可执行文件的绝对路径，点击空白处自动保存。
-4. 输入区模型选择器中选 Pi 和实际可用模型，明确选择“完全访问”后发送。
+4. 输入区选择 Pi、实际可用的模型和权限档位后发送。没保存过选择时默认是帮我批准，不是完全访问。
 
 Moose 不安装或捆绑 Pi，也不复制其凭据。0.22.0 已重新核对 Pi 1.0.0 的 RPC 协议；模型和推理档位实时查询，不内置模型目录。普通对话兼容性与插话能力分别探测，旧版不开放本轮新增的插话入口。
 
@@ -17,8 +17,8 @@ Moose 不安装或捆绑 Pi，也不复制其凭据。0.22.0 已重新核对 Pi 
 - Pi 保存 sessionFile；Moose 保存其路径，下次用 `--session` 恢复。编辑历史继续使用 Moose 的文本历史重建机制，不撤销工作区文件。
 - 顶部更多 → 原生会话可浏览、预览并去重导入当前项目的历史，导入后可续聊。只读处理 v2/v3 JSONL 的当前分支和压缩记录，保留源历史；跨目录、损坏文件和超出读取边界明确报错。
 - 1.x 的运行中“立即发送”使用原生 `steer`；普通发送继续进入 Moose 队列。明确拒绝、已接收和结果未知分别记录，回执不要求原生 turn ID。取消先清除原生待投递输入，清除失败则关闭该连接，避免继续投递。
-- Pi 没有内置审批沙箱，只能选择完全访问。扩展发出的确认和提问可显示为交互卡片，这不代表所有工具执行都受到审批保护。
-- 不展示 Pi 不具备的原生 Plan/Goal 模式。支持读取全局 `~/.pi/agent/skills` 和项目 `.pi/skills`，也保留 Moose 原有 skills 路径。
+- Pi 没有可暂停的工具审批协议。请求批准时，会改动的工具一开始就中止这一轮；帮我批准和完全访问允许同一组工具。`--approve` 只决定是否信任项目目录里的扩展，不是更宽的沙箱，也不能当成完全访问。扩展发出的确认，在非“请求批准”时由 Moose 代答，这不表示所有工具都经过沙箱。
+- 计划模式没有原生接口：提示要求只读，会改动的工具会被中止，助手正文收成可审阅的计划。目标模式同样没有原生状态机，只把目标约束写进这一轮；回合结束后不会自动再开一轮。支持读取全局 `~/.pi/agent/skills` 和项目 `.pi/skills`，也保留 Moose 原有 skills 路径。
 - 上下文用量来自 `get_session_stats.contextUsage`；没有账户套餐额度接口，不推算或伪造剩余额度。
 - Pi 自己的全屏界面、小组件和终端里的编辑器没有接进 Moose。
 
@@ -32,7 +32,7 @@ sequenceDiagram
   participant Svc as MooseService
   participant Adapter as PiAdapter
   participant CLI as pi --mode rpc
-  Page->>Svc: 选好模型和“完全访问”后发送
+  Page->>Svc: 选好模型、权限和任务模式后发送
   Svc->>Svc: 校验参数，先写入队列
   Svc->>Adapter: 目录空闲后 createAdapter
   Adapter->>CLI: stdio 上的 JSONL
