@@ -69,7 +69,7 @@ export class CodexExtensions {
           clientInfo: { name: 'moose', version: appVersion },
           capabilities: { experimentalApi: true },
         },
-        8000,
+        2500,
       ),
     );
     this.version = string(init.userAgent);
@@ -94,11 +94,11 @@ export class CodexExtensions {
       diagnostics: [],
     };
     const results = await Promise.allSettled([
-      rpc.request<ConfigReadResponse>('config/read', { cwd, includeLayers: true }, 8000),
+      rpc.request<ConfigReadResponse>('config/read', { cwd, includeLayers: true }, 2500),
       configurationOnly ? Promise.resolve([]) : this.plugins.list(cwd),
       configurationOnly
         ? Promise.resolve({ data: [] } as HooksListResponse)
-        : rpc.request<HooksListResponse>('hooks/list', { cwds: [cwd] }, 8000),
+        : rpc.request<HooksListResponse>('hooks/list', { cwds: [cwd] }, 2500),
     ]);
     const [config, plugins, hooks] = results;
     for (const [i, result] of results.entries())
@@ -182,7 +182,7 @@ export class CodexExtensions {
             limit: 100,
             detail: 'toolsAndAuthOnly',
           },
-          8000,
+          2500,
         );
         for (const server of result.data) {
           const row = snapshot.mcp.find((s) => s.name === server.name);

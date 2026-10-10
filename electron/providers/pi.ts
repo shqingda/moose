@@ -267,7 +267,11 @@ export class PiAdapter implements AgentAdapter {
     return undefined;
   }
 
-  /** Pi 没有工具审批协议。计划模式和“请求批准”会中止会改动的工具；自动档代答扩展确认。 */
+  /**
+   * Pi 没有工具审批协议，也没有比普通执行更宽的沙箱开关。
+   * `--approve` 只决定是否信任项目目录里的扩展，不是完全访问。
+   * 因此“完全访问”和“帮我批准”允许同一组工具；只有“请求批准”会中止会改动的工具。
+   */
   private guardTool(name: string) {
     const mode = normalizePermission(this.context?.session.mode);
     const task = this.context?.promptContext?.mode || 'build';

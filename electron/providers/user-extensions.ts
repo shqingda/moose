@@ -34,7 +34,7 @@ export class UserExtensions {
     private provider: Exclude<Provider, 'codex'>,
     private env: NodeJS.ProcessEnv = agentEnvironment(),
   ) {}
-  private async run(args: string[], cwd: string, timeout = 8000): Promise<string> {
+  private async run(args: string[], cwd: string, timeout = 2500): Promise<string> {
     if (this.closed) throw new Error('Configuration client is closed');
     const child = spawnAgent(this.path, args, cwd, this.env);
     this.children.add(child);

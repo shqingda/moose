@@ -16,9 +16,21 @@ import { Input } from './ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Badge } from './ui/badge';
 import { Empty, EmptyHeader, EmptyTitle } from './ui/empty';
+const blankSnapshot: ExtensionSnapshot = {
+  supported: true,
+  pending: true,
+  version: '',
+  cwd: '',
+  sources: [],
+  settings: [],
+  mcp: [],
+  plugins: [],
+  hooks: [],
+  diagnostics: [],
+};
 export function ExtensionTools({ scope }: { scope: ExtensionScope }) {
   const t = useI18n(),
-    [snapshot, setSnapshot] = useState<ExtensionSnapshot>(),
+    [snapshot, setSnapshot] = useState<ExtensionSnapshot>(blankSnapshot),
     [sourceId, setSourceId] = useState(''),
     [busy, setBusy] = useState(false),
     [pendingToggle, setPendingToggle] = useState(''),
@@ -51,10 +63,6 @@ export function ExtensionTools({ scope }: { scope: ExtensionScope }) {
   async function load() {
     if (operation.current) return;
     operation.current = true;
-    setChange(undefined);
-    setEditing(undefined);
-    setBusy(true);
-    setError('');
     try {
       const next = await window.moose.request('extensionsRead', scope);
       setSnapshot(next);
@@ -65,17 +73,18 @@ export function ExtensionTools({ scope }: { scope: ExtensionScope }) {
     } finally {
       operation.current = false;
       setPendingToggle('');
-      setBusy(false);
     }
   }
   useEffect(() => {
     let live = true;
-    setSnapshot(undefined);
+    setSnapshot(blankSnapshot);
+    setSourceId('');
     setError('');
     void window.moose.request('extensionsRead', { ...scope, cached: true }).then(
       (next) => {
         if (!live) return;
-        setSnapshot((current) => current || next);
+        setSnapshot((current) => (current && !current.pending ? current : next));
+        setSourceId((current) => current || next.sources.find((s) => s.writable)?.id || '');
         if (next.reason) setError(explain(next.reason));
       },
       () => undefined,
@@ -221,7 +230,7 @@ export function ExtensionTools({ scope }: { scope: ExtensionScope }) {
           </p>
         )}
         {snapshot?.supported === false && <p className="extension-note">{t('extUnsupported')}</p>}
-        {snapshot?.supported && !snapshot.pending && (
+        {snapshot?.supported && (
           <>
             <Tabs
               defaultValue={capabilities?.mcp === false ? 'agent' : 'mcp'}

@@ -43,7 +43,7 @@ Codex Goal 由原生目标接口保存和推进，支持预算与暂停；接口
 | --- | --- | --- | --- |
 | Codex | `on-request` + 用户审批 + `workspace-write` | `on-request` + `auto_review` + 同一沙箱 | `never` + `danger-full-access` |
 | Grok | `--permission-mode default`，权限请求交给用户；CLI 不认识该参数时仍拦截 ACP 权限 | `--permission-mode auto`，剩余请求由 Moose 选一次性允许 | `--always-approve`；若仍有请求则选始终允许 |
-| Pi | 扩展确认交给用户；会改动的工具被中止。Pi 没有可暂停的工具协议 | 允许工具运行，并代答扩展确认 | 与帮我批准相同的工具范围。Pi 没有更强的沙箱开关，不会因此加上 `--approve` |
+| Pi | 扩展确认交给用户；会改动的工具被中止。Pi 没有可暂停的工具协议 | 允许工具运行，并代答扩展确认 | 与帮我批准是同一套工具策略。Pi 没有更宽的权限或沙箱参数；`--approve` 只影响是否加载项目扩展，不能当作完全访问 |
 | OpenCode | ACP `session/request_permission` 交给用户 | Moose 选择 `allow_once`，不写永久允许规则 | Moose 选择 `allow_always`（CLI 提供时）。没有单独的沙箱逃逸参数 |
 
 0.22.0 在探测结果中返回运行时模式和插话能力，前后端按同一结果开放操作。Pi 1.x 的 `steer` 回执可以不含原生 turn ID；只有明确接收或处理才记为已接收，缺失投递结果仍记为未知。停止先清除原生待投递队列，再取消任务，避免迟到输入成为后续任务。

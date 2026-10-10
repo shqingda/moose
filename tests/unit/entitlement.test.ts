@@ -1,4 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
+import { createHash } from 'node:crypto';
 import { chmodSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -28,6 +29,32 @@ function script(dir: string, body: string) {
   chmodSync(path, 0o755);
   return path;
 }
+function rememberConfig(store: Store, cwd: string) {
+  const key = `extension-cache:codex:${createHash('sha256').update(cwd).digest('hex')}`;
+  store.sqlite.prepare('INSERT INTO settings(key,value) VALUES(?,?)').run(
+    key,
+    JSON.stringify({
+      supported: true,
+      version: 'codex/9.9.9',
+      cwd,
+      sources: [
+        {
+          id: 'user',
+          kind: 'user',
+          path: join(cwd, 'config.toml'),
+          version: '1',
+          writable: true,
+          disabled: false,
+        },
+      ],
+      settings: [{ key: 'model', value: 'cached-model', source: 'user' }],
+      mcp: [],
+      plugins: [],
+      hooks: [],
+      diagnostics: [],
+    }),
+  );
+}
 
 it('shows cached configuration immediately and bounds a hanging CLI', async () => {
   const dir = realpathSync(mkdtempSync(join(tmpdir(), 'moose-ext-hang-')));
@@ -41,26 +68,40 @@ process.stdin.resume();
 setInterval(() => {}, 1 << 30);
 `,
   );
+  rememberConfig(store, store.directory(project.id));
   const extensions = new Extensions(store, {
     path: async () => path,
     lock: () => () => {},
   });
   const scope = { projectId: project.id, provider: 'codex' as const };
   try {
-    const cachedStarted = performance.now();
+    const contentStarted = performance.now();
     const cached = (await extensions.handle('extensionsRead', {
       ...scope,
       cached: true,
     })) as ExtensionSnapshot;
-    const cachedMs = performance.now() - cachedStarted;
-    expect(cached.pending).toBe(true);
-    expect(cachedMs).toBeLessThan(200);
+    const contentMs = performance.now() - contentStarted;
+    expect(cached.settings[0]?.value).toBe('cached-model');
+    expect(contentMs).toBeLessThan(50);
     const started = performance.now();
-    const fresh = (await extensions.handle('extensionsRead', scope)) as ExtensionSnapshot;
-    const elapsed = performance.now() - started;
+    const live = extensions.handle('extensionsRead', scope) as Promise<ExtensionSnapshot>;
+    const duringStarted = performance.now();
+    const during = (await extensions.handle('extensionsRead', {
+      ...scope,
+      cached: true,
+    })) as ExtensionSnapshot;
+    const duringMs = performance.now() - duringStarted;
+    expect(during.settings[0]?.value).toBe('cached-model');
+    expect(duringMs).toBeLessThan(50);
+    const fresh = await live;
+    const statusMs = performance.now() - started;
     expect(fresh.reason).toBe('timeout');
-    expect(elapsed).toBeGreaterThan(1000);
-    expect(elapsed).toBeLessThan(9000);
+    expect(fresh.settings[0]?.value).toBe('cached-model');
+    expect(statusMs).toBeGreaterThan(1500);
+    expect(statusMs).toBeLessThan(3500);
+    console.info(
+      `config hung CLI: time-to-content ${contentMs.toFixed(1)} ms, still cached while waiting ${duringMs.toFixed(1)} ms, timeout status ${statusMs.toFixed(0)} ms`,
+    );
   } finally {
     await extensions.close();
     store.close();
@@ -91,24 +132,33 @@ process.stdin.on('data', (chunk) => {
 });
 `,
   );
+  rememberConfig(store, store.directory(project.id));
   const extensions = new Extensions(store, {
     path: async () => path,
     lock: () => () => {},
   });
   try {
+    const contentStarted = performance.now();
+    const cached = (await extensions.handle('extensionsRead', {
+      projectId: project.id,
+      provider: 'codex',
+      cached: true,
+    })) as ExtensionSnapshot;
+    const contentMs = performance.now() - contentStarted;
+    expect(cached.settings[0]?.value).toBe('cached-model');
+    expect(contentMs).toBeLessThan(50);
     const started = performance.now();
     const fresh = (await extensions.handle('extensionsRead', {
       projectId: project.id,
       provider: 'codex',
     })) as ExtensionSnapshot;
+    const statusMs = performance.now() - started;
     expect(fresh.reason).toBe('subscription');
-    expect(performance.now() - started).toBeLessThan(2000);
-    const again = (await extensions.handle('extensionsRead', {
-      projectId: project.id,
-      provider: 'codex',
-      cached: true,
-    })) as ExtensionSnapshot;
-    expect(again.pending).toBe(true);
+    expect(fresh.settings[0]?.value).toBe('cached-model');
+    expect(statusMs).toBeLessThan(1000);
+    console.info(
+      `config entitlement error: time-to-content ${contentMs.toFixed(1)} ms, status ${statusMs.toFixed(0)} ms`,
+    );
   } finally {
     await extensions.close();
     store.close();

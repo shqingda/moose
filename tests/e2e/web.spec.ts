@@ -138,7 +138,8 @@ test('browser login, project selection, OpenCode approval and terminal survive p
     };
   });
   expect(geometry.backTop).toBeLessThan(32);
-  expect(geometry.bodyRight).toBe(geometry.viewport);
+  // Subpixel layout can leave the body edge a fraction off innerWidth. The body still fills the viewport.
+  expect(Math.abs(geometry.bodyRight - geometry.viewport)).toBeLessThan(1);
   expect(geometry.outerOverflow).toBe(false);
   await page.screenshot({ path: 'test-results/web-settings.png' });
   await page.getByRole('button', { name: 'Back', exact: true }).click();
