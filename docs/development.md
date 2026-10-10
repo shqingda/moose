@@ -1,6 +1,6 @@
 # 开发与打包
 
-先读 [技术架构](architecture.md) 了解进程和数据流。环境版本和安装入口见 [README](../README.md)。
+先读 [技术架构](architecture.md) 了解进程和数据流。安装入口见 [README](../README.md)。环境版本见下一节。
 
 | 你要做的事 | 看哪一节 |
 | --- | --- |
@@ -62,7 +62,8 @@ better-sqlite3 和 node-pty 是运行时原生依赖；安装与打包会准备�
 | 用途 | 源资源与使用位置 | 生成或更新方式 |
 | --- | --- | --- |
 | macOS 应用与 Dock | [moose-icon-white.png](../src/assets/moose-icon-white.png)；桌面打包读取 `build/icon.icns` | 修改白底母图后执行 `pnpm icon:build` |
-| 官网与 README 标识 | [moose-icon-black.png](../src/assets/moose-icon-black.png) | 直接导入黑底母图 |
+| 官网标识 | [moose-icon-black.png](../src/assets/moose-icon-black.png) | 直接导入黑底母图 |
+| README 标识 | [versta-icon.png](../src/assets/versta-icon.png) | README 使用锁定的 Versta 应用图标 |
 | 会话区欢迎 logo | [moose-logo-transparent.png](../src/assets/moose-logo-transparent.png)；[welcome.tsx](../src/components/welcome.tsx) 使用派生的 `moose-logo-welcome.png` 透明 PNG，容器无底色 | 单独维护透明素材；保留金色鹿角、象牙白鹿头、黑色实心眼睛和透明边缘 |
 | 侧边栏剪影与 Web favicon | [moose-mark.json](../src/assets/moose-mark.json)；[MooseMark](../src/components/common.tsx) 使用 `currentColor`，favicon 导出为深浅两份 | 修改共享矢量轮廓后执行 `pnpm icon:build`；侧边栏外观沿用原版 |
 
