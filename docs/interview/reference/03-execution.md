@@ -190,10 +190,12 @@ flowchart TD
 
 **一句话**：Plan 是“先出方案、批准某个版本后再做”，Goal 的续跑由底座决定，插话是送进正在运行的回合；三者都由 Moose 后台按模式调用 CLI，而不是把斜杠命令原样转发。
 
-| | 用户想表达的 | 支持的底座 |
+> **权限三档和各家差异以[计划、目标与三档权限](08-plan-goal-permissions.md)为准。** 下面保留 Codex 的协议时序。范围表已按 0.23.3 改过。
+
+| | 用户想表达的 | 0.23.3 的范围 |
 | --- | --- | --- |
-| **Plan** | “先给我方案，我批准后再做。” | 目前只对 Codex 开放 |
-| **Goal** | “按这个目标一直做下去，直到完成或遇到阻碍。” | Codex 和 Grok；Pi 和 OpenCode 尚未接入 |
+| **Plan** | “先给我方案，我批准后再做。” | 四个底座都有。Codex 优先原生协作模式，其余由 Moose 收成只读 |
+| **Goal** | “按这个目标一直做下去，直到完成或遇到阻碍。” | 四个底座都有。只有 Codex 在回合结束后继续等下一轮 |
 | **插话** | 在当前任务执行过程中补充要求 | Codex、Grok、Pi 1.x；OpenCode 不支持，走普通队列 |
 
 #### `/plan` 和 `/goal` 是模式选择入口
@@ -326,9 +328,9 @@ sequenceDiagram
 | --- | --- | --- |
 | Codex | `thread/goal/set` 和 `thread/goal/get` | 目标进入完成、受阻或达到上限等终止状态 |
 | Grok | 后台在正文前加上 `/goal `，通过 ACP 的 `session/prompt` 发送，由 Grok 自己处理 | 这次调用返回即可；不使用 Codex 的 `thread/goal/*` 接口 |
-| Pi、OpenCode | 尚未接入 Goal | — |
+| Pi、OpenCode | 没有原生目标状态机。目标约束只写进这一轮提示，回合结束即停 | 这一轮调用返回 |
 
-代码入口：[模式候选项](../../../src/components/context-suggestions.tsx)、[Codex Goal 协议与状态等待](../../../electron/providers/codex.ts)、[Grok ACP 命令](../../../electron/providers/grok.ts)。
+代码入口：[模式与提示](../../../electron/providers/modes.ts)、[模式候选项](../../../src/components/context-suggestions.tsx)、[Codex](../../../electron/providers/codex.ts)、[Grok](../../../electron/providers/grok.ts)、[Pi](../../../electron/providers/pi.ts)、[OpenCode](../../../electron/providers/opencode.ts)。
 
 ### 插话：和下一条排队消息有什么不同
 

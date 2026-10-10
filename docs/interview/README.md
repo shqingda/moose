@@ -1,6 +1,6 @@
 # 面试材料怎么读
 
-这组文档分两类：**项目经历**（讲 Moose 本身）和**通用练习**（前端与 AI 应用题、代码审查、Agent 专题）。项目描述以 **Moose 0.23.1** 源码为准（核对日期：2026-10-09）；历史测量数字保留当时的版本和条件，不代表当前版本重新测过。
+这组文档分两类：**项目经历**（讲 Moose 本身）和**通用练习**（前端与 AI 应用题、代码审查、Agent 专题）。除[计划、目标与三档权限](reference/08-plan-goal-permissions.md)按 **Moose 0.23.3** 核对外，项目描述以 **Moose 0.23.1** 源码为准（核对日期：2026-10-09）；历史测量数字保留当时的版本和条件，不代表当前版本重新测过。
 
 通用练习里的示例方案和他人经验，不能当作 Moose 已实现的证明；反过来，Moose 的实现也只是一种做法，不是标准答案。
 
@@ -9,6 +9,7 @@
 | 你要做什么 | 读哪份 | 读到什么程度 |
 | --- | --- | --- |
 | 准备项目介绍 | [项目面试指南](project-interview-guide.md) | 能讲清用途、职责和一条任务链路，再挑两个难点 |
+| 讲清计划、目标和三档权限 | [计划、目标与三档权限](reference/08-plan-goal-permissions.md) | 能用 30 秒区分宿主状态机和提示词，并说出四家底座差在哪 |
 | 回答“为什么这样设计” | [项目追问资料](reference/README.md)（`reference/` 下按话题分 7 篇） | 被问到时按话题查，顺着源码说明失败路径和验证范围 |
 | 练前端与 AI 应用基础题 | [题目](questions.md) → [答案](answers/README.md)（`answers/` 下按章节分 12 篇） | 先自己答，再对照答案查漏；每题可直接跳转 |
 | 练现场代码审查 | [React 搜索组件](react-search-results-code-review.md) | 说清错误现象、出现顺序、修复方法和复现方式 |
@@ -21,7 +22,7 @@
 3. **两三个难点讲透**：不必全背，按岗位挑选。
    - 前端：[流式消息一致性](reference/02-agents-and-streaming.md#6-流式消息和-react-页面如何保持一致)、[搜索、通知与文件预览](reference/07-search-notice-preview.md#19-搜索通知和文件预览怎样串起用户体验)
    - 后端／系统：[排队与恢复](reference/03-execution.md#7-排队并行和重启恢复)、[四个可展开的案例](reference/06-interview-expression.md#16-面试里值得展开的四个问题)
-   - Agent／协议：[适配器](reference/02-agents-and-streaming.md#5-不同代理如何接进同一套界面)、[Plan、Goal 与插话](reference/03-execution.md#8-plangoal-和运行中插话)
+   - Agent／协议：[适配器](reference/02-agents-and-streaming.md#5-不同代理如何接进同一套界面)、[Plan、Goal 与插话](reference/03-execution.md#8-plangoal-和运行中插话)。当前范围和权限三档见[专文](reference/08-plan-goal-permissions.md)
 4. **检查有没有说过头**：过一遍[容易说过头的话](reference/06-interview-expression.md#最后检查这些话有没有说过头)，直到右边那一栏能自然说出口。
 5. **准备演示和一处自己改过的代码**：按[演示安排](reference/06-interview-expression.md#三到五分钟的演示怎么安排)跑一遍，并准备一个“发现问题 → 修改 → 验证”的真实例子。
 

@@ -198,4 +198,4 @@ flowchart TD
 
 ---
 
-上一篇：[面试表达：案例、取舍、简历与演示](06-interview-expression.md) ｜ [追问资料目录](README.md)
+上一篇：[面试表达：案例、取舍、简历与演示](06-interview-expression.md) ｜ [追问资料目录](README.md) ｜ 下一篇：[计划、目标与三档权限](08-plan-goal-permissions.md)

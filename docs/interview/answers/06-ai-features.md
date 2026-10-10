@@ -163,7 +163,7 @@ pendingRequests.delete(requestId);               // 用过即删，不能重复�
 - 消息 ID 由任务 ID 和请求键拼成（`electron/session-execution.ts`）。用户回复走 `respond` 请求，`electron/service.ts` 先确认对应任务仍在运行、消息仍是 `pending`、任务没有被取消，否则返回“This request is no longer active”；适配器再核对选项是否属于当初给出的那几个，用原始请求 ID 回给 CLI，然后删除这条待处理请求。
 - 任务结束、失败或被取消时，仍在等待的审批会被标成 `expired`，不会被当作批准或拒绝。Grok 适配器在取消和关闭时会把未决的权限请求回复为 `cancelled`。
 - Plan 模式和原生代码审查期间，Codex 的命令和文件改动审批会被自动拒绝。
-- 权限档位：`electron/providers/codex-permissions.ts` 把“请求审批”映射为 `on-request` 加 `workspace-write` 沙箱，并关闭沙箱网络和网页搜索；“自动审批”改由 Codex 的 `auto_review` 审核；“完全访问”对应 `never` 加 `danger-full-access`。Pi 没有内置审批沙箱，只能在完全访问下运行；OpenCode 在 Moose 里只支持请求审批模式。
+- 权限档位：`electron/providers/codex-permissions.ts` 把“请求批准”映射为 `on-request` 加 `workspace-write` 沙箱，并关闭沙箱网络和网页搜索；“帮我批准”改由 Codex 的 `auto_review` 审核；“完全访问”对应 `never` 加 `danger-full-access`。0.23.3 起四家都有这三档。Pi 仍没有可暂停的工具协议：请求批准会中止改动，帮我批准和完全访问允许同一组工具。OpenCode 由 Moose 在权限回调里交给用户、选一次性允许或选始终允许。见[计划、目标与三档权限](../reference/08-plan-goal-permissions.md)。
 - Moose 没有实现审批超时（任务结束前一直等待），也没有“拒绝并附原因”的输入框。Codex 的审批卡只提供“仅此一次”和“拒绝”，没有“本会话内允许”；Grok 的选项则直接使用代理给出的列表。
 
 **容易答错的地方**

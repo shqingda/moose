@@ -86,7 +86,7 @@ CLI 输出很碎时，后台先在内存里合并，约每 80 毫秒批量保存
 
 | 主题 | 一句话说清边界 | 细节 |
 | --- | --- | --- |
-| Plan、Goal、运行中插话 | Plan 是先审方案再执行，Goal 是让底座持续推进目标，插话是给当前回合补充要求；各底座支持情况不同 | [模式与插话](reference/03-execution.md#8-plangoal-和运行中插话) |
+| Plan、Goal、运行中插话 | 计划是先审再改，目标是运行时按状态决定要不要再开一轮；权限三档是另一条轴 | [计划、目标与权限](reference/08-plan-goal-permissions.md)；Codex 协议时序见[第 8 节](reference/03-execution.md#8-plangoal-和运行中插话) |
 | 原生历史和子代理 | 对话分叉不隔离文件；是否创建子代理由底座决定 | [历史与子代理](reference/03-execution.md#9-原生历史与子代理) |
 | worktree、提交与 PR | 隔离目录后仍要处理合并冲突，提交前要核对预览是否过期 | [worktree](reference/04-git-extensions-background.md#10-用-worktree-隔离代码修改)、[Git 流程](reference/04-git-extensions-background.md#11-git-提交pr-和原生代码审查) |
 | 配置、MCP 和认证 | 先确认配置来自哪一层、作用范围多大，写入前核对版本；凭据交给底座管理 | [扩展与认证](reference/04-git-extensions-background.md#12-配置mcp插件与认证) |
