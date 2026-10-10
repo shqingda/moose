@@ -12,7 +12,7 @@ import { Plans } from './plans';
 import { Steering } from './steering';
 import { providerDefinitions } from '../shared/providers';
 import { ProviderRegistry } from './provider-registry';
-import { createAdapter } from './providers/registry';
+import { createAdapter, type AdapterFactory } from './providers/registry';
 import { contextInText } from '../shared/prompt-context';
 import { ContextCatalog } from './context-catalog';
 import { Attachments, agentAttachments } from './attachments';
@@ -52,7 +52,7 @@ export class MooseService {
   constructor(
     readonly store: Store,
     private emit: (event: AppEvent) => void,
-    private adapterFactory = createAdapter,
+    private adapterFactory: AdapterFactory = createAdapter,
   ) {
     this.agents = new ProviderRegistry(store, adapterFactory);
     this.worktrees = new Worktrees(store, {
@@ -230,6 +230,10 @@ export class MooseService {
   }
   providers(refresh = false): Promise<ProviderInfo[]> {
     return this.agents.providers(refresh);
+  }
+  /** Hosts call this once they accept requests, so the first window joins a probe already underway. */
+  warmProviders() {
+    this.agents.warmUp();
   }
   /** 后台业务入口：校验 IPC 参数后分发项目、消息、审批、用量和 Git 操作。 */
   async handle(method: string, input: unknown, clientId = 'local'): Promise<unknown> {
@@ -498,8 +502,10 @@ export class MooseService {
       }
       case 'usage':
         return this.agents.usage(args as Requests['usage']);
-      case 'providers':
-        return this.providers((args as Requests['providers']).refresh);
+      case 'providers': {
+        const { refresh, cached } = args as Requests['providers'];
+        return cached ? this.agents.cachedProviders() : this.providers(refresh);
+      }
       case 'settings': {
         const s = this.store.setSettings(args as Requests['settings']);
         this.agents.invalidate();
@@ -556,7 +562,10 @@ export class MooseService {
       let nativeId: string | null = null;
       const lastUser = retained.filter((m) => m.kind === 'user').at(-1);
       if (source.provider === 'codex' && source.nativeId && lastUser?.nativeTurnId) {
-        adapter = this.adapterFactory(source.provider, await this.providerPath(source.provider));
+        adapter = await this.adapterFactory(
+          source.provider,
+          await this.providerPath(source.provider),
+        );
         this.operations.add(adapter);
         if (adapter.fork)
           nativeId = await adapter.fork(source, project.path, lastUser.nativeTurnId);

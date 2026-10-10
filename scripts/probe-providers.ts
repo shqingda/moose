@@ -6,7 +6,7 @@ for (const provider of providerIds) {
   let adapter;
   try {
     const path = await discover(provider, '');
-    adapter = createAdapter(provider, path);
+    adapter = await createAdapter(provider, path);
     const info = await adapter.probe();
     console.log(
       JSON.stringify({

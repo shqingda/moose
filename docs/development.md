@@ -45,7 +45,7 @@ Oxfmt 负责格式，Oxlint 负责基础正确性检查，不依赖 ESLint。统
 
 ## 构建与原生依赖
 
-界面、预加载脚本、桌面运行时、终端宿主和 Web 服务跑在不同进程里，热更新方式也不一样，所以分成五个入口，由 `vite-plugin-electron` 的多入口配置（Flat API）分别编译：main、preload、runtime、pty-host、web-server。全部首次构建完成后启动 Electron；preload 修改重载窗口，其他后台入口修改重启应用，React 使用 HMR。沙箱 preload 输出单文件 CJS，其余入口输出 ESM。
+界面、预加载脚本、桌面运行时、终端宿主和 Web 服务跑在不同进程里，热更新方式也不一样，所以有五个入口：main、preload、runtime、pty-host、web-server。`vite-plugin-electron` 的多入口配置（Flat API）分四次编译：runtime（开发和 `MOOSE_RUNTIME_MODE=local` 用的 utility process）与 web-server（安装版和 Web 用的共享服务）放在同一次构建里，共用 `dist-electron/chunks/` 下拆出的服务代码，安装包只带一份 MooseService；其余入口各自打成单文件。全部首次构建完成后启动 Electron；preload 修改重载窗口，其他后台入口修改重启应用，React 使用 HMR。沙箱 preload 输出单文件 CJS，其余入口输出 ESM。Web 安装包复制 `web-server`、`chunks` 和 `pty-host`。
 
 macOS 构建额外使用 Xcode Command Line Tools 编译 `native/notification-permission.mm`，通过 Node-API 在应用自身进程内读取／请求系统通知权限；产物 `dist-native/notifications.node` 随桌面包签名，并从 asar 归档里解包（原生模块不能直接从归档里加载）。独立 Web 包不需要它。构建会优先使用 Electron 重建缓存中的 Node-API 头文件，缺少时先执行 `pnpm native:rebuild`。
 

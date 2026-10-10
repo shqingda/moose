@@ -1,10 +1,26 @@
 import { Store } from './db/store';
 import { MooseError, fault } from '../shared/errors';
 import { providerDefinitions, providerIds } from '../shared/providers';
-import { createAdapter } from './providers/registry';
+import { createAdapter, type AdapterFactory } from './providers/registry';
 import { discover, cliVersion } from './providers/process';
 import { providerError, type AgentAdapter } from './providers/types';
-import type { Provider, ProviderInfo, Requests } from '../shared/types';
+import type { Provider, ProviderInfo, Requests, Settings } from '../shared/types';
+import { statSync } from 'node:fs';
+import { version } from '../package.json';
+
+/** Persisted probe of one provider; valid only while the Moose build, its settings and the CLI file are unchanged. */
+interface SavedProbe {
+  key: string;
+  mtimeMs: number;
+  size: number;
+  info: ProviderInfo;
+}
+const probeKey = (provider: Provider, settings: Settings) =>
+  JSON.stringify([
+    version,
+    settings[providerDefinitions[provider].enabledKey],
+    settings[providerDefinitions[provider].pathKey],
+  ]);
 
 /** Own discovery, capability probes and quotas; never owns task or directory locks. */
 export class ProviderRegistry {
@@ -17,16 +33,32 @@ export class ProviderRegistry {
   private providerCache?: ProviderInfo[];
   private providerRevision = 0;
   private probePromise?: Promise<ProviderInfo[]>;
+  private warm?: { promise: Promise<ProviderInfo[]>; settledAt?: number };
   private probing = new Set<AgentAdapter>();
   constructor(
     private store: Store,
-    private adapterFactory = createAdapter,
+    private adapterFactory: AdapterFactory = createAdapter,
   ) {}
 
   invalidate() {
     this.providerRevision++;
     this.providerCache = undefined;
+    this.warm = undefined;
     this.usageCache.clear();
+  }
+  /** 后台启动即开始探测；随后第一个刷新请求复用这一轮，不再重复启动 CLI。 */
+  warmUp() {
+    if (this.warm || this.providerCache) return;
+    const warm: { promise: Promise<ProviderInfo[]>; settledAt?: number } = {
+      promise: this.providers(true),
+    };
+    this.warm = warm;
+    void warm.promise.then(
+      () => (warm.settledAt = Date.now()),
+      () => {
+        if (this.warm === warm) this.warm = undefined;
+      },
+    );
   }
   /** 根据用户配置或默认搜索路径定位本机代理 CLI。 */
   async path(provider: Provider) {
@@ -37,8 +69,59 @@ export class ProviderRegistry {
       throw new MooseError('provider', String(error));
     }
   }
+  /** 只读上一轮探测结果（内存优先，其次磁盘上仍然有效的条目）；绝不启动探测。 */
+  cachedProviders(): ProviderInfo[] {
+    if (this.providerCache) return this.providerCache;
+    const settings = this.store.getSettings();
+    const rows = this.store.sqlite
+      .prepare("SELECT value FROM settings WHERE key LIKE 'provider-probe:%'")
+      .all() as { value: string }[];
+    const saved = new Map<Provider, ProviderInfo>();
+    for (const row of rows) {
+      try {
+        const entry = JSON.parse(row.value) as SavedProbe;
+        if (entry.key !== probeKey(entry.info.provider, settings)) continue;
+        const file = statSync(entry.info.path);
+        if (file.mtimeMs !== entry.mtimeMs || file.size !== entry.size) continue;
+        saved.set(entry.info.provider, entry.info);
+      } catch {
+        // A removed CLI or unreadable row is simply not shown until the fresh probe lands.
+      }
+    }
+    return providerIds.flatMap((provider) => saved.get(provider) ?? []);
+  }
+  private persist(results: ProviderInfo[], settings: Settings) {
+    const upsert = this.store.sqlite.prepare(
+      'INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',
+    );
+    const remove = this.store.sqlite.prepare('DELETE FROM settings WHERE key=?');
+    for (const info of results) {
+      const key = 'provider-probe:' + info.provider;
+      try {
+        if (info.error || !info.path) {
+          remove.run(key);
+          continue;
+        }
+        const file = statSync(info.path);
+        const entry: SavedProbe = {
+          key: probeKey(info.provider, settings),
+          mtimeMs: file.mtimeMs,
+          size: file.size,
+          info,
+        };
+        upsert.run(key, JSON.stringify(entry));
+      } catch {
+        remove.run(key);
+      }
+    }
+  }
   /** 并行探测代理版本与能力；缓存结果，并合并重复探测请求。 */
   async providers(refresh = false): Promise<ProviderInfo[]> {
+    if (refresh && this.warm) {
+      const warm = this.warm;
+      this.warm = undefined;
+      if (warm.settledAt === undefined || Date.now() - warm.settledAt < 10_000) return warm.promise;
+    }
     if (!refresh && this.providerCache) return this.providerCache;
     if (this.probePromise) return this.probePromise;
     this.probePromise = this.probeProviders();
@@ -71,8 +154,9 @@ export class ProviderRegistry {
             info.available = true;
             info.version = await cliVersion(info.path);
             if (this.stopping || !info.enabled) return info;
-            adapter = this.adapterFactory(provider, info.path);
+            adapter = await this.adapterFactory(provider, info.path);
             this.probing.add(adapter);
+            if (this.stopping) return info;
             Object.assign(info, await adapter.probe());
             info.taskModes ??= [...providerDefinitions[provider].taskModes];
             info.steering ??= typeof adapter.steer === 'function';
@@ -92,6 +176,11 @@ export class ProviderRegistry {
       if (this.stopping) return results;
       if (revision !== this.providerRevision) continue;
       this.providerCache = results;
+      try {
+        this.persist(results, settings);
+      } catch {
+        // The on-disk copy only speeds up the next start; a closed or busy store must not fail the probe.
+      }
       return results;
     }
   }
@@ -112,9 +201,10 @@ export class ProviderRegistry {
           const revision = this.providerRevision;
           const path = await this.path(a.provider);
           if (this.stopping) throw new Error('Moose is shutting down');
-          const adapter = this.adapterFactory(a.provider, path);
+          const adapter = await this.adapterFactory(a.provider, path);
           this.probing.add(adapter);
           try {
+            if (this.stopping) throw new Error('Moose is shutting down');
             const value = (await adapter.usage?.()) || { context: null, limits: [] };
             if (revision === this.providerRevision)
               this.usageCache.set(a.provider, { at: Date.now(), value });

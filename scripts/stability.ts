@@ -179,9 +179,17 @@ const report = {
   finished: '',
   elapsedSeconds: 0,
   status: 'running',
-  buildHash: createHash('sha256')
-    .update(await readFile(join(build, 'dist-electron/runtime/runtime.js')))
-    .digest('hex'),
+  buildHash: await (async () => {
+    const service = createHash('sha256');
+    for (const file of [
+      'dist-electron/runtime/runtime.js',
+      ...(await readdir(join(build, 'dist-electron/chunks')))
+        .sort()
+        .map((name) => `dist-electron/chunks/${name}`),
+    ])
+      service.update(await readFile(join(build, file)));
+    return service.digest('hex');
+  })(),
   conditions:
     'Hidden desktop + Web; isolated shared service; 10,000 historical events; 4 Hz streamed turns; 2 Hz PTY; 10-second panel/search cycle; minute reconnects; desktop reopen every 10 minutes; version mismatch writes rejected',
   cycles: 0,

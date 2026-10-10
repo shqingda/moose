@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Store } from '../../electron/db/store';
 import { SharedRuntime } from '../../electron/shared-runtime';
+import { closeDesktop } from '../../scripts/close-desktop';
 
 test('desktop starts one shared service in its existing data directory and preserves the standard app menu', async () => {
   const data = await mkdtemp(join(tmpdir(), 'moose-desktop-runtime-'));
@@ -49,7 +50,7 @@ test('desktop starts one shared service in its existing data directory and prese
         }),
       project.id,
     );
-    await app!.close();
+    await closeDesktop(app!);
     app = undefined;
     const snapshot = (await client.request('snapshot', {})) as { projects: { id: string }[] };
     expect(snapshot.projects[0].id).toBe(project.id);
@@ -86,7 +87,7 @@ test('desktop starts one shared service in its existing data directory and prese
     expect(menu).toContain('Check for Updates…');
     expect(menu).not.toContain('Open in Browser');
     expect(menu.some((label) => label.includes('Background'))).toBe(false);
-    await app!.close();
+    await closeDesktop(app!);
     app = undefined;
     await client.stop();
     await expect
@@ -101,7 +102,7 @@ test('desktop starts one shared service in its existing data directory and prese
       .toBe(false);
     app = undefined;
   } finally {
-    await app?.close().catch(() => {});
+    if (app) await closeDesktop(app);
     await client.stop().catch(() => {});
     await client.close();
     await rm(data, { recursive: true, force: true });

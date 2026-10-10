@@ -43,7 +43,7 @@ for (const provider of selected) {
     'This is an isolated acceptance-test repository. Create exactly one file named hello.txt containing moose-ready followed by a newline. Do not read any other directories or use network tools. Do not commit. Then reply with one short sentence.',
     'Continue the previous task: append a second line saying resumed-ok to the file you just created. Keep the first line unchanged. Do not touch other files or commit. Then reply with one short sentence.',
   ].entries()) {
-    const adapter: AgentAdapter = createAdapter(provider, path);
+    const adapter: AgentAdapter = await createAdapter(provider, path);
     let timeout: ReturnType<typeof setTimeout> | undefined;
     try {
       await Promise.race([

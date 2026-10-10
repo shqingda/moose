@@ -231,7 +231,19 @@ function Workspace({
     }
   }, [setError]);
   useEffect(() => {
-    void connect();
+    if (providers.length && !performance.getEntriesByName('moose/renderer/providersShown').length)
+      performance.mark('moose/renderer/providersShown');
+  }, [providers]);
+  useEffect(() => {
+    // 先显示上一轮探测结果，同时立即刷新；刷新结果总是覆盖缓存。
+    let probed = false;
+    void window.moose.request('providers', { cached: true }).then(
+      (info) => {
+        if (!probed && info.length) setProviders(info);
+      },
+      () => undefined,
+    );
+    void connect().finally(() => (probed = true));
   }, [connect]);
   useEffect(() => {
     if (selected) localStorage.setItem('moose.selected', selected);

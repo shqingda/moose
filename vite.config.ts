@@ -1,16 +1,27 @@
-// 构建入口：协调 main / preload / runtime 首次完成后启动 Electron，并区分重启与页面重载。
+// 构建入口：协调 main / preload / 服务 / pty-host 首次完成后启动 Electron，并区分重启与页面重载。
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwind from '@tailwindcss/vite';
 import electron from 'vite-plugin-electron';
 import { fileURLToPath } from 'node:url';
+import { rm } from 'node:fs/promises';
 import type { ChildProcess } from 'node:child_process';
 
 export default defineConfig(({ command }) => {
   const ready = new Set<string>();
   let started = false;
   let transition = Promise.resolve();
-  const targets = ['main', 'preload', 'runtime', 'pty-host', 'web-server'] as const;
+  // runtime (utility process) and web-server (shared service) build together and share MooseService chunks.
+  const targets = {
+    main: { 'main/main': 'electron/main.ts' },
+    preload: { 'preload/preload': 'electron/preload.ts' },
+    service: {
+      'runtime/runtime': 'electron/runtime.ts',
+      'web-server/web-server': 'electron/web-server.ts',
+    },
+    'pty-host': { 'pty-host/pty-host': 'electron/pty-host.ts' },
+  } as const;
+  const names = Object.keys(targets) as (keyof typeof targets)[];
   return {
     base: './',
     resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
@@ -18,8 +29,8 @@ export default defineConfig(({ command }) => {
       react(),
       tailwind(),
       electron(
-        targets.map((target) => ({
-          entry: `electron/${target}.ts`,
+        names.map((target) => ({
+          entry: targets[target],
           vite: {
             plugins: [
               {
@@ -28,28 +39,36 @@ export default defineConfig(({ command }) => {
                   if (config.build?.lib)
                     config.build.lib.formats = [target === 'preload' ? 'cjs' : 'es'];
                 },
+                async buildStart() {
+                  // Hashed chunks would pile up in the packaged dist-electron; dev keeps old ones for the running app.
+                  if (target === 'service' && command === 'build')
+                    await rm('dist-electron/chunks', { recursive: true, force: true });
+                },
                 closeBundle() {
                   ready.add(target);
                 },
               },
             ],
             build: {
-              outDir: `dist-electron/${target}`,
+              outDir: 'dist-electron',
               sourcemap: command === 'serve',
               lib: {
-                entry: `electron/${target}.ts`,
+                entry: targets[target],
                 formats: [target === 'preload' ? 'cjs' : 'es'],
-                fileName: () => (target === 'preload' ? 'preload.cjs' : `${target}.js`),
+                fileName: (_format, name) => (target === 'preload' ? `${name}.cjs` : `${name}.js`),
               },
               rolldownOptions: {
                 external: ['electron', 'better-sqlite3', 'node-pty'],
-                output: { codeSplitting: false },
+                output:
+                  target === 'service'
+                    ? { chunkFileNames: 'chunks/[name]-[hash].js' }
+                    : { codeSplitting: false },
               },
             },
           },
           onstart({ startup, reload }) {
             ready.add(target);
-            if (ready.size !== targets.length) return;
+            if (ready.size !== names.length) return;
             transition = transition.then(async () => {
               if (started && target === 'preload') {
                 reload();

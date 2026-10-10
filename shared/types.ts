@@ -285,7 +285,7 @@ export interface Requests
     choice?: string;
     answers?: Record<string, string>;
   };
-  providers: { refresh?: boolean };
+  providers: { refresh?: boolean; cached?: boolean };
   settings: Partial<Settings>;
   gitStatus: { projectId: string; sessionId?: string };
   gitDiff: { projectId: string; sessionId?: string; path: string; area: GitFile['area'] };
