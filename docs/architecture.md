@@ -363,7 +363,7 @@ SSE 对积压超过阈值的慢连接断开，重连后按游标补读。终端�
 | 半透明和阴影 | 侧栏可以轻微半透明，浮层可以用很轻的阴影 |
 | 不要加的东西 | 会话行、气泡、输入框不加装饰外框，也不做切角 |
 
-应用图标是白底拟物，官网用黑底，会话区用去掉圆角底托的透明 logo（金色鹿角、象牙白鹿头、黑色眼睛）。侧栏的 `MooseMark` 从 `moose-mark.json` 画单色剪影。Web favicon 是同一轮廓导出的深浅两份 SVG，跟系统 `prefers-color-scheme` 走，不跟应用里的主题设置走。源文件和生成命令见[图标与品牌资源](development.md#图标与品牌资源)。
+应用图标、官网和会话欢迎图使用同一张 Versta 图标母图（`src/assets/brand/versta-icon.png`）。侧栏的 `MooseMark` 从 `moose-mark.json` 画单色剪影。Web favicon 是同一轮廓导出的深浅两份 SVG，跟系统 `prefers-color-scheme` 走，不跟应用里的主题设置走。源文件和生成命令见[图标与品牌资源](development.md#图标与品牌资源)。
 
 ## 16. 搜索、通知、文件查看与错误恢复
 

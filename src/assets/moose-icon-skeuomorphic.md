@@ -1,16 +1,16 @@
 # Moose 图标生成记录
 
-0.21.3 的 macOS 应用图标是 [moose-icon-white.png](moose-icon-white.png)，官网保留 [moose-icon-black.png](moose-icon-black.png)，会话区使用 [moose-logo-transparent.png](moose-logo-transparent.png)，侧边栏继续读取 [moose-mark.json](moose-mark.json)。资源用途、构建输出与 favicon 主题选择统一维护在[开发指南](../../docs/development.md#图标与品牌资源)，不根据下列历史提示重新选用绿色母图。
+这些提示是旧拟物图标的历史记录。对应 PNG（`moose-icon-white.png`、`moose-icon-black.png`、`moose-logo-transparent.png`、`moose-logo-welcome.png` 以及绿色 `moose-icon-skeuomorphic*.png`）已从仓库删除。当前应用图标、官网和欢迎图使用 [versta-icon.png](brand/versta-icon.png)。侧边栏仍读取 [moose-mark.json](moose-mark.json)。资源用途见[开发指南](../../docs/development.md#图标与品牌资源)。不要按下面的提示重新生成旧图标。
 
 ## 素材来源
 
-黑底图标与透明 logo 均由内置 imagegen 工具编辑，基于原版拟物图标。黑底版只改变圆角底座颜色，透明版移除底座并保留实心黑眼睛。透明 logo 是单独保存的 PNG，`pnpm icon:build` 不会重新生成它。
+黑底图标与透明 logo 均由内置 imagegen 工具编辑，基于原版拟物图标。黑底版只改变圆角底座颜色，透明版移除底座并保留实心黑眼睛。这些 PNG 已删除，`pnpm icon:build` 也不会重新生成它们。
 
-原版绿色素材保留为来源记录：
+曾保留的绿色来源记录：
 
-- [moose-icon-skeuomorphic.png](moose-icon-skeuomorphic.png)：早期拟物版本。
-- [moose-icon-skeuomorphic-v2.png](moose-icon-skeuomorphic-v2.png)：0.19.1 几何调整；[生成说明](moose-icon-skeuomorphic-v2.md)。
-- [moose-icon-skeuomorphic-v3.png](moose-icon-skeuomorphic-v3.png)：细边框和更丰富高光；[生成说明](moose-icon-skeuomorphic-v3.md)。
+- `moose-icon-skeuomorphic.png`：早期拟物版本。
+- `moose-icon-skeuomorphic-v2.png`：0.19.1 几何调整；[生成说明](moose-icon-skeuomorphic-v2.md)。
+- `moose-icon-skeuomorphic-v3.png`：细边框和更丰富高光；[生成说明](moose-icon-skeuomorphic-v3.md)。
 
 ## 黑底图标提示
 
@@ -18,7 +18,7 @@ Change only the dark green/teal tile to obsidian black. Preserve the gold antler
 
 ## 白底 Dock 图标
 
-[moose-icon-white.png](moose-icon-white.png) 由内置 imagegen 工具编辑黑底母图生成，作为当前 macOS 应用和 Dock 的打包源。官网仍使用黑底版。
+`moose-icon-white.png` 曾由内置 imagegen 工具编辑黑底母图生成，并作为当时的 macOS 应用和 Dock 打包源。该文件已删除。当前打包源是 `src/assets/brand/versta-icon.png`。
 
 提示：Change only the black rounded-square tile to white ceramic/enamel with soft grey shading. Preserve the tile bounds, thin beveled edge, champagne-gold antler, ivory moose silhouette, solid black eye, shallow relief, upper-left lighting and soft contact shadows. Keep genuine transparent alpha outside the tile.
 

@@ -1,4 +1,4 @@
-import mooseIcon from '../../../../src/assets/moose-icon-black.png';
+import verstaIcon from '../../../../src/assets/brand/versta-icon.png';
 import { useEffect, useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 
@@ -7,7 +7,7 @@ export const Route = createFileRoute('/')({ component: Home });
 const installCommand = 'curl -fsSL https://moose.shqingda.workers.dev/install.sh | sh\nmoose';
 
 function Mark() {
-  return <img className="mark" src={mooseIcon} alt="Moose" />;
+  return <img className="mark" src={verstaIcon} alt="Versta" />;
 }
 
 function Home() {

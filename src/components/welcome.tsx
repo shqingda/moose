@@ -2,14 +2,14 @@ import { ChevronRight, FolderOpen } from 'lucide-react';
 import { useI18n } from '../lib/i18n';
 import { Button } from './ui/button';
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from './ui/empty';
-import mooseLogo from '../assets/moose-logo-welcome.png';
+import verstaIcon from '../assets/brand/versta-icon.png';
 /** 根据是否选择项目展示欢迎页，引导打开目录或填写任务输入。 */
 export function Welcome({ projectName, onAdd }: { projectName?: string; onAdd(): void }) {
   const t = useI18n();
   return (
     <div className="welcome">
       <div className="welcome-symbol">
-        <img src={mooseLogo} alt="" width={96} height={96} draggable={false} decoding="async" />
+        <img src={verstaIcon} alt="" width={96} height={96} draggable={false} decoding="async" />
       </div>
       <Empty className="welcome-copy">
         <EmptyHeader>

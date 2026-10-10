@@ -108,8 +108,8 @@ existing release files or tags.
 
 ## Site assets and favicons
 
-The landing page imports the approved black skeuomorphic icon from
-`src/assets/moose-icon-black.png`. `pnpm icon:build` generates both favicon
+The landing page, README, and session welcome image import
+`src/assets/brand/versta-icon.png`. `pnpm icon:build` generates both favicon
 variants from the unchanged sidebar silhouette: `favicon.svg` is dark and
 `favicon-light.svg` is light. The HTML selects them using the system
 `prefers-color-scheme` preference, independently of the application's theme.

@@ -57,20 +57,20 @@ better-sqlite3 和 node-pty 是运行时原生依赖；安装与打包会准备�
 
 ## 图标与品牌资源
 
-当前 macOS 应用与 Dock 使用从 0.21.3 起采用的白底拟物版；0.21.2 安装包使用黑底版，官网仍沿用黑底标识。各用途分别维护，不要把侧边栏剪影替换成大尺寸应用图标：
+应用图标、官网、README 和会话欢迎图共用 [versta-icon.png](../src/assets/brand/versta-icon.png)。不要把侧边栏剪影替换成这张大图标：
 
 | 用途 | 源资源与使用位置 | 生成或更新方式 |
 | --- | --- | --- |
-| macOS 应用与 Dock | [moose-icon-white.png](../src/assets/moose-icon-white.png)；桌面打包读取 `build/icon.icns` | 修改白底母图后执行 `pnpm icon:build` |
-| 官网与 README 标识 | [moose-icon-black.png](../src/assets/moose-icon-black.png) | 直接导入黑底母图 |
-| 会话区欢迎 logo | [moose-logo-transparent.png](../src/assets/moose-logo-transparent.png)；[welcome.tsx](../src/components/welcome.tsx) 使用派生的 `moose-logo-welcome.png` 透明 PNG，容器无底色 | 单独维护透明素材；保留金色鹿角、象牙白鹿头、黑色实心眼睛和透明边缘 |
+| macOS 应用与 Dock | [versta-icon.png](../src/assets/brand/versta-icon.png)；桌面打包读取 `build/icon.icns` | 修改母图后执行 `pnpm icon:build` |
+| 官网与 README 标识 | [versta-icon.png](../src/assets/brand/versta-icon.png) | 直接导入同一母图 |
+| 会话区欢迎图 | [welcome.tsx](../src/components/welcome.tsx) 导入 [versta-icon.png](../src/assets/brand/versta-icon.png) | 直接导入同一母图，不另做派生图 |
 | 侧边栏剪影与 Web favicon | [moose-mark.json](../src/assets/moose-mark.json)；[MooseMark](../src/components/common.tsx) 使用 `currentColor`，favicon 导出为深浅两份 | 修改共享矢量轮廓后执行 `pnpm icon:build`；侧边栏外观沿用原版 |
 
-`pnpm icon:build` 调用 [scripts/icon.swift](../scripts/icon.swift) 生成 `build/icon.iconset/` 各尺寸 PNG，以及 `public/` 和 `distribution/site/public/` 中的 `favicon.svg`、`favicon-light.svg`，再通过 `iconutil` 生成 `build/icon.icns`。生成资源随源文件一起提交；该命令不会重新生成透明 logo。欢迎页展示 96 CSS 像素，使用 288×288 的三倍尺寸派生图；更新原图后执行 `sips -Z 288 src/assets/moose-logo-transparent.png --out src/assets/moose-logo-welcome.png`。保留原始母图，检查浅深背景与边缘透明度。
+`pnpm icon:build` 调用 [scripts/icon.swift](../scripts/icon.swift)，从 `src/assets/brand/versta-icon.png` 生成 `build/icon.iconset/` 各尺寸 PNG，以及 `public/` 和 `distribution/site/public/` 中的 `favicon.svg`、`favicon-light.svg`，再通过 `iconutil` 生成 `build/icon.icns`。生成资源随源文件一起提交。侧边栏剪影不从应用图标重绘。
 
 应用入口 [index.html](../index.html) 与官网 [根路由](../distribution/site/src/routes/__root.tsx) 通过 `prefers-color-scheme` 选择 favicon：浅色系统用 `favicon.svg`（深色剪影），深色系统用 `favicon-light.svg`（浅色剪影）。它跟随系统偏好，不读取 Moose 的主题设置。
 
-旧绿色拟物 PNG 保留为历史素材，不作为当前打包源。生成提示与历史来源见[图标生成记录](../src/assets/moose-icon-skeuomorphic.md)。视觉核查方法见[测试指南](testing.md#图标与主题验收)。
+旧 Moose 拟物 PNG 已从仓库删除。生成提示仍记在[图标生成记录](../src/assets/moose-icon-skeuomorphic.md)，不作为当前母图。视觉核查方法见[测试指南](testing.md#图标与主题验收)。
 
 ## 发布流程
 

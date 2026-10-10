@@ -1,6 +1,6 @@
 # Moose thin-border highlight revision
 
-Generated with built-in imagegen. Edit target: `moose-icon-skeuomorphic-v2.png` (0.19.1 geometry); lighting reference: `moose-icon-skeuomorphic.png` (original 0.19.2). Archived green-base master: `moose-icon-skeuomorphic-v3.png`. The website uses the black-base variant `moose-icon-black.png`; the current macOS master is `moose-icon-white.png`, exported with `pnpm icon:build`.
+Generated with built-in imagegen. Edit target: `moose-icon-skeuomorphic-v2.png` (0.19.1 geometry); lighting reference: `moose-icon-skeuomorphic.png` (original 0.19.2). Those PNG files have been removed. The current icon master is `src/assets/brand/versta-icon.png`, exported with `pnpm icon:build`.
 
 ## Final prompt
 
