@@ -74,7 +74,7 @@ MOOSE_TEST_BACKGROUND=0 pnpm exec tsx scripts/package-smoke.ts
 | 定时任务 | 保存未来执行时间并检查预览、暂停和编辑；自动化使用受控时间 | 真实长时间运行与休眠后的恢复 |
 | 桌面与 Web | 共用同一后台，刷新恢复会话；检查终端只读、接管与释放 | 托管云端工作区与多人权限不在支持范围内 |
 | 侧栏动效 | 按帧验证标题展开／折叠单向移动、位置不超出起止范围、中途反向连续；草稿保留 | 实际显示窗口与用户录屏仍需视觉核对 |
-| 图标与主题 | 浅深主题切换；欢迎图标透明、侧栏剪影保持原样、favicon 对比清晰 | 实际 Dock 展示和不同浏览器的缓存行为需单独观察 |
+| 图标与主题 | 浅深主题切换；欢迎图使用 Versta 图标、侧栏剪影保持原样、favicon 对比清晰 | 实际 Dock 展示和不同浏览器的缓存行为需单独观察 |
 
 实际入口见[使用指南](usage.md)与[Web 使用说明](web.md)。真实 CLI 握手使用 `pnpm test:providers`；`scripts/check-native-workflows.ts` 和 `scripts/check-reasoning.ts` 会发送模型任务，应按需运行。只读探测也可能启动 CLI 或连接其已配置的扩展，不等于完全离线。
 
@@ -84,7 +84,7 @@ MOOSE_TEST_BACKGROUND=0 pnpm exec tsx scripts/package-smoke.ts
 
 修改图标资源时，使用隔离桌面与 Web 工作区做以下检查，无需调用真实模型。0.21.2 的专项验收采用同样范围，历史结果见[发布说明](releases/0.21.2.md)：
 
-1. 欢迎页加载透明 PNG，确认边缘 alpha 为零、容器无背景色，浅色与深色界面都保留完整驼鹿轮廓和黑色眼睛。
+1. 欢迎页加载 Versta 图标母图，浅色与深色界面都完整显示标记。
 2. 核对侧边栏矢量路径与原版一致；切换应用主题时，剪影继续使用界面文字颜色。
 3. 将应用固定为深色，模拟系统浅色 → 深色 → 浅色偏好，确认 HTML 只匹配对应 favicon，资源返回 SVG，颜色分别为深色／浅色／深色；再验证 Web 欢迎页。该检查验证浏览器主题选择，不代表人工切换了 macOS 系统外观。
 4. 构建 macOS ICNS，核对打包应用 `Contents/Resources/icon.icns` 与 `build/icon.icns` 的 SHA-256 相同。包内图标核对不能代替人工观察正在运行的 Dock 图标。

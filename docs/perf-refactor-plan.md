@@ -105,7 +105,7 @@
 
 ### 1.6 源码里重、但多数没进安装包的东西
 
-- `src/assets` 约 8.3 MB，多是图标母图。应用产物只收 `moose-logo-welcome.png`（59,516 字节）。官网 [distribution/site/src/routes/index.tsx](../distribution/site/src/routes/index.tsx) 引用了约 1.4 MB 的 `moose-icon-black.png`。那是站点，不是桌面 asar，也不在本计划的 P0。
+- 应用图标母图是 [versta-icon.png](../src/assets/brand/versta-icon.png)。欢迎页和官网 [distribution/site/src/routes/index.tsx](../distribution/site/src/routes/index.tsx) 直接导入它。侧栏剪影仍是 `moose-mark.json`。这不在本计划的 P0。
 - `src/lib/i18n.tsx` 约 35 KB，两种语言都在壳上。收益小。
 - 样式源码合计约 77 KB，产物 `index-*.css` 144,400 字节。Tailwind 已经按内容扫描。没有分析器结果之前，不做大规模清类名。
 

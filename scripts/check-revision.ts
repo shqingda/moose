@@ -33,7 +33,7 @@ try {
   await agent.run({
     session: s,
     cwd,
-    text: 'Read the attached image and text. Briefly name the animal icon in the image and repeat the code from the text. Do not use tools or edit files.',
+    text: 'Read the attached image and text. Briefly describe the logo in the image and repeat the code from the text. Do not use tools or edit files.',
     attachments: [
       {
         id: randomUUID(),

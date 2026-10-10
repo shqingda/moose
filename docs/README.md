@@ -16,7 +16,7 @@
 | 浏览器入口、共享后台、目录选择与连接问题 | [Web 使用说明](web.md) |
 | 进程分工、消息执行与数据存储 | [技术架构](architecture.md) |
 | 本地开发、构建与发布 | [开发与打包](development.md) |
-| 应用图标、透明 logo 和 Web favicon | [图标与品牌资源](development.md#图标与品牌资源) |
+| 应用图标和 Web favicon | [图标与品牌资源](development.md#图标与品牌资源) |
 | 当前版本怎么验收、发布时过了哪些检查 | [0.23.3 发布验收](releases/0.23.3-validation.md) |
 | 选择测试、后台验收与验证边界 | [测试与验证](testing.md) |
 | 各代理已经接入哪些能力 | [底座能力与接入边界](providers/native-capabilities.md) |

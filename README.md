@@ -1,6 +1,6 @@
 # Moose
 
-<img src="src/assets/moose-icon-black.png" width="96" height="96" alt="Moose 黑底拟物图标" />
+<img src="src/assets/brand/versta-icon.png" width="96" height="96" alt="Versta" />
 
 Moose 是一个可扩展的 AI 编程代理工作台，提供 macOS 桌面端和本机 Web 入口。用户打开代码项目、提出开发任务，在同一个界面查看代理输出、处理审批、使用终端，并审阅和提交代码改动。
 
